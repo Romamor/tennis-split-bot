@@ -31,7 +31,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
         fun amount(value: Long) = if(value > 0) "+$value ₽" else "$value ₽"
         fun draft() = service.draft(member, requireNotNull(action.entity))
         fun summary(content: DraftContent): String {
-            val players = content.players.take(12).joinToString("\n") { "${name(it.participantId)}${if(it.plusOne) " +1" else ""}: ${it.minutes} мин" }
+            val players = content.players.take(12).joinToString("\n") { "${name(it.participantId)}${if(it.plusOne) " +1" else ""}: ${hoursLabel(it.minutes)}" }
             val payments = content.payments.take(10).joinToString(", ") { "${name(it.participantId)} ${it.amount} ₽" }
             return "${content.date}\n${players.ifEmpty { "Игроки пока не указаны" }}\nОплатили: ${payments.ifEmpty { "пока не указано" }}"
         }
@@ -101,13 +101,13 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             "players" -> {
                 val d = draft(); val players = d.content.players.filterNot { it.plusOne }
                 Screen("Выбери игрока, чтобы изменить время или добавить +1.", page(players, action.page).map {
-                    button("${name(it.participantId).take(40)} · ${it.minutes} мин", BotAction("player", entity = d.id, participant = it.participantId))
+                    button("${name(it.participantId).take(40)} · ${hoursLabel(it.minutes)}", BotAction("player", entity = d.id, participant = it.participantId))
                 } + pagination(action, players.size) + listOf(button("Добавить игрока", BotAction("add_players", entity = d.id)), button("К тренировке", BotAction("draft", entity = d.id))))
             }
             "add_players" -> {
                 val d = draft(); val visible = profiles.filter { (action.showAll || it.participant.active) && d.content.players.none { p -> p.participantId == it.participant.id && !p.plusOne } }
                 Screen("Кто ещё играл?", page(visible, action.page).map {
-                    val changed = d.content.copy(players = d.content.players + PlayerInput(it.participant.id, d.content.players.firstOrNull()?.minutes ?: 120))
+                    val changed = d.content.copy(players = d.content.players + PlayerInput(it.participant.id, 60))
                     button(name(it.participant.id).take(45), apply(WorkflowCommand.SaveDraft(d.id, d.version, changed), "players", d.id))
                 } + pagination(action, visible.size) + listOf(button("Показать всех", action.copy(showAll = true, page = 0)),
                     button("Добавить человека по имени", BotAction("ask", field = "name", back = "add_players", entity = d.id)), button("К игрокам", BotAction("players", entity = d.id))))
@@ -121,7 +121,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 if(guest != null) rows += button("Изменить время +1", BotAction("time_choices", entity = d.id, version = d.version, participant = id, field = "minutes", guest = true, draft = d.content, back = "player"))
                 rows += button("Убрать игрока", apply(WorkflowCommand.SaveDraft(d.id, d.version, d.content.copy(players = d.content.players.filterNot { it.participantId == id })), "players", d.id))
                 rows += button("К игрокам", BotAction("players", entity = d.id))
-                Screen("${name(id)}: ${player.minutes} мин${guest?.let { "\n+1: ${it.minutes} мин. Его доля относится на ${name(id)}." } ?: ""}", rows)
+                Screen("${name(id)}: ${hoursLabel(player.minutes)}${guest?.let { "\n+1: ${hoursLabel(it.minutes)}. Его доля относится на ${name(id)}." } ?: ""}", rows)
             }
             "payments" -> {
                 val d = draft(); val visible = profiles.filter { action.showAll || it.participant.active || d.content.payments.any { p -> p.participantId == it.participant.id } }
@@ -149,13 +149,20 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             "time_choices" -> {
                 val content=requireNotNull(action.draft)
                 checkAccounting(content.players.isNotEmpty(),ErrorCode.INVALID_INPUT,"Pick players first")
-                val choices=listOf(60L to "1 час",90L to "1,5 часа",120L to "2 часа").map { (minutes,label) ->
+                val page = action.page.coerceAtLeast(0)
+                val choices = (1L..6L).map { index ->
+                    val minutes = (page.toLong() * 6 + index) * 30
                     val changed=content.copy(players=content.players.map {
                         if(action.field=="all_minutes" || it.participantId==action.participant && it.plusOne==action.guest) it.copy(minutes=minutes) else it
                     })
-                    label to apply(WorkflowCommand.SaveDraft(requireNotNull(action.entity),requireNotNull(action.version),changed),action.back ?: "draft",action.entity,action.participant)
+                    hoursLabel(minutes) to apply(WorkflowCommand.SaveDraft(requireNotNull(action.entity),requireNotNull(action.version),changed),action.back ?: "draft",action.entity,action.participant)
                 }
-                Screen("Сколько времени играли?",listOf(choices,button("Другое время",action.copy(kind="ask")),button("Назад",BotAction(action.back ?: "draft",entity=action.entity,participant=action.participant))))
+                val navigation = buildList {
+                    if(page > 0) add("← Меньше" to action.copy(page=page-1))
+                    if(page < Int.MAX_VALUE) add("Больше →" to action.copy(page=page+1))
+                }
+                Screen("Сколько времени играли? Выбери с шагом полчаса.",choices.chunked(3) + listOf(navigation,
+                    button("Назад",BotAction(action.back ?: "draft",entity=action.entity,participant=action.participant))))
             }
             "form" -> {
                 val form = requireNotNull(action.form)

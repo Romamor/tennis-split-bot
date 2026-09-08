@@ -316,12 +316,85 @@ class TelegramBotTest {
         assertTrue(database.pendingEvents(groupId=group).isEmpty())
     }
 
-    @Test fun `common time is set with a button while custom time remains available`() {
+    @Test fun `time choices use half hours for everyone and individual guests`() {
         seed(); ready(); open(action=BotAction("draft",entity="training"))
-        click("Время всем"); click("1,5 часа")
+        click("Время всем"); click("1,5 ч")
         assertTrue(service.draft(member(),"training").content.players.all { it.minutes==90L })
-        click("Время всем"); click("Другое время"); reply("75")
-        assertTrue(service.draft(member(),"training").content.players.all { it.minutes==75L })
+        assertTrue(text().contains("1,5 ч"))
+        assertFalse(text().contains(" мин"))
+        click("Игроки"); clickStarts("Андрей"); click("Добавить +1")
+        click("Изменить время +1"); click("0,5 ч")
+        val players=service.draft(member(),"training").content.players
+        assertEquals(30L,players.single { it.plusOne }.minutes)
+        assertTrue(players.filterNot { it.plusOne }.all { it.minutes==90L })
+        click("К игрокам"); click("К тренировке"); click("Время всем")
+        click("Больше →"); click("3,5 ч")
+        assertTrue(service.draft(member(),"training").content.players.all { it.minutes==210L })
+    }
+
+    @Test fun `new players default to one hour and published card displays hours`() {
+        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("Игроки")
+        click("Добавить игрока"); click("Андрей")
+        assertTrue(panel().keyboard!!.rows.flatten().any { it.text=="Андрей · 1 ч" })
+        clickStarts("Андрей"); click("Добавить +1")
+        val draft=service.drafts(member()).single()
+        assertTrue(draft.content.players.all { it.minutes==60L })
+        assertTrue(text().contains("+1: 1 ч"))
+        click("К игрокам"); click("К тренировке"); click("Кто оплатил"); clickStarts("Андрей"); reply("200")
+        click("К тренировке"); click("Посмотреть расчёт"); click("Учесть тренировку")
+        val card=api.messages.values.single { it.chat.id==chat && it.text!!.contains("200 ₽") }
+        assertTrue(card.text!!.contains("по 1 ч"))
+        assertFalse(card.text.contains(" мин"))
+        assertEquals("1,25 ч",hoursLabel(75))
+    }
+
+    @Test fun `text input moves controls below the reply and retires the old panel`() {
+        open(); click("Участники")
+        val oldPanel=panel()
+        click("Добавить по имени")
+        val promptId=bot.state.session(1).input!!.promptId
+        reply("Андрей")
+        assertTrue(panel().id > promptId)
+        assertEquals(panel().id,api.sent.last { it.chat.id==1L }.id)
+        assertNull(api.messages[1L to oldPanel.id]!!.keyboard)
+        assertTrue(text().contains("Андрей"))
+        val currentPanel=panel().id
+        val sends=api.sent.size
+        click("Это я"); click("Подтвердить")
+        assertEquals(currentPanel,panel().id)
+        assertEquals(sends,api.sent.size)
+        assertEquals(1,api.sent.count { it.chat.id==chat })
+    }
+
+    @Test fun `menu command opens a fresh panel once including after restart`() {
+        seed(); open(); click("Участники")
+        val old=panel().id
+        val command=message("/menu")
+        bot.handle(command)
+        assertNotEquals(old,panel().id)
+        val current=panel().id
+        val sends=api.sent.size
+        bot=TelegramBot(api,database,api.bot,clock)
+        bot.handle(command)
+        assertEquals(current,panel().id)
+        assertEquals(sends,api.sent.size)
+    }
+
+    @Test fun `uncertain new panel does not repeat data changes or erase old controls`() {
+        open(); click("Участники"); click("Добавить по имени")
+        val old=panel()
+        val prompt=bot.state.session(1).input!!.promptId
+        val response=message("Андрей",reply=api.messages[1L to prompt])
+        api.acceptThenFail={ target,_ -> target==1L }
+        bot.handle(response)
+        val sends=api.sent.size
+        bot.handle(response)
+        assertEquals(sends,api.sent.size)
+        assertNotNull(api.messages[1L to old.id]!!.keyboard)
+        assertEquals(1,service.participants(member()).size)
+        bot.handle(message("/menu"))
+        click("Участники")
+        assertNotNull(button("Андрей"))
     }
 
     @Test fun `same-name participants have distinguishable labels without exposing record IDs`() {

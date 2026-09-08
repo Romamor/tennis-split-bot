@@ -71,7 +71,7 @@ class TelegramDelivery(private val api: TelegramApi, private val state: Telegram
         val namesLine = main.take(6).joinToString(", ") {
             names[it.participantId].orEmpty().take(40) + if (published.players.any { p -> p.participantId == it.participantId && p.plusOne }) " +1" else ""
         } + if (main.size > 6) " и ещё ${main.size - 6}" else ""
-        val time = published.players.map { it.minutes }.distinct().let { if (it.size == 1) "по ${it.single()} мин" else "время различается" }
+        val time = published.players.map { it.minutes }.distinct().let { if (it.size == 1) "по ${hoursLabel(it.single())}" else "время различается" }
         val total = published.payments.sumOf { it.amount }
         val payers = published.payments.take(6).joinToString(", ") { "${names[it.participantId].orEmpty().take(40)} ${it.amount} ₽" } +
             if(published.payments.size > 6) " и ещё ${published.payments.size - 6}" else ""

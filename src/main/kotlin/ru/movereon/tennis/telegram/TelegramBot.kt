@@ -31,29 +31,32 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         val chat = update.callback?.message?.chat ?: message?.chat
         if(chat?.type != "private" || chat.id != user.id) { state.complete(update.id); return }
         state.remember(user)
+        val previousSession = state.session(user.id)
+        val moveToBottom = message != null || previousSession.input != null ||
+            update.callback?.message?.id != previousSession.panelId
         update.callback?.let { try { api.answer(it.id) } catch (_: TelegramFailure) { /* Callback acknowledgement is not a financial operation. */ } }
         try {
             val saved = state.plan(update.id)
             val plan = saved ?: resolve(update,user) ?: run { state.complete(update.id); return }
             val member = membership.verify(plan.groupId,user.id)
             state.savePlan(update.id,plan)
-            execute(update.id, member, plan)
+            execute(update.id, member, plan, moveToBottom)
         } catch (_: BotAccessDenied) {
-            privatePanel(user.id,null,update.id,"Доступ к группе не подтверждён. Проверь, что ты остаёшься в чате, а бот имеет права администратора.",null)
+            privatePanel(user.id,null,update.id,"Доступ к группе не подтверждён. Проверь, что ты остаёшься в чате, а бот имеет права администратора.",null,moveToBottom)
         } catch (failure: SimilarTransferFound) {
             val plan = requireNotNull(state.plan(update.id))
             val command = plan.action.command as WorkflowCommand.RecordTransfer
             val screen = Screen("Похожий перевод уже записан. Проверь его, прежде чем добавлять ещё один.",
                 failure.transferIds.take(5).map { listOf("Посмотреть запись" to BotAction("transfer",entity=it)) } +
                     listOf(listOf("Это ещё один перевод" to plan.action.copy(command=command.copy(allowSimilar=true))), listOf("В меню" to BotAction("menu"))))
-            show(user.id,plan.groupId,update.id,screen)
+            show(user.id,plan.groupId,update.id,screen,moveToBottom)
         } catch (failure: AccountingException) {
             val plan = state.plan(update.id)
-            if(plan != null) show(user.id,plan.groupId,update.id,Screen(explain(failure),listOf(listOf("Открыть свежую запись" to errorBack(plan.action)),listOf("В меню" to BotAction("menu")))))
-            else privatePanel(user.id,state.session(user.id).groupId,update.id,explain(failure),null)
+            if(plan != null) show(user.id,plan.groupId,update.id,Screen(explain(failure),listOf(listOf("Открыть свежую запись" to errorBack(plan.action)),listOf("В меню" to BotAction("menu")))),moveToBottom)
+            else privatePanel(user.id,state.session(user.id).groupId,update.id,explain(failure),null,moveToBottom)
         } catch (_: NoSuchElementException) {
             val group = state.session(user.id).groupId
-            if(group != null) show(user.id,group,update.id,Screen("Запись уже изменилась. Открой её заново.",listOf(listOf("В меню" to BotAction("menu")))))
+            if(group != null) show(user.id,group,update.id,Screen("Запись уже изменилась. Открой её заново.",listOf(listOf("В меню" to BotAction("menu")))),moveToBottom)
         }
         state.complete(update.id)
     }
@@ -114,7 +117,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             val link = if(parameter.isNotEmpty()) state.link(parameter) ?: throw BotAccessDenied() else null
             val groupId = link?.groupId ?: state.session(user.id).groupId
             if(groupId == null) {
-                privatePanel(user.id,null,update.id,"Добавь бота в группу и дай ему права администратора. Администратор группы отправляет /setup. Затем открой любую кнопку в появившемся меню.",null)
+                privatePanel(user.id,null,update.id,"Добавь бота в группу и дай ему права администратора. Администратор группы отправляет /setup. Затем открой любую кнопку в появившемся меню.",null,moveToBottom=true)
                 return null
             }
             return SavedPlan(user.id,groupId,"start:${update.id}",link?.action ?: BotAction("menu"))
@@ -122,24 +125,29 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         val session = state.session(user.id)
         val pending = session.input
         if(pending == null || session.groupId == null || message.replyTo?.id != pending.promptId || message.replyTo.from?.id != identity.id) {
-            privatePanel(user.id,session.groupId,update.id,"Для ввода данных ответь на последнее сообщение-запрос бота. Меню можно открыть командой /menu.",null)
+            privatePanel(user.id,session.groupId,update.id,"Для ввода данных ответь на последнее сообщение-запрос бота. Меню можно открыть командой /menu.",null,moveToBottom=true)
             return null
         }
         membership.verify(session.groupId,user.id)
         return try { SavedPlan(user.id,session.groupId,"text:${update.id}",parseInput(pending.action,pending.token,text)) }
         catch (failure: AccountingException) {
+            if(pending.action.field in setOf("all_minutes","minutes"))
+                return SavedPlan(user.id,session.groupId,"text:${update.id}",pending.action.copy(kind="time_choices"))
             prompt(user.id,session.groupId,update.id,pending.token,pending.action,explain(failure))
             null
         }
     }
 
-    private fun execute(updateId: Long,member: VerifiedGroupMember,plan: SavedPlan) {
+    private fun execute(updateId: Long,member: VerifiedGroupMember,plan: SavedPlan,moveToBottom: Boolean) {
         var action = plan.action
         val session = state.session(member.userId)
         state.saveSession(session.copy(groupId=member.groupId,input=null))
         when(action.kind) {
             "ask" -> {
-                checkAccounting(action.field != "all_minutes" || !action.draft?.players.isNullOrEmpty(),ErrorCode.INVALID_INPUT,"Pick players first")
+                if(action.field in setOf("all_minutes","minutes")) {
+                    show(member.userId,member.groupId,updateId,ui.render(member,action.copy(kind="time_choices")),moveToBottom)
+                    return
+                }
                 prompt(member.userId,member.groupId,updateId,plan.token,action); return
             }
             "create_draft" -> {
@@ -170,7 +178,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
                 action = BotAction("recovery")
             }
         }
-        show(member.userId,member.groupId,updateId,ui.render(member,action))
+        show(member.userId,member.groupId,updateId,ui.render(member,action),moveToBottom)
     }
 
     private fun parseInput(action: BotAction, token: String, text: String): BotAction {
@@ -219,7 +227,6 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         val instruction = when(action.field) {
             "name", "rename" -> "Напиши имя участника, до 100 символов."
             "draft_date", "transfer_date" -> "Укажи дату: ДД.ММ.ГГГГ или ГГГГ-ММ-ДД."
-            "all_minutes", "minutes" -> "Сколько минут играли? Например, 60, 90 или 120."
             "payment" -> "Сколько рублей оплатил этот человек? Целое число. 0 — убрать оплату."
             "transfer_amount" -> "Сколько рублей перевели? Укажи целую сумму."
             "transfer_note" -> "Комментарий к переводу, до 300 символов. Напиши - для пустого комментария."
@@ -228,13 +235,14 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         val id = delivery.sendOnce("prompt:$userId:$updateId",groupId,userId,listOfNotNull(error,instruction,"Ответь именно на это сообщение.").joinToString("\n"),forceReply=true)
         if(id != null) state.saveSession(state.session(userId).copy(groupId=groupId,input=PendingInput(token,action,id)))
     }
-    private fun show(userId: Long,groupId: String,updateId: Long,screen: Screen) {
+    private fun show(userId: Long,groupId: String,updateId: Long,screen: Screen,moveToBottom: Boolean) {
         val keyboard = TgKeyboard(screen.buttons.map { row -> row.map { (label,action) -> TgButton(label.take(60),callbackData=state.action(userId,groupId,action)) } })
-        privatePanel(userId,groupId,updateId,screen.text,keyboard)
+        privatePanel(userId,groupId,updateId,screen.text,keyboard,moveToBottom)
     }
-    private fun privatePanel(userId: Long,groupId: String?,updateId: Long,text: String,keyboard: TgKeyboard?) {
+    private fun privatePanel(userId: Long,groupId: String?,updateId: Long,text: String,keyboard: TgKeyboard?,moveToBottom: Boolean) {
         val session = state.session(userId)
-        var panelId = session.panelId
+        val previousPanelId = session.panelId
+        var panelId = if (moveToBottom) null else previousPanelId
         if(panelId != null) {
             try { api.edit(userId,panelId,text.take(4000),keyboard) }
             catch (failure: TelegramFailure) {
@@ -243,6 +251,12 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         }
         if(panelId == null) panelId = delivery.sendOnce("panel:$userId:$updateId",groupId,userId,text,keyboard)
         state.saveSession(session.copy(groupId=groupId,panelId=panelId))
+        if (moveToBottom && panelId != null && previousPanelId != null && panelId != previousPanelId) {
+            // Retire old controls only after the new panel is confirmed delivered.
+            // Cleanup failure must not retry the user's already completed action.
+            try { api.edit(userId,previousPanelId,"Продолжение — в сообщении ниже ↓",null) }
+            catch (_: TelegramFailure) { /* The new panel remains available. */ }
+        }
     }
     private fun explain(error: AccountingException): String = when(error.code) {
         ErrorCode.STALE_VERSION -> "Запись уже изменена. Открой свежую версию и повтори правку."
@@ -256,7 +270,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             error.message.orEmpty().contains("date",true) -> "Проверь дату. Например: 08.09.2026."
             error.message.orEmpty().contains("Players and payments",true) -> "Добавь игроков, время и хотя бы одну оплату."
             error.message.orEmpty().contains("Pick players",true) -> "Сначала добавь игроков в тренировку, затем задай общее время."
-            else -> "Проверь данные: суммы — в целых рублях, время — положительное число минут, имя — до 100 символов."
+            else -> "Проверь данные: суммы — в целых рублях, время — с шагом полчаса, имя — до 100 символов."
         }
     }
 

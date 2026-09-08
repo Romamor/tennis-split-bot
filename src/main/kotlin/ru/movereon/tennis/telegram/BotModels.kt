@@ -36,3 +36,10 @@ data class Screen(val text: String, val buttons: List<List<Pair<String, BotActio
 internal fun participantLabels(profiles: List<ParticipantProfile>): Map<String,String> = profiles.groupBy { it.name }.values.flatMap { matches ->
     matches.sortedBy { it.id }.mapIndexed { index, p -> p.id to if(matches.size==1) p.name else "${p.name} (${index+1})" }
 }.toMap()
+
+/** Older records may contain arbitrary minutes; display hours without changing their calculation. */
+internal fun hoursLabel(minutes: Long): String {
+    val hours = minutes.toBigDecimal().divide(60.toBigDecimal(),2,java.math.RoundingMode.HALF_UP)
+    val approximate = hours.multiply(60.toBigDecimal()).compareTo(minutes.toBigDecimal()) != 0
+    return (if(approximate) "≈" else "") + hours.stripTrailingZeros().toPlainString().replace('.',',') + " ч"
+}
