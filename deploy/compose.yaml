@@ -1,0 +1,28 @@
+name: tennis-split-bot
+services:
+  bot:
+    build: .
+    image: tennis-split-bot:local
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    pids_limit: 128
+    stop_grace_period: 30s
+    environment:
+      BOT_DATABASE_PATH: /data/bot.sqlite
+      JAVA_OPTS: "-Xms32m -Xmx256m"
+    volumes:
+      - ./bot.env:/app/.env:ro
+      - ./data:/data
+    # SQLite JDBC extracts its native library here; it must be executable.
+    tmpfs:
+      - /tmp:rw,exec,nosuid,size=64m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
