@@ -20,6 +20,10 @@ class TelegramStore(private val database: SqliteAccountingStore) {
     }
     fun group(id: String): BotGroup? = database.readTransaction { c -> query(c, "SELECT * FROM tg_groups WHERE group_id=?", id, map = ::groupRow).singleOrNull() }
     fun groups(): List<BotGroup> = database.readTransaction { c -> query(c,"SELECT * FROM tg_groups ORDER BY group_id",map=::groupRow) }
+    /** Only groups the user has previously opened after a membership check. */
+    fun knownGroups(userId: Long): List<BotGroup> = database.readTransaction { c ->
+        query(c,"SELECT g.* FROM tg_groups g WHERE EXISTS (SELECT 1 FROM tg_plans p WHERE p.group_id=g.group_id AND p.user_id=?) OR EXISTS (SELECT 1 FROM workflow_audit a WHERE a.group_id=g.group_id AND a.actor_user_id=?) ORDER BY g.title,g.group_id",userId,userId,map=::groupRow)
+    }
     fun groupByChat(chatId: Long): BotGroup? = database.readTransaction { c -> query(c, "SELECT * FROM tg_groups WHERE chat_id=?", chatId, map = ::groupRow).singleOrNull() }
     fun migrate(oldChat: Long, newChat: Long) = database.writeTransaction { c ->
         update(c, "UPDATE tg_groups SET chat_id=? WHERE chat_id=?", newChat, oldChat)

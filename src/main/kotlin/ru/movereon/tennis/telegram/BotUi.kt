@@ -26,7 +26,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
 
     fun render(member: VerifiedGroupMember, action: BotAction): Screen {
         val editor = action.editorId?.let { state.editor(member.userId,member.groupId,it) ?: throw NoSuchElementException("Editor closed") }
-        val order = if(action.kind in setOf("participants","balances","add_players")) editor?.order ?: service.attendanceOrder(member) else emptyList()
+        val order = if(action.kind in setOf("participants","balances","add_players","selection_more","payments")) editor?.order ?: service.attendanceOrder(member) else emptyList()
         val ranks = order.withIndex().associate { it.value to it.index }
         val allProfiles = service.participants(member,true)
         val byId = allProfiles.associateBy { it.participant.id }
@@ -48,20 +48,21 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
         }
         fun summary(content: DraftContent): String {
             val main=content.players.filterNot { it.plusOne }
-            val players=main.take(12).joinToString("\n") { playerLine(content,it) }
+            val players=main.take(6).joinToString("\n") { playerLine(content,it) }
             val payments=content.payments.take(10).joinToString(", ") { "${name(it.participantId)} ${it.amount} ₽" }
-            val playerTail=if(main.size>12) "\n… ещё ${main.size-12}. Полный состав — в «Подробности»." else ""
+            val playerTail=if(main.size>6) "\n… ещё ${main.size-6}. Полный состав — в «Подробности»." else ""
             val paymentTail=if(content.payments.size>10) "; ещё ${content.payments.size-10} — в «Кто оплатил»" else ""
             return "${historyDate(content.date)} · ${main.size} участников + ${content.players.count { it.plusOne }} гостей\n" +
                 "${players.ifEmpty { "Игроки пока не указаны" }}$playerTail\nОплатили: ${payments.ifEmpty { "пока не указано" }}$paymentTail\nВсего: ${content.payments.sumOf { it.amount }} ₽"
         }
         val screen = when(action.kind) {
-            "menu" -> Screen("🏓 ${state.group(member.groupId)?.title}\n\n${own?.let { "Твоя запись: ${it.name}" } ?: "Свяжи себя с записью в разделе «Участники»."}",
-                listOf(button("Новая тренировка",BotAction("create_draft",field=today(member))),button("Тренировки",BotAction("drafts")),
-                    listOf("Балансы" to BotAction("balances"),"Кому перевести?" to BotAction("plan")),
-                    button("Отметить перевод",BotAction("transfer_direction")),
-                    listOf("Участники" to BotAction("participants"),"История" to BotAction("history")),button("Ещё",BotAction("more"))))
-            "more" -> Screen("Дополнительные действия",listOfNotNull(
+            "menu" -> Screen("🏓 ${state.group(member.groupId)?.title}\n\n${own?.let { "Привет, ${it.name}!" } ?: "Свою запись можно связать с Telegram в «Ещё → Участники»."}",
+                listOf(button("Записать тренировку",BotAction("create_draft",field=today(member))),
+                    button("Кто кому должен",BotAction("plan")),button("Записать перевод",BotAction("transfer_direction")),
+                    listOf("Ещё" to BotAction("more"),"Сменить группу" to BotAction("groups"))))
+            "more" -> Screen("🏓 ${state.group(member.groupId)?.title}",listOfNotNull(
+                button("Тренировки",BotAction("drafts")),button("История",BotAction("history")),
+                button("Участники",BotAction("participants")),button("Балансы",BotAction("balances")),
                 if(manager && state.troubled(member.groupId).isNotEmpty()) button("Восстановить сообщение в группе",BotAction("recovery")) else null,home()))
             "balances" -> {
                 val visible = profiles.filter { it.participant.active != action.inactiveOnly }
@@ -80,7 +81,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 Screen(if(plan.isEmpty()) "Расчёты закрыты." else "Чтобы закрыть текущие расчёты:\n\n" + page(plan, action.page).joinToString("\n") {
                     "${name(it.from.value)} → ${name(it.to.value)}: ${it.amount} ₽"
                 } + "\n\nЭто предложение по текущим балансам. После новых расходов суммы могут измениться.",
-                    pagination(action, plan.size) + listOf(button("Отметить фактический перевод", BotAction("new_transfer")), home()))
+                    pagination(action, plan.size) + listOf(button("Записать перевод", BotAction("transfer_direction")),button("Балансы участников",BotAction("balances")), home()))
             }
             "participants" -> {
                 val visible = profiles.filter { it.participant.active != action.inactiveOnly }
@@ -112,7 +113,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 Screen("Тренировки${if(!action.showAll) " · незавершённые записи" else " · все записи"}\n${if(drafts.isEmpty()) "Пока пусто." else "Можно дополнить существующую запись."}",
                     local.take(5).map { button("Продолжить ввод · ${historyDate(it.content.date)}",BotAction("draft",entity=it.draftId,editorId=it.id)) } +
                     page(drafts, action.page).map { button("${it.content.date} · ${status(it.status)}", BotAction("draft", entity = it.id)) } +
-                        pagination(action, drafts.size) + listOf(button("Новая тренировка", BotAction("create_draft", field = today(member))),
+                        pagination(action, drafts.size) + listOf(button("Записать тренировку", BotAction("create_draft", field = today(member))),
                             button(if(action.showAll) "Только незавершённые" else "Показать все", action.copy(showAll = !action.showAll, page = 0)), home()))
             }
             "draft" -> {
@@ -121,29 +122,35 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 val conflict = editor != null && shared != null && shared.version!=editor.baseline.version
                 val rows = mutableListOf<List<Pair<String,BotAction>>>()
                 if(d.status!=DraftStatus.CANCELLED) {
-                    rows += listOf("Игроки" to BotAction("players",entity=d.id),"Кто оплатил" to BotAction("payments",entity=d.id))
-                    rows += listOf("Время всем" to BotAction("time_choices",entity=d.id,field="all_minutes",back="draft"),
-                        "Дата" to BotAction("ask",entity=d.id,field="draft_date",back="draft"))
                     if(!conflict) {
-                        if((d.status in setOf(DraftStatus.DRAFT,DraftStatus.EDITING) || editor?.dirty==true) && (manager || member.userId==d.createdBy))
-                            rows += button(if(d.financialVersion==0L) "Учесть тренировку" else "Сохранить изменения",commit(true))
-                        if(editor?.dirty==true) rows += button("Сохранить черновик",commit(false))
+                        if((d.status in setOf(DraftStatus.DRAFT,DraftStatus.EDITING) || editor?.dirty==true) && (d.financialVersion>0 || manager || member.userId==d.createdBy)) {
+                            if(d.content.players.isNotEmpty() && d.content.payments.isNotEmpty())
+                                rows += button(if(d.financialVersion==0L) "Записать тренировку" else "Сохранить изменения",commit(true))
+                            else rows += button(if(d.content.players.isEmpty()) "Выбрать игроков" else "Добавить оплату",
+                                BotAction(if(d.content.players.isEmpty()) "add_players" else "payments",entity=d.id))
+                        }
                     } else rows += button("Загрузить общую версию",BotAction("reload_editor_confirm",entity=d.id))
-                    rows += button("Посмотреть расчёт",BotAction("preview",entity=d.id))
+                    rows += listOf("Игроки" to BotAction("players",entity=d.id),"Кто оплатил" to BotAction("payments",entity=d.id))
                 }
                 rows += listOf("Подробности" to BotAction("training_details",entity=d.id),"Ещё" to BotAction("draft_more",entity=d.id))
-                rows += button("Закрыть без сохранения",BotAction("close_editor",entity=d.id))
-                rows += button("К тренировкам",BotAction("drafts",showAll=true))
+                rows += home()
                 val previous = d.publishedContent
                 val delta = if(previous != null && previous!=d.content) "\n\nПосле применения: расходы ${previous.payments.sumOf { it.amount }} → ${d.content.payments.sumOf { it.amount }} ₽; " +
                     "людей ${previous.players.size} → ${d.content.players.size}. Уже записанные возвраты сохраняются." else ""
-                Screen("${if(editor?.dirty==true) "Есть несохранённый ввод" else status(d.status)}\n${summary(d.content)}$delta" +
+                Screen("🏓 ${state.group(member.groupId)?.title}\n${if(editor?.dirty==true) { if(d.financialVersion>0) "Изменения ещё не сохранены" else "Тренировка ещё не записана" } else status(d.status)}\n${summary(d.content)}$delta" +
                     (if(conflict) "\n\nОбщую запись уже изменили. Твой ввод сохранён отдельно; загрузи общую версию перед сохранением." else
-                        if(editor?.dirty==true) "\n\nВвод пока виден только тебе. Сохрани черновик для группы или учти тренировку." else ""),rows)
+                        if(editor?.dirty==true) "\n\nБаланс изменится после записи тренировки." else ""),rows)
             }
             "draft_more" -> {
                 val d = draft()
+                val shared = if(editor != null && editor.baseline.version>0) service.draft(member,d.id) else null
+                val conflict = editor != null && shared != null && shared.version!=editor.baseline.version
                 Screen("Дополнительные действия тренировки",listOfNotNull(
+                    if(conflict) button("Загрузить общую версию",BotAction("reload_editor_confirm",entity=d.id)) else null,
+                    if(editor?.dirty==true && !conflict && d.status!=DraftStatus.CANCELLED) button("Сохранить на потом",commit(false)) else null,
+                    if(d.status!=DraftStatus.CANCELLED) button("Дата",BotAction("ask",entity=d.id,field="draft_date",back="draft")) else null,
+                    if(d.content.players.isNotEmpty() && d.content.payments.isNotEmpty()) button("Посмотреть расчёт",BotAction("preview",entity=d.id)) else null,
+                    button(if(editor?.dirty==true) "Закрыть без сохранения" else "Закрыть",BotAction("close_editor",entity=d.id)),
                     if(d.version>0 && (manager || member.userId==d.createdBy) && d.status!=DraftStatus.CANCELLED)
                         button("Отменить тренировку",confirm(WorkflowCommand.CancelDraft(d.id,d.version),"draft",d.id)) else null,
                     if((editor?.baseline?.status ?: d.status)==DraftStatus.EDITING && d.version>0 && (manager || member.userId==d.createdBy))
@@ -166,7 +173,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                     val label = "${name(it.participantId).take(30)} · ${hoursLabel(it.minutes)}" +
                         (guest?.let { " · +1: ${hoursLabel(it.minutes)}" } ?: "")
                     button(label, BotAction("player", entity = d.id, participant = it.participantId))
-                } + pagination(action, players.size) + listOf(button("Выбрать игроков", BotAction("add_players", entity = d.id)), button("К тренировке", BotAction("draft", entity = d.id))))
+                } + pagination(action, players.size) + listOf(button("Выбрать игроков", BotAction("add_players", entity = d.id)), button("Время всем",BotAction("time_choices",entity=d.id,field="all_minutes",back="players")), button("Дальше: оплаты", BotAction("payments", entity = d.id)), button("К тренировке", BotAction("draft", entity = d.id))))
             }
             "add_players" -> {
                 val d = draft()
@@ -185,17 +192,30 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                     if(currentPage > 0) add("← Назад" to action.copy(page=currentPage-1))
                     if((currentPage+1)*pageSize < visible.size) add("Дальше →" to action.copy(page=currentPage+1))
                 }
-                val bulk = buildList {
-                    if(visible.any { it.participant.id !in selected }) add("Выбрать всех" to edit("all_players","add_players").copy(page=currentPage,inactiveOnly=action.inactiveOnly))
-                    if(selected.isNotEmpty()) add("Снять выбор" to edit("clear_players","add_players").copy(page=currentPage,inactiveOnly=action.inactiveOnly))
-                }
-                val rows = choices.chunked(2) + listOfNotNull(navigation.takeIf { it.isNotEmpty() },bulk.takeIf { it.isNotEmpty() }) +
-                    listOf(button("Готово · ${selected.size}",BotAction("draft",entity=d.id)),
-                        button("Как в прошлый раз",edit("previous_players","add_players")),
-                        button(if(action.inactiveOnly) "Ходят" else "Не ходят · ${profiles.count { !it.participant.active }}",action.copy(inactiveOnly=!action.inactiveOnly,page=0)),
-                        button("Добавить человека по имени",BotAction("ask",field="name",back="add_players",entity=d.id)))
-                Screen("Кто играл? ${if(action.inactiveOnly) "Не ходят" else "Ходят"} · частые игроки сверху.\nВыбрано: ${selected.size} · гостей +1: ${d.content.players.count { it.plusOne }}\n" +
-                    "Страница ${currentPage+1} из ${((visible.size-1).coerceAtLeast(0))/pageSize+1}\n\nНовый игрок — 1 ч. Время и +1 можно изменить после «Готово».",rows)
+                val rows = choices.chunked(2) + listOfNotNull(navigation.takeIf { it.isNotEmpty() }) +
+                    listOfNotNull(
+                        if(visible.isEmpty()) button("Добавить игрока",BotAction("ask",field="name",back="add_players",entity=d.id)) else null,
+                        if(selected.isNotEmpty()) button("Дальше: оплаты · ${selected.size}",BotAction("payments",entity=d.id)) else null,
+                        if(selected.isNotEmpty()) button("Время и +1",BotAction("players",entity=d.id)) else null,
+                        listOf("Ещё" to BotAction("selection_more",entity=d.id,page=currentPage,inactiveOnly=action.inactiveOnly),"В меню" to BotAction("menu")))
+                Screen("🏓 ${state.group(member.groupId)?.title}\nКто играл?${if(action.inactiveOnly) " · Не ходят" else ""}\n" +
+                    "Выбрано: ${selected.size}" + (if(d.content.players.any { it.plusOne }) " · гостей +1: ${d.content.players.count { it.plusOne }}" else "") +
+                    " · по умолчанию 1 ч" + (if(visible.size>pageSize) "\nСтраница ${currentPage+1} из ${(visible.size-1)/pageSize+1}" else ""),rows)
+            }
+            "selection_more" -> {
+                val d = draft()
+                val selected = d.content.players.filterNot { it.plusOne }.map { it.participantId }.toSet()
+                val visible = profiles.filter { it.participant.active != action.inactiveOnly }
+                val previous = service.drafts(member,true).filter { it.id!=d.id && it.status!=DraftStatus.CANCELLED && it.publishedContent!=null }
+                    .maxWithOrNull(compareBy<TrainingDraft> { it.publishedContent!!.date }.thenBy { it.id })
+                Screen("Выбор игроков · ${state.group(member.groupId)?.title}",listOfNotNull(
+                    if(visible.any { it.participant.id !in selected }) button("Выбрать всех",edit("all_players","add_players").copy(page=action.page,inactiveOnly=action.inactiveOnly)) else null,
+                    if(selected.isNotEmpty()) button("Снять весь выбор",edit("clear_players","add_players").copy(page=action.page,inactiveOnly=action.inactiveOnly)) else null,
+                    previous?.let { button("Повторить состав за ${historyDate(it.publishedContent!!.date)}",edit("previous_players","add_players",value=it.id).copy(version=it.version)) },
+                    button(if(action.inactiveOnly) "Ходят" else "Не ходят · ${profiles.count { !it.participant.active }}",BotAction("add_players",entity=d.id,inactiveOnly=!action.inactiveOnly)),
+                    button("Добавить человека по имени",BotAction("ask",field="name",back="add_players",entity=d.id)),
+                    button("Сохранить на потом",commit(false)),
+                    button("К выбору игроков",BotAction("add_players",entity=d.id,page=action.page,inactiveOnly=action.inactiveOnly))))
             }
             "player" -> {
                 val d = draft(); val id = requireNotNull(action.participant)
@@ -209,12 +229,33 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 Screen("${name(id)}: ${hoursLabel(player.minutes)}${guest?.let { " · +1: ${hoursLabel(it.minutes)}. Его доля относится на ${name(id)}." } ?: ""}", rows)
             }
             "payments" -> {
-                val d = draft(); val visible = profiles.filter { action.showAll || it.participant.active || d.content.payments.any { p -> p.participantId == it.participant.id } }
-                Screen("Кто оплачивал стол? Укажи общую оплату каждого человека за эту тренировку.",
-                    listOfNotNull(own?.let { button("Я оплатил",BotAction("ask",entity=d.id,participant=it.id,field="payment",back="payments")) }) + page(visible, action.page).map {
-                    val paid = d.content.payments.firstOrNull { p -> p.participantId == it.participant.id }?.amount ?: 0
-                    button("${name(it.participant.id).take(40)} · $paid ₽", BotAction("ask", entity = d.id, participant = it.participant.id, field = "payment", back = "payments"))
-                } + pagination(action, visible.size) + listOf(button("Показать всех", action.copy(showAll = true)), button("К тренировке", BotAction("draft", entity = d.id))))
+                val d = draft()
+                val selected = d.content.players.map { it.participantId }.toSet()
+                val paidIds = d.content.payments.map { it.participantId }.toSet()
+                val visible = profiles.filter { action.showAll || it.participant.id in selected || it.participant.id in paidIds }
+                val shared = if(editor != null && editor.baseline.version>0) service.draft(member,d.id) else null
+                val conflict = editor != null && shared != null && shared.version!=editor.baseline.version
+                val rows = mutableListOf<List<Pair<String,BotAction>>>()
+                if(d.status!=DraftStatus.CANCELLED) {
+                    if(!conflict && d.content.players.isNotEmpty() && d.content.payments.isNotEmpty() &&
+                        (d.status in setOf(DraftStatus.DRAFT,DraftStatus.EDITING) || editor?.dirty==true) && (d.financialVersion>0 || manager || member.userId==d.createdBy))
+                        rows += button(if(d.financialVersion==0L) "Записать тренировку" else "Сохранить изменения",commit(true))
+                    if(conflict) rows += button("Загрузить общую версию",BotAction("reload_editor_confirm",entity=d.id))
+                    if(own!=null && page(visible,action.page).none { it.participant.id==own.id })
+                        rows += button("Я оплатил",BotAction("ask",entity=d.id,participant=own.id,field="payment",back="payments",page=action.page,showAll=action.showAll))
+                    rows += page(visible,action.page).map {
+                        val paid = d.content.payments.firstOrNull { p -> p.participantId == it.participant.id }?.amount
+                        button("${name(it.participant.id).take(40)}${paid?.let { " · $it ₽" } ?: ""}",
+                            BotAction("ask",entity=d.id,participant=it.participant.id,field="payment",back="payments",page=action.page,showAll=action.showAll))
+                    }
+                    rows += pagination(action,visible.size)
+                    if(profiles.any { it.participant.id !in selected && it.participant.id !in paidIds })
+                        rows += button(if(action.showAll) "Только игроки и оплатившие" else "Оплатил другой человек",action.copy(showAll=!action.showAll,page=0))
+                }
+                rows += listOf("Игроки" to BotAction("players",entity=d.id),"Ещё" to BotAction("draft_more",entity=d.id))
+                rows += button("К тренировке",BotAction("draft",entity=d.id))
+                Screen("🏓 ${state.group(member.groupId)?.title}\n${summary(d.content)}\n\nКто оплатил стол? Нажми на имя и укажи сумму." +
+                    (if(conflict) "\nОбщую запись уже изменили. Твой ввод сохранён отдельно." else ""),rows)
             }
             "preview" -> {
                 val d = draft(); val allocation = calculateTraining(d.content.training())
@@ -227,8 +268,8 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 val text = "Всего ${allocation.total} ₽\n\n" + page(allocation.participantShares.entries.toList(),action.page).joinToString("\n") { "${name(it.key.value)}: доля ${it.value} ₽" } +
                     "\n\nБалансы после сохранения:\n" + page(affected,action.page).joinToString("\n") { "${name(it.value)}: ${amount(current.getOrDefault(it,0))} → ${amount(updated.getOrDefault(it,0))}" }
                 val rows = mutableListOf<List<Pair<String,BotAction>>>()
-                if(d.status in setOf(DraftStatus.DRAFT,DraftStatus.EDITING) && (manager || member.userId == d.createdBy))
-                    rows += button(if(d.financialVersion == 0L) "Учесть тренировку" else "Сохранить изменения", commit(true))
+                if(d.status in setOf(DraftStatus.DRAFT,DraftStatus.EDITING) && (d.financialVersion>0 || manager || member.userId == d.createdBy))
+                    rows += button(if(d.financialVersion == 0L) "Записать тренировку" else "Сохранить изменения", commit(true))
                 rows += button("Исправить", BotAction("draft", entity = d.id))
                 Screen(text, rows + pagination(action,maxOf(affected.size,allocation.participantShares.size)))
             }
@@ -396,7 +437,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             else -> Screen("Открой нужный раздел из меню.",listOf(home()))
         }
         if(editor == null) return screen
-        val formKinds = setOf("draft","players","add_players","player","payments","preview","time_choices","draft_more","training_details",
+        val formKinds = setOf("draft","players","add_players","selection_more","player","payments","preview","time_choices","draft_more","training_details",
             "edit","commit_editor","close_editor","reload_editor","reload_editor_confirm")
         return screen.copy(buttons=screen.buttons.map { row -> row.map { (label,button) ->
             val belongs = button.entity==editor.draftId && (button.kind in formKinds ||

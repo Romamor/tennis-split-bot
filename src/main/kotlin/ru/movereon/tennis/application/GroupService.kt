@@ -185,7 +185,8 @@ class GroupService(private val accounting: SqliteAccountingStore, private val cl
         }
         is WorkflowCommand.PostDraft -> {
             val old = draft(c, m.groupId, command.id, command.expectedVersion)
-            draftOwner(c, m, old)
+            // Any verified member of this group may correct a posted training.
+            if(old.financialVersion == 0L) draftOwner(c, m, old)
             checkAccounting(old.status in setOf(DraftStatus.DRAFT, DraftStatus.EDITING), ErrorCode.INVALID_STATE, "No draft changes to post")
             validateContent(c, m.groupId, old.content)
             notFuture(c, m.groupId, old.content.date)

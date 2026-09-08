@@ -6,7 +6,10 @@ import ru.movereon.tennis.core.*
 /** Private input state; no shared draft, audit event or balance changes here. */
 class DraftEditing(private val service: GroupService,private val state: TelegramStore) {
     fun open(member: VerifiedGroupMember,id: String,token: String,date: String? = null): DraftEditor {
-        state.editors(member.userId,member.groupId).firstOrNull { it.draftId==id }?.let { return it }
+        state.editors(member.userId,member.groupId).firstOrNull { it.draftId==id }?.let {
+            if(it.dirty || service.draft(member,id).version==it.baseline.version) return it
+            state.closeEditor(member.userId,member.groupId,it.id)
+        }
         val baseline = if(date == null) service.draft(member,id) else
             service.drafts(member,true).firstOrNull { it.id==id } ?: TrainingDraft(id,member.userId,0,DraftStatus.DRAFT,0,DraftContent(date),null)
         return state.openEditor(member.userId,DraftEditor("e_$token",member.groupId,id,baseline,baseline.content,service.attendanceOrder(member)))
@@ -46,11 +49,14 @@ class DraftEditing(private val service: GroupService,private val state: Telegram
                 content.copy(players=emptyList())
             }
             "previous_players" -> {
-                val previous = service.drafts(member,true).filter { it.status!=DraftStatus.CANCELLED && it.id!=editor.draftId }
-                    .mapNotNull { it.publishedContent }.maxByOrNull { it.date }
-                checkAccounting(previous != null,ErrorCode.INVALID_STATE,"No previous training")
-                content.copy(players=requireNotNull(previous).players)
+                val previous = if(action.value!=null) service.draft(member,action.value) else
+                    service.drafts(member,true).filter { it.status!=DraftStatus.CANCELLED && it.id!=editor.draftId && it.publishedContent!=null }
+                        .maxWithOrNull(compareBy<TrainingDraft> { it.publishedContent!!.date }.thenBy { it.id })
+                checkAccounting(previous?.publishedContent != null && previous.status!=DraftStatus.CANCELLED,ErrorCode.INVALID_STATE,"No previous training")
+                checkAccounting(action.version==null || previous?.version==action.version,ErrorCode.STALE_VERSION,"Previous training changed")
+                content.copy(players=requireNotNull(previous?.publishedContent).players)
             }
+
             "all_minutes", "minutes" -> {
                 val minutes = parseAmount(requireNotNull(action.value))
                 content.copy(players=content.players.map {

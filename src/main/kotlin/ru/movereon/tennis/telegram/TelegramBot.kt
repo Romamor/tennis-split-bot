@@ -116,10 +116,18 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         update.callback?.let { callback ->
             val action = callback.data?.let(state::action)
             if(action == null || action.userId != user.id) throw BotAccessDenied()
+            if(action.action.kind=="groups") {
+                chooseGroup(user.id,update.id,action.action.page,verify)
+                return null
+            }
             return SavedPlan(user.id,action.groupId,action.token,action.action)
         }
         val message = requireNotNull(update.message)
         val text = message.text?.trim() ?: return null
+        if(text == "/groups") {
+            chooseGroup(user.id,update.id,0,verify)
+            return null
+        }
         if(text == "/start" || text.startsWith("/start ") || text == "/menu") {
             val parameter = text.substringAfter(' ',"").trim()
             val link = if(parameter.isNotEmpty()) state.link(parameter) ?: throw BotAccessDenied() else null
@@ -146,9 +154,25 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         }
     }
 
+    private fun chooseGroup(userId: Long,updateId: Long,page: Int,verify: (String,Long)->VerifiedGroupMember) {
+        val available = state.knownGroups(userId).filter {
+            try { verify(it.id,userId); true } catch (_: BotAccessDenied) { false }
+        }
+        val index = page.coerceIn(0,(available.size-1).coerceAtLeast(0)/8)
+        val rows = available.drop(index*8).take(8).map { group ->
+            listOf(TgButton(group.title.take(60),callbackData=state.action(userId,group.id,BotAction("menu"))))
+        }.toMutableList()
+        available.firstOrNull()?.let { group ->
+            if(index>0) rows += listOf(TgButton("← Назад",callbackData=state.action(userId,group.id,BotAction("groups",page=index-1))))
+            if((index+1)*8<available.size) rows += listOf(TgButton("Дальше →",callbackData=state.action(userId,group.id,BotAction("groups",page=index+1))))
+        }
+        state.saveSession(state.session(userId).copy(groupId=null,input=null))
+        privatePanel(userId,null,updateId,"Выбери группу\n\nЗдесь группы, которые ты уже открывал или настраивал. Для другой группы нажми кнопку бота в её чате.",TgKeyboard(rows),moveToBottom=true)
+    }
+
     private fun execute(updateId: Long,member: VerifiedGroupMember,plan: SavedPlan,moveToBottom: Boolean) {
         var action = plan.action
-        if(action.editorId == null && (action.kind in setOf("draft","players","add_players","player","payments","preview","time_choices","draft_more","training_details") ||
+        if(action.editorId == null && (action.kind in setOf("draft","players","add_players","selection_more","player","payments","preview","time_choices","draft_more","training_details") ||
             action.kind=="ask" && action.field in setOf("payment","draft_date","minutes","all_minutes"))) {
             val editor=editing.open(member,requireNotNull(action.entity),"view_$updateId")
             action=action.copy(editorId=editor.id,editorVersion=editor.revision)
@@ -170,7 +194,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             "edit" -> {
                 editing.change(member,action,updateId)
                 action = BotAction(action.back ?: "draft",entity=action.entity,participant=action.participant,
-                    editorId=action.editorId,page=action.page,inactiveOnly=action.inactiveOnly)
+                    editorId=action.editorId,page=action.page,inactiveOnly=action.inactiveOnly,showAll=action.showAll)
             }
             "commit_editor" -> {
                 service.execute(member,"telegram:${plan.token}",requireNotNull(action.command))
@@ -213,7 +237,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
                 action = BotAction("recovery")
             }
         }
-        if(action.kind in setOf("draft","players","add_players","player","payments","preview","draft_more") && action.editorId == null) {
+        if(action.kind in setOf("draft","players","add_players","selection_more","player","payments","preview","draft_more") && action.editorId == null) {
             val editor = editing.open(member,requireNotNull(action.entity),"view_$updateId")
             action = action.copy(editorId=editor.id)
         }
@@ -232,7 +256,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         if(action.editorId != null && action.field in setOf("payment","draft_date")) {
             val value = if(action.field=="draft_date") date() else if(text=="0") "0" else parseAmount(text).toString()
             return BotAction("edit",entity=action.entity,participant=action.participant,field=action.field,value=value,
-                editorId=action.editorId,editorVersion=action.editorVersion,back=action.back)
+                editorId=action.editorId,editorVersion=action.editorVersion,back=action.back,page=action.page,showAll=action.showAll)
         }
         return when(action.field) {
             "name" -> {
@@ -276,13 +300,15 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             "transfer_note" -> "Комментарий к переводу, до 300 символов. Напиши - для пустого комментария."
             else -> "Введи значение."
         }
-        val id = delivery.sendOnce("prompt:$userId:$updateId",groupId,userId,listOfNotNull(error,instruction,"Ответь именно на это сообщение.").joinToString("\n"),forceReply=true)
+        val id = delivery.sendOnce("prompt:$userId:$updateId",groupId,userId,listOfNotNull("🏓 ${state.group(groupId)?.title}",error,instruction,"Ответь именно на это сообщение.").joinToString("\n"),forceReply=true)
         if(id != null) state.saveSession(state.session(userId).copy(groupId=groupId,input=PendingInput(token,action,id)))
     }
     private fun show(userId: Long,groupId: String,updateId: Long,screen: Screen,moveToBottom: Boolean) {
         val tokens = state.actions(userId,groupId,screen.buttons.flatten().map { it.second }).iterator()
         val keyboard = TgKeyboard(screen.buttons.map { row -> row.map { (label,_) -> TgButton(label.take(60),callbackData=tokens.next()) } })
-        privatePanel(userId,groupId,updateId,screen.text,keyboard,moveToBottom)
+        val heading = "🏓 ${state.group(groupId)?.title}"
+        val text = if(screen.text.startsWith(heading)) screen.text else "$heading\n${screen.text}"
+        privatePanel(userId,groupId,updateId,text,keyboard,moveToBottom)
     }
     private fun privatePanel(userId: Long,groupId: String?,updateId: Long,text: String,keyboard: TgKeyboard?,moveToBottom: Boolean) {
         val session = state.session(userId)

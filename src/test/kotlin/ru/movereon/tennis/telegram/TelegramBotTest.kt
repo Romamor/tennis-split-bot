@@ -63,7 +63,7 @@ class TelegramBotTest {
     }
     private fun recordViaUi(userId:Long=1):String {
         open(userId)
-        click("Отметить перевод",userId); click("Я перевёл",userId)
+        click("Записать перевод",userId); click("Я перевёл",userId)
         if(userId != 1L) { click("Отправитель",userId); click("Андрей",userId) }
         click("Получатель",userId); click("Борис",userId)
         click("Сумма",userId); reply("100",userId)
@@ -95,7 +95,7 @@ class TelegramBotTest {
 
     @Test fun `manual participant can be added and linked through buttons and a reply`() {
         open()
-        click("Участники"); click("Добавить по имени"); reply("Андрей")
+        click("Ещё"); click("Участники"); click("Добавить по имени"); reply("Андрей")
         assertTrue(text().contains("Telegram пока не привязан"))
         click("Это я"); click("Подтвердить")
         val profile=service.participants(member()).single().participant
@@ -107,21 +107,21 @@ class TelegramBotTest {
 
     @Test fun `full training dialog adds a plus-one records payments and edits one group card`() {
         seed(); open()
-        click("Тренировки"); click("Новая тренировка")
+        click("Записать тренировку")
         listOf("Андрей","Борис","Саша").forEach { name -> click("⬜ $name") }
-        click("Готово · 3"); click("Игроки")
+        click("Дальше: оплаты · 3"); click("Игроки")
         clickStarts("Саша"); click("Добавить +1"); click("К игрокам"); click("К тренировке")
         click("Кто оплатил"); clickStarts("Андрей"); reply("350"); clickStarts("Борис"); reply("400")
-        click("К тренировке"); click("Посмотреть расчёт")
+        click("К тренировке"); click("Ещё"); click("Посмотреть расчёт")
         assertTrue(text().contains("Саша: доля 374 ₽"))
-        val postToken=click("Учесть тренировку")
+        val postToken=click("Записать тренировку")
         assertEquals(mapOf(ParticipantId("a") to 162L,ParticipantId("b") to 212L,ParticipantId("s") to -374L),database.balances(group))
         val card=api.messages.values.single { it.chat.id==chat && it.text!!.contains("750 ₽") }
         clickData(postToken)
         assertEquals(1,database.history(group).size)
         click("Кто оплатил"); clickStarts("Андрей"); reply("450")
         assertEquals(card,api.messages[chat to card.id])
-        click("К тренировке"); click("Посмотреть расчёт")
+        click("К тренировке"); click("Ещё"); click("Посмотреть расчёт")
         assertTrue(text().contains("+162 ₽ → +237 ₽"))
         click("Сохранить изменения")
         assertEquals(2,api.sent.count { it.chat.id==chat })
@@ -130,8 +130,8 @@ class TelegramBotTest {
     }
 
     @Test fun `the same create button cannot create a second draft`() {
-        seed(); open(); click("Тренировки")
-        val token=click("Новая тренировка")
+        seed(); open()
+        val token=click("Записать тренировку")
         clickData(token)
         assertEquals(0,service.drafts(member()).size)
         assertEquals(1,bot.state.editors(1,group).size)
@@ -139,7 +139,7 @@ class TelegramBotTest {
 
     @Test fun `outsiders cannot use forwarded links or another users callbacks`() {
         seed(); open()
-        val token=button("Балансы").callbackData!!
+        val token=button("Кто кому должен").callbackData!!
         open(9)
         assertTrue(text(9).contains("Доступ к группе не подтверждён"))
         assertFalse(text(9).contains("Андрей"))
@@ -151,7 +151,7 @@ class TelegramBotTest {
 
     @Test fun `membership is checked again before every action`() {
         seed(); open()
-        val token=button("Балансы").callbackData!!
+        val token=button("Кто кому должен").callbackData!!
         api.members[chat to 1] = TgMember("left")
         clickData(token)
         assertTrue(text().contains("Доступ к группе не подтверждён"))
@@ -169,7 +169,7 @@ class TelegramBotTest {
 
     @Test fun `Telegram membership failure does not consume update or alter balances`() {
         seed(); open()
-        val action=button("Балансы").callbackData!!
+        val action=button("Кто кому должен").callbackData!!
         val update=TgUpdate(updateId++,callback=TgCallback("membership-failure",user(1),panel(),action))
         api.memberFailure=true
         assertFailsWith<TelegramFailure> { bot.handle(update) }
@@ -237,7 +237,7 @@ class TelegramBotTest {
     @Test fun `unknown group send is paused and can be adopted with a reply`() {
         seed(); ready(); open(action=BotAction("preview",entity="training"))
         api.acceptThenFail={ target,text -> target==chat && text.startsWith("🏓 2026") }
-        click("Учесть тренировку")
+        click("Записать тренировку")
         val card=api.messages.values.single { it.chat.id==chat && it.text!!.startsWith("🏓 2026") }
         assertEquals("UNKNOWN",bot.state.delivery("training:$group:training")?.status)
         bot=TelegramBot(api,database,api.bot,clock)
@@ -250,7 +250,7 @@ class TelegramBotTest {
     }
 
     @Test fun `explicit recovery after deletion does not duplicate on a double click`() {
-        seed(); ready(); open(action=BotAction("preview",entity="training")); click("Учесть тренировку")
+        seed(); ready(); open(action=BotAction("preview",entity="training")); click("Записать тренировку")
         val card=bot.state.delivery("training:$group:training")!!
         api.messages.remove(chat to card.messageId!!)
         service.execute(member(),"edit",WorkflowCommand.SaveDraft("training",3,DraftContent("2026-09-08",listOf(PlayerInput("a",60),PlayerInput("b",60)),listOf(PaymentInput("a",200)))))
@@ -277,7 +277,7 @@ class TelegramBotTest {
     @Test fun `bot removal prevents private disclosure`() {
         seed(); open()
         api.members[chat to api.bot.id]=TgMember("member")
-        click("Балансы")
+        click("Кто кому должен")
         assertTrue(text().contains("Доступ к группе не подтверждён"))
     }
 
@@ -295,7 +295,7 @@ class TelegramBotTest {
 
     @Test fun `permanent membership rejection denies access without blocking later updates`() {
         seed(); open()
-        val token=button("Балансы").callbackData!!
+        val token=button("Кто кому должен").callbackData!!
         api.memberRejected=true
         val update=TgUpdate(updateId++,callback=TgCallback("rejected",user(1),panel(),token))
         bot.handle(update)
@@ -304,9 +304,11 @@ class TelegramBotTest {
         assertTrue(database.history(group).isEmpty())
     }
 
-    @Test fun `setting common time before choosing players gives a useful error`() {
-        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("Готово · 0"); click("Время всем")
-        assertTrue(text().contains("Сначала добавь игроков"))
+    @Test fun `empty selection guides user to choose players before payments`() {
+        seed(); open(); click("Записать тренировку")
+        assertTrue(text().contains("Кто играл?"))
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text.startsWith("Дальше: оплаты") })
+        assertFalse(text().contains("Страница 1 из 1"))
         assertEquals(null,bot.state.session(1).input)
     }
 
@@ -322,11 +324,11 @@ class TelegramBotTest {
 
     @Test fun `time choices use half hours for everyone and individual guests`() {
         seed(); ready(); open(action=BotAction("draft",entity="training"))
-        click("Время всем"); click("1,5 ч")
+        click("Игроки"); click("Время всем"); click("1,5 ч")
         assertTrue(input().players.all { it.minutes==90L })
-        assertTrue(text().contains("1,5 ч"))
+        assertNotNull(button("Андрей · 1,5 ч"))
         assertFalse(text().contains(" мин"))
-        click("Игроки"); clickStarts("Андрей"); click("Добавить +1")
+        clickStarts("Андрей"); click("Добавить +1")
         click("Изменить время +1"); click("0,5 ч")
         val players=input().players
         assertEquals(30L,players.single { it.plusOne }.minutes)
@@ -335,20 +337,20 @@ class TelegramBotTest {
         assertNotNull(button("Андрей · 1,5 ч · +1: 0,5 ч"))
         clickStarts("Андрей"); click("Убрать +1"); click("К игрокам")
         assertNotNull(button("Андрей · 1,5 ч"))
-        click("К тренировке"); click("Время всем")
+        click("К тренировке"); click("Игроки"); click("Время всем")
         click("Больше →"); click("3,5 ч")
         assertTrue(input().players.all { it.minutes==210L })
     }
 
     @Test fun `new players default to one hour and published card displays hours`() {
-        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("⬜ Андрей"); click("Готово · 1"); click("Игроки")
+        seed(); open(); click("Записать тренировку"); click("⬜ Андрей"); click("Дальше: оплаты · 1"); click("Игроки")
         assertTrue(panel().keyboard!!.rows.flatten().any { it.text=="Андрей · 1 ч" })
         clickStarts("Андрей"); click("Добавить +1")
         val draft=bot.state.editors(1,group).single().view()
         assertTrue(draft.content.players.all { it.minutes==60L })
         assertTrue(text().contains("+1: 1 ч"))
         click("К игрокам"); click("К тренировке"); click("Кто оплатил"); clickStarts("Андрей"); reply("200")
-        click("К тренировке"); click("Посмотреть расчёт"); click("Учесть тренировку")
+        click("К тренировке"); click("Ещё"); click("Посмотреть расчёт"); click("Записать тренировку")
         val card=api.messages.values.single { it.chat.id==chat && it.text!!.contains("200 ₽") }
         assertTrue(card.text!!.contains("по 1 ч"))
         assertFalse(card.text.contains(" мин"))
@@ -356,7 +358,7 @@ class TelegramBotTest {
     }
 
     @Test fun `text input moves controls below the reply and retires the old panel`() {
-        open(); click("Участники")
+        open(); click("Ещё"); click("Участники")
         val oldPanel=panel()
         click("Добавить по имени")
         val promptId=bot.state.session(1).input!!.promptId
@@ -374,7 +376,7 @@ class TelegramBotTest {
     }
 
     @Test fun `menu command opens a fresh panel once including after restart`() {
-        seed(); open(); click("Участники")
+        seed(); open(); click("Ещё"); click("Участники")
         val old=panel().id
         val command=message("/menu")
         bot.handle(command)
@@ -388,7 +390,7 @@ class TelegramBotTest {
     }
 
     @Test fun `uncertain new panel does not repeat data changes or erase old controls`() {
-        open(); click("Участники"); click("Добавить по имени")
+        open(); click("Ещё"); click("Участники"); click("Добавить по имени")
         val old=panel()
         val prompt=bot.state.session(1).input!!.promptId
         val response=message("Андрей",reply=api.messages[1L to prompt])
@@ -400,7 +402,7 @@ class TelegramBotTest {
         assertNotNull(api.messages[1L to old.id]!!.keyboard)
         assertEquals(1,service.participants(member()).size)
         bot.handle(message("/menu"))
-        click("Участники")
+        click("Ещё"); click("Участники")
         assertNotNull(button("Андрей"))
     }
 
@@ -462,7 +464,7 @@ class TelegramBotTest {
         val panelId=panel().id
         assertEquals(12,panel().keyboard!!.rows.flatten().count { it.text.startsWith("⬜") })
         assertTrue(panel().keyboard!!.rows.take(6).all { it.size==2 })
-        click("Выбрать всех")
+        click("Ещё"); click("Выбрать всех")
         assertEquals(27,input("many").players.size)
         click("Дальше →"); click("✅ Игрок 13")
         assertTrue(text().contains("Страница 2 из 3"))
@@ -473,7 +475,7 @@ class TelegramBotTest {
         click("Дальше →")
         assertTrue(text().contains("Страница 3 из 3"))
         assertEquals(3,panel().keyboard!!.rows.flatten().count { it.text.startsWith("✅") })
-        click("Готово · 26"); click("Игроки")
+        click("Дальше: оплаты · 26"); click("Игроки")
         assertNotNull(button("Игрок 01 · 1 ч"))
     }
 
@@ -487,7 +489,7 @@ class TelegramBotTest {
         val d=editor().view()
         assertEquals(listOf(PlayerInput("b",120)),d.content.players)
         assertEquals(listOf(PaymentInput("a",100)),d.content.payments)
-        assertTrue(text().contains("гостей +1: 0"))
+        assertFalse(text().contains("гостей +1:"))
     }
 
     @Test fun `player choices rank posted attendance without counting guests drafts or cancelled games`() {
@@ -516,7 +518,7 @@ class TelegramBotTest {
 
     @Test fun `training can be posted and edited directly from its card without preview`() {
         seed(); ready(); open(action=BotAction("draft",entity="training"))
-        val token=click("Учесть тренировку")
+        val token=click("Записать тренировку")
         assertEquals(DraftStatus.POSTED,service.draft(member(),"training").status)
         assertEquals(50L,database.balances(group)[ParticipantId("a")])
         clickData(token)
@@ -529,13 +531,14 @@ class TelegramBotTest {
         assertEquals(2,api.sent.count { it.chat.id==chat })
         open(2,BotAction("draft",entity="training"))
         click("Кто оплатил",2); clickStarts("Андрей",2); reply("300",2); click("К тренировке",2)
-        assertFalse(panel(2).keyboard!!.rows.flatten().any { it.text=="Сохранить изменения" })
+        click("Сохранить изменения",2)
+        assertEquals(150L,database.balances(group)[ParticipantId("a")])
     }
 
     @Test fun `selection is private until explicit save and closing discards only personal input`() {
-        seed(); open(); click("Новая тренировка")
+        seed(); open(); click("Записать тренировку")
         val before=service.audit(member()).size
-        click("⬜ Андрей"); click("⬜ Борис"); click("Готово · 2")
+        click("⬜ Андрей"); click("⬜ Борис"); click("Дальше: оплаты · 2")
         assertTrue(service.drafts(member(),true).isEmpty())
         assertEquals(before,service.audit(member()).size)
         val privateEditor=bot.state.editors(1,group).single()
@@ -543,24 +546,23 @@ class TelegramBotTest {
         assertNull(bot.state.editor(2,group,privateEditor.id))
         bot=TelegramBot(api,SqliteAccountingStore(directory.resolve("bot.sqlite"),clock),api.bot,clock)
         assertEquals(2,input(id).players.size)
-        click("Сохранить черновик")
+        click("Ещё"); click("Сохранить на потом")
         assertEquals(2,service.draft(member(),id).content.players.size)
         assertEquals(before+1,service.audit(member()).size)
         assertTrue(database.history(group).isEmpty())
-        click("Время всем"); click("2 ч")
+        click("Игроки"); click("Время всем"); click("2 ч")
         assertTrue(service.draft(member(),id).content.players.all { it.minutes==60L })
-        click("Закрыть без сохранения")
+        click("К тренировке"); click("Ещё"); click("Закрыть без сохранения")
         assertTrue(bot.state.editors(1,group).isEmpty())
         assertTrue(service.draft(member(),id).content.players.all { it.minutes==60L })
     }
 
-    @Test fun `failed initial posting rolls back creation and keeps the personal form`() {
-        seed(); open(); click("Новая тренировка"); click("⬜ Андрей"); click("Готово · 1")
-        val before=service.audit(member()).size
-        click("Учесть тренировку")
+    @Test fun `training without payments cannot be posted from the screen`() {
+        seed(); open(); click("Записать тренировку"); click("⬜ Андрей"); click("Дальше: оплаты · 1")
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Записать тренировку" })
+        assertTrue(text().contains("Кто оплатил стол?"))
         assertTrue(service.drafts(member(),true).isEmpty())
         assertTrue(database.history(group).isEmpty())
-        assertEquals(before,service.audit(member()).size)
         assertEquals(1,bot.state.editors(1,group).single().content.players.size)
     }
 
@@ -568,8 +570,9 @@ class TelegramBotTest {
         seed(); ready()
         open(action=BotAction("payments",entity="training")); clickStarts("Андрей"); reply("300"); click("К тренировке")
         open(2,BotAction("payments",entity="training")); clickStarts("Андрей",2); reply("400",2); click("К тренировке",2)
-        click("Сохранить черновик")
-        click("Сохранить черновик",2)
+        click("Ещё",2)
+        click("Ещё"); click("Сохранить на потом")
+        click("Сохранить на потом",2)
         assertEquals(300L,service.draft(member(),"training").content.payments.single().amount)
         assertEquals(400L,input(userId=2).payments.single().amount)
         click("Открыть свежую запись",2)
@@ -579,7 +582,7 @@ class TelegramBotTest {
     }
 
     @Test fun `correcting a training keeps an already recorded repayment`() {
-        seed(); ready(cost=600); open(action=BotAction("draft",entity="training")); click("Учесть тренировку")
+        seed(); ready(cost=600); open(action=BotAction("draft",entity="training")); click("Записать тренировку")
         service.execute(member(2),"return",WorkflowCommand.RecordTransfer("return","b","a",100,"2026-09-08"))
         assertEquals(200L,database.balances(group)[ParticipantId("a")])
         click("Кто оплатил"); clickStarts("Андрей"); reply("800"); click("К тренировке")
@@ -605,8 +608,8 @@ class TelegramBotTest {
         assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Андрей" })
         open(action=BotAction("add_players",entity="training"))
         assertFalse(panel().keyboard!!.rows.flatten().any { it.text.contains("Андрей") })
-        clickStarts("Не ходят"); assertNotNull(button("✅ Андрей"))
-        click("Готово · 2")
+        click("Ещё"); clickStarts("Не ходят"); assertNotNull(button("✅ Андрей"))
+        click("Дальше: оплаты · 2")
         assertTrue(text().contains("Андрей (не ходит)"))
         assertEquals(50L,database.balances(group)[ParticipantId("a")])
     }
@@ -633,7 +636,7 @@ class TelegramBotTest {
         open(action=BotAction("draft",entity="many"))
         assertTrue(text().contains("Игрок 01: 1 ч · +1: 0,5 ч"))
         assertEquals(1,text().lines().count { it.contains("Игрок 01") && !it.startsWith("Оплатили:") })
-        assertTrue(text().contains("ещё 15"))
+        assertTrue(text().contains("ещё 21"))
         click("Подробности")
         assertTrue(text().contains("Игрок 01: 1 ч · +1: 0,5 ч"))
         repeat(3) { click("Дальше →") }
@@ -648,4 +651,239 @@ class TelegramBotTest {
         assertTrue("Саша (1)" in labels && "Саша (2)" in labels)
         assertFalse(labels.any { it.contains("secret-record-id") })
     }
+    @Test fun `simple training flow for twenty-seven members posts after players and payments`() {
+        repeat(27) { i -> service.execute(member(),"person-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        open()
+        assertEquals(listOf("Записать тренировку","Кто кому должен","Записать перевод","Ещё","Сменить группу"),
+            panel().keyboard!!.rows.flatten().map { it.text })
+        click("Записать тренировку")
+        assertTrue(text().startsWith("🏓 Теннис"))
+        (1..6).forEach { click("⬜ Игрок %02d".format(it)) }
+        click("Дальше: оплаты · 6")
+        assertTrue(text().contains("Кто оплатил стол?"))
+        val payers=panel().keyboard!!.rows.flatten().mapNotNull { bot.state.action(it.callbackData!!)?.action }
+            .filter { it.field=="payment" }.map { it.participant }
+        assertEquals((0..5).map { "p$it" },payers)
+        click("Игрок 01"); reply("350")
+        assertTrue(text().contains("Всего: 350 ₽"))
+        click("Игрок 02"); reply("400")
+        assertTrue(text().contains("Всего: 750 ₽"))
+        assertTrue(text().contains("Игрок 06: 1 ч"))
+        val token=click("Записать тренировку")
+        clickData(token)
+        val posted=service.drafts(member(),true).single()
+        assertEquals(DraftStatus.POSTED,posted.status)
+        assertEquals(6,posted.content.players.size)
+        assertTrue(posted.content.players.all { it.minutes==60L })
+        assertEquals(1,database.history(group).size)
+        assertEquals(225L,database.balances(group)[ParticipantId("p0")])
+        assertEquals(275L,database.balances(group)[ParticipantId("p1")])
+        assertEquals(-125L,database.balances(group)[ParticipantId("p5")])
+    }
+
+    private fun secondGroup(): VerifiedGroupMember {
+        val otherChat=-100456L
+        api.members[otherChat to 900]=TgMember("administrator")
+        api.members[otherChat to 1]=TgMember("administrator")
+        bot.handle(message("/setup",chatId=otherChat))
+        bot.state.register(BotGroup("tg:$otherChat",otherChat,"Личная группа"))
+        return VerifiedGroupMember("tg:$otherChat",1,true)
+    }
+
+    @Test fun `group switch includes newly configured empty group and keeps existing training separate`() {
+        seed(); open(); click("Записать тренировку"); click("⬜ Андрей")
+        val original=bot.state.editors(1,group).single()
+        val other=secondGroup()
+        // Setup alone must not silently redirect an existing personal form.
+        assertEquals(group,bot.state.session(1).groupId)
+        bot.handle(message("/menu")); click("Сменить группу")
+        assertNotNull(button("Личная группа")); assertNotNull(button("Теннис"))
+        click("Личная группа"); click("Записать тренировку")
+        assertTrue(text().startsWith("🏓 Личная группа"))
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text.contains("Андрей") })
+        assertEquals(other.groupId,bot.state.session(1).groupId)
+        assertNotNull(button("Добавить игрока"))
+        click("Добавить игрока")
+        val prompt=api.messages[1L to bot.state.session(1).input!!.promptId]!!
+        assertTrue(prompt.text!!.startsWith("🏓 Личная группа"))
+        reply("Только здесь")
+        assertEquals(listOf("Только здесь"),service.participants(other).map { it.participant.name })
+        assertEquals(listOf(PlayerInput("a",60)),bot.state.editor(1,group,original.id)!!.content.players)
+        assertEquals(3,service.participants(member()).size)
+        bot.handle(message("/groups")); click("Теннис")
+        assertTrue(text().startsWith("🏓 Теннис"))
+    }
+
+    @Test fun `group chooser hides unvisited groups and rechecks access on selection`() {
+        seed(); open(2)
+        val other=secondGroup()
+        click("Сменить группу",2)
+        assertFalse(panel(2).keyboard!!.rows.flatten().any { it.text=="Личная группа" })
+        bot.handle(message("/groups"))
+        val stale=button("Личная группа").callbackData!!
+        api.members[bot.state.group(other.groupId)!!.chatId to 1]=TgMember("left")
+        clickData(stale)
+        assertTrue(text().contains("Доступ к группе не подтверждён"))
+        bot.handle(message("/groups"))
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Личная группа" })
+        assertNotNull(button("Теннис"))
+    }
+
+    @Test fun `repeat roster and attendance only use current group and repeat names a fixed training`() {
+        seed()
+        ready("first",600); service.execute(member(),"post-first",WorkflowCommand.PostDraft("first",2))
+        val other=secondGroup()
+        listOf("a","b","s").forEach { service.execute(other,"add-$it",WorkflowCommand.AddParticipant(it,"Чужой $it")) }
+        repeat(3) { service.execute(other,"post-$it",WorkflowCommand.CommitDraft("other-$it",0,
+            DraftContent("2026-09-08",listOf(PlayerInput("s",60)),listOf(PaymentInput("s",100))),true)) }
+        assertEquals(listOf("a","b","s"),service.attendanceOrder(member()))
+        assertEquals("s",service.attendanceOrder(other).first())
+        open(); click("Записать тренировку"); click("Ещё")
+        val repeatToken=button("Повторить состав за 08.09.2026").callbackData!!
+        // Another completed training must not change what the already displayed button repeats.
+        service.execute(member(),"newer",WorkflowCommand.CommitDraft("z-later",0,
+            DraftContent("2026-09-08",listOf(PlayerInput("s",60)),listOf(PaymentInput("s",100))),true))
+        clickData(repeatToken)
+        assertEquals(listOf("a","b"),bot.state.editors(1,group).single().content.players.map { it.participantId })
+        assertTrue(text().startsWith("🏓 Теннис"))
+    }
+
+    @Test fun `payment input retains the page and outside payer filter`() {
+        repeat(27) { i -> service.execute(member(),"person-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        open(); click("Записать тренировку"); click("⬜ Игрок 01"); click("Дальше: оплаты · 1")
+        click("Оплатил другой человек"); repeat(3) { click("Дальше →") }
+        click("Игрок 27"); reply("350")
+        assertNotNull(button("Игрок 27 · 350 ₽"))
+        assertNotNull(button("Только игроки и оплатившие"))
+        click("Записать тренировку")
+        assertEquals(350L,database.balances(group)[ParticipantId("p26")])
+        assertEquals(-350L,database.balances(group)[ParticipantId("p0")])
+    }
+
+    @Test fun `reopening an unchanged card refreshes data saved by another editor`() {
+        seed(); ready(cost=600); open(action=BotAction("draft",entity="training"))
+        assertFalse(editor().dirty)
+        service.execute(member(),"new-content",WorkflowCommand.CommitDraft("training",2,
+            service.draft(member(),"training").content.copy(payments=listOf(PaymentInput("a",800))),true))
+        open(action=BotAction("draft",entity="training"))
+        assertTrue(text().contains("Всего: 800 ₽"))
+        assertFalse(text().contains("Твой ввод сохранён отдельно"))
+        assertFalse(editor().dirty)
+    }
+
+    @Test fun `identical record IDs in two groups keep money history and corrections isolated`() {
+        seed()
+        val other=secondGroup()
+        listOf("a","b").forEach { service.execute(other,"seed-$it",WorkflowCommand.AddParticipant(it,"Другой $it")) }
+        service.execute(other,"link-a",WorkflowCommand.LinkSelf("a",1))
+        fun content(cost:Long)=DraftContent("2026-09-08",listOf(PlayerInput("a",60),PlayerInput("b",60)),listOf(PaymentInput("a",cost)))
+        service.execute(member(),"same-post",WorkflowCommand.CommitDraft("same-training",0,content(600),true))
+        service.execute(other,"same-post",WorkflowCommand.CommitDraft("same-training",0,content(1000),true))
+        service.execute(member(2),"same-transfer",WorkflowCommand.RecordTransfer("same-transfer","b","a",100,"2026-09-08"))
+        service.execute(other,"same-transfer",WorkflowCommand.RecordTransfer("same-transfer","a","b",100,"2026-09-08"))
+        assertEquals(200L,database.balances(group)[ParticipantId("a")])
+        assertEquals(600L,database.balances(other.groupId)[ParticipantId("a")])
+        val otherBalances=database.balances(other.groupId)
+        val otherHistory=database.history(other.groupId)
+        val otherAudit=service.audit(other)
+        open(action=BotAction("history"))
+        assertTrue(text().contains("600 ₽"))
+        assertFalse(text().contains("1000 ₽") || text().contains("Другой"))
+        service.execute(member(),"cancel",WorkflowCommand.CancelDraft("same-training",service.draft(member(),"same-training").version))
+        assertEquals(-100L,database.balances(group)[ParticipantId("a")])
+        assertEquals(DraftStatus.POSTED,service.draft(other,"same-training").status)
+        assertEquals(otherBalances,database.balances(other.groupId))
+        assertEquals(otherHistory,database.history(other.groupId))
+        assertEquals(otherAudit,service.audit(other))
+        val link=bot.state.link(other.groupId,BotAction("history"))
+        bot.handle(message("/start $link"))
+        assertTrue(text().contains("1000 ₽") && text().contains("Другой"))
+        assertFalse(text().contains("600 ₽") || text().contains("Андрей"))
+    }
+
+    @Test fun `same draft ID has separate editors and cross-group editor references are rejected`() {
+        seed(); ready("same",600)
+        val other=secondGroup()
+        service.execute(other,"add",WorkflowCommand.AddParticipant("a","Другой игрок"))
+        service.execute(other,"create",WorkflowCommand.CreateDraft("same","2026-09-08"))
+        open(action=BotAction("payments",entity="same")); clickStarts("Андрей"); reply("800")
+        val first=editor("same")
+        val link=bot.state.link(other.groupId,BotAction("draft",entity="same"))
+        bot.handle(message("/start $link"))
+        val second=bot.state.editors(1,other.groupId).single()
+        assertNotEquals(first.id,second.id)
+        assertTrue(second.content.players.isEmpty())
+        assertTrue(second.content.payments.isEmpty())
+        val invalid=bot.state.action(1,other.groupId,BotAction("draft",entity="same",editorId=first.id))
+        clickData(invalid)
+        assertFalse(text().contains("800") || text().contains("Андрей"))
+        assertEquals(first,bot.state.editor(1,group,first.id))
+        assertEquals(second,bot.state.editor(1,other.groupId,second.id))
+        assertTrue(database.history(group).isEmpty())
+        assertTrue(database.history(other.groupId).isEmpty())
+    }
+
+    @Test fun `reply from previous group cannot fill a prompt in the current group`() {
+        seed(); ready()
+        val other=secondGroup()
+        service.execute(other,"add",WorkflowCommand.AddParticipant("a","Другой игрок"))
+        service.execute(other,"create",WorkflowCommand.CreateDraft("training","2026-09-08"))
+        open(action=BotAction("payments",entity="training")); clickStarts("Андрей")
+        val oldPrompt=api.messages[1L to bot.state.session(1).input!!.promptId]!!
+        val first=editor()
+        val link=bot.state.link(other.groupId,BotAction("payments",entity="training",showAll=true))
+        bot.handle(message("/start $link")); click("Другой игрок")
+        val currentPrompt=bot.state.session(1).input!!.promptId
+        bot.handle(message("900",reply=oldPrompt))
+        assertEquals(currentPrompt,bot.state.session(1).input!!.promptId)
+        assertEquals(first,bot.state.editor(1,group,first.id))
+        assertTrue(bot.state.editors(1,other.groupId).single().content.payments.isEmpty())
+        reply("250")
+        assertEquals(250L,bot.state.editors(1,other.groupId).single().content.payments.single().amount)
+        assertEquals(100L,editor().content.payments.single().amount)
+        assertTrue(database.history(group).isEmpty())
+        assertTrue(database.history(other.groupId).isEmpty())
+    }
+
+    @Test fun `group member who did not play can correct a posted training`() {
+        seed(); ready(cost=600); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        // User 3 belongs to the chat, has no participant profile, and did not play.
+        open(3,BotAction("payments",entity="training"))
+        clickStarts("Андрей",3); reply("800",3)
+        click("Сохранить изменения",3)
+        assertEquals(400L,database.balances(group)[ParticipantId("a")])
+        assertEquals(800L,service.draft(member(),"training").publishedContent!!.payments.single().amount)
+        assertEquals(3L,service.audit(member()).last().actorUserId)
+        click("Ещё",3)
+        assertFalse(panel(3).keyboard!!.rows.flatten().any { it.text=="Отменить тренировку" })
+    }
+
+    @Test fun `being a member of another bot group grants no access to a posted training`() {
+        seed(); ready(cost=600); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        val other=secondGroup()
+        val otherChat=bot.state.group(other.groupId)!!.chatId
+        api.members[otherChat to 3]=TgMember("member")
+        val ownLink=bot.state.link(other.groupId,BotAction("menu"))
+        bot.handle(message("/start $ownLink",3))
+        assertTrue(text(3).startsWith("🏓 Личная группа"))
+        api.members[chat to 3]=TgMember("left")
+        val before=service.audit(member())
+        open(3,BotAction("payments",entity="training"))
+        assertTrue(text(3).contains("Доступ к группе не подтверждён"))
+        assertFalse(text(3).contains("600") || text(3).contains("Андрей"))
+        assertEquals(before,service.audit(member()))
+        assertEquals(300L,database.balances(group)[ParticipantId("a")])
+    }
+
+    @Test fun `leaving training group after editing prevents saving with old button`() {
+        seed(); ready(cost=600); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        open(3,BotAction("payments",entity="training")); clickStarts("Андрей",3); reply("800",3)
+        val save=button("Сохранить изменения",3).callbackData!!
+        api.members[chat to 3]=TgMember("left")
+        clickData(save,3)
+        assertTrue(text(3).contains("Доступ к группе не подтверждён"))
+        assertEquals(600L,service.draft(member(),"training").publishedContent!!.payments.single().amount)
+        assertEquals(1,database.history(group).size)
+    }
+
 }
