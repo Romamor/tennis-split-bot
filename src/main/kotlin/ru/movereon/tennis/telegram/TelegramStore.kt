@@ -42,6 +42,38 @@ class TelegramStore(private val database: SqliteAccountingStore) {
         val token = token()
         update(c, "INSERT INTO tg_actions VALUES(?,?,?,?)", token, userId, groupId, json.encodeToString(action)); token
     }
+    fun actions(userId: Long,groupId: String,actions: List<BotAction>): List<String> = database.writeTransaction { c ->
+        actions.map { action -> token().also { update(c,"INSERT INTO tg_actions VALUES(?,?,?,?)",it,userId,groupId,json.encodeToString(action)) } }
+    }
+    fun editor(userId: Long,groupId: String,id: String): DraftEditor? = database.readTransaction { c ->
+        query(c,"SELECT editor_json FROM tg_editors WHERE user_id=? AND group_id=? AND editor_id=?",userId,groupId,id) {
+            json.decodeFromString<DraftEditor>(it.getString(1))
+        }.singleOrNull()
+    }
+    fun editors(userId: Long,groupId: String): List<DraftEditor> = database.readTransaction { c ->
+        query(c,"SELECT editor_json FROM tg_editors WHERE user_id=? AND group_id=? ORDER BY rowid DESC",userId,groupId) {
+            json.decodeFromString<DraftEditor>(it.getString(1))
+        }
+    }
+    fun openEditor(userId: Long,editor: DraftEditor): DraftEditor = database.writeTransaction { c ->
+        update(c,"INSERT OR IGNORE INTO tg_editors VALUES(?,?,?,?,?)",editor.id,userId,editor.groupId,editor.draftId,json.encodeToString(editor))
+        query(c,"SELECT editor_json FROM tg_editors WHERE user_id=? AND group_id=? AND draft_id=?",userId,editor.groupId,editor.draftId) {
+            json.decodeFromString<DraftEditor>(it.getString(1))
+        }.single()
+    }
+    fun edit(userId: Long,groupId: String,id: String,version: Long,updateId: Long,change: (DraftEditor)->DraftEditor): DraftEditor = database.writeTransaction { c ->
+        val old = query(c,"SELECT editor_json FROM tg_editors WHERE user_id=? AND group_id=? AND editor_id=?",userId,groupId,id) {
+            json.decodeFromString<DraftEditor>(it.getString(1))
+        }.singleOrNull() ?: throw NoSuchElementException("Editor is closed")
+        if(old.lastUpdate == updateId) return@writeTransaction old
+        ru.movereon.tennis.core.checkAccounting(old.revision==version,ru.movereon.tennis.core.ErrorCode.STALE_VERSION,"Editor changed")
+        val next = change(old).copy(revision=old.revision+1,lastUpdate=updateId)
+        update(c,"UPDATE tg_editors SET editor_json=? WHERE editor_id=?",json.encodeToString(next),id)
+        next
+    }
+    fun closeEditor(userId: Long,groupId: String,id: String) = database.writeTransaction { c ->
+        update(c,"DELETE FROM tg_editors WHERE user_id=? AND group_id=? AND editor_id=?",userId,groupId,id)
+    }
     fun action(token: String): SavedAction? = database.readTransaction { c -> query(c, "SELECT * FROM tg_actions WHERE token=?", token) {
         SavedAction(token, it.getLong("user_id"), it.getString("group_id"), json.decodeFromString(it.getString("action_json")))
     }.singleOrNull() }
@@ -59,6 +91,11 @@ class TelegramStore(private val database: SqliteAccountingStore) {
     fun plan(updateId: Long): SavedPlan? = database.readTransaction { c -> query(c, "SELECT * FROM tg_plans WHERE update_id=?", updateId) {
         SavedPlan(it.getLong("user_id"), it.getString("group_id"), it.getString("token"), json.decodeFromString(it.getString("action_json")))
     }.singleOrNull() }
+    fun planForToken(userId: Long,groupId: String,token: String): BotAction? = database.readTransaction { c ->
+        query(c,"SELECT action_json FROM tg_plans WHERE user_id=? AND group_id=? AND token=? ORDER BY update_id LIMIT 1",userId,groupId,token) {
+            json.decodeFromString<BotAction>(it.getString(1))
+        }.singleOrNull()
+    }
     fun savePlan(updateId: Long, plan: SavedPlan) = database.writeTransaction { c ->
         update(c, "INSERT OR IGNORE INTO tg_plans VALUES(?,?,?,?,?)", updateId, plan.userId, plan.groupId, plan.token, json.encodeToString(plan.action))
     }

@@ -14,6 +14,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
     private val service = GroupService(accounting,clock)
     private val membership = Membership(api,state,identity)
     val delivery = TelegramDelivery(api,state,accounting,service,identity)
+    private val editing = DraftEditing(service,state)
     private val ui = BotUi(service,accounting,state,clock)
     init { state.bind(identity) }
 
@@ -35,10 +36,17 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         val moveToBottom = message != null || previousSession.input != null ||
             update.callback?.message?.id != previousSession.panelId
         update.callback?.let { try { api.answer(it.id) } catch (_: TelegramFailure) { /* Callback acknowledgement is not a financial operation. */ } }
+        var currentPlan: SavedPlan? = null
+        val verified = mutableMapOf<Pair<String,Long>,VerifiedGroupMember>()
+        fun verify(group: String,id: Long) = verified.getOrPut(group to id) { membership.verify(group,id) }
         try {
             val saved = state.plan(update.id)
-            val plan = saved ?: resolve(update,user) ?: run { state.complete(update.id); return }
-            val member = membership.verify(plan.groupId,user.id)
+            val raw = saved ?: resolve(update,user,::verify) ?: run { state.complete(update.id); return }
+            currentPlan = raw
+            val member = verify(raw.groupId,user.id)
+            val plan = if(saved == null && raw.action.kind=="commit_editor")
+                raw.copy(action=raw.action.copy(command=state.planForToken(user.id,raw.groupId,raw.token)?.command ?: editing.commit(member,raw.action))) else raw
+            currentPlan = plan
             state.savePlan(update.id,plan)
             execute(update.id, member, plan, moveToBottom)
         } catch (_: BotAccessDenied) {
@@ -51,7 +59,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
                     listOf(listOf("Это ещё один перевод" to plan.action.copy(command=command.copy(allowSimilar=true))), listOf("В меню" to BotAction("menu"))))
             show(user.id,plan.groupId,update.id,screen,moveToBottom)
         } catch (failure: AccountingException) {
-            val plan = state.plan(update.id)
+            val plan = state.plan(update.id) ?: currentPlan
             if(plan != null) show(user.id,plan.groupId,update.id,Screen(explain(failure),listOf(listOf("Открыть свежую запись" to errorBack(plan.action)),listOf("В меню" to BotAction("menu")))),moveToBottom)
             else privatePanel(user.id,state.session(user.id).groupId,update.id,explain(failure),null,moveToBottom)
         } catch (_: NoSuchElementException) {
@@ -104,7 +112,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         }
     }
 
-    private fun resolve(update: TgUpdate,user: TgUser): SavedPlan? {
+    private fun resolve(update: TgUpdate,user: TgUser,verify: (String,Long)->VerifiedGroupMember): SavedPlan? {
         update.callback?.let { callback ->
             val action = callback.data?.let(state::action)
             if(action == null || action.userId != user.id) throw BotAccessDenied()
@@ -128,7 +136,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             privatePanel(user.id,session.groupId,update.id,"Для ввода данных ответь на последнее сообщение-запрос бота. Меню можно открыть командой /menu.",null,moveToBottom=true)
             return null
         }
-        membership.verify(session.groupId,user.id)
+        verify(session.groupId,user.id)
         return try { SavedPlan(user.id,session.groupId,"text:${update.id}",parseInput(pending.action,pending.token,text)) }
         catch (failure: AccountingException) {
             if(pending.action.field in setOf("all_minutes","minutes"))
@@ -140,6 +148,11 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
 
     private fun execute(updateId: Long,member: VerifiedGroupMember,plan: SavedPlan,moveToBottom: Boolean) {
         var action = plan.action
+        if(action.editorId == null && (action.kind in setOf("draft","players","add_players","player","payments","preview","time_choices","draft_more","training_details") ||
+            action.kind=="ask" && action.field in setOf("payment","draft_date","minutes","all_minutes"))) {
+            val editor=editing.open(member,requireNotNull(action.entity),"view_$updateId")
+            action=action.copy(editorId=editor.id,editorVersion=editor.revision)
+        }
         val session = state.session(member.userId)
         state.saveSession(session.copy(groupId=member.groupId,input=null))
         when(action.kind) {
@@ -151,13 +164,27 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
                 prompt(member.userId,member.groupId,updateId,plan.token,action); return
             }
             "create_draft" -> {
-                val id = "d_${plan.token}"
-                service.execute(member,"telegram:${plan.token}",WorkflowCommand.CreateDraft(id,requireNotNull(action.field)))
-                action = BotAction("draft",entity=id)
+                val editor = editing.open(member,"d_${plan.token}","${plan.token}_$updateId",requireNotNull(action.field))
+                action = BotAction("add_players",entity=editor.draftId,editorId=editor.id)
+            }
+            "edit" -> {
+                editing.change(member,action,updateId)
+                action = BotAction(action.back ?: "draft",entity=action.entity,participant=action.participant,
+                    editorId=action.editorId,page=action.page,inactiveOnly=action.inactiveOnly)
+            }
+            "commit_editor" -> {
+                service.execute(member,"telegram:${plan.token}",requireNotNull(action.command))
+                state.closeEditor(member.userId,member.groupId,requireNotNull(action.editorId))
+                if((action.command as WorkflowCommand.CommitDraft).post) delivery.flush()
+                action = BotAction("draft",entity=action.entity)
+            }
+            "close_editor", "reload_editor" -> {
+                state.closeEditor(member.userId,member.groupId,requireNotNull(action.editorId))
+                action = if(action.kind=="reload_editor") BotAction("draft",entity=action.entity) else BotAction("drafts")
             }
             "new_transfer" -> {
                 val own = service.participants(member,true).firstOrNull { it.participant.telegramUserId == member.userId }?.participant
-                action = BotAction("form",form=TransferForm("t_${plan.token}",from=own?.id,date=ui.today(member)))
+                action = BotAction("form",form=TransferForm("t_${plan.token}",from=if(action.field=="incoming") null else own?.id,to=if(action.field=="incoming") own?.id else null,date=ui.today(member)))
             }
             "apply" -> {
                 val command = requireNotNull(action.command)
@@ -168,15 +195,27 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
                 }
                 val representedUser = service.participants(member,true).firstOrNull { it.participant.id == represented }?.participant?.telegramUserId
                 val absent = if(representedUser != null && representedUser != member.userId) membership.absent(member.groupId,representedUser) else null
-                service.execute(member,"telegram:${plan.token}",command,absent)
-                delivery.flush()
-                action = BotAction(action.back ?: "menu",entity=action.entity,participant=action.participant,form=action.form,represented=represented)
+                // Legacy draft-edit buttons reopen the new form instead of silently saving shared data.
+                if(command is WorkflowCommand.SaveDraft) {
+                    val editor = editing.open(member,command.id,"legacy_$updateId")
+                    show(member.userId,member.groupId,updateId,ui.render(member,BotAction("draft",entity=command.id,editorId=editor.id)),moveToBottom)
+                    return
+                }
+                val receipt = service.execute(member,"telegram:${plan.token}",command,absent)
+                if(receipt.financialSequence != null) delivery.flush()
+                if(action.editorId != null && (command is WorkflowCommand.CancelDraft || command is WorkflowCommand.DiscardChanges))
+                    state.closeEditor(member.userId,member.groupId,action.editorId)
+                action = BotAction(action.back ?: "menu",entity=action.entity,participant=action.participant,form=action.form,represented=represented,page=action.page,showAll=action.showAll)
             }
             "recover" -> {
                 checkAccounting(service.canManage(member),ErrorCode.FORBIDDEN,"Organizer required")
                 delivery.recovery(requireNotNull(action.entity),member.groupId,plan.token)
                 action = BotAction("recovery")
             }
+        }
+        if(action.kind in setOf("draft","players","add_players","player","payments","preview","draft_more") && action.editorId == null) {
+            val editor = editing.open(member,requireNotNull(action.entity),"view_$updateId")
+            action = action.copy(editorId=editor.id)
         }
         show(member.userId,member.groupId,updateId,ui.render(member,action),moveToBottom)
     }
@@ -189,6 +228,11 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             }.getOrNull()
             checkAccounting(parsed != null,ErrorCode.INVALID_INPUT,"Invalid date")
             return parsed.toString()
+        }
+        if(action.editorId != null && action.field in setOf("payment","draft_date")) {
+            val value = if(action.field=="draft_date") date() else if(text=="0") "0" else parseAmount(text).toString()
+            return BotAction("edit",entity=action.entity,participant=action.participant,field=action.field,value=value,
+                editorId=action.editorId,editorVersion=action.editorVersion,back=action.back)
         }
         return when(action.field) {
             "name" -> {
@@ -236,7 +280,8 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         if(id != null) state.saveSession(state.session(userId).copy(groupId=groupId,input=PendingInput(token,action,id)))
     }
     private fun show(userId: Long,groupId: String,updateId: Long,screen: Screen,moveToBottom: Boolean) {
-        val keyboard = TgKeyboard(screen.buttons.map { row -> row.map { (label,action) -> TgButton(label.take(60),callbackData=state.action(userId,groupId,action)) } })
+        val tokens = state.actions(userId,groupId,screen.buttons.flatten().map { it.second }).iterator()
+        val keyboard = TgKeyboard(screen.buttons.map { row -> row.map { (label,_) -> TgButton(label.take(60),callbackData=tokens.next()) } })
         privatePanel(userId,groupId,updateId,screen.text,keyboard,moveToBottom)
     }
     private fun privatePanel(userId: Long,groupId: String?,updateId: Long,text: String,keyboard: TgKeyboard?,moveToBottom: Boolean) {
@@ -276,6 +321,7 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
 
     private fun errorBack(action: BotAction): BotAction {
         val command = action.command
+        if(action.editorId != null) return BotAction("draft",entity=action.entity,editorId=action.editorId)
         if(command is WorkflowCommand.RecordTransfer) return BotAction("form",form=TransferForm(command.id,command.from,command.to,command.amount,command.date,command.note,command.onBehalfOf))
         if(command is WorkflowCommand.AddParticipant) return BotAction("participants")
         return BotAction(action.back ?: if(action.entity != null && action.kind in setOf("draft","preview","players","player","payments")) "draft" else "menu",

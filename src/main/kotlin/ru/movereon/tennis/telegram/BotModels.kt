@@ -11,6 +11,10 @@ import ru.movereon.tennis.application.ParticipantProfile
 /** Opaque, user-bound database tokens carry this payload; callbacks never accept raw commands. */
 @Serializable data class BotAction(
     val kind: String,
+    val editorId: String? = null,
+    val editorVersion: Long? = null,
+    val value: String? = null,
+    val inactiveOnly: Boolean = false,
     val entity: String? = null,
     val version: Long? = null,
     val participant: String? = null,
@@ -42,4 +46,16 @@ internal fun hoursLabel(minutes: Long): String {
     val hours = minutes.toBigDecimal().divide(60.toBigDecimal(),2,java.math.RoundingMode.HALF_UP)
     val approximate = hours.multiply(60.toBigDecimal()).compareTo(minutes.toBigDecimal()) != 0
     return (if(approximate) "≈" else "") + hours.stripTrailingZeros().toPlainString().replace('.',',') + " ч"
+}
+
+@Serializable data class DraftEditor(
+    val id: String, val groupId: String, val draftId: String,
+    val baseline: ru.movereon.tennis.application.TrainingDraft,
+    val content: DraftContent, val order: List<String>,
+    val remembered: List<ru.movereon.tennis.application.PlayerInput> = emptyList(),
+    val revision: Long = 1, val lastUpdate: Long? = null,
+) {
+    val dirty: Boolean get() = baseline.version == 0L || content != baseline.content
+    fun view() = baseline.copy(content=content,status=if(content != baseline.content && baseline.financialVersion > 0)
+        ru.movereon.tennis.application.DraftStatus.EDITING else baseline.status)
 }

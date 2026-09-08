@@ -53,6 +53,7 @@ data class WorkflowAudit(val id: Long, val actorUserId: Long, val kind: String, 
     @Serializable @SerialName("appoint_organizer") data class AppointOrganizer(val userId: Long) : WorkflowCommand
     @Serializable @SerialName("create_draft") data class CreateDraft(val id: String, val date: String) : WorkflowCommand
     @Serializable @SerialName("save_draft") data class SaveDraft(val id: String, val expectedVersion: Long, val content: DraftContent) : WorkflowCommand
+    @Serializable @SerialName("commit_draft") data class CommitDraft(val id: String, val expectedVersion: Long, val content: DraftContent, val post: Boolean = false) : WorkflowCommand
     @Serializable @SerialName("post_draft") data class PostDraft(val id: String, val expectedVersion: Long) : WorkflowCommand
     @Serializable @SerialName("discard_changes") data class DiscardChanges(val id: String, val expectedVersion: Long) : WorkflowCommand
     @Serializable @SerialName("cancel_draft") data class CancelDraft(val id: String, val expectedVersion: Long) : WorkflowCommand

@@ -243,7 +243,7 @@ class SqliteAccountingStore(path: Path, private val clock: Clock = Clock.systemU
                         statement.execute("PRAGMA user_version=1")
                     }
                 }
-                1, 2, 3 -> require(application == APPLICATION_ID) { "Database belongs to another application" }
+                1, 2, 3, 4 -> require(application == APPLICATION_ID) { "Database belongs to another application" }
                 else -> error("Unsupported database schema version: $version")
             }
             if (version < 2) {
@@ -258,6 +258,13 @@ class SqliteAccountingStore(path: Path, private val clock: Clock = Clock.systemU
                 connection.createStatement().use { statement ->
                     sql.split(';').filter { it.isNotBlank() }.forEach { statement.execute(it) }
                     statement.execute("PRAGMA user_version=3")
+                }
+            }
+            if (version < 4) {
+                val sql = requireNotNull(javaClass.getResourceAsStream("/db/004_editors.sql")).bufferedReader().use { it.readText() }
+                connection.createStatement().use { statement ->
+                    sql.split(';').filter { it.isNotBlank() }.forEach { statement.execute(it) }
+                    statement.execute("PRAGMA user_version=4")
                 }
             }
         }

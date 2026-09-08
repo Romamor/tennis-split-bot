@@ -14,6 +14,9 @@ import java.time.ZoneId
 /** Application boundary: the Telegram adapter must provide verified membership, never user-supplied claims. */
 class GroupService(private val accounting: SqliteAccountingStore, private val clock: Clock = Clock.systemUTC()) {
     private val json = Json { encodeDefaults = true }
+    private val attendanceCache = object : LinkedHashMap<String,Pair<Long,List<String>>>(16,0.75f,true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String,Pair<Long,List<String>>>?) = size > 64
+    }
     private data class Change(val entityId: String, val version: Long, val before: String?, val after: String, val financial: Receipt? = null)
 
     fun execute(member: VerifiedGroupMember, commandId: String, input: WorkflowCommand,
@@ -66,6 +69,23 @@ class GroupService(private val accounting: SqliteAccountingStore, private val cl
         groupZone(connection, member.groupId)
         query(connection, "SELECT * FROM training_drafts WHERE group_id=? ORDER BY occurred_on,draft_id", member.groupId, map = ::draftRow)
             .filter { includeFinished || it.status in setOf(DraftStatus.DRAFT, DraftStatus.EDITING) }
+    }
+
+    /** Revision and source data are read in the same SQLite snapshot. */
+    fun attendanceOrder(member: VerifiedGroupMember): List<String> = accounting.readTransaction { c ->
+        groupZone(c,member.groupId)
+        val revision = query(c,"SELECT COALESCE(MAX(audit_id),0) FROM workflow_audit WHERE group_id=? AND kind IN ('add_participant','rename_participant','post_draft','cancel_draft','commit_draft')",member.groupId) { it.getLong(1) }.single()
+        synchronized(attendanceCache) { attendanceCache[member.groupId]?.takeIf { it.first==revision }?.second }
+            ?.let { return@readTransaction it }
+        val counts = query(c,"SELECT published_json FROM training_drafts WHERE group_id=? AND status IN ('POSTED','EDITING') AND published_json IS NOT NULL",member.groupId) {
+            json.decodeFromString<DraftContent>(it.getString(1))
+        }.flatMap { it.players.filterNot { p -> p.plusOne }.map { p -> p.participantId }.distinct() }.groupingBy { it }.eachCount()
+        val collator = java.text.Collator.getInstance(java.util.Locale.forLanguageTag("ru"))
+        val ids = query(c,"SELECT * FROM participants WHERE group_id=?",member.groupId,map=::profile)
+            .sortedWith(compareByDescending<ParticipantProfile> { counts[it.id] ?: 0 }
+                .thenComparator { a,b -> collator.compare(a.name,b.name) }.thenBy { it.id }).map { it.id }
+        synchronized(attendanceCache) { attendanceCache[member.groupId] = revision to ids }
+        ids
     }
 
     fun audit(member: VerifiedGroupMember): List<WorkflowAudit> = accounting.readTransaction { connection ->
@@ -146,6 +166,22 @@ class GroupService(private val accounting: SqliteAccountingStore, private val cl
             val ordered = oldKeys.mapNotNull { byKey[it] } + command.content.players.filter { (it.participantId to it.plusOne) !in oldKeys }
             val status = if (old.financialVersion > 0) DraftStatus.EDITING else DraftStatus.DRAFT
             saveDraft(c, m.groupId, old, old.copy(version = next(old.version), status = status, content = command.content.copy(players = ordered)))
+        }
+        is WorkflowCommand.CommitDraft -> {
+            val old = findDraft(c,m.groupId,command.id)
+            version(command.expectedVersion,old?.version ?: 0)
+            val before = old?.let { json.encodeToString(it) }
+            if(old == null) apply(c,m,commandId,WorkflowCommand.CreateDraft(command.id,command.content.date),absent)
+            var current = draft(c,m.groupId,command.id)
+            checkAccounting(current.status != DraftStatus.CANCELLED,ErrorCode.INVALID_STATE,"Draft is cancelled")
+            validateContent(c,m.groupId,command.content)
+            if(current.content != command.content) {
+                apply(c,m,commandId,WorkflowCommand.SaveDraft(command.id,current.version,command.content),absent)
+                current = draft(c,m.groupId,command.id)
+            }
+            val result = if(command.post) apply(c,m,commandId,WorkflowCommand.PostDraft(command.id,current.version),absent)
+                else Change(current.id,current.version,before,json.encodeToString(current))
+            result.copy(before=before)
         }
         is WorkflowCommand.PostDraft -> {
             val old = draft(c, m.groupId, command.id, command.expectedVersion)

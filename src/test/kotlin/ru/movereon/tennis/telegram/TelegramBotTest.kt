@@ -47,6 +47,8 @@ class TelegramBotTest {
         val link=bot.state.link(group,action)
         bot.handle(message("/start $link",userId))
     }
+    private fun editor(id:String="training",userId:Long=1) = bot.state.editors(userId,group).single { it.draftId==id }
+    private fun input(id:String="training",userId:Long=1) = editor(id,userId).content
     private fun seed() {
         listOf("a" to "Андрей","b" to "Борис","s" to "Саша").forEach { (id,name) ->
             service.execute(member(),"seed-$id",WorkflowCommand.AddParticipant(id,name))
@@ -61,7 +63,7 @@ class TelegramBotTest {
     }
     private fun recordViaUi(userId:Long=1):String {
         open(userId)
-        click("Отметить перевод",userId)
+        click("Отметить перевод",userId); click("Я перевёл",userId)
         if(userId != 1L) { click("Отправитель",userId); click("Андрей",userId) }
         click("Получатель",userId); click("Борис",userId)
         click("Сумма",userId); reply("100",userId)
@@ -105,8 +107,9 @@ class TelegramBotTest {
 
     @Test fun `full training dialog adds a plus-one records payments and edits one group card`() {
         seed(); open()
-        click("Тренировки"); click("Новая тренировка"); click("Игроки")
-        listOf("Андрей","Борис","Саша").forEach { name -> click("Добавить игрока"); click(name) }
+        click("Тренировки"); click("Новая тренировка")
+        listOf("Андрей","Борис","Саша").forEach { name -> click("⬜ $name") }
+        click("Готово · 3"); click("Игроки")
         clickStarts("Саша"); click("Добавить +1"); click("К игрокам"); click("К тренировке")
         click("Кто оплатил"); clickStarts("Андрей"); reply("350"); clickStarts("Борис"); reply("400")
         click("К тренировке"); click("Посмотреть расчёт")
@@ -130,7 +133,8 @@ class TelegramBotTest {
         seed(); open(); click("Тренировки")
         val token=click("Новая тренировка")
         clickData(token)
-        assertEquals(1,service.drafts(member()).size)
+        assertEquals(0,service.drafts(member()).size)
+        assertEquals(1,bot.state.editors(1,group).size)
     }
 
     @Test fun `outsiders cannot use forwarded links or another users callbacks`() {
@@ -185,7 +189,7 @@ class TelegramBotTest {
         assertEquals(listOf(PaymentInput("a",100)),service.draft(member(),"training").content.payments)
         bot=TelegramBot(api,SqliteAccountingStore(directory.resolve("bot.sqlite"),clock),api.bot,clock)
         reply("400")
-        assertEquals(400L,service.draft(member(),"training").content.payments.single { it.participantId=="b" }.amount)
+        assertEquals(400L,input().payments.single { it.participantId=="b" }.amount)
     }
 
     @Test fun `fractional amount is rejected and a corrected response is accepted`() {
@@ -194,7 +198,7 @@ class TelegramBotTest {
         assertNotNull(bot.state.session(1).input)
         assertEquals(100L,service.draft(member(),"training").content.payments.single().amount)
         reply("200")
-        assertEquals(200L,service.draft(member(),"training").content.payments.single().amount)
+        assertEquals(200L,input().payments.single().amount)
     }
 
     @Test fun `unavailable private notification never falls back to the group`() {
@@ -253,7 +257,7 @@ class TelegramBotTest {
         service.execute(member(),"repost",WorkflowCommand.PostDraft("training",4))
         bot.delivery.flush()
         assertEquals("FAILED",bot.state.delivery(card.key)?.status)
-        open(); click("Восстановить карточки"); click("Карточка тренировки")
+        open(); click("Ещё"); click("Восстановить сообщение в группе"); click("Карточка тренировки")
         val recovery=click("В чате нет карточки — отправить")
         assertEquals(3,api.sent.count { it.chat.id==chat })
         clickData(recovery)
@@ -301,7 +305,7 @@ class TelegramBotTest {
     }
 
     @Test fun `setting common time before choosing players gives a useful error`() {
-        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("Время всем")
+        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("Готово · 0"); click("Время всем")
         assertTrue(text().contains("Сначала добавь игроков"))
         assertEquals(null,bot.state.session(1).input)
     }
@@ -319,25 +323,28 @@ class TelegramBotTest {
     @Test fun `time choices use half hours for everyone and individual guests`() {
         seed(); ready(); open(action=BotAction("draft",entity="training"))
         click("Время всем"); click("1,5 ч")
-        assertTrue(service.draft(member(),"training").content.players.all { it.minutes==90L })
+        assertTrue(input().players.all { it.minutes==90L })
         assertTrue(text().contains("1,5 ч"))
         assertFalse(text().contains(" мин"))
         click("Игроки"); clickStarts("Андрей"); click("Добавить +1")
         click("Изменить время +1"); click("0,5 ч")
-        val players=service.draft(member(),"training").content.players
+        val players=input().players
         assertEquals(30L,players.single { it.plusOne }.minutes)
         assertTrue(players.filterNot { it.plusOne }.all { it.minutes==90L })
-        click("К игрокам"); click("К тренировке"); click("Время всем")
+        click("К игрокам")
+        assertNotNull(button("Андрей · 1,5 ч · +1: 0,5 ч"))
+        clickStarts("Андрей"); click("Убрать +1"); click("К игрокам")
+        assertNotNull(button("Андрей · 1,5 ч"))
+        click("К тренировке"); click("Время всем")
         click("Больше →"); click("3,5 ч")
-        assertTrue(service.draft(member(),"training").content.players.all { it.minutes==210L })
+        assertTrue(input().players.all { it.minutes==210L })
     }
 
     @Test fun `new players default to one hour and published card displays hours`() {
-        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("Игроки")
-        click("Добавить игрока"); click("Андрей")
+        seed(); open(); click("Тренировки"); click("Новая тренировка"); click("⬜ Андрей"); click("Готово · 1"); click("Игроки")
         assertTrue(panel().keyboard!!.rows.flatten().any { it.text=="Андрей · 1 ч" })
         clickStarts("Андрей"); click("Добавить +1")
-        val draft=service.drafts(member()).single()
+        val draft=bot.state.editors(1,group).single().view()
         assertTrue(draft.content.players.all { it.minutes==60L })
         assertTrue(text().contains("+1: 1 ч"))
         click("К игрокам"); click("К тренировке"); click("Кто оплатил"); clickStarts("Андрей"); reply("200")
@@ -395,6 +402,242 @@ class TelegramBotTest {
         bot.handle(message("/menu"))
         click("Участники")
         assertNotNull(button("Андрей"))
+    }
+
+    @Test fun `history groups draft edits and transfer reviews while retaining every audit event`() {
+        seed(); ready("same")
+        service.execute(member(),"post",WorkflowCommand.PostDraft("same",2))
+        service.execute(member(),"pay",WorkflowCommand.RecordTransfer("same","a","b",50,"2026-09-08"))
+        service.execute(member(2),"review",WorkflowCommand.ChangeTransfer("same",1,TransferIntent.REVIEW))
+        val auditCount=service.audit(member()).size
+        open(action=BotAction("history"))
+        assertTrue(text().contains("Андрей → Борис: 50 ₽"))
+        assertTrue(text().contains("Уточняем · пока не учитывается"))
+        assertEquals(2,panel().keyboard!!.rows.flatten().count { it.text.matches(Regex("[0-9]+\\..*")) })
+        assertFalse(text().contains("Добавление участника"))
+        clickStarts("1. Перевод")
+        click("Изменения записи")
+        assertEquals(2,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="audit" })
+        clickStarts("08.09 15:00 · Уточнение")
+        assertTrue(text().contains("До:"))
+        assertTrue(text().contains("Учтён"))
+        assertTrue(text().contains("Уточняем"))
+        click("К изменениям"); click("К истории"); clickStarts("2. Тренировка"); click("Ещё"); click("Изменения записи")
+        assertEquals(3,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="audit" })
+        assertEquals(auditCount,service.audit(member()).size)
+        click("К истории"); click("Все изменения")
+        assertTrue(panel().keyboard!!.rows.flatten().any { it.text.contains("Привязка Telegram") })
+    }
+
+    @Test fun `history summary keeps published amount while edits are pending and includes cancellation`() {
+        seed(); ready(); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        service.execute(member(),"edit",WorkflowCommand.SaveDraft("training",3,DraftContent("2026-09-09",
+            listOf(PlayerInput("a",60)),listOf(PaymentInput("a",999)))))
+        open(action=BotAction("history"))
+        assertTrue(text().contains("08.09.2026"))
+        assertTrue(text().contains("100 ₽"))
+        assertFalse(text().contains("999 ₽"))
+        assertTrue(text().contains("Есть неучтённые правки"))
+        service.execute(member(),"cancel",WorkflowCommand.CancelDraft("training",4))
+        open(action=BotAction("history"))
+        assertTrue(text().contains("Отменена"))
+        assertEquals(1,panel().keyboard!!.rows.flatten().count { it.text.startsWith("1. Тренировка") })
+    }
+
+    @Test fun `history paginates records rather than individual changes`() {
+        seed()
+        repeat(9) { ready("training-$it",(it+1)*100L) }
+        open(action=BotAction("history"))
+        assertEquals(8,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="draft" })
+        click("Дальше →")
+        assertEquals(1,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="draft" })
+        assertTrue(text().contains("100 ₽"))
+        assertNotNull(button("← Назад"))
+    }
+
+    @Test fun `twenty-seven-player selection supports bulk selection and stays on its page`() {
+        repeat(27) { i -> service.execute(member(),"person-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        service.execute(member(),"draft",WorkflowCommand.CreateDraft("many","2026-09-08"))
+        open(action=BotAction("add_players",entity="many"))
+        val panelId=panel().id
+        assertEquals(12,panel().keyboard!!.rows.flatten().count { it.text.startsWith("⬜") })
+        assertTrue(panel().keyboard!!.rows.take(6).all { it.size==2 })
+        click("Выбрать всех")
+        assertEquals(27,input("many").players.size)
+        click("Дальше →"); click("✅ Игрок 13")
+        assertTrue(text().contains("Страница 2 из 3"))
+        assertTrue(text().contains("Выбрано: 26"))
+        assertNotNull(button("⬜ Игрок 13"))
+        assertEquals(panelId,panel().id)
+        assertTrue(input("many").players.all { it.minutes==60L })
+        click("Дальше →")
+        assertTrue(text().contains("Страница 3 из 3"))
+        assertEquals(3,panel().keyboard!!.rows.flatten().count { it.text.startsWith("✅") })
+        click("Готово · 26"); click("Игроки")
+        assertNotNull(button("Игрок 01 · 1 ч"))
+    }
+
+    @Test fun `deselecting a player removes their guest but retains payments and other times`() {
+        seed(); ready()
+        service.execute(member(),"guest",WorkflowCommand.SaveDraft("training",2,DraftContent("2026-09-08",
+            listOf(PlayerInput("a",90),PlayerInput("a",30,true),PlayerInput("b",120)),listOf(PaymentInput("a",100)))))
+        open(action=BotAction("add_players",entity="training"))
+        assertNotNull(button("✅ Андрей +1"))
+        click("✅ Андрей +1")
+        val d=editor().view()
+        assertEquals(listOf(PlayerInput("b",120)),d.content.players)
+        assertEquals(listOf(PaymentInput("a",100)),d.content.payments)
+        assertTrue(text().contains("гостей +1: 0"))
+    }
+
+    @Test fun `player choices rank posted attendance without counting guests drafts or cancelled games`() {
+        seed()
+        fun training(id:String,players:List<PlayerInput>,post:Boolean=true,cancel:Boolean=false) {
+            service.execute(member(),"new-$id",WorkflowCommand.CreateDraft(id,"2026-09-08"))
+            service.execute(member(),"save-$id",WorkflowCommand.SaveDraft(id,1,DraftContent("2026-09-08",players,listOf(PaymentInput("a",100)))))
+            if(post) service.execute(member(),"post-$id",WorkflowCommand.PostDraft(id,2))
+            if(cancel) service.execute(member(),"cancel-$id",WorkflowCommand.CancelDraft(id,3))
+        }
+        training("a-once",listOf(PlayerInput("a",60),PlayerInput("a",60,true)))
+        training("b-once",listOf(PlayerInput("b",60)))
+        training("b-twice",listOf(PlayerInput("b",60)))
+        repeat(3) { training("s-cancel-$it",listOf(PlayerInput("s",60)),cancel=true) }
+        training("s-draft",listOf(PlayerInput("s",60)),post=false)
+        // Pending edits do not erase the published attendance of Boris.
+        service.execute(member(),"edit-b",WorkflowCommand.SaveDraft("b-twice",3,DraftContent("2026-09-08",
+            listOf(PlayerInput("s",60)),listOf(PaymentInput("a",100)))))
+        service.execute(member(),"selection",WorkflowCommand.CreateDraft("selection","2026-09-08"))
+        open(action=BotAction("add_players",entity="selection"))
+        fun choices() = panel().keyboard!!.rows.flatten().filter { it.text.startsWith("⬜") || it.text.startsWith("✅") }.map { it.text }
+        assertEquals(listOf("⬜ Борис","⬜ Андрей","⬜ Саша"),choices())
+        click("⬜ Саша")
+        assertEquals(listOf("⬜ Борис","⬜ Андрей","✅ Саша"),choices())
+    }
+
+    @Test fun `training can be posted and edited directly from its card without preview`() {
+        seed(); ready(); open(action=BotAction("draft",entity="training"))
+        val token=click("Учесть тренировку")
+        assertEquals(DraftStatus.POSTED,service.draft(member(),"training").status)
+        assertEquals(50L,database.balances(group)[ParticipantId("a")])
+        clickData(token)
+        assertEquals(1,database.history(group).size)
+        click("Кто оплатил"); clickStarts("Андрей"); reply("200"); click("К тренировке")
+        click("Сохранить изменения")
+        assertEquals(DraftStatus.POSTED,service.draft(member(),"training").status)
+        assertEquals(100L,database.balances(group)[ParticipantId("a")])
+        assertEquals(2,database.history(group).size)
+        assertEquals(2,api.sent.count { it.chat.id==chat })
+        open(2,BotAction("draft",entity="training"))
+        click("Кто оплатил",2); clickStarts("Андрей",2); reply("300",2); click("К тренировке",2)
+        assertFalse(panel(2).keyboard!!.rows.flatten().any { it.text=="Сохранить изменения" })
+    }
+
+    @Test fun `selection is private until explicit save and closing discards only personal input`() {
+        seed(); open(); click("Новая тренировка")
+        val before=service.audit(member()).size
+        click("⬜ Андрей"); click("⬜ Борис"); click("Готово · 2")
+        assertTrue(service.drafts(member(),true).isEmpty())
+        assertEquals(before,service.audit(member()).size)
+        val privateEditor=bot.state.editors(1,group).single()
+        val id=privateEditor.draftId
+        assertNull(bot.state.editor(2,group,privateEditor.id))
+        bot=TelegramBot(api,SqliteAccountingStore(directory.resolve("bot.sqlite"),clock),api.bot,clock)
+        assertEquals(2,input(id).players.size)
+        click("Сохранить черновик")
+        assertEquals(2,service.draft(member(),id).content.players.size)
+        assertEquals(before+1,service.audit(member()).size)
+        assertTrue(database.history(group).isEmpty())
+        click("Время всем"); click("2 ч")
+        assertTrue(service.draft(member(),id).content.players.all { it.minutes==60L })
+        click("Закрыть без сохранения")
+        assertTrue(bot.state.editors(1,group).isEmpty())
+        assertTrue(service.draft(member(),id).content.players.all { it.minutes==60L })
+    }
+
+    @Test fun `failed initial posting rolls back creation and keeps the personal form`() {
+        seed(); open(); click("Новая тренировка"); click("⬜ Андрей"); click("Готово · 1")
+        val before=service.audit(member()).size
+        click("Учесть тренировку")
+        assertTrue(service.drafts(member(),true).isEmpty())
+        assertTrue(database.history(group).isEmpty())
+        assertEquals(before,service.audit(member()).size)
+        assertEquals(1,bot.state.editors(1,group).single().content.players.size)
+    }
+
+    @Test fun `simultaneous editors cannot overwrite a saved revision and can reload explicitly`() {
+        seed(); ready()
+        open(action=BotAction("payments",entity="training")); clickStarts("Андрей"); reply("300"); click("К тренировке")
+        open(2,BotAction("payments",entity="training")); clickStarts("Андрей",2); reply("400",2); click("К тренировке",2)
+        click("Сохранить черновик")
+        click("Сохранить черновик",2)
+        assertEquals(300L,service.draft(member(),"training").content.payments.single().amount)
+        assertEquals(400L,input(userId=2).payments.single().amount)
+        click("Открыть свежую запись",2)
+        assertTrue(text(2).contains("Твой ввод сохранён отдельно"))
+        click("Загрузить общую версию",2); click("Загрузить общую версию",2)
+        assertEquals(300L,input(userId=2).payments.single().amount)
+    }
+
+    @Test fun `correcting a training keeps an already recorded repayment`() {
+        seed(); ready(cost=600); open(action=BotAction("draft",entity="training")); click("Учесть тренировку")
+        service.execute(member(2),"return",WorkflowCommand.RecordTransfer("return","b","a",100,"2026-09-08"))
+        assertEquals(200L,database.balances(group)[ParticipantId("a")])
+        click("Кто оплатил"); clickStarts("Андрей"); reply("800"); click("К тренировке")
+        assertEquals(200L,database.balances(group)[ParticipantId("a")])
+        assertTrue(text().contains("600 → 800 ₽"))
+        val token=click("Сохранить изменения"); clickData(token)
+        assertEquals(300L,database.balances(group)[ParticipantId("a")])
+        assertEquals(-300L,database.balances(group)[ParticipantId("b")])
+        assertEquals(3,database.history(group).size)
+    }
+
+    @Test fun `inactive participants are separate in all lists without hiding their debts from accounting`() {
+        seed(); ready(); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        service.execute(member(),"inactive",WorkflowCommand.SetActive("a",2,false))
+        open(action=BotAction("balances"))
+        assertFalse(text().contains("Андрей:"))
+        assertTrue(text().contains("им должны 50 ₽"))
+        clickStarts("Не ходят")
+        assertTrue(text().contains("Андрей: +50 ₽"))
+        open(action=BotAction("participants"))
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Андрей" })
+        clickStarts("Не ходят"); click("Андрей"); click("К участникам")
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Андрей" })
+        open(action=BotAction("add_players",entity="training"))
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text.contains("Андрей") })
+        clickStarts("Не ходят"); assertNotNull(button("✅ Андрей"))
+        click("Готово · 2")
+        assertTrue(text().contains("Андрей (не ходит)"))
+        assertEquals(50L,database.balances(group)[ParticipantId("a")])
+    }
+
+    @Test fun `attendance order is cached across navigation and balances remain fresh`() {
+        seed()
+        val order=service.attendanceOrder(member())
+        assertSame(order,service.attendanceOrder(member()))
+        service.execute(member(),"transfer",WorkflowCommand.RecordTransfer("t","a","b",40,"2026-09-08"))
+        assertSame(order,service.attendanceOrder(member()))
+        service.execute(member(),"rename",WorkflowCommand.RenameParticipant("s",1,"Ааа"))
+        assertEquals("s",service.attendanceOrder(member()).first())
+        ready(); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        assertEquals(listOf("a","b","s"),service.attendanceOrder(member()))
+        service.execute(member(),"cancel",WorkflowCommand.CancelDraft("training",3))
+        assertEquals("s",service.attendanceOrder(member()).first())
+    }
+
+    @Test fun `guest shares one output line with inviter and full roster is never silently truncated`() {
+        repeat(27) { i -> service.execute(member(),"p-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        service.execute(member(),"draft",WorkflowCommand.CreateDraft("many","2026-09-08"))
+        service.execute(member(),"save",WorkflowCommand.SaveDraft("many",1,DraftContent("2026-09-08",
+            (0..26).map { PlayerInput("p$it",60) }+PlayerInput("p0",30,true),listOf(PaymentInput("p0",100)))))
+        open(action=BotAction("draft",entity="many"))
+        assertTrue(text().contains("Игрок 01: 1 ч · +1: 0,5 ч"))
+        assertEquals(1,text().lines().count { it.contains("Игрок 01") && !it.startsWith("Оплатили:") })
+        assertTrue(text().contains("ещё 15"))
+        click("Подробности")
+        assertTrue(text().contains("Игрок 01: 1 ч · +1: 0,5 ч"))
+        repeat(3) { click("Дальше →") }
+        assertTrue(text().contains("Игрок 27"))
     }
 
     @Test fun `same-name participants have distinguishable labels without exposing record IDs`() {
