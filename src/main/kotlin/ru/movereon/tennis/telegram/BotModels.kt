@@ -21,6 +21,8 @@ import ru.movereon.tennis.application.ParticipantProfile
     val field: String? = null,
     val guest: Boolean = false,
     val page: Int = 0,
+    val detailPage: Int = 0,
+    val relatedIds: List<String> = emptyList(),
     val showAll: Boolean = false,
     val command: WorkflowCommand? = null,
     val draft: DraftContent? = null,

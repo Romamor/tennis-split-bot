@@ -28,6 +28,7 @@ class TelegramBotTest {
         TgMessage(inputMessageId++,TgChat(chatId,if(chatId < 0) "supergroup" else "private","Теннис"),user(userId),text,reply))
     private fun panel(userId:Long=1):TgMessage = api.messages[userId to requireNotNull(bot.state.session(userId).panelId)]!!
     private fun text(userId:Long=1) = panel(userId).text.orEmpty()
+    private fun labels(userId:Long=1) = panel(userId).keyboard!!.rows.flatten().joinToString("\n") { it.text }
     private fun button(label:String,userId:Long=1):TgButton = panel(userId).keyboard!!.rows.flatten().firstOrNull { it.text==label }
         ?: error("Button '$label' not found in ${panel(userId)}")
     private fun clickData(data:String,userId:Long=1) {
@@ -413,11 +414,13 @@ class TelegramBotTest {
         service.execute(member(2),"review",WorkflowCommand.ChangeTransfer("same",1,TransferIntent.REVIEW))
         val auditCount=service.audit(member()).size
         open(action=BotAction("history"))
-        assertTrue(text().contains("Андрей → Борис: 50 ₽"))
-        assertTrue(text().contains("Уточняем · пока не учитывается"))
+        assertTrue(labels().contains("Перевод · 08.09.2026 · 50 ₽ ❔"))
+        assertFalse(text().contains("50 ₽"))
         assertEquals(2,panel().keyboard!!.rows.flatten().count { it.text.matches(Regex("[0-9]+\\..*")) })
         assertFalse(text().contains("Добавление участника"))
         clickStarts("1. Перевод")
+        assertTrue(text().contains("Андрей → Борис: 50 ₽"))
+        assertTrue(text().contains("Уточняем · пока не учитывается"))
         click("Изменения записи")
         assertEquals(2,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="audit" })
         clickStarts("08.09 15:00 · Уточнение")
@@ -436,13 +439,13 @@ class TelegramBotTest {
         service.execute(member(),"edit",WorkflowCommand.SaveDraft("training",3,DraftContent("2026-09-09",
             listOf(PlayerInput("a",60)),listOf(PaymentInput("a",999)))))
         open(action=BotAction("history"))
-        assertTrue(text().contains("08.09.2026"))
-        assertTrue(text().contains("100 ₽"))
-        assertFalse(text().contains("999 ₽"))
-        assertTrue(text().contains("Есть неучтённые правки"))
+        assertTrue(labels().contains("08.09.2026"))
+        assertTrue(labels().contains("100 ₽"))
+        assertFalse(labels().contains("999 ₽"))
+        assertTrue(labels().contains("✏️"))
         service.execute(member(),"cancel",WorkflowCommand.CancelDraft("training",4))
         open(action=BotAction("history"))
-        assertTrue(text().contains("Отменена"))
+        assertTrue(labels().contains("❌"))
         assertEquals(1,panel().keyboard!!.rows.flatten().count { it.text.startsWith("1. Тренировка") })
     }
 
@@ -453,7 +456,7 @@ class TelegramBotTest {
         assertEquals(8,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="draft" })
         click("Дальше →")
         assertEquals(1,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="draft" })
-        assertTrue(text().contains("100 ₽"))
+        assertTrue(labels().contains("100 ₽"))
         assertNotNull(button("← Назад"))
     }
 
@@ -787,8 +790,8 @@ class TelegramBotTest {
         val otherHistory=database.history(other.groupId)
         val otherAudit=service.audit(other)
         open(action=BotAction("history"))
-        assertTrue(text().contains("600 ₽"))
-        assertFalse(text().contains("1000 ₽") || text().contains("Другой"))
+        assertTrue(labels().contains("600 ₽"))
+        assertFalse(labels().contains("1000 ₽"))
         service.execute(member(),"cancel",WorkflowCommand.CancelDraft("same-training",service.draft(member(),"same-training").version))
         assertEquals(-100L,database.balances(group)[ParticipantId("a")])
         assertEquals(DraftStatus.POSTED,service.draft(other,"same-training").status)
@@ -797,7 +800,9 @@ class TelegramBotTest {
         assertEquals(otherAudit,service.audit(other))
         val link=bot.state.link(other.groupId,BotAction("history"))
         bot.handle(message("/start $link"))
-        assertTrue(text().contains("1000 ₽") && text().contains("Другой"))
+        assertTrue(labels().contains("1000 ₽"))
+        clickStarts("1. Перевод")
+        assertTrue(text().contains("Другой"))
         assertFalse(text().contains("600 ₽") || text().contains("Андрей"))
     }
 
@@ -884,6 +889,147 @@ class TelegramBotTest {
         assertTrue(text(3).contains("Доступ к группе не подтверждён"))
         assertEquals(600L,service.draft(member(),"training").publishedContent!!.payments.single().amount)
         assertEquals(1,database.history(group).size)
+    }
+
+    @Test fun `unfinished list paginates all personal forms and shared drafts without duplicates`() {
+        seed()
+        repeat(9) { ready("shared-$it") }
+        val editing=DraftEditing(service,bot.state)
+        repeat(10) { editing.open(member(),"private-$it","private-$it","2026-09-08") }
+        val existing=editing.open(member(),"shared-0","existing")
+        bot.state.edit(1,group,existing.id,existing.revision,9000) { it.copy(content=it.content.copy(payments=listOf(PaymentInput("a",200)))) }
+        open(action=BotAction("drafts"))
+        fun targets()=panel().keyboard!!.rows.flatten().mapNotNull { bot.state.action(it.callbackData!!)?.action }
+            .filter { it.kind=="draft" }.map { it.entity }
+        assertFalse(text().contains("Пока пусто"))
+        assertTrue(text().contains("Страница 1 из 3"))
+        assertEquals(8,targets().size)
+        val ids=targets().toMutableList()
+        click("Дальше →"); assertEquals(8,targets().size); ids+=targets()
+        click("Дальше →"); assertEquals(3,targets().size); ids+=targets()
+        assertEquals(19,ids.toSet().size)
+        assertEquals(1,ids.count { it=="shared-0" })
+        assertTrue((0..9).all { "private-$it" in ids })
+        assertFalse(panel().keyboard!!.rows.flatten().any { it.text=="Дальше →" || it.text=="Записать тренировку" })
+    }
+
+    @Test fun `all trainings paginates finished records and can return to unfinished`() {
+        seed()
+        repeat(17) { ready("finished-$it"); service.execute(member(),"post-$it",WorkflowCommand.PostDraft("finished-$it",2)) }
+        open(action=BotAction("drafts"))
+        assertTrue(text().contains("Пока пусто"))
+        click("Показать все")
+        fun count()=panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="draft" }
+        assertEquals(8,count()); assertTrue(text().contains("Страница 1 из 3"))
+        click("Дальше →"); assertEquals(8,count())
+        click("Дальше →"); assertEquals(1,count())
+        click("Только незавершённые")
+        assertTrue(text().contains("Пока пусто")); assertEquals(0,count())
+    }
+
+    @Test fun `growing participant lists show every player through pagination`() {
+        repeat(27) { i -> service.execute(member(),"person-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        service.execute(member(),"training",WorkflowCommand.CommitDraft("many",0,DraftContent("2026-09-08",
+            (0..26).map { PlayerInput("p$it",60) },listOf(PaymentInput("p0",2700)))))
+        val form=TransferForm("test",date="2026-09-08")
+        listOf(BotAction("participants"),BotAction("balances"),BotAction("players",entity="many"),
+            BotAction("payments",entity="many"),BotAction("training_details",entity="many"),BotAction("preview",entity="many"),
+            BotAction("choose_from",form=form),BotAction("choose_to",form=form)).forEach { action ->
+            open(action=action)
+            val seen=mutableSetOf<String>()
+            var pages=0
+            do {
+                val content=text()+"\n"+labels()
+                seen+=Regex("Игрок [0-9]{2}").findAll(content).map { it.value }.toSet()
+                assertTrue(text().length<3500,action.kind)
+                pages++
+                val next=panel().keyboard!!.rows.flatten().any { it.text=="Дальше →" }
+                if(next) click("Дальше →")
+            } while(next && pages<10)
+            assertEquals(4,pages,action.kind)
+            assertEquals(27,seen.size,action.kind)
+        }
+    }
+
+    @Test fun `similar transfers and recovery lists are not silently truncated`() {
+        seed()
+        repeat(10) { service.execute(member(),"pay-$it",WorkflowCommand.RecordTransfer("t$it","a","b",100,"2026-09-08",allowSimilar=true)) }
+        recordViaUi()
+        fun records(kind:String)=panel().keyboard!!.rows.flatten().mapNotNull { bot.state.action(it.callbackData!!)?.action }.filter { it.kind==kind }
+        assertEquals(8,records("transfer").size)
+        click("Дальше →"); assertEquals(2,records("transfer").size)
+        assertTrue(text().contains("Похожий перевод"))
+        click("Это ещё один перевод")
+        assertEquals(11,database.history(group).size)
+        repeat(10) {
+            bot.state.sending("training:$group:missing-$it",group,chat)
+            bot.state.deliveryStatus("training:$group:missing-$it","FAILED")
+        }
+        open(action=BotAction("recovery")); assertEquals(8,records("recover_confirm").size)
+        click("Дальше →"); assertEquals(2,records("recover_confirm").size)
+        click("Карточка тренировки"); click("Назад")
+        assertEquals(2,records("recover_confirm").size)
+        assertNotNull(button("2/2"))
+    }
+
+    @Test fun `historical before and after content is fully paginated and keeps message short`() {
+        repeat(27) { i -> service.execute(member(),"person-$i",WorkflowCommand.AddParticipant("p$i","Игрок %02d".format(i+1))) }
+        val content=DraftContent("2026-09-08",(0..26).map { PlayerInput("p$it",60) },(0..26).map { PaymentInput("p$it",100) })
+        service.execute(member(),"original",WorkflowCommand.CommitDraft("many",0,content,true))
+        service.execute(member(),"change",WorkflowCommand.CommitDraft("many",service.draft(member(),"many").version,
+            content.copy(players=content.players.map { if(it.participantId=="p26") it.copy(minutes=90) else it }),true))
+        val event=service.audit(member()).last()
+        open(action=BotAction("audit",entity=event.id.toString(),back="changes",page=2))
+        repeat(6) { assertTrue(text().length<3500); click("Дальше →") }
+        assertTrue(text().contains("Игрок 27: 1 ч"))
+        assertTrue(text().contains("Игрок 27: 1,5 ч"))
+        assertEquals(2,text().lines().count { it=="Игрок 27: 100 ₽" })
+        click("К изменениям")
+        assertTrue(text().contains("Все изменения"))
+        assertTrue(panel().keyboard!!.rows.flatten().mapNotNull { bot.state.action(it.callbackData!!)?.action }.filter { it.kind=="audit" }.all { it.page==2 })
+    }
+
+    @Test fun `history remains short with many records and long participant names`() {
+        seed()
+        service.execute(member(),"long-a",WorkflowCommand.RenameParticipant("a",2,"А".repeat(100)))
+        service.execute(member(2),"long-b",WorkflowCommand.RenameParticipant("b",2,"Б".repeat(100)))
+        repeat(40) { service.execute(member(),"pay-$it",WorkflowCommand.RecordTransfer("long-$it","a","b",it+1L,"2026-09-08")) }
+        open(action=BotAction("history"))
+        repeat(5) { index ->
+            assertTrue(text().length<200)
+            assertEquals(8,panel().keyboard!!.rows.flatten().count { bot.state.action(it.callbackData!!)?.action?.kind=="transfer" })
+            if(index<4) click("Дальше →")
+        }
+        clickStarts("33. Перевод")
+        assertTrue(text().contains("А".repeat(100)))
+        assertTrue(text().contains("Б".repeat(100)))
+    }
+
+    @Test fun `bot admin and organizer rights are checked separately for each group`() {
+        seed(); ready(); service.execute(member(),"post",WorkflowCommand.PostDraft("training",2))
+        val otherChat=-100789L
+        api.members[otherChat to 900]=TgMember("administrator")
+        api.members[otherChat to 3]=TgMember("administrator")
+        bot.handle(message("/setup",userId=3,chatId=otherChat))
+        val other=VerifiedGroupMember("tg:$otherChat",3,true)
+        assertTrue(service.canManage(other))
+        assertFalse(service.canManage(member(3)))
+        open(3,BotAction("draft_more",entity="training"))
+        assertFalse(labels(3).contains("Отменить тренировку"))
+        val before=service.audit(member())
+        val forbidden=bot.state.action(3,group,BotAction("apply",entity="training",back="draft",
+            command=WorkflowCommand.CancelDraft("training",service.draft(member(),"training").version)))
+        clickData(forbidden,3)
+        assertTrue(text(3).contains("не хватает прав"))
+        assertEquals(before,service.audit(member()))
+        assertEquals(DraftStatus.POSTED,service.draft(member(),"training").status)
+        // Losing bot admin rights in the second group does not affect the first.
+        api.members[otherChat to 900]=TgMember("member")
+        open(3,BotAction("plan"))
+        assertFalse(text(3).contains("Доступ к группе не подтверждён"))
+        val otherLink=bot.state.link(other.groupId,BotAction("menu"))
+        bot.handle(message("/start $otherLink",3))
+        assertTrue(text(3).contains("Доступ к группе не подтверждён"))
     }
 
 }

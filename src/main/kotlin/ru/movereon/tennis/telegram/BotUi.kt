@@ -19,9 +19,14 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
     private fun confirm(command: WorkflowCommand, back: String, entity: String? = null) =
         BotAction("confirm", entity = entity, command = command, back = back)
     fun today(member: VerifiedGroupMember): String = LocalDate.now(clock.withZone(ZoneId.of(service.timeZone(member)))).toString()
-    private fun pagination(action: BotAction, count: Int): List<List<Pair<String,BotAction>>> = listOfNotNull(
-        if (action.page > 0) button("← Назад", action.copy(page = action.page - 1)) else null,
-        if ((action.page + 1) * 8 < count) button("Дальше →", action.copy(page = action.page + 1)) else null)
+    private fun pagination(action: BotAction, count: Int): List<List<Pair<String,BotAction>>> {
+        if(count<=8) return emptyList()
+        return listOf(buildList {
+            if(action.page>0) add("← Назад" to action.copy(page=action.page-1))
+            add("${action.page+1}/${(count-1)/8+1}" to action)
+            if((action.page+1)*8<count) add("Дальше →" to action.copy(page=action.page+1))
+        })
+    }
     private fun <T> page(values: List<T>, index: Int) = values.drop(index.coerceAtLeast(0) * 8).take(8)
 
     fun render(member: VerifiedGroupMember, action: BotAction): Screen {
@@ -110,10 +115,21 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             "drafts" -> {
                 val drafts = service.drafts(member, action.showAll)
                 val local = state.editors(member.userId,member.groupId).filter { it.dirty }
-                Screen("Тренировки${if(!action.showAll) " · незавершённые записи" else " · все записи"}\n${if(drafts.isEmpty()) "Пока пусто." else "Можно дополнить существующую запись."}",
-                    local.take(5).map { button("Продолжить ввод · ${historyDate(it.content.date)}",BotAction("draft",entity=it.draftId,editorId=it.id)) } +
-                    page(drafts, action.page).map { button("${it.content.date} · ${status(it.status)}", BotAction("draft", entity = it.id)) } +
-                        pagination(action, drafts.size) + listOf(
+                val localIds = local.map { it.draftId }.toSet()
+                fun description(content: DraftContent,label: String) =
+                    "${historyDate(content.date)} · ${content.players.count { !it.plusOne }} чел. · ${content.payments.sumOf { it.amount }} ₽ · $label"
+                val entries = (local.map {
+                    Triple(it.content.date,description(it.content,"не сохранено"),BotAction("draft",entity=it.draftId,editorId=it.id))
+                } + drafts.filterNot { it.id in localIds }.map {
+                    Triple(it.content.date,description(it.content,status(it.status)),BotAction("draft",entity=it.id))
+                }).sortedByDescending { it.first }
+                val currentPage=action.page.coerceIn(0,(entries.size-1).coerceAtLeast(0)/8)
+                val current=action.copy(page=currentPage)
+                Screen("Тренировки${if(!action.showAll) " · незавершённые записи" else " · все записи"}\n" +
+                    (if(entries.isEmpty()) "Пока пусто." else "Выбери запись.") +
+                    (if(entries.size>8) "\nСтраница ${currentPage+1} из ${(entries.size-1)/8+1}" else ""),
+                    page(entries,currentPage).mapIndexed { index,it -> button("${currentPage*8+index+1}. ${it.second}",it.third) } +
+                        pagination(current,entries.size) + listOf(
                             button(if(action.showAll) "Только незавершённые" else "Показать все", action.copy(showAll = !action.showAll, page = 0)), home()))
             }
             "draft" -> {
@@ -313,6 +329,15 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                     button(name(it.participant.id).take(45), BotAction("form", form = updated))
                 } + pagination(action, choices.size) + listOf(button("К переводу", BotAction("form", form = form))))
             }
+            "similar_transfers" -> {
+                val command=action.command as WorkflowCommand.RecordTransfer
+                val count=action.relatedIds.size
+                val currentPage=action.page.coerceIn(0,(count-1).coerceAtLeast(0)/8)
+                Screen("Похожий перевод уже записан. Проверь его, прежде чем добавлять ещё один.",
+                    page(action.relatedIds,currentPage).mapIndexed { index,id -> button("Посмотреть запись ${currentPage*8+index+1}",BotAction("transfer",entity=id)) } +
+                        pagination(action.copy(page=currentPage),count) + listOf(
+                            button("Это ещё один перевод",action.copy(kind="apply",command=command.copy(allowSimilar=true))),home()))
+            }
             "transfer_preview" -> {
                 val f = requireNotNull(action.form)
                 checkAccounting(f.from != null && f.to != null && f.amount != null && f.amount > 0 && f.from != f.to, ErrorCode.INVALID_INPUT, "Incomplete transfer")
@@ -363,34 +388,29 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             "history" -> {
                 val entries = service.audit(member).filter { historyFamily(it.kind) != null }
                     .groupBy { historyFamily(it.kind) to it.entityId }.values.sortedByDescending { it.last().id }
-                val rows = mutableListOf<List<Pair<String,BotAction>>>()
-                val descriptions = page(entries,action.page).mapIndexed { index, changes ->
-                    val last = changes.last()
-                    val number = action.page.coerceAtLeast(0).toLong() * 8 + index + 1
-                    val title: String
-                    val description: String
-                    val target = requireNotNull(historyFamily(last.kind))
-                    if(target == "draft") {
-                        val d = Json.decodeFromString<TrainingDraft>(requireNotNull(last.afterJson))
-                        // An unfinished edit must not look like an already applied expense.
-                        val content = d.publishedContent ?: d.content
-                        title = "Тренировка · ${historyDate(content.date)}"
-                        description = "${content.payments.sumOf { it.amount }} ₽ · ${status(d.status)}"
+                val currentPage=action.page.coerceIn(0,(entries.size-1).coerceAtLeast(0)/8)
+                val rows = page(entries,currentPage).mapIndexed { index,changes ->
+                    val last=changes.last()
+                    val number=currentPage*8+index+1
+                    val target=requireNotNull(historyFamily(last.kind))
+                    val label = if(target=="draft") {
+                        val d=Json.decodeFromString<TrainingDraft>(requireNotNull(last.afterJson))
+                        val content=d.publishedContent ?: d.content
+                        val marker=when(d.status) { DraftStatus.POSTED -> "✅"; DraftStatus.CANCELLED -> "❌"; DraftStatus.EDITING -> "✏️"; else -> "📝" }
+                        "$number. Тренировка · ${historyDate(content.date)} · ${content.payments.sumOf { it.amount }} ₽ $marker"
                     } else {
-                        val original = Json.parseToJsonElement(requireNotNull(changes.first().afterJson)).jsonObject
-                        val current = Json.parseToJsonElement(requireNotNull(last.afterJson)).jsonObject
-                        title = "Перевод" + (original["date"]?.jsonPrimitive?.content?.let { " · ${historyDate(it)}" } ?: "")
-                        val transferStatus = current["status"]?.jsonPrimitive?.content ?: "ACTIVE"
-                        description = "${name(original["from"]!!.jsonPrimitive.content)} → ${name(original["to"]!!.jsonPrimitive.content)}: ${original["amount"]!!.jsonPrimitive.content} ₽\n" +
-                            when(transferStatus) { "ACTIVE" -> "Учтён"; "UNDER_REVIEW" -> "Уточняем · пока не учитывается"; else -> "Запись отменена" }
+                        val original=Json.parseToJsonElement(requireNotNull(changes.first().afterJson)).jsonObject
+                        val current=Json.parseToJsonElement(requireNotNull(last.afterJson)).jsonObject
+                        val date=original["date"]?.jsonPrimitive?.content?.let(::historyDate).orEmpty()
+                        val marker=when(current["status"]?.jsonPrimitive?.content ?: "ACTIVE") { "ACTIVE" -> "✅"; "UNDER_REVIEW" -> "❔"; else -> "❌" }
+                        "$number. Перевод · $date · ${original["amount"]!!.jsonPrimitive.content} ₽ $marker"
                     }
-                    rows += button("$number. $title",BotAction(target,entity=last.entityId))
-                    "$number. $title\n$description"
+                    button(label,BotAction(target,entity=last.entityId))
                 }
-                Screen("История\n\n" + descriptions.joinToString("\n\n").ifEmpty { "Тренировок и переводов пока нет." } +
-                    "\n\nОдна запись — одна тренировка или перевод. Последние изменения сверху.",
-                    rows + pagination(action,entries.size) + listOf(button("Все изменения",BotAction("changes")),home()))
+                Screen("История\n" + (if(entries.isEmpty()) "Тренировок и переводов пока нет." else "Выбери запись. Последние изменения сверху."),
+                    rows + pagination(action.copy(page=currentPage),entries.size) + listOf(button("Все изменения",BotAction("changes")),home()))
             }
+
             "changes" -> {
                 val audit = service.audit(member).filter {
                     action.entity == null || it.entityId == action.entity && historyFamily(it.kind) == action.field
@@ -408,12 +428,22 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             }
             "audit" -> {
                 val event = service.audit(member).single { it.id.toString() == action.entity }
+                fun storedContent(text: String?) = text?.let { Json.parseToJsonElement(it).jsonObject["content"] }
+                    ?.let { Json.decodeFromJsonElement<DraftContent>(it) }
+                val parts=listOfNotNull(storedContent(event.beforeJson),storedContent(event.afterJson))
+                val count=parts.maxOfOrNull { maxOf(it.players.count { p -> !p.plusOne },it.payments.size) } ?: 0
+                val detailPage=action.detailPage.coerceIn(0,(count-1).coerceAtLeast(0)/4)
                 fun readable(text: String?): String {
                     if(text == null) return "Не было"
                     val value = Json.parseToJsonElement(text).jsonObject
                     val content = value["content"]?.jsonObject
-                    if(content != null) return (status(DraftStatus.valueOf(value["status"]!!.jsonPrimitive.content)) + "\n" +
-                        summary(Json.decodeFromJsonElement<DraftContent>(content))).take(1400)
+                    if(content != null) {
+                        val draft=Json.decodeFromJsonElement<DraftContent>(content)
+                        val players=draft.players.filterNot { it.plusOne }.drop(detailPage*4).take(4).joinToString("\n") { playerLine(draft,it) }
+                        val payments=draft.payments.drop(detailPage*4).take(4).joinToString("\n") { "${name(it.participantId)}: ${it.amount} ₽" }
+                        return "${status(DraftStatus.valueOf(value["status"]!!.jsonPrimitive.content))} · ${historyDate(draft.date)}\n" +
+                            "Игроки:\n${players.ifEmpty { "На этой странице нет" }}\nОплаты:\n${payments.ifEmpty { "На этой странице нет" }}\nВсего: ${draft.payments.sumOf { it.amount }} ₽"
+                    }
                     if(value["name"] != null) return "Имя: ${value["name"]!!.jsonPrimitive.content}\nTelegram: ${value["telegramUserId"]?.jsonPrimitive?.longOrNull?.let(state::name) ?: "не привязан"}\nХодит: ${if(value["active"]?.jsonPrimitive?.booleanOrNull == true) "да" else "нет"}"
                     if(value["amount"] != null) return "${name(value["from"]?.jsonPrimitive?.content)} → ${name(value["to"]?.jsonPrimitive?.content)}: ${value["amount"]?.jsonPrimitive?.content} ₽\n" +
                         when(value["status"]?.jsonPrimitive?.content ?: "ACTIVE") {
@@ -422,7 +452,11 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                     return auditLabel(event.kind)
                 }
                 Screen("${auditLabel(event.kind)}\nАвтор: ${state.name(event.actorUserId)}\n${event.recordedAt.take(19)} UTC\n\nДо:\n${readable(event.beforeJson)}\n\nПосле:\n${readable(event.afterJson)}",
-                    listOf(button(if(action.back == "changes") "К изменениям" else "К истории",
+                    (if(count>4) listOf(buildList {
+                        if(detailPage>0) add("← Назад" to action.copy(detailPage=detailPage-1))
+                        add("${detailPage+1}/${(count-1)/4+1}" to action.copy(detailPage=detailPage))
+                        if((detailPage+1)*4<count) add("Дальше →" to action.copy(detailPage=detailPage+1))
+                    }) else emptyList()) + listOf(button(if(action.back == "changes") "К изменениям" else "К истории",
                         if(action.back == "changes") BotAction("changes",entity=action.participant,field=action.field,page=action.page)
                         else BotAction("history"))))
             }
@@ -430,10 +464,10 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 checkAccounting(manager,ErrorCode.FORBIDDEN,"Organizer required")
                 val issues = state.troubled(member.groupId)
                 Screen("Карточки, которым нужна проверка. Если карточка уже есть в группе, ответь на неё командой /restore. Если её нет — выбери запись ниже.",
-                    issues.take(8).map { button(if(it.key.startsWith("menu:")) "Общее меню" else "Карточка тренировки", BotAction("recover_confirm",entity=it.key)) } + listOf(home()))
+                    page(issues,action.page).map { button(if(it.key.startsWith("menu:")) "Общее меню" else "Карточка тренировки", BotAction("recover_confirm",entity=it.key,page=action.page)) } + pagination(action,issues.size) + listOf(home()))
             }
             "recover_confirm" -> Screen("Проверь общий чат. Отправлять новую карточку стоит, только если прежней там нет.",
-                listOf(button("В чате нет карточки — отправить", action.copy(kind="recover")),button("Назад",BotAction("recovery"))))
+                listOf(button("В чате нет карточки — отправить", action.copy(kind="recover")),button("Назад",BotAction("recovery",page=action.page))))
             else -> Screen("Открой нужный раздел из меню.",listOf(home()))
         }
         if(editor == null) return screen

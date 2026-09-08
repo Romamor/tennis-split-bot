@@ -54,10 +54,8 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
         } catch (failure: SimilarTransferFound) {
             val plan = requireNotNull(state.plan(update.id))
             val command = plan.action.command as WorkflowCommand.RecordTransfer
-            val screen = Screen("Похожий перевод уже записан. Проверь его, прежде чем добавлять ещё один.",
-                failure.transferIds.take(5).map { listOf("Посмотреть запись" to BotAction("transfer",entity=it)) } +
-                    listOf(listOf("Это ещё один перевод" to plan.action.copy(command=command.copy(allowSimilar=true))), listOf("В меню" to BotAction("menu"))))
-            show(user.id,plan.groupId,update.id,screen,moveToBottom)
+            val action = plan.action.copy(kind="similar_transfers",relatedIds=failure.transferIds,command=command)
+            show(user.id,plan.groupId,update.id,ui.render(verify(plan.groupId,user.id),action),moveToBottom)
         } catch (failure: AccountingException) {
             val plan = state.plan(update.id) ?: currentPlan
             if(plan != null) show(user.id,plan.groupId,update.id,Screen(explain(failure),listOf(listOf("Открыть свежую запись" to errorBack(plan.action)),listOf("В меню" to BotAction("menu")))),moveToBottom)
