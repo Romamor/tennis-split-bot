@@ -113,7 +113,7 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
                 Screen("Тренировки${if(!action.showAll) " · незавершённые записи" else " · все записи"}\n${if(drafts.isEmpty()) "Пока пусто." else "Можно дополнить существующую запись."}",
                     local.take(5).map { button("Продолжить ввод · ${historyDate(it.content.date)}",BotAction("draft",entity=it.draftId,editorId=it.id)) } +
                     page(drafts, action.page).map { button("${it.content.date} · ${status(it.status)}", BotAction("draft", entity = it.id)) } +
-                        pagination(action, drafts.size) + listOf(button("Записать тренировку", BotAction("create_draft", field = today(member))),
+                        pagination(action, drafts.size) + listOf(
                             button(if(action.showAll) "Только незавершённые" else "Показать все", action.copy(showAll = !action.showAll, page = 0)), home()))
             }
             "draft" -> {
