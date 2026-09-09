@@ -135,7 +135,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (button == null) {
                 if (message.ephemeralId != null && message.from?.id == identity.id && message.receiver?.id == user.id)
                     closePanel(user.id, chat, message.ephemeralId)
-                answer(callback, "Это старое меню. Нажми «Играл» на актуальной карточке или /start в личном чате.")
+                answer(callback, "Это старое меню. Нажми «Участие» на актуальной карточке или /start в личном чате.")
                 return null
             }
             checkAccounting(button.owner == null || button.owner == user.id, ErrorCode.FORBIDDEN, "Эта панель открыта для другого участника")
@@ -229,7 +229,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 if (requested.phase !in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && existing==null)
                     return plan(action.copy(kind="player",user=target))
                 var draft=if (action.kind=="reload_attendance") newAttendanceDraft(auth,action.id,target,false)
-                    else existing ?: newAttendanceDraft(auth,action.id,target,chat<0 && action.kind=="player" && action.user==0L)
+                    else existing ?: newAttendanceDraft(auth,action.id,target,action.kind=="player" && target==user.id)
                 val same=draft.training==action.id && draft.user==target
                 if (action.kind=="change" && same)
                     draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.valueOf(action.option),action.value))
@@ -321,7 +321,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         if (plan.chat < 0 && plan.screen.kind in setOf("private_link", "close_panel")) {
             closePanel(plan.user, plan.chat, plan.ephemeral)
-            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Играл» на общей карточке." else null
+            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Участие» на общей карточке." else null
             plan.callback?.let { runCatching { api.answer(it, text, text != null) } }
             return
         }

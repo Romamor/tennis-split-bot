@@ -81,17 +81,22 @@ class Screens(private val service: SettlementService, private val state: Interac
                     if (t.phase == TrainingPhase.REVIEW) append("\nДо повторного завершения действует прежний расчёт.")
                 }
                 if (action.kind == "public") {
-                    row("Играл", next("player", target = 0))
+                    row("Участие", next("player", target = 0))
                     val link = state.button(next("training"), null, "link:${t.groupId}:${t.id}", permanent = true)
                     rows += listOf(TgButton("Открыть у бота", url = "https://t.me/$botName?start=n_$link"))
                 } else {
                     pages(index, maxOf(1, (p.size + 7) / 8))
-                    row("Моё участие", next("player", target = a.userId))
+                    val participationLabel = when {
+                        t.phase !in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW) -> "Участие"
+                        t.players.any { it.userId == a.userId && it.playing } -> "Изменить участие"
+                        else -> "Играл"
+                    }
+                    row(participationLabel, next("player", target = a.userId))
                     if (service.isAdmin(a)) {
                         if (state.delivery("training:${t.groupId}:${t.id}")?.status in setOf("UNKNOWN", "FAILED"))
                             row("Восстановить сообщение в группе", next("recover_confirm"))
                         if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
-                            row("Изменить игроков", next("roster", option = "players"))
+                            row("Игроки", next("roster", option = "players"))
                             row("Изменить название и время", next("edit_details", version = t.version))
                             row("Завершить", next("preview_finish", version = t.version))
                         }
@@ -172,9 +177,9 @@ class Screens(private val service: SettlementService, private val state: Interac
                     })
                 }
                 pages(p.index, p.pages)
-                if (service.isAdmin(a) && action.option == "players") row("Добавить аккаунт Telegram", next("pick_account"))
+                if (service.isAdmin(a) && action.option == "players") row("Найти в Telegram", next("pick_account"))
                 if (action.option == "players") row("К тренировке", next("training", option = "")) else menu()
-                if (action.kind == "transfer_people") "С кем рассчитываемся?" else "Участники группы · ${p.total}\nСверху те, кто чаще играл. Список пополняется, когда люди взаимодействуют с ботом."
+                if (action.kind == "transfer_people") "С кем рассчитываемся?" else "Известные участники группы · ${p.total}\nВыбери, кого добавить или изменить. Можно выбрать и того, кто ещё не играл.\nНет человека в списке — нажми «Найти в Telegram»."
             }
             "administrators", "admin_candidates" -> {
                 val p=service.administrators(requireNotNull(a),telegramAdmins,action.kind=="admin_candidates",action.page)
