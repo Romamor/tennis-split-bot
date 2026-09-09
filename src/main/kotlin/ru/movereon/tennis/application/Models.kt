@@ -12,7 +12,7 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
     val name:String get()=(firstName+" "+lastName).trim().ifEmpty { "Участник $id" }
 }
 @Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String)
-data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean)
+data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)
 @Serializable enum class TrainingPhase { OPEN,CLOSED,REVIEW,CANCELLED }
@@ -37,11 +37,13 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
     @Serializable data class EditTraining(val id:String,val version:Long,val title:String,val date:String,val startTime:String):SettlementCommand
     @Serializable data class ChangeAttendance(val id:String,val userId:Long,val change:AttendanceChange,val value:Long=0):SettlementCommand
     @Serializable data class SaveAttendance(val id:String,val userId:Long,val expected:Attendance?,val attendance:Attendance):SettlementCommand
+    @Serializable data class AddPlayers(val id:String,val version:Long,val users:List<Long>):SettlementCommand
     @Serializable data class FinishTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class ReopenTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class CancelTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class SetAdministrator(val userId:Long,val enabled:Boolean):SettlementCommand
     @Serializable data class RecordTransfer(val id:String,val from:Long,val to:Long,val amount:Long,val date:String,val note:String="",val onBehalfOf:Long?=null,val allowSimilar:Boolean=false):SettlementCommand
     @Serializable data class ChangeTransfer(val id:String,val version:Long,val change:TransferChange,val onBehalfOf:Long?=null):SettlementCommand
+    @Serializable data class EditTransferAmount(val id:String,val version:Long,val amount:Long,val allowSimilar:Boolean=false):SettlementCommand
 }
 class DuplicateTransfer(val ids:List<String>):IllegalStateException("Похожий перевод уже есть")

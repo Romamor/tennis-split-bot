@@ -9,7 +9,9 @@ import java.math.BigInteger
 import ru.movereon.tennis.core.*
 
 /** One normalized database. Pre-release legacy schemas are intentionally not migrated. */
-class Database(path: Path) {
+class Database(path: Path, private val trace:((String)->Unit)?=null) {
+    val readTransactions=java.util.concurrent.atomic.AtomicLong()
+    val writeTransactions=java.util.concurrent.atomic.AtomicLong()
     val path=path.toAbsolutePath().normalize()
     init {
         Files.createDirectories(this.path.parent)
@@ -19,8 +21,16 @@ class Database(path: Path) {
             if(version==0) {
                 require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                 val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=1") }
-            } else require(app==APPLICATION_ID && version==1) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=2") }
+            } else {
+                require(app==APPLICATION_ID && version in 1..2) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                if(version==1) {
+                    c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
+                    c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
+                    refreshAttendance(c)
+                    c.createStatement().use { it.execute("PRAGMA user_version=2") }
+                }
+            }
         }
         connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
     }
@@ -30,9 +40,12 @@ class Database(path: Path) {
     fun <T> read(block:(Connection)->T):T=transaction(false,block)
     fun <T> write(block:(Connection)->T):T=transaction(true,block)
     private fun <T> transaction(write:Boolean,block:(Connection)->T):T=connect().use { c ->
+        if(write) writeTransactions.incrementAndGet() else readTransactions.incrementAndGet()
+        val previous=sqlTrace.get();sqlTrace.set(trace)
         c.createStatement().use { it.execute(if(write) "BEGIN IMMEDIATE" else "BEGIN") }
         try { block(c).also { c.createStatement().use { it.execute("COMMIT") } } }
         catch(t:Throwable) { try { c.createStatement().use { it.execute("ROLLBACK") } } catch(r:Throwable) { t.addSuppressed(r) };throw t }
+        finally { sqlTrace.set(previous) }
     }
     fun balances(groupId:Long):Map<Long,Long> = read { balances(it,groupId) }
     internal fun balances(c:Connection,groupId:Long):Map<Long,Long> = sums(c,
@@ -52,7 +65,7 @@ class Database(path: Path) {
         check(totals.values.all { it==BigInteger.ZERO }) { "Несбалансированная операция" }
         val groups=sqlQuery(c,"SELECT id FROM groups") { it.getLong(1) }
         groups.forEach { validateBalances(balances(c,it).mapKeys { (id,_)->ParticipantId(id.toString()) }) }
-        "Схема 1 (новая модель): ${groups.size} групп, ${totals.size} денежных операций; целостность в порядке"
+        "Схема 2 (новая модель): ${groups.size} групп, ${totals.size} денежных операций; целостность в порядке"
     }
     fun backup(destination:Path):Path {
         val target=destination.toAbsolutePath().normalize();require(!Files.exists(target)) { "Копия уже существует" }
@@ -64,8 +77,23 @@ class Database(path: Path) {
 }
 
 internal fun sqlUpdate(c:Connection,sql:String,vararg params:Any?):Int = c.prepareStatement(sql).use { s ->
+    sqlTrace.get()?.invoke(sql)
     params.forEachIndexed { i,p->s.setObject(i+1,p) };s.executeUpdate()
 }
 internal fun <T> sqlQuery(c:Connection,sql:String,vararg params:Any?,map:(ResultSet)->T):List<T> = c.prepareStatement(sql).use { s ->
+    sqlTrace.get()?.invoke(sql)
     params.forEachIndexed { i,p->s.setObject(i+1,p) };s.executeQuery().use { r -> buildList { while(r.next())add(map(r)) } }
+}
+
+private val sqlTrace=ThreadLocal<((String)->Unit)?>()
+internal fun refreshAttendance(c:Connection,group:Long?=null) {
+    val where=if(group==null) "" else " WHERE group_id=?"
+    val params=if(group==null) emptyArray<Any>() else arrayOf<Any>(group)
+    sqlUpdate(c,"""UPDATE group_users SET attendance_count=(SELECT COUNT(*) FROM training_players p
+        JOIN trainings t ON t.group_id=p.group_id AND t.id=p.training_id
+        WHERE p.group_id=group_users.group_id AND p.user_id=group_users.user_id
+        AND p.applied_playing=1 AND t.status IN ('CLOSED','REVIEW')),
+        has_played=EXISTS(SELECT 1 FROM training_players p JOIN trainings t ON t.group_id=p.group_id AND t.id=p.training_id
+        WHERE p.group_id=group_users.group_id AND p.user_id=group_users.user_id AND t.status<>'CANCELLED'
+        AND (p.playing=1 OR p.applied_playing=1))$where""",*params)
 }

@@ -11,17 +11,21 @@ import java.time.Clock
 import java.util.UUID
 
 @Serializable data class ScreenAction(val kind: String, val group: Long, val id: String = "", val page: Int = 0,
-    val user: Long = 0, val value: Long = 0, val version: Long = 0, val option: String = "")
+    val user: Long = 0, val value: Long = 0, val version: Long = 0, val option: String = "",
+    val back: ScreenAction? = null, val resume: ScreenAction? = null)
 @Serializable data class InputForm(val kind: String, val group: Long, val training: String = "", val user: Long = 0,
     val version: Long = 0, val title: String = "Теннис", val date: String = "", val time: String = "19:00",
     val amount: Long = 0, val direction: String = "out", val note: String = "", val request: Int = 0,
-    val attendance: AttendanceDraft? = null)
-@Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance)
+    val attendance: AttendanceDraft? = null, val selectedUsers: List<Long> = emptyList(), val page: Int = 0,
+    val order: List<Long>? = null, val origin: ScreenAction? = null, val baseline: String? = null, val transfer: String = "",
+    val similar: List<String> = emptyList())
+@Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
+    val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
-    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false)
+    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
 
@@ -68,7 +72,16 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun rememberEphemeral(user: Long, chat: Long, id: Long?) = database.write { c ->
         sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=? WHERE user_id=? AND chat_id=?", id, user, chat)
     }
-    fun button(action: ScreenAction, owner: Long?, scope: String, permanent: Boolean = false): String = database.write { c ->
+    private val buttonConnection=ThreadLocal<java.sql.Connection>()
+    fun <T> buttonBatch(block:()->T):T {
+        if(buttonConnection.get()!=null) return block()
+        return database.write { c ->
+            buttonConnection.set(c)
+            try { block() } finally { buttonConnection.remove() }
+        }
+    }
+    private fun <T> buttonWrite(block:(java.sql.Connection)->T):T = buttonConnection.get()?.let(block) ?: database.write(block)
+    fun button(action: ScreenAction, owner: Long?, scope: String, permanent: Boolean = false): String = buttonWrite { c ->
         val payload = json.encodeToString(action)
         val hash = MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }
         val found = sqlQuery(c, """SELECT token FROM bot_buttons WHERE scope=? AND owner_id IS ? AND payload_hash=?

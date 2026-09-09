@@ -40,8 +40,8 @@ class SelfServiceBotTest {
     }
     private lateinit var bot: SelfServiceBot
     private var updateId = 1L
-    private fun setup() {
-        bot = SelfServiceBot(api, Database(dir.resolve("new.sqlite")), fake.bot, clock)
+    private fun setup(trace:((String)->Unit)?=null) {
+        bot = SelfServiceBot(api, Database(dir.resolve("new.sqlite"),trace), fake.bot, clock)
         for (id in 1L..4L) bot.service.remember(Account(id, "User $id"))
         for (group in listOf(-1L, -2L)) {
             bot.service.register(SettlementGroup(group, if (group == -1L) "Первая группа" else "Вторая группа", "Europe/Moscow"))
@@ -84,11 +84,11 @@ class SelfServiceBotTest {
         assertEquals(1, bot.service.trainings(Access(-1, 1)).total)
         val card = publicCard()
         assertTrue(card.text!!.contains("Первая группа"))
-        assertFalse(card.keyboard!!.rows.flatten().any { it.text == "Завершить" })
+        assertFalse(card.keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") || it.text.contains("Применить правки") })
         click(2, "Участие", card)
         var personal = ephemeralMessages.getValue(-1L to 2L)
         assertTrue(personal.text!!.contains("Играл 1 ч"))
-        assertFalse(personal.keyboard!!.rows.flatten().any { it.text == "Завершить" })
+        assertFalse(personal.keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") || it.text.contains("Применить правки") })
         click(2, "Платил", personal)
         personal = ephemeralMessages.getValue(-1L to 2L)
         val firstDelta = click(2, "+50", personal)
@@ -125,7 +125,7 @@ class SelfServiceBotTest {
         setup(); create()
         val adminCard = latest(1)
         fake.members[-1L to 1L] = TgMember("member")
-        click(1, "Завершить", adminCard)
+        click(1, "Учесть тренировку", adminCard)
         assertTrue(answers.last().contains("администратору"))
         val training = bot.service.trainings(Access(-1, 1)).items.single()
         val forged = bot.state.button(ScreenAction("finish", -1, training.id, version = training.version), 2, "personal:2:2")
@@ -159,7 +159,7 @@ class SelfServiceBotTest {
 
     @Test fun `manual amount and real transfer confirmation work without changing another user`() {
         setup(); create(); open(2)
-        click(2, "Записать перевод"); click(2, "User 1"); click(2, "Я перевёл")
+        click(2,"Мои расчёты"); click(2, "Записать перевод"); click(2, "User 1"); click(2, "Я отправил")
         message(2, "450")
         assertEquals(emptyMap(), bot.service.balances(Access(-1, 2)))
         val recorded = click(2, "Деньги переданы")
@@ -168,7 +168,7 @@ class SelfServiceBotTest {
         assertNull(bot.state.form(2, 2))
         click(2, "Уточнить")
         assertEquals(mapOf(1L to 0L, 2L to 0L), bot.service.balances(Access(-1, 2)))
-        click(2, "Деньги получены")
+        click(2, "Всё верно")
         assertEquals(mapOf(1L to -450L, 2L to 450L), bot.service.balances(Access(-1, 2)))
     }
 
@@ -379,7 +379,7 @@ class SelfServiceBotTest {
     }
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
-        setup();create();click(2,"Участие",publicCard())
+        setup();create();click(2,"Участие",publicCard());confirm(2);click(2,"Участие",publicCard())
         click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
         val panel=ephemeralMessages.getValue(-1L to 2L)
         val link=panel.keyboard!!.rows.flatten().single { it.text=="В меню группы" }
@@ -464,23 +464,107 @@ class SelfServiceBotTest {
     }
 
     @Test fun `administrator can add a known first time player and an unknown Telegram member without crossing groups`() {
-        setup();create();click(1,"Игроки")
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="User 2" })
-        click(1,"User 2");click(1,"Играл · 1 ч");click(1,"Всё правильно")
+        setup();create();click(1,"Игроки");click(1,"Участники группы")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.contains("User 2") })
+        click(1,"User 2");click(1,"Добавить ·")
         val training=bot.service.trainings(Access(-1,1)).items.single()
         assertTrue(training.players.single().playing)
         assertEquals(0,bot.service.roster(Access(-1,1)).items.single { it.account.id==2L }.attendance)
-        click(1,"Игроки");click(1,"Найти в Telegram")
+        click(1,"Участники группы");click(1,"Добавить человека")
         val form=bot.state.form(1,1)!!
         fake.members[-1L to 99L]=TgMember("member")
         bot.handle(TgUpdate(updateId++,TgMessage(2000,TgChat(1,"private"),TgUser(1,firstName="User 1"),
             usersShared=TgUsersShared(form.request,listOf(TgSharedUser(99,"Новичок"))))))
-        click(1,"Играл · 1 ч");click(1,"Всё правильно")
+        click(1,"Добавить ·")
         val saved=bot.service.training(Access(-1,1),training.id)
         assertEquals(setOf(2L,99L),saved.players.filter { it.playing }.map { it.userId }.toSet())
         assertTrue(bot.service.roster(Access(-1,1)).items.any { it.account.id==99L })
         assertFalse(bot.service.roster(Access(-2,3)).items.any { it.account.id==99L })
         assertEquals(3,bot.service.history(Access(-1,1)).total)
+    }
+
+    @Test fun `bulk selection survives pagination and restart with one confirmed history entry`() {
+        setup();create()
+        for(id in 5L..28L) {
+            bot.service.remember(Account(id,"Player $id"));bot.service.rememberMembership(-1,id,true)
+        }
+        click(1,"Игроки");click(1,"Участники группы")
+        click(1,"Player 10")
+        val stale=latest(1)
+        click(1,"Дальше")
+        val candidate=latest(1).keyboard!!.rows.flatten().first { it.text.startsWith("▫️") }.text
+        click(1,candidate)
+        val selection=bot.state.form(1,1)!!.selectedUsers
+        assertEquals(2,selection.size)
+        assertEquals(1,bot.service.history(Access(-1,1)).total)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        click(1,"Назад")
+        assertEquals(selection,bot.state.form(1,1)!!.selectedUsers)
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="✅ Player 10" })
+        click(1,"Добавить ·",stale)
+        assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.isEmpty())
+        val confirmed=click(1,"Добавить · 2")
+        bot.handle(confirmed)
+        val t=bot.service.trainings(Access(-1,1)).items.single()
+        assertEquals(selection.toSet(),t.players.map { it.userId }.toSet())
+        assertEquals(2,bot.service.history(Access(-1,1)).total)
+        click(1,"Участники группы")
+        assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("Player 10") })
+        click(1,"Отмена")
+        assertEquals(2,bot.service.history(Access(-1,1)).total)
+    }
+
+    @Test fun `concurrent self registration and revoked administrator cannot be overwritten by bulk selection`() {
+        setup();create();click(1,"Игроки");click(1,"Участники группы")
+        click(1,"User 2");click(1,"User 3")
+        click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        click(1,"Добавить · 2")
+        assertTrue(latest(1).text!!.contains("Состав изменился"))
+        assertEquals(listOf(3L),bot.state.form(1,1)!!.selectedUsers)
+        fake.members[-1L to 1L]=TgMember("member")
+        click(1,"Добавить · 1")
+        val t=bot.service.trainings(Access(-1,1)).items.single()
+        assertEquals(2L,t.players.single().userId)
+        assertEquals(300,t.players.single().paid)
+        fake.members[-1L to 1L]=TgMember("administrator")
+        click(1,"Добавить · 1")
+        assertEquals(2,bot.service.training(Access(-1,1),t.id).players.size)
+        click(1,"Участники группы")
+        fake.members[-1L to 1L]=TgMember("member")
+        message(1,"добавить")
+        assertNull(bot.state.form(1,1))
+        assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("Добавить ·") })
+    }
+
+    @Test fun `editing a player returns to the same roster page and keeps summary visible`() {
+        setup();create()
+        val auth=Access(-1,1,true)
+        val t=bot.service.trainings(auth).items.single()
+        val ids=(5L..16L).toList()
+        ids.forEach { bot.service.remember(Account(it,"Player $it"));bot.service.rememberMembership(-1,it,true) }
+        bot.service.execute(auth,"many",SettlementCommand.AddPlayers(t.id,t.version,ids))
+        click(1,"Игроки");click(1,"Дальше")
+        click(1,"Player 13");click(1,"+0,5 ч");click(1,"Платил");click(1,"Добавить гостя")
+        click(1,"Всё правильно")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="2 / 2" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Player 13 · 1,5 ч · +1 · 300 ₽" })
+        assertEquals(1,bot.service.training(auth,t.id).players.count { it.paid>0 })
+    }
+
+    @Test fun `a page of bulk additions keeps history below Telegram message limit`() {
+        setup();create()
+        val auth=Access(-1,1,true)
+        val id=bot.service.trainings(auth).items.single().id
+        repeat(8) { batch ->
+            val users=(1L..27L).map { 100+batch*27+it }
+            users.forEach { bot.service.remember(Account(it,"Длинное имя ".repeat(10)));bot.service.rememberMembership(-1,it,true) }
+            bot.service.execute(auth,"batch:$batch",SettlementCommand.AddPlayers(id,bot.service.training(auth,id).version,users))
+        }
+        val history=bot.screens.render(ScreenAction("history",-1,id),auth,"history-test",1)
+        assertTrue(history.text.length<=4096)
+        assertTrue(history.text.contains("Добавил игроков: 27"))
+        assertTrue(history.keyboard.rows.flatten().any { it.text=="Дальше ›" })
+        assertEquals(216,bot.service.training(auth,id).players.size)
     }
 
     @Test fun `confirmation cannot overwrite an administrator change and replay cannot erase a new draft`() {
@@ -502,4 +586,125 @@ class SelfServiceBotTest {
         assertEquals(newDraft,bot.state.attendanceDraft(2,-1))
         assertEquals(count,bot.service.history(Access(-1,2)).total)
     }
+    @Test fun `member menu has two primary items and transfer amount edits preserve review`() {
+        setup();bot.service.rememberMembership(-2,2,false);open(2)
+        assertEquals(listOf("🏓 Мои тренировки","💰 Мои расчёты"),latest(2).keyboard!!.rows.flatten().map { it.text })
+        click(2,"Мои расчёты");click(2,"Записать перевод");click(2,"User 1");click(2,"Я получил")
+        message(2,"300");click(2,"Деньги переданы")
+        val original=bot.service.transfers(Access(-1,2)).items.single()
+        click(2,"Уточнить перевод");click(2,"Исправить сумму");message(2,"450");click(2,"Сохранить сумму")
+        val edited=bot.service.transfer(Access(-1,2),original.id)
+        assertEquals(450,edited.amount);assertEquals(PaymentStatus.REVIEW,edited.status)
+        click(2,"История изменений")
+        assertTrue(latest(2).text!!.contains("300 ₽ → 450 ₽"));assertFalse(latest(2).text!!.contains(" UTC"))
+        click(2,"Назад")
+        assertTrue(bot.service.balances(Access(-1,2)).values.all { it==0L })
+        click(2,"Всё верно")
+        assertEquals(mapOf(1L to 450L,2L to -450L),bot.service.balances(Access(-1,2)))
+        click(2,"Назад");click(2,"Назад");click(2,"Баланс группы")
+        assertTrue(latest(2).text!!.contains("User 2 · баланс: -450 ₽"))
+        assertFalse(Regex("долг|долж",RegexOption.IGNORE_CASE).containsMatchIn(latest(2).text!!))
+    }
+
+    @Test fun `back warns on unsaved selection and continues or discards without writing history`() {
+        setup();create();click(1,"Игроки");click(1,"Участники группы");click(1,"User 2")
+        val selected=bot.state.form(1,1)!!.selectedUsers
+        click(1,"Отмена")
+        assertTrue(latest(1).text!!.contains("несохранённые"))
+        click(1,"Продолжить ввод")
+        assertEquals(selected,bot.state.form(1,1)!!.selectedUsers)
+        click(1,"Отмена");click(1,"Сбросить и выйти")
+        assertNull(bot.state.form(1,1));assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.isEmpty())
+        assertEquals(1,bot.service.history(Access(-1,1)).total)
+        click(1,"Участники группы");click(1,"Отмена")
+        assertFalse(latest(1).text!!.contains("несохранённые"))
+    }
+
+    @Test fun `back from dirty attendance warns in group and discards only that input`() {
+        setup();create();click(2,"Участие",publicCard());click(3,"Участие",publicCard())
+        click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
+        click(2,"Продолжить ввод",ephemeralMessages.getValue(-1L to 2L))
+        assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
+        click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
+        click(2,"Сбросить и выйти",ephemeralMessages.getValue(-1L to 2L))
+        assertNull(bot.state.attendanceDraft(2,-1));assertNotNull(bot.state.attendanceDraft(3,-1))
+        assertEquals(1,bot.service.history(Access(-1,1)).total)
+    }
+
+    @Test fun `back from history returns to training and original training list page`() {
+        setup()
+        repeat(20) { bot.service.execute(Access(-1,1,true),"new:$it",SettlementCommand.CreateTraining("t$it","Тренировка $it","2026-09-09","19:00")) }
+        open(1);click(1,"Управление тренировками");click(1,"Дальше");click(1,"Дальше")
+        val list=latest(1)
+        click(1,"Тренировка")
+        val title=latest(1).text!!.lineSequence().first { it.startsWith("Тренировка") }
+        click(1,"История изменений");click(1,"Назад")
+        assertTrue(latest(1).text!!.contains(title))
+        click(1,"Назад")
+        assertEquals(list.text,latest(1).text)
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="3 / 3" })
+    }
+
+    @Test fun `selection order survives attendance changes and names have profile verification`() {
+        setup();create()
+        for(id in 5L..16L) { bot.service.remember(Account(id,"Тёзка"));bot.service.rememberMembership(-1,id,true) }
+        click(1,"Игроки");click(1,"Участники группы")
+        val original=bot.state.form(1,1)!!.order
+        click(1,"Тёзка · #1")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.url=="tg://user?id=5" })
+        click(1,"Назад")
+        click(1,"Тёзка · #1");click(1,"Выбрать этого участника")
+        val auth=Access(-1,1,true)
+        bot.service.execute(auth,"old-create",SettlementCommand.CreateTraining("old","Ранее","2026-09-08","19:00"))
+        bot.service.execute(auth,"old-join",SettlementCommand.AddPlayers("old",1,listOf(16)))
+        bot.service.execute(auth,"old-pay",SettlementCommand.ChangeAttendance("old",16,AttendanceChange.MARK_PAID))
+        bot.service.execute(auth,"old-finish",SettlementCommand.FinishTraining("old",bot.service.training(auth,"old").version))
+        click(1,"Дальше");click(1,"Назад")
+        assertEquals(original,bot.state.form(1,1)!!.order)
+        assertEquals(listOf(5L),bot.state.form(1,1)!!.selectedUsers)
+        click(1,"Отмена");click(1,"Сбросить и выйти");click(1,"Участники группы")
+        assertEquals(16L,bot.state.form(1,1)!!.order!!.first())
+    }
+
+    @Test fun `render batches button writes and roster reads use prepared attendance`() {
+        val queries=mutableListOf<String>();setup { queries+=it };create()
+        val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
+        val db=bot.service.database
+        val before=db.writeTransactions.get()
+        val rendered=bot.screens.render(ScreenAction("training",-1,t.id),auth,"batch-measure",1)
+        val batch=db.writeTransactions.get()-before
+        val actions=rendered.tokens.map { bot.state.button(it)!!.action }
+        val previous=db.writeTransactions.get()
+        actions.forEach { bot.state.button(it,1,"individual-measure") }
+        val individual=db.writeTransactions.get()-previous
+        assertEquals(1,batch);assertEquals(actions.size.toLong(),individual)
+        queries.clear();repeat(3) { bot.service.roster(auth) }
+        assertFalse(queries.any { it.contains("training_players",ignoreCase=true) })
+        println("Button transactions: individual=$individual, batch=$batch; roster training scans=0")
+    }
+
+    @Test fun `accounting controls use approved labels and preserve balances while correcting`() {
+        setup();create();click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт")
+        assertTrue(latest(1).text!!.contains("Учтена"))
+        val balances=bot.service.balances(Access(-1,1))
+        click(1,"Исправить тренировку")
+        assertEquals(balances,bot.service.balances(Access(-1,1)))
+        click(1,"Применить правки");click(1,"Подтвердить правки")
+        assertEquals(balances,bot.service.balances(Access(-1,1)))
+        assertTrue(latest(1).text!!.contains("Учтена"))
+    }
+
+    @Test fun `unchanged details exit directly and changed details require an explicit discard`() {
+        setup();create();click(1,"Изменить название и время");click(1,"Отмена")
+        assertFalse(latest(1).text!!.contains("несохранённые"))
+        val before=bot.service.trainings(Access(-1,1)).items.single()
+        click(1,"Изменить название и время");message(1,"Другое название");click(1,"Отмена")
+        assertTrue(latest(1).text!!.contains("несохранённые"))
+        click(1,"Продолжить ввод")
+        assertEquals("Другое название",bot.state.form(1,1)!!.title)
+        click(1,"Отмена");click(1,"Сбросить и выйти")
+        assertEquals(before,bot.service.training(Access(-1,1),before.id))
+    }
+
 }

@@ -38,6 +38,34 @@ class SettlementServiceTest {
         finish()
     }
 
+    @Test fun `bulk addition is atomic group scoped admin only and replay safe`() {
+        val s=setup();s.create()
+        val command=SettlementCommand.AddPlayers("t",1,listOf(1,2,3))
+        assertFailsWith<AccountingException> { s.run(command,member) }
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.AddPlayers("t",1,listOf(1,4))) }
+        assertTrue(s.training(admin,"t").players.isEmpty())
+        val receipt=s.execute(admin,"bulk",command)
+        assertEquals(receipt,s.execute(admin,"bulk",command))
+        val t=s.training(admin,"t")
+        assertEquals(2,t.version)
+        assertEquals(3,t.players.size)
+        assertTrue(t.players.all { it.playing && it.minutes==60L && it.paid==0L && it.guestMinutes==0L })
+        assertEquals(2,s.history(admin).total)
+        assertTrue(s.balances(admin).values.all { it==0L })
+        assertEquals(0,s.trainings(other).total)
+    }
+
+    @Test fun `bulk addition preserves existing players and rejects stale or closed training`() {
+        val s=setup();s.create();s.change(2,AttendanceChange.JOIN);s.change(2,AttendanceChange.SET_PAID,600)
+        s.change(2,AttendanceChange.SET_MINUTES,90)
+        val before=s.training(admin,"t")
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.AddPlayers("t",1,listOf(1,2))) }
+        s.run(SettlementCommand.AddPlayers("t",before.version,listOf(1,2)))
+        assertEquals(before.players.single(),s.training(admin,"t").players.single { it.userId==2L })
+        s.finish()
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.AddPlayers("t",s.training(admin,"t").version,listOf(3))) }
+    }
+
     @Test fun `reopen keeps previous balances and attendance until close and cancellation keeps actual transfers`() {
         val s = setup(); s.sample()
         assertEquals(mapOf(1L to 150L, 2L to -150L), s.balances(admin))
@@ -218,4 +246,53 @@ class SettlementServiceTest {
         val copy = s.database.backup(dir.resolve("copy.sqlite"))
         assertEquals(s.database.verify(), Database(copy).verify())
     }
+    @Test fun `amount edit preserves review ownership and does not create a second transfer`() {
+        val s=setup()
+        s.run(SettlementCommand.RecordTransfer("payment",1,2,300,"2026-09-10"))
+        s.run(SettlementCommand.EditTransferAmount("payment",1,450),member)
+        assertEquals(mapOf(1L to 450L,2L to -450L),s.balances(admin))
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.EditTransferAmount("payment",1,500)) }
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.EditTransferAmount("payment",2,500),Access(-1,3,true)) }
+        s.run(SettlementCommand.ChangeTransfer("payment",2,TransferChange.REVIEW))
+        s.run(SettlementCommand.EditTransferAmount("payment",3,600),member)
+        assertTrue(s.balances(admin).values.all { it==0L })
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.ChangeTransfer("payment",4,TransferChange.CONFIRM),member) }
+        s.run(SettlementCommand.ChangeTransfer("payment",4,TransferChange.CONFIRM))
+        assertEquals(mapOf(1L to 600L,2L to -600L),s.balances(admin))
+        assertEquals(1,s.transfers(member).total)
+        val count=s.history(admin).total
+        s.run(SettlementCommand.EditTransferAmount("payment",5,600),member)
+        assertEquals(count,s.history(admin).total)
+    }
+
+    @Test fun `duplicates use a rolling 24 hour window regardless of recorder or stated date`() {
+        val db=setup().database
+        val start=java.time.Instant.parse("2026-09-10T21:00:00Z")
+        fun at(seconds:Long)=SettlementService(db,java.time.Clock.fixed(start.plusSeconds(seconds),java.time.ZoneOffset.UTC))
+        at(0).execute(admin,"first",SettlementCommand.RecordTransfer("first",1,2,300,"2026-09-10"))
+        assertFailsWith<DuplicateTransfer> { at(23*3600).execute(member,"second",SettlementCommand.RecordTransfer("second",1,2,300,"2026-09-11")) }
+        at(86401).execute(member,"second",SettlementCommand.RecordTransfer("second",1,2,300,"2026-09-10"))
+        at(86402).execute(member,"third",SettlementCommand.RecordTransfer("third",1,2,400,"2026-09-10"))
+        assertFailsWith<DuplicateTransfer> { at(86403).execute(admin,"edit",SettlementCommand.EditTransferAmount("third",1,300)) }
+        at(86403).execute(admin,"edit",SettlementCommand.EditTransferAmount("third",1,300,true))
+        assertEquals(3,at(86404).transfers(member).total)
+    }
+
+    @Test fun `cached attendance migration preserves records and includes open participation in zero balances`() {
+        val s=setup();s.sample()
+        val before=s.training(admin,"t");val balances=s.balances(admin)
+        s.database.write { c ->
+            sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN attendance_count")
+            sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN has_played")
+            c.createStatement().use { it.execute("PRAGMA user_version=1") }
+        }
+        val migrated=SettlementService(Database(s.database.path))
+        assertEquals(before,migrated.training(admin,"t"));assertEquals(balances,migrated.balances(admin))
+        assertEquals(1,migrated.roster(admin).items.single { it.account.id==2L }.attendance)
+        migrated.execute(admin,"new",SettlementCommand.CreateTraining("new","Теннис","2026-09-10","19:00"))
+        migrated.execute(admin,"join",SettlementCommand.AddPlayers("new",1,listOf(3)))
+        assertTrue(migrated.roster(admin,balanceOnly=true,settled=true).items.any { it.account.id==3L })
+        assertTrue(migrated.database.verify().contains("целостность в порядке"))
+    }
+
 }

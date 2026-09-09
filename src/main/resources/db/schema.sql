@@ -16,6 +16,8 @@ CREATE TABLE group_users (
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id),
     present INTEGER NOT NULL CHECK(present IN (0,1)),
+    attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0),
+    has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1)),
     -- Planned group preferences. UI and behavior are not implemented yet.
     is_attending INTEGER NOT NULL DEFAULT 1 CHECK(is_attending IN (0,1)),
     nickname TEXT CHECK(nickname IS NULL OR (length(nickname) BETWEEN 1 AND 64 AND nickname=trim(nickname))),

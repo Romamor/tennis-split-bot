@@ -36,6 +36,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     }
 
     fun account(id: Long): Account = database.read { account(it, id) }
+    fun groupAccount(a:Access,user:Long):Account = database.read { c ->
+        known(c,a.groupId,a.userId); known(c,a.groupId,user); account(c,user)
+    }
     private fun account(c: Connection, id: Long): Account = sqlQuery(c, "SELECT * FROM users WHERE id=?", id, map = ::readAccount)
         .singleOrNull() ?: invalid("Аккаунт ещё не известен боту")
     private fun readAccount(r: ResultSet) = Account(r.getLong("id"), r.getString("first_name"), r.getString("last_name"), r.getString("username"), r.getBoolean("is_bot"))
@@ -44,7 +47,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             .singleOrNull() ?: invalid("Группа не найдена")
     }
     fun groups(userId: Long, page: Int = 0): Page<SettlementGroup> = database.read { c ->
-        val condition = "FROM groups g JOIN group_users u ON u.group_id=g.id WHERE u.user_id=?"
+        val condition = "FROM groups g JOIN group_users u ON u.group_id=g.id WHERE u.user_id=? AND u.present=1"
         val total = count(c, "SELECT COUNT(*) $condition", userId)
         val index = pageIndex(page, total)
         Page(sqlQuery(c, "SELECT g.* $condition ORDER BY g.title,g.id LIMIT 8 OFFSET ?", userId, index * 8) {
@@ -107,14 +110,31 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 LocalDate.parse(command.date)
                 require(command.note.length <= 300) { "Комментарий не длиннее 300 символов" }
                 transferParty(c, a, setOf(command.from, command.to), command.onBehalfOf, absent)
-                val similar = sqlQuery(c, """SELECT id FROM transfers WHERE group_id=? AND from_user=? AND to_user=?
-                    AND amount=? AND occurred_on=? AND status<>'CANCELLED'""", a.groupId, command.from, command.to, command.amount, command.date) { it.getString(1) }
+                val similar = recentSimilar(c,a.groupId,command.from,command.to,command.amount)
                 if (similar.isNotEmpty() && !command.allowSimilar) throw DuplicateTransfer(similar)
                 require(count(c, "SELECT COUNT(*) FROM transfers WHERE group_id=? AND id=?", a.groupId, transferId) == 0) { "Перевод уже записан" }
                 sqlUpdate(c, """INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,note,status,version,created_by,created_at)
                     VALUES(?,?,?,?,?,?,?,'ACTIVE',1,?,?)""", a.groupId, transferId, command.from, command.to, command.amount, command.date, command.note, a.userId, clock.instant().toString())
                 entries = transferEntries(transfer(c, a.groupId, transferId))
                 after = json.encodeToString(transfer(c, a.groupId, transferId))
+            }
+            is SettlementCommand.EditTransferAmount -> {
+                transferId=command.id
+                val old=transfer(c,a.groupId,transferId)
+                transferParty(c,a,setOf(old.from,old.to),null,null)
+                stale(old.version,command.version)
+                state(old.status!=PaymentStatus.CANCELLED,"Отменённый перевод нельзя исправить")
+                require(command.amount>0) { "Укажи положительную сумму" }
+                if(command.amount==old.amount) return@write ActionReceipt(0,old.version)
+                val similar=recentSimilar(c,a.groupId,old.from,old.to,command.amount,old.id)
+                if(similar.isNotEmpty() && !command.allowSimilar) throw DuplicateTransfer(similar)
+                before=json.encodeToString(old)
+                version=Math.addExact(old.version,1)
+                sqlUpdate(c,"UPDATE transfers SET amount=?,version=? WHERE group_id=? AND id=?",command.amount,version,a.groupId,old.id)
+                val changed=transfer(c,a.groupId,old.id)
+                if(old.status==PaymentStatus.ACTIVE)
+                    entries=transferEntries(old).map { it.copy(amount=-it.amount) }+transferEntries(changed)
+                after=json.encodeToString(changed)
             }
             is SettlementCommand.ChangeTransfer -> {
                 transferId = command.id
@@ -156,6 +176,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         is SettlementCommand.EditTraining -> command.id
                         is SettlementCommand.ChangeAttendance -> command.id
                         is SettlementCommand.SaveAttendance -> command.id
+                        is SettlementCommand.AddPlayers -> command.id
                         is SettlementCommand.FinishTraining -> command.id
                         is SettlementCommand.ReopenTraining -> command.id
                         is SettlementCommand.CancelTraining -> command.id
@@ -166,6 +187,20 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     version = Math.addExact(old.version, 1)
                     if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
                     when (command) {
+                        is SettlementCommand.AddPlayers -> {
+                            stale(old.version,command.version); editable(old)
+                            require(command.users.isNotEmpty() && command.users.distinct().size==command.users.size)
+                            command.users.forEach { known(c,a.groupId,it) }
+                            val additions=command.users.filter { id -> old.players.none { it.userId==id && it.playing } }
+                            if (additions.isEmpty()) return@write ActionReceipt(0,old.version)
+                            var ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1
+                            additions.forEach { id ->
+                                sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,paid,ordinal)
+                                    VALUES(?,?,?,1,60,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                    playing=1,minutes=60,guest_minutes=0,paid=0""",a.groupId,trainingId,id,ordinal++)
+                            }
+                            validateDraftTraining(training(c,a.groupId,trainingId).calculation())
+                        }
                         is SettlementCommand.EditTraining -> {
                             stale(old.version, command.version); editable(old)
                             validateDetails(command.title, command.date, command.startTime)
@@ -211,7 +246,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         }
                         is SettlementCommand.ReopenTraining -> {
                             stale(old.version, command.version)
-                            state(old.phase == TrainingPhase.CLOSED, "Возобновить можно завершённую тренировку")
+                            state(old.phase == TrainingPhase.CLOSED, "Открыть исправление можно для учтённой тренировки")
                             sqlUpdate(c, "UPDATE trainings SET status='REVIEW' WHERE group_id=? AND id=?", a.groupId, trainingId)
                         }
                         is SettlementCommand.CancelTraining -> {
@@ -225,6 +260,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     }
                     sqlUpdate(c, "UPDATE trainings SET version=? WHERE group_id=? AND id=?", version, a.groupId, trainingId)
                 }
+                refreshAttendance(c,a.groupId)
                 after = json.encodeToString(training(c, a.groupId, trainingId))
             }
         }
@@ -300,7 +336,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         require(title == title.trim() && title.length in 1..100) { "Название: от 1 до 100 символов" }
         LocalDate.parse(date); LocalTime.parse(time)
     }
-    private fun editable(t: TrainingRecord) = state(t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW), "Для правки завершённой тренировки сначала нажми «Возобновить»")
+    private fun editable(t: TrainingRecord) = state(t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW), "Для правки учтённой тренировки сначала нажми «Исправить тренировку»")
 
     fun training(a: Access, id: String): TrainingRecord = database.read { known(it, a.groupId, a.userId); training(it, a.groupId, id) }
     internal fun training(c: Connection, group: Long, id: String): TrainingRecord {
@@ -320,6 +356,19 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT 8 OFFSET ?", *args, index * 8) { it.getString(1) }
         Page(ids.map { training(c, a.groupId, it) }, total, index)
     }
+    private fun recentSimilar(c:Connection,group:Long,from:Long,to:Long,amount:Long,exclude:String=""):List<String> =
+        sqlQuery(c,"""SELECT id FROM transfers WHERE group_id=? AND from_user=? AND to_user=? AND amount=?
+            AND id<>? AND status<>'CANCELLED' AND julianday(created_at)>=julianday(?)
+            ORDER BY created_at DESC,id LIMIT 8""",group,from,to,amount,exclude,clock.instant().minusSeconds(86400).toString()) { it.getString(1) }
+    fun rosterIds(a:Access):List<Long> = database.read { c ->
+        known(c,a.groupId,a.userId)
+        sqlQuery(c,"""SELECT u.id FROM group_users gu JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0
+            ORDER BY gu.attendance_count DESC,u.first_name COLLATE NOCASE,u.id""",a.groupId) { it.getLong(1) }
+    }
+    fun groupAccounts(a:Access):List<Account> = database.read { c ->
+        known(c,a.groupId,a.userId)
+        sqlQuery(c,"SELECT u.* FROM users u JOIN group_users gu ON gu.user_id=u.id WHERE gu.group_id=? AND u.is_bot=0",a.groupId,map=::readAccount)
+    }
     fun transfer(a: Access, id: String): MoneyTransfer = database.read { known(it, a.groupId, a.userId); transfer(it, a.groupId, id) }
     private fun transfer(c: Connection, group: Long, id: String): MoneyTransfer = sqlQuery(c, "SELECT * FROM transfers WHERE group_id=? AND id=?", group, id) {
         MoneyTransfer(group, id, it.getLong("from_user"), it.getLong("to_user"), it.getLong("amount"), it.getString("occurred_on"), it.getString("note"), PaymentStatus.valueOf(it.getString("status")), it.getLong("version"), it.getString("reviewer")?.toLong(), it.getString("review_party")?.toLong(), it.getLong("created_by"))
@@ -334,23 +383,27 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         Page(ids.map { transfer(c, a.groupId, it) }, total, index)
     }
     fun balances(a: Access): Map<Long, Long> = database.read { known(it, a.groupId, a.userId); database.balances(it, a.groupId) }
-    fun roster(a: Access, page: Int = 0, playedBefore: Boolean = false, balanceOnly: Boolean = false, settled: Boolean = false): Page<AccountBalance> = database.read { c ->
+    fun roster(a: Access, page: Int = 0, playedBefore: Boolean = false, balanceOnly: Boolean = false, settled: Boolean = false, exclude: Set<Long> = emptySet()): Page<AccountBalance> = database.read { c ->
         known(c, a.groupId, a.userId)
         val balances = database.balances(c, a.groupId)
-        val rows = sqlQuery(c, """SELECT u.*,gu.present,(SELECT COUNT(*) FROM training_players p
-            JOIN trainings t ON t.group_id=p.group_id AND t.id=p.training_id WHERE p.group_id=gu.group_id AND p.user_id=gu.user_id
-            AND p.applied_playing=1 AND t.status IN ('CLOSED','REVIEW')) AS attendance
+        val rows = sqlQuery(c, """SELECT u.*,gu.present,gu.attendance_count AS attendance,gu.has_played
             FROM group_users gu JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0
             ORDER BY attendance DESC,u.first_name COLLATE NOCASE,u.id""", a.groupId) {
-            AccountBalance(readAccount(it), balances[it.getLong("id")] ?: 0, it.getInt("attendance"), it.getBoolean("present"))
-        }.filter { (!playedBefore || it.attendance > 0) && (!balanceOnly || if (settled) it.balance == 0L && it.attendance > 0 else it.balance != 0L) }
+            AccountBalance(readAccount(it), balances[it.getLong("id")] ?: 0, it.getInt("attendance"), it.getBoolean("present"),it.getBoolean("has_played"))
+        }.filter { it.account.id !in exclude && (!playedBefore || it.attendance > 0) && (!balanceOnly || if (settled) it.balance == 0L && it.hasPlayed else it.balance != 0L) }
         val index = pageIndex(page, rows.size)
         Page(rows.drop(index * 8).take(8), rows.size, index)
     }
-    fun history(a: Access, trainingId: String? = null, page: Int = 0): Page<AuditAction> = database.read { c ->
+    fun history(a: Access, trainingId: String? = null, page: Int = 0, transferId:String?=null): Page<AuditAction> = database.read { c ->
         known(c, a.groupId, a.userId)
-        val condition = "FROM actions WHERE group_id=?" + if (trainingId != null) " AND training_id=?" else ""
-        val args = if (trainingId != null) arrayOf<Any>(a.groupId, trainingId) else arrayOf<Any>(a.groupId)
+        require(trainingId==null || transferId==null)
+        if(transferId!=null) {
+            val t=transfer(c,a.groupId,transferId)
+            allowed(a.userId in setOf(t.from,t.to) || admin(c,a),"История перевода доступна его сторонам")
+        }
+        val condition = "FROM actions WHERE group_id=?" + if(trainingId!=null) " AND training_id=?" else if(transferId!=null) " AND transfer_id=?" else ""
+        val id=trainingId ?: transferId
+        val args=if(id!=null) arrayOf<Any>(a.groupId,id) else arrayOf<Any>(a.groupId)
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val index = pageIndex(page, total)
         Page(sqlQuery(c, "SELECT * $condition ORDER BY id DESC LIMIT 8 OFFSET ?", *args, index * 8) {
