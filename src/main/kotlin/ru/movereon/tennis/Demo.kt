@@ -1,93 +1,38 @@
 package ru.movereon.tennis
 
-import ru.movereon.tennis.core.*
-import ru.movereon.tennis.storage.OperationDetails
-import ru.movereon.tennis.storage.SqliteAccountingStore
+import ru.movereon.tennis.application.*
+import ru.movereon.tennis.storage.Database
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.LocalDate
 
-private data class DemoStep(val id: String, val title: String, val actor: Actor, val command: Command)
-private val andrey = ParticipantId("andrey")
-private val boris = ParticipantId("boris")
-private val vera = ParticipantId("vera")
-private val sasha = ParticipantId("sasha")
-private val names = mapOf(andrey to "Андрей", boris to "Борис", vera to "Вера", sasha to "Саша")
-
-private fun demoSteps(): List<DemoStep> {
-    val author = Actor("demo:andrey", andrey)
-    val payer = Actor("demo:vera", vera)
-    return listOf(
-        DemoStep("t1", "Первая тренировка: Вера с +1, общие расходы 750 ₽", author,
-            Command.PostTraining("training-1", Training(
-                listOf(PlayerSlot(andrey, 120), PlayerSlot(boris, 120), PlayerSlot(vera, 120), PlayerSlot(vera, 120, true)),
-                listOf(ExpensePayment(andrey, 350), ExpensePayment(boris, 400))))),
-        DemoStep("advance", "Вера перевела Борису 500 ₽, включая аванс", payer, Command.RecordTransfer("advance", vera, boris, 500)),
-        DemoStep("t2", "Вторая тренировка: разное время, расходы 900 ₽", author,
-            Command.PostTraining("training-2", Training(
-                listOf(PlayerSlot(andrey, 60), PlayerSlot(boris, 120), PlayerSlot(vera, 120), PlayerSlot(sasha, 60)),
-                listOf(ExpensePayment(boris, 900))))),
-        DemoStep("t3", "Третья тренировка: Андрей и Саша оплатили по 300 ₽", author,
-            Command.PostTraining("training-3", Training(names.keys.map { PlayerSlot(it, 60) },
-                listOf(ExpensePayment(andrey, 300), ExpensePayment(sasha, 300))))),
-        DemoStep("partial", "Вера отметила перевод Андрею 100 ₽", payer, Command.RecordTransfer("partial", vera, andrey, 100)),
-        DemoStep("review", "Андрей уточняет поступление: перевод пока не учитывается", author,
-            Command.ChangeTransfer("partial", 1, TransferAction.REVIEW)),
-        DemoStep("confirm", "Андрей подтвердил поступление 100 ₽", author,
-            Command.ChangeTransfer("partial", 2, TransferAction.CONFIRM)),
-    )
+private fun existing(path: String): Database {
+    require(Files.isRegularFile(Path.of(path))) { "Файл базы не найден" }
+    return Database(Path.of(path))
 }
 
-private fun showBalances(balances: Map<ParticipantId, Long>) {
-    names.forEach { (id, name) -> println("$name: ${balances.getOrDefault(id, 0)} ₽") }
-}
-
-private fun showPlan(balances: Map<ParticipantId, Long>) {
-    println("\nПредложение рассчитаться:")
-    suggestTransfers(balances).forEach { println("${names[it.from]} → ${names[it.to]}: ${it.amount} ₽") }
-}
-
-private fun existingStore(path: String): SqliteAccountingStore {
-    require(Files.isRegularFile(Path.of(path))) { "Файл базы не найден: $path" }
-    return SqliteAccountingStore(Path.of(path))
-}
-
-/** Local demonstrations and database maintenance. No Telegram connection is made. */
+/** Maintenance commands never contact Telegram. Demonstrations use a separate database file. */
 fun main(args: Array<String>) {
     when {
         args.contentEquals(arrayOf("bot")) -> ru.movereon.tennis.telegram.runBot()
-        args.size == 2 && args[0] == "workflow-demo" -> runWorkflowDemo(Path.of(args[1]))
-        args.isEmpty() -> {
-            val book = AccountBook("demo")
-            demoSteps().forEach { step ->
-                book.execute(step.id, step.actor, step.command)
-                println("\n${step.title}")
-                showBalances(book.balances())
+        args.size == 2 && args[0] == "verify" -> println(existing(args[1]).verify())
+        args.size == 3 && args[0] == "backup" -> println("Резервная копия проверена: ${existing(args[1]).backup(Path.of(args[2]))}")
+        args.size == 2 && args[0] == "demo" -> {
+            val path = Path.of(args[1])
+            require(!Files.exists(path)) { "Для демонстрации укажи новый файл" }
+            val s = SettlementService(Database(path))
+            val a = Access(-1, 1, true)
+            s.register(SettlementGroup(-1, "Демонстрация", "Europe/Moscow"))
+            for ((id, name) in listOf(1L to "Андрей", 2L to "Борис", 3L to "Вера", 4L to "Саша")) {
+                s.remember(Account(id, name)); s.rememberMembership(-1, id, true)
             }
-            showPlan(book.balances())
+            s.execute(a, "create", SettlementCommand.CreateTraining("training", "Теннис", "2026-09-09", "19:00"))
+            for (id in 1L..4L) s.execute(a, "join:$id", SettlementCommand.ChangeAttendance("training", id, AttendanceChange.JOIN))
+            s.execute(a, "paid:1", SettlementCommand.ChangeAttendance("training", 1, AttendanceChange.SET_PAID, 350))
+            s.execute(a, "paid:2", SettlementCommand.ChangeAttendance("training", 2, AttendanceChange.SET_PAID, 400))
+            s.execute(a, "finish", SettlementCommand.FinishTraining("training", s.training(a, "training").version))
+            s.roster(a).items.forEach { println("${it.account.name}: ${it.balance} ₽") }
+            println(s.database.verify())
         }
-        args.size == 2 && args[0] == "storage-demo" -> {
-            val store = SqliteAccountingStore(Path.of(args[1]))
-            val before = store.history("demo").size
-            demoSteps().forEach { step ->
-                store.execute("demo", step.id, step.actor, step.command,
-                    OperationDetails(LocalDate.of(2026, 9, 8), "Демонстрационные данные"))
-            }
-            val history = store.history("demo")
-            println("База демонстрации: ${store.path}")
-            println("Новых операций: ${history.size - before}; всего: ${history.size}")
-            showBalances(store.balances("demo"))
-            showPlan(store.balances("demo"))
-            println("Проверка целостности: ${store.verifyIntegrity()}")
-        }
-        args.size == 2 && args[0] == "verify" -> {
-            val store = existingStore(args[1])
-            println("Проверка ${store.path}: ${store.verifyIntegrity()}")
-        }
-        args.size == 3 && args[0] == "backup" -> {
-            val backup = existingStore(args[1]).backup(Path.of(args[2]))
-            println("Резервная копия создана и проверена: $backup")
-        }
-        else -> error("Использование: [bot | storage-demo <база> | workflow-demo <база> | verify <база> | backup <база> <новая копия>]")
+        else -> println("Использование: bot | demo <новый файл> | verify <база> | backup <база> <новая копия>")
     }
 }

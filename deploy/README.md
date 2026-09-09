@@ -52,7 +52,7 @@ sudo docker --context default compose -f /opt/tennis-split-bot/compose.yaml stop
 
 Статус контейнера `running` ещё не подтверждает работу Telegram. В журнале
 должно появиться «Бот @… запущен», после чего вручную проверить `/start`
-в личном чате и `/setup` в тестовой группе по [инструкции](../docs/TELEGRAM.md).
+в личном чате и `/start` в тестовой группе по [инструкции](../docs/TELEGRAM.md).
 Остановка сохраняет базу. Не использовать очистку Docker или удаление данных.
 
 ## Копия базы и обновление
@@ -61,7 +61,7 @@ sudo docker --context default compose -f /opt/tennis-split-bot/compose.yaml stop
 указав новое имя файла при каждом запуске:
 
 ```sh
-sudo docker --context default compose -f /opt/tennis-split-bot/compose.yaml exec bot /app/bin/tennis-settlements-bot backup /data/bot.sqlite /data/backup-YYYY-MM-DD.sqlite
+sudo docker --context default compose -f /opt/tennis-split-bot/compose.yaml exec bot /app/bin/tennis-settlements-bot backup /data/settlements.sqlite /data/backup-YYYY-MM-DD.sqlite
 ```
 
 Перед обновлением сохранить копию вне сервера и проверить её командой

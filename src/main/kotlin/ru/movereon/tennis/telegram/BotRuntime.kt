@@ -1,6 +1,7 @@
 package ru.movereon.tennis.telegram
 
-import ru.movereon.tennis.storage.SqliteAccountingStore
+import ru.movereon.tennis.storage.Database
+import ru.movereon.tennis.selfservice.SelfServiceBot
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,7 +28,7 @@ class BotConfig(val token: String, val database: Path, val timeZone: String, val
             require(runCatching { ZoneId.of(zone) }.isSuccess) { "Проверь BOT_TIME_ZONE: ожидается название часового пояса" }
             val timeout=value("BOT_POLL_TIMEOUT","25").toIntOrNull()
             require(timeout != null && timeout in 1..50) { "BOT_POLL_TIMEOUT должен быть от 1 до 50" }
-            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/bot.sqlite")),zone,timeout)
+            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/settlements.sqlite")),zone,timeout)
         }
     }
 }
@@ -41,12 +42,11 @@ fun runBot() {
         val lock=channel.tryLock() ?: error("С этой базой уже работает другой процесс бота")
         lock.use {
             val api=HttpTelegramApi(config.token)
-            val bot=TelegramBot(api,SqliteAccountingStore(path),api.me(),defaultZone=config.timeZone)
+            val bot=SelfServiceBot(api,Database(path),api.me(),zone=config.timeZone)
             println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
             while(!Thread.currentThread().isInterrupted) {
                 try {
-                    bot.maintainButtons()
-                    bot.delivery.flush()
+                    bot.maintain()
                     api.updates(bot.state.offset(),config.pollTimeout).sortedBy { it.id }.forEach(bot::handle)
                 } catch (failure: TelegramFailure) {
                     if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")

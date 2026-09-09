@@ -14,7 +14,7 @@ services:
     pids_limit: 128
     stop_grace_period: 30s
     environment:
-      BOT_DATABASE_PATH: /data/bot.sqlite
+      BOT_DATABASE_PATH: /data/settlements.sqlite
       JAVA_OPTS: "-Xms16m -Xmx96m"
     volumes:
       - ./bot.env:/app/.env:ro

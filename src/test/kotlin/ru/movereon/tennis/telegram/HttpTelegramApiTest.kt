@@ -57,7 +57,7 @@ class HttpTelegramApiTest {
         assertEquals(42L,result.single().id)
         val body=bodies.single().second
         assertEquals(41L,body.getValue("offset").jsonPrimitive.long)
-        assertEquals(listOf("message","callback_query"),body.getValue("allowed_updates").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("message","callback_query","chat_member","my_chat_member"),body.getValue("allowed_updates").jsonArray.map { it.jsonPrimitive.content })
     }
 
     @Test fun `force reply is sent only as a private input mechanism`() {
@@ -95,5 +95,37 @@ class HttpTelegramApiTest {
         assertFalse(config.toString().contains(token))
         val other="999999:abcdefghijklmnopqrstuvwxyz_987654321"
         assertEquals(other,BotConfig.load(env,mapOf("TELEGRAM_BOT_TOKEN" to other)).token)
+    }
+
+    @Test fun `ephemeral messages use recipient parameters and verify the returned audience`() {
+        response = { method -> 200 to if (method == "sendMessage")
+            """{"ok":true,"result":{"chat":{"id":-100123,"type":"supergroup"},"receiver_user":{"id":4503599627370000},"ephemeral_message_id":73}}"""
+            else """{"ok":true,"result":true}"""
+        }
+        val keyboard = TgKeyboard(listOf(listOf(TgButton("+50 ₽", callbackData = "n:token"))))
+        val msg = api.ephemeral(-100123,4503599627370000,"callback", "Мои данные", keyboard)
+        assertEquals(73L, msg.ephemeralId)
+        val parameters = bodies.last().second.getValue("ephemeral_message_parameters").jsonObject
+        assertEquals(4503599627370000L, parameters.getValue("receiver_user_id").jsonPrimitive.long)
+        assertTrue(parameters.getValue("replace_callback_query_message").jsonPrimitive.boolean)
+        api.editEphemeral(-100123,4503599627370000,73,"Обновлено",keyboard)
+        assertEquals("editEphemeralMessageText", bodies.last().first)
+        assertEquals(73L,bodies.last().second.getValue("ephemeral_message_id").jsonPrimitive.long)
+        response = { 200 to """{"ok":true,"result":{"message_id":9,"chat":{"id":-100123,"type":"supergroup"}}}""" }
+        assertEquals(FailureKind.UNCERTAIN, assertFailsWith<TelegramFailure> {
+            api.ephemeral(-100123,4503599627370000,"callback", "Мои данные",keyboard)
+        }.kind)
+    }
+
+    @Test fun `account picker asks for a real user and parses member updates`() {
+        response = { method -> 200 to if (method == "sendMessage")
+            """{"ok":true,"result":{"message_id":1,"chat":{"id":1,"type":"private"}}}"""
+            else """{"ok":true,"result":[{"update_id":51,"chat_member":{"chat":{"id":-100,"type":"supergroup"},"from":{"id":1},"new_chat_member":{"status":"member","user":{"id":22,"first_name":"Игрок","last_name":"Фамилия"}}}}]}"""
+        }
+        api.requestUsers(1,"Выбери аккаунт",45)
+        val request = bodies.last().second.getValue("reply_markup").jsonObject.getValue("keyboard").jsonArray[0].jsonArray[0].jsonObject.getValue("request_users").jsonObject
+        assertFalse(request.getValue("user_is_bot").jsonPrimitive.boolean)
+        assertEquals(45, request.getValue("request_id").jsonPrimitive.int)
+        assertEquals("Фамилия", api.updates(null,1).single().memberUpdate!!.member.user!!.lastName)
     }
 }
