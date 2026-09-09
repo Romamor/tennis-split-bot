@@ -13,6 +13,8 @@ class FakeTelegramApi : TelegramApi {
     var acceptThenFail: ((Long,String)->Boolean)? = null
     private var nextMessage = 1L
     override fun me() = bot
+    override fun administrators(chatId:Long) = members.filter { it.key.first==chatId && it.value.admin }
+        .map { (key,member) -> member.copy(user=member.user ?: TgUser(key.second,firstName="User ${key.second}")) }
     override fun updates(offset: Long?,timeout: Int) = emptyList<TgUpdate>()
     override fun member(chatId: Long,userId: Long): TgMember {
         membershipCalls += chatId to userId

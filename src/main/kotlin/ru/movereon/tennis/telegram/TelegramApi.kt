@@ -58,6 +58,7 @@ interface TelegramApi {
         throw TelegramFailure(FailureKind.REJECTED)
     }
     fun requestUsers(chatId: Long, text: String, requestId: Int): TgMessage = throw TelegramFailure(FailureKind.REJECTED)
+    fun deleteEphemeral(chatId: Long, userId: Long, ephemeralId: Long) { throw TelegramFailure(FailureKind.REJECTED) }
 }
 
 /** No redirects, URL logging or upstream exception causes: the request URL contains the token. */
@@ -128,6 +129,12 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
                 }) }) })
             })
         }))
+
+    override fun deleteEphemeral(chatId: Long, userId: Long, ephemeralId: Long) {
+        call("deleteEphemeralMessage", buildJsonObject {
+            put("chat_id", chatId); put("receiver_user_id", userId); put("ephemeral_message_id", ephemeralId)
+        })
+    }
 
     private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement {
         val response = try {

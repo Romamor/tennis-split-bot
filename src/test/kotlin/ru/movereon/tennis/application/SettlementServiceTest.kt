@@ -136,20 +136,23 @@ class SettlementServiceTest {
         assertEquals(1, s.transfer(admin, "represented").createdBy)
     }
 
-    @Test fun `payer can leave while guest stays attached to inviter and rounding is stable`() {
+    @Test fun `leaving with a payment requires confirmation and guest allocation stays stable`() {
         val s = setup(); s.create()
         s.change(1, AttendanceChange.JOIN)
         s.change(1, AttendanceChange.MARK_PAID)
-        s.change(1, AttendanceChange.LEAVE)
+        assertFailsWith<AccountingException> { s.change(1, AttendanceChange.LEAVE) }
+        assertEquals(300,s.training(admin,"t").players.single().paid)
+        s.change(1, AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,300)
         s.change(2, AttendanceChange.JOIN)
         s.change(2, AttendanceChange.GUEST, 1)
         s.change(3, AttendanceChange.JOIN)
+        s.change(2, AttendanceChange.SET_PAID,300)
         s.finish()
-        assertEquals(mapOf(1L to 300L, 2L to -200L, 3L to -100L), s.balances(admin))
+        assertEquals(mapOf(2L to 100L, 3L to -100L), s.balances(admin))
         assertEquals(3, s.training(admin, "t").players.size)
         assertEquals(0, s.roster(admin).items.single { it.account.id == 1L }.attendance)
         s.reopen(); s.finish()
-        assertEquals(mapOf(1L to 300L, 2L to -200L, 3L to -100L), s.balances(admin))
+        assertEquals(mapOf(2L to 100L, 3L to -100L), s.balances(admin))
     }
 
     @Test fun `failed financial overflow rolls back the record audit and ledger together`() {
@@ -161,6 +164,23 @@ class SettlementServiceTest {
         assertFailsWith<AccountingException> { s.transfer(admin, "overflow") }
         assertEquals(mapOf(1L to -Long.MAX_VALUE, 2L to Long.MAX_VALUE), s.balances(admin))
         s.database.verify()
+    }
+
+    @Test fun `table payment needs participation and stale removal cannot clear a changed payment`() {
+        val s=setup();s.create()
+        for (change in listOf(AttendanceChange.MARK_PAID,AttendanceChange.ADJUST_PAID,AttendanceChange.SET_PAID)) {
+            assertFailsWith<AccountingException> { s.change(2,change,50,member) }
+        }
+        s.change(2,AttendanceChange.JOIN,who=member)
+        s.change(2,AttendanceChange.MARK_PAID,who=member)
+        s.change(2,AttendanceChange.ADJUST_MINUTES,30,member)
+        s.change(2,AttendanceChange.ADJUST_PAID,50,member)
+        assertFailsWith<AccountingException> { s.change(2,AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,300,member) }
+        assertEquals(350,s.training(member,"t").players.single().paid)
+        s.change(2,AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,350,member)
+        s.change(2,AttendanceChange.JOIN,who=member)
+        assertEquals(60,s.training(member,"t").players.single().minutes)
+        assertEquals(0,s.training(member,"t").players.single().paid)
     }
 
     @Test fun `lists are paged and zero balances appear only for previously playing accounts`() {

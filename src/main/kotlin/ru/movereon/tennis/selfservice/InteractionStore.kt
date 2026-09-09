@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ru.movereon.tennis.application.SettlementCommand
+import ru.movereon.tennis.application.Attendance
 import ru.movereon.tennis.storage.*
 import java.security.MessageDigest
 import java.time.Clock
@@ -13,11 +14,14 @@ import java.util.UUID
     val user: Long = 0, val value: Long = 0, val version: Long = 0, val option: String = "")
 @Serializable data class InputForm(val kind: String, val group: Long, val training: String = "", val user: Long = 0,
     val version: Long = 0, val title: String = "Теннис", val date: String = "", val time: String = "19:00",
-    val amount: Long = 0, val direction: String = "out", val note: String = "", val request: Int = 0)
+    val amount: Long = 0, val direction: String = "out", val note: String = "", val request: Int = 0,
+    val attendance: AttendanceDraft? = null)
+@Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
-    val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null)
+    val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
+    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
 
@@ -25,6 +29,14 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
     fun formSignature(form: InputForm): String = MessageDigest.getInstance("SHA-256")
         .digest(json.encodeToString(form).toByteArray()).take(12).joinToString("") { "%02x".format(it) }
+    fun draftSignature(draft: AttendanceDraft): String = MessageDigest.getInstance("SHA-256")
+        .digest(json.encodeToString(draft).toByteArray()).take(12).joinToString("") { "%02x".format(it) }
+    fun attendanceDraft(user: Long, group: Long): AttendanceDraft? = form(user,group)?.attendance
+    fun attendanceDraft(user: Long, group: Long, draft: AttendanceDraft?) = database.write { c ->
+        val input=draft?.let { json.encodeToString(InputForm("attendance",group,training=it.training,user=it.user,attendance=it)) }
+        sqlUpdate(c,"""INSERT INTO bot_sessions(user_id,chat_id,group_id,input_json) VALUES(?,?,?,?)
+            ON CONFLICT(user_id,chat_id) DO UPDATE SET input_json=excluded.input_json""",user,group,group,input)
+    }
     fun offset(): Long? = database.read { c ->
         sqlQuery(c, "SELECT MIN(update_id) FROM bot_events WHERE completed=0") { it.getString(1)?.toLong() }.single()
             ?: sqlQuery(c, "SELECT MAX(update_id)+1 FROM bot_events") { it.getString(1)?.toLong() }.single()
@@ -46,8 +58,15 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     }
     fun session(user: Long, chat: Long, group: Long, form: InputForm?) = database.write { c ->
         sqlUpdate(c, """INSERT INTO bot_sessions(user_id,chat_id,group_id,input_json) VALUES(?,?,?,?)
-            ON CONFLICT(user_id,chat_id) DO UPDATE SET group_id=excluded.group_id,input_json=excluded.input_json""",
+            ON CONFLICT(user_id,chat_id) DO UPDATE SET group_id=excluded.group_id,
+            input_json=CASE WHEN excluded.chat_id<0 THEN bot_sessions.input_json ELSE excluded.input_json END""",
             user, chat, group.takeIf { it < 0 }, form?.let { json.encodeToString(it) })
+    }
+    fun currentEphemeral(user: Long, chat: Long): Long? = database.read { c ->
+        sqlQuery(c, "SELECT ephemeral_id FROM bot_sessions WHERE user_id=? AND chat_id=?", user, chat) { it.getString(1)?.toLong() }.singleOrNull()
+    }
+    fun rememberEphemeral(user: Long, chat: Long, id: Long?) = database.write { c ->
+        sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=? WHERE user_id=? AND chat_id=?", id, user, chat)
     }
     fun button(action: ScreenAction, owner: Long?, scope: String, permanent: Boolean = false): String = database.write { c ->
         val payload = json.encodeToString(action)
@@ -90,6 +109,14 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     }
     fun forgetDelivery(key: String) = database.write { c -> sqlUpdate(c, "DELETE FROM bot_deliveries WHERE delivery_key=?", key) }
     fun interruptedSends() = database.write { c -> sqlUpdate(c, "UPDATE bot_deliveries SET status='UNKNOWN' WHERE status='SENDING'") }
+    /** Refresh existing live cards after an update, without creating new messages or changing training data. */
+    fun refreshLiveCards() = database.write { c ->
+        sqlUpdate(c, """UPDATE actions SET delivered_at=NULL WHERE id IN (
+            SELECT MAX(a.id) FROM actions a JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
+            JOIN bot_deliveries d ON d.delivery_key='training:' || t.group_id || ':' || t.id
+            WHERE t.status IN ('OPEN','REVIEW') AND d.status='SENT' AND a.needs_delivery=1
+            GROUP BY a.group_id,a.training_id)""")
+    }
     fun pendingCards(): List<Triple<Long, String, Long>> = database.read { c ->
         sqlQuery(c, """SELECT group_id,training_id,MAX(id) FROM actions WHERE training_id IS NOT NULL
             AND needs_delivery=1 AND delivered_at IS NULL GROUP BY group_id,training_id ORDER BY MAX(id) LIMIT 20""") {

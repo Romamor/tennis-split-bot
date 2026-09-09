@@ -13,6 +13,8 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 }
 @Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String)
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean)
+enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
+data class GroupRoleEntry(val account:Account,val role:GroupRole)
 @Serializable enum class TrainingPhase { OPEN,CLOSED,REVIEW,CANCELLED }
 @Serializable data class Attendance(val userId:Long,val playing:Boolean,val minutes:Long=60,val guestMinutes:Long=0,val paid:Long=0,val ordinal:Int=0,val appliedPlaying:Boolean=false)
 @Serializable data class TrainingRecord(val groupId:Long,val id:String,val title:String,val date:String,val startTime:String,
@@ -28,12 +30,13 @@ data class AccountBalance(val account:Account,val balance:Long,val attendance:In
 @Serializable data class AuditAction(val id:Long,val groupId:Long,val actorId:Long,val kind:String,val trainingId:String?,val transferId:String?,
     val before:String?,val after:String,val occurredAt:String)
 data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8) { val pages:Int get()=maxOf(1,(total+size-1)/size) }
-@Serializable enum class AttendanceChange { JOIN,LEAVE,MARK_PAID,ADJUST_PAID,SET_PAID,ADJUST_MINUTES,SET_MINUTES,GUEST,SET_GUEST_MINUTES }
+@Serializable enum class AttendanceChange { JOIN,LEAVE,LEAVE_AND_CLEAR_PAYMENT,MARK_PAID,ADJUST_PAID,SET_PAID,ADJUST_MINUTES,SET_MINUTES,GUEST,SET_GUEST_MINUTES }
 @Serializable enum class TransferChange { REVIEW,CONFIRM,CANCEL }
 @Serializable sealed interface SettlementCommand {
     @Serializable data class CreateTraining(val id:String,val title:String,val date:String,val startTime:String):SettlementCommand
     @Serializable data class EditTraining(val id:String,val version:Long,val title:String,val date:String,val startTime:String):SettlementCommand
     @Serializable data class ChangeAttendance(val id:String,val userId:Long,val change:AttendanceChange,val value:Long=0):SettlementCommand
+    @Serializable data class SaveAttendance(val id:String,val userId:Long,val expected:Attendance?,val attendance:Attendance):SettlementCommand
     @Serializable data class FinishTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class ReopenTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class CancelTraining(val id:String,val version:Long):SettlementCommand

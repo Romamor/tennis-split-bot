@@ -13,10 +13,14 @@ class Screens(private val service: SettlementService, private val state: Interac
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
     }
     private fun shortName(id: Long) = clean(service.account(id).name, 36)
-    fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null): Output {
+    fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null, inGroup: Boolean = false, telegramAdmins:Set<Long> = emptySet()): Output {
         val rows = mutableListOf<List<TgButton>>()
         val tokens = mutableSetOf<String>()
         fun button(label: String, next: ScreenAction): TgButton {
+            if (inGroup && next.kind in privateActions) {
+                val token = state.button(next, null, "private-link:${next.group}:${next.id}", permanent = true)
+                return TgButton(label, url = "https://t.me/$botName?start=n_$token")
+            }
             val token = state.button(next, user, scope)
             tokens += token
             return TgButton(label, callbackData = "n:$token")
@@ -52,7 +56,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                     row("Создать тренировку", next("new"))
                     row("Управление тренировками", next("trainings", option = "all"))
                 }
-                if (a.telegramAdmin) row("Администраторы бота", next("roster", option = "admins"))
+                if (a.telegramAdmin) row("Администраторы бота", next("administrators", option = ""))
                 row("Сменить группу", next("groups"))
                 "Что хочешь сделать?"
             }
@@ -69,7 +73,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val index = action.page.coerceIn(0, maxOf(0, (p.size - 1) / 8))
                 val body = buildString {
                     append("${clean(t.title, 100)} · ${date(t.date)} · ${t.startTime}\n${phase(t.phase)}\n")
-                    append("Играют: ${p.count { it.playing }} · гостей +1: ${p.count { it.guestMinutes > 0 }}\n")
+                    append("Играли: ${p.count { it.playing }} · гостей +1: ${p.count { it.guestMinutes > 0 }}\n")
                     append("Оплачено: ${p.sumOf { it.paid }} ₽\n\n")
                     p.drop(index * 8).take(8).forEach { append(playerLine(it)).append('\n') }
                     if (p.isEmpty()) append("Пока никто не отметился.\n")
@@ -77,12 +81,12 @@ class Screens(private val service: SettlementService, private val state: Interac
                     if (t.phase == TrainingPhase.REVIEW) append("\nДо повторного завершения действует прежний расчёт.")
                 }
                 if (action.kind == "public") {
-                    row("Присоединиться / Мои данные", next("player", target = 0))
+                    row("Играл", next("player", target = 0))
                     val link = state.button(next("training"), null, "link:${t.groupId}:${t.id}", permanent = true)
                     rows += listOf(TgButton("Открыть у бота", url = "https://t.me/$botName?start=n_$link"))
                 } else {
                     pages(index, maxOf(1, (p.size + 7) / 8))
-                    row("Мои время и оплата", next("player", target = a.userId))
+                    row("Моё участие", next("player", target = a.userId))
                     if (service.isAdmin(a)) {
                         if (state.delivery("training:${t.groupId}:${t.id}")?.status in setOf("UNKNOWN", "FAILED"))
                             row("Восстановить сообщение в группе", next("recover_confirm"))
@@ -103,10 +107,12 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val t = service.training(requireNotNull(a), action.id)
                 val target = action.user.takeIf { it > 0 } ?: a.userId
                 checkAccounting(target == a.userId || service.isAdmin(a), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
-                val player = t.players.firstOrNull { it.userId == target }
+                val stored = t.players.firstOrNull { it.userId == target }
+                val draft = state.attendanceDraft(a.userId,a.groupId)?.takeIf { it.training==t.id && it.user==target }
+                val player = draft?.value ?: stored
                 if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
                     fun change(label: String, type: AttendanceChange, value: Long = 0) = button(label, next("change", target = target, value = value, option = type.name))
-                    if (player?.playing != true) rows += listOf(change("🏓 Присоединиться · 1 ч", AttendanceChange.JOIN))
+                    if (player?.playing != true) rows += listOf(change("Играл · 1 ч", AttendanceChange.JOIN))
                     else {
                         rows += listOf(change("−0,5 ч", AttendanceChange.ADJUST_MINUTES, -30), change("+0,5 ч", AttendanceChange.ADJUST_MINUTES, 30))
                         rows += listOf(change(if (player.guestMinutes > 0) "Убрать гостя +1" else "Добавить гостя +1", AttendanceChange.GUEST, if (player.guestMinutes > 0) 0 else 1))
@@ -114,16 +120,44 @@ class Screens(private val service: SettlementService, private val state: Interac
                             change("Гость −0,5 ч", AttendanceChange.SET_GUEST_MINUTES, (player.guestMinutes - 30).coerceAtLeast(30)),
                             change("Гость +0,5 ч", AttendanceChange.SET_GUEST_MINUTES, Math.addExact(player.guestMinutes, 30)))
                     }
-                    if (player == null || player.paid == 0L) rows += listOf(change("Платил · 300 ₽", AttendanceChange.MARK_PAID))
-                    rows += listOf(change("−50 ₽", AttendanceChange.ADJUST_PAID, -50), change("+50 ₽", AttendanceChange.ADJUST_PAID, 50))
-                    row("Другая сумма", next("ask_paid", target = target))
-                    if (player?.playing == true) rows += listOf(change("Выйти из тренировки", AttendanceChange.LEAVE))
-                }
+                    if (player?.playing == true) {
+                        if (player.paid == 0L) rows += listOf(change("Платил · 300 ₽", AttendanceChange.MARK_PAID))
+                        else rows += listOf(change("−50 ₽", AttendanceChange.ADJUST_PAID, -50), change("+50 ₽", AttendanceChange.ADJUST_PAID, 50))
+                        if (!inGroup) row("Другая сумма", next("ask_paid", target = target))
+                        if (player.paid > 0) row("Не играл", next("leave_confirm", target = target))
+                        else rows += listOf(change("Не играл", AttendanceChange.LEAVE))
+                    }
+                    if (draft != null) {
+                        if (draft.expected==stored) row("Всё правильно",next("save_attendance",target=target,option=state.draftSignature(draft)))
+                        else {
+                            row("Загрузить сохранённые данные",next("reload_attendance",target=target))
+                            row("Убрать несохранённый ввод",next("discard_attendance",target=target,option=state.draftSignature(draft)))
+                        }
+                    }
+                } else if (draft!=null) {
+                    row("Убрать несохранённый ввод",next("discard_attendance",target=target,option=state.draftSignature(draft)))
+                } else if (inGroup) row("Закрыть",next("close_panel"))
                 row("Карточка тренировки", next("training", target = 0, option = ""))
                 "${clean(t.title, 60)} · ${date(t.date)}\n${name(target)}\n" +
-                    (if (player?.playing == true) "Играет ${hours(player.minutes)}" else "Не отмечен играющим") +
+                    (if (player?.playing == true) "Играл ${hours(player.minutes)}" else "Не играл") +
                     (if ((player?.guestMinutes ?: 0) > 0) " · +1 ${hours(player!!.guestMinutes)}" else "") +
-                    "\nОплатил стол: ${player?.paid ?: 0} ₽" + if (t.phase == TrainingPhase.CLOSED) "\nТренировка завершена. Исправить данные может администратор после возобновления." else ""
+                    "\nОплатил стол: ${player?.paid ?: 0} ₽" +
+                    (if (draft!=null && draft.expected!=stored) "\nСохранённые данные уже изменились. Обнови форму перед подтверждением." else if (draft!=null) "\nСохраним после «Всё правильно»." else "") +
+                    if (t.phase == TrainingPhase.CLOSED) "\nТренировка завершена. Исправить данные может администратор после возобновления." else ""
+            }
+            "leave_confirm" -> {
+                val t = service.training(requireNotNull(a), action.id)
+                val target = action.user.takeIf { it > 0 } ?: a.userId
+                checkAccounting(target == a.userId || service.isAdmin(a), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
+                val pending=state.attendanceDraft(a.userId,a.groupId)?.takeIf { it.training==t.id && it.user==target }
+                val p = requireNotNull(pending?.value ?: t.players.firstOrNull { it.userId == target }) { "Участник не найден в тренировке" }
+                row(if (p.paid > 0) "Не играл — убрать ${p.paid} ₽" else "Подтвердить: не играл",
+                    next("change", target = target, value = p.paid,
+                        option = if (p.paid > 0) AttendanceChange.LEAVE_AND_CLEAR_PAYMENT.name else AttendanceChange.LEAVE.name))
+                row("Назад", next("player", target = target))
+                "${name(target)}\nНе играл в этой тренировке?\n" +
+                    if (p.paid > 0) "Участие${if (p.guestMinutes > 0) " и гость +1" else ""} будут убраны вместе с оплатой стола ${p.paid} ₽. Переводы между людьми сохранятся."
+                    else "Участие будет убрано."
             }
             "roster", "transfer_people" -> {
                 requireNotNull(a)
@@ -142,13 +176,33 @@ class Screens(private val service: SettlementService, private val state: Interac
                 if (action.option == "players") row("К тренировке", next("training", option = "")) else menu()
                 if (action.kind == "transfer_people") "С кем рассчитываемся?" else "Участники группы · ${p.total}\nСверху те, кто чаще играл. Список пополняется, когда люди взаимодействуют с ботом."
             }
+            "administrators", "admin_candidates" -> {
+                val p=service.administrators(requireNotNull(a),telegramAdmins,action.kind=="admin_candidates",action.page)
+                p.items.forEach { entry ->
+                    val role=when(entry.role) { GroupRole.SUPERADMIN -> "Суперадмин · Telegram";GroupRole.ADMIN -> "Админ бота";GroupRole.MEMBER -> "Участник" }
+                    row("${clean(entry.account.name,36)} · $role",next("admin_person",target=entry.account.id))
+                }
+                pages(p.index,p.pages)
+                if (action.kind=="administrators") {
+                    row("Назначить администратора",next("admin_candidates"))
+                    menu()
+                } else row("Назад",next("administrators"))
+                if (action.kind=="administrators") "Администраторы · ${p.total}\nСуперадмины получают права из Telegram. Назначенные админы бота управляют тренировками, но не назначают других."
+                else "Кого назначить?\nВ этом списке только участники без административной роли."
+            }
             "admin_person" -> {
                 requireNotNull(a)
                 checkAccounting(a.telegramAdmin, ErrorCode.FORBIDDEN, "Назначать могут администраторы Telegram-группы")
                 val appointed = service.isAdmin(Access(a.groupId, action.user))
-                row(if (appointed) "Снять назначение" else "Назначить администратором", next("set_admin", value = if (appointed) 0 else 1))
-                row("Назад", next("roster", option = "admins"))
-                "${name(action.user)}\n" + (if (appointed) "Назначен администратором бота." else "Нет отдельного назначения в боте.") + "\nАдминистраторы Telegram имеют старшие права независимо от этого назначения."
+                val superior=action.user in telegramAdmins
+                if (appointed) row(if(superior) "Снять дополнительное назначение" else "Снять назначение",next("set_admin",value=0))
+                else if (!superior) row("Назначить администратором",next("set_admin",value=1))
+                row("Назад", next("administrators"))
+                "${name(action.user)}\n" + when {
+                    superior -> "Суперадминистратор · администратор Telegram-группы.\nСтаршие права меняются в настройках группы." + if (appointed) "\nТакже есть отдельное назначение администратором бота." else ""
+                    appointed -> "Администратор бота · назначен в этой группе. Можно снять назначение."
+                    else -> "Участник · административных прав нет."
+                }
             }
             "preview_finish" -> {
                 val t = service.training(requireNotNull(a), action.id)
@@ -259,6 +313,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
+        if (inGroup && action.kind !in setOf("public","player")) row("Закрыть", next("close_panel"))
         val header = if (group != null && action.kind != "groups") "${clean(group.title, 80)}\n\n" else ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text
@@ -276,15 +331,16 @@ class Screens(private val service: SettlementService, private val state: Interac
         "RecordTransfer" -> "Записал перевод"
         "ChangeTransfer" -> "Изменил состояние перевода"
         "SetAdministrator" -> if (a.after == "true") "Назначил администратора бота" else "Снял назначение администратора"
-        "ChangeAttendance" -> {
+        "ChangeAttendance", "SaveAttendance" -> {
             val after = state.json.decodeFromString<TrainingRecord>(a.after)
             val before = a.before?.let { state.json.decodeFromString<TrainingRecord>(it) }
             val changed = after.players.filter { p -> before?.players?.find { it.userId == p.userId } != p }
-            changed.joinToString("; ") { "${shortName(it.userId)}: ${if (it.playing) hours(it.minutes) else "не играет"}${if (it.guestMinutes > 0) ", +1 ${hours(it.guestMinutes)}" else ""}, ${it.paid} ₽" }.ifEmpty { "Подтвердил прежние время и оплату" }
+            changed.joinToString("; ") { "${shortName(it.userId)}: ${if (it.playing) hours(it.minutes) else "не играл"}${if (it.guestMinutes > 0) ", +1 ${hours(it.guestMinutes)}" else ""}, ${it.paid} ₽" }.ifEmpty { "Подтвердил прежние время и оплату" }
         }
         else -> "Изменение записи"
     }
     companion object {
+        val privateActions = setOf("menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "ask_paid", "pick_account", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

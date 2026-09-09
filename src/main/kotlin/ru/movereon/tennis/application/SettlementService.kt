@@ -52,6 +52,19 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }, total, index)
     }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
+    fun administrators(a:Access,telegramAdmins:Set<Long>,candidates:Boolean=false,page:Int=0):Page<GroupRoleEntry> = database.read { c ->
+        known(c,a.groupId,a.userId)
+        allowed(a.telegramAdmin,"Управлять назначениями могут администраторы Telegram-группы")
+        val rows=sqlQuery(c,"""SELECT u.*,ga.user_id AS appointed FROM group_users gu JOIN users u ON u.id=gu.user_id
+            LEFT JOIN group_admins ga ON ga.group_id=gu.group_id AND ga.user_id=gu.user_id
+            WHERE gu.group_id=? AND u.is_bot=0""",a.groupId) {
+            val account=readAccount(it)
+            GroupRoleEntry(account,when { account.id in telegramAdmins -> GroupRole.SUPERADMIN;it.getString("appointed")!=null -> GroupRole.ADMIN;else -> GroupRole.MEMBER })
+        }.filter { if (candidates) it.role==GroupRole.MEMBER else it.role!=GroupRole.MEMBER }
+            .sortedWith(compareBy<GroupRoleEntry> { it.role.ordinal }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
+        val index=pageIndex(page,rows.size)
+        Page(rows.drop(index*8).take(8),rows.size,index)
+    }
     private fun admin(c: Connection, a: Access) = a.telegramAdmin || count(c,
         "SELECT COUNT(*) FROM group_admins WHERE group_id=? AND user_id=?", a.groupId, a.userId) > 0
     private fun requireAdmin(c: Connection, a: Access) = allowed(admin(c, a), "Это действие доступно администратору этой группы")
@@ -142,6 +155,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     trainingId = when (command) {
                         is SettlementCommand.EditTraining -> command.id
                         is SettlementCommand.ChangeAttendance -> command.id
+                        is SettlementCommand.SaveAttendance -> command.id
                         is SettlementCommand.FinishTraining -> command.id
                         is SettlementCommand.ReopenTraining -> command.id
                         is SettlementCommand.CancelTraining -> command.id
@@ -150,7 +164,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     val old = training(c, a.groupId, trainingId)
                     before = json.encodeToString(old)
                     version = Math.addExact(old.version, 1)
-                    if (command !is SettlementCommand.ChangeAttendance) requireAdmin(c, a)
+                    if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
                     when (command) {
                         is SettlementCommand.EditTraining -> {
                             stale(old.version, command.version); editable(old)
@@ -169,6 +183,24 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,paid=excluded.paid""",
                                 a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.paid, changed.ordinal)
                             validateDraftTraining(training(c, a.groupId, trainingId).calculation())
+                        }
+                        is SettlementCommand.SaveAttendance -> {
+                            editable(old)
+                            allowed(command.userId == a.userId || admin(c,a), "Можно менять только свои время и оплату")
+                            known(c,a.groupId,command.userId)
+                            val current=old.players.firstOrNull { it.userId==command.userId }
+                            checkAccounting(current==command.expected,ErrorCode.STALE_VERSION,"Эти данные уже изменили. Обнови форму перед сохранением")
+                            val input=command.attendance
+                            require(input.userId==command.userId && input.minutes>0 && input.minutes%30==0L && input.guestMinutes>=0 && input.guestMinutes%30==0L && input.paid>=0)
+                            require(input.playing || input.paid==0L && input.guestMinutes==0L)
+                            val row=(current ?: Attendance(command.userId,false,ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1))
+                                .copy(playing=input.playing,minutes=input.minutes,guestMinutes=input.guestMinutes,paid=input.paid)
+                            if (row==current || current==null && !row.playing) return@write ActionReceipt(0,old.version)
+                            sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,paid,ordinal)
+                                VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,paid=excluded.paid""",
+                                a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.paid,row.ordinal)
+                            validateDraftTraining(training(c,a.groupId,trainingId).calculation())
                         }
                         is SettlementCommand.FinishTraining -> {
                             stale(old.version, command.version); editable(old)
@@ -207,18 +239,36 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         ActionReceipt(actionId, version)
     }
 
+    fun previewAttendance(row: Attendance, change: AttendanceChange, value: Long=0): Attendance =
+        changeAttendance(row,SettlementCommand.ChangeAttendance("input",row.userId,change,value))
     private fun changeAttendance(row: Attendance, command: SettlementCommand.ChangeAttendance): Attendance = when (command.change) {
-        AttendanceChange.JOIN -> row.copy(playing = true)
-        AttendanceChange.LEAVE -> row.copy(playing = false, guestMinutes = 0)
-        AttendanceChange.MARK_PAID -> if (row.paid == 0L) row.copy(paid = 300) else row
+        AttendanceChange.JOIN -> if (row.playing) row else row.copy(playing = true, minutes = 60)
+        AttendanceChange.LEAVE -> {
+            state(row.paid == 0L, "Указана оплата. Подтверди её удаление вместе с участием")
+            row.copy(playing = false, guestMinutes = 0)
+        }
+        AttendanceChange.LEAVE_AND_CLEAR_PAYMENT -> {
+            require(command.value > 0)
+            checkAccounting(row.paid == command.value, ErrorCode.STALE_VERSION, "Оплата изменилась. Открой подтверждение заново")
+            row.copy(playing = false, guestMinutes = 0, paid = 0)
+        }
+        AttendanceChange.MARK_PAID -> {
+            state(row.playing, "Сначала отметь «Играл»")
+            if (row.paid == 0L) row.copy(paid = 300) else row
+        }
         AttendanceChange.ADJUST_PAID -> {
             require(command.value == 50L || command.value == -50L)
+            state(row.playing, "Сначала отметь «Играл»")
             row.copy(paid = Math.addExact(row.paid, command.value).coerceAtLeast(0))
         }
-        AttendanceChange.SET_PAID -> { require(command.value >= 0); row.copy(paid = command.value) }
+        AttendanceChange.SET_PAID -> {
+            require(command.value >= 0)
+            state(row.playing || command.value == 0L, "Сначала отметь «Играл»")
+            row.copy(paid = command.value)
+        }
         AttendanceChange.ADJUST_MINUTES -> {
             require(command.value == 30L || command.value == -30L)
-            state(row.playing, "Сначала присоединись к тренировке")
+            state(row.playing, "Сначала отметь «Играл»")
             row.copy(minutes = Math.addExact(row.minutes, command.value).coerceAtLeast(30))
         }
         AttendanceChange.SET_MINUTES -> {

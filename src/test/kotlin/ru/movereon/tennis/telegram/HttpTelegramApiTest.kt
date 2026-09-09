@@ -112,6 +112,10 @@ class HttpTelegramApiTest {
         api.editEphemeral(-100123,4503599627370000,73,"Обновлено",keyboard)
         assertEquals("editEphemeralMessageText", bodies.last().first)
         assertEquals(73L,bodies.last().second.getValue("ephemeral_message_id").jsonPrimitive.long)
+        api.deleteEphemeral(-100123,4503599627370000,73)
+        assertEquals("deleteEphemeralMessage",bodies.last().first)
+        assertEquals(4503599627370000L,bodies.last().second.getValue("receiver_user_id").jsonPrimitive.long)
+        assertEquals(73L,bodies.last().second.getValue("ephemeral_message_id").jsonPrimitive.long)
         response = { 200 to """{"ok":true,"result":{"message_id":9,"chat":{"id":-100123,"type":"supergroup"}}}""" }
         assertEquals(FailureKind.UNCERTAIN, assertFailsWith<TelegramFailure> {
             api.ephemeral(-100123,4503599627370000,"callback", "Мои данные",keyboard)
