@@ -287,4 +287,21 @@ class SelfServiceBotTest {
         assertEquals(300,row.paid)
         assertEquals(1,fake.sent.count { it.chat.id==-1L },"No personal panels are posted as ordinary group messages")
     }
+
+    @Test fun `superadmin can appoint and remove a bot admin through the UI in one group only`() {
+        setup()
+        bot.service.execute(Access(-2,3,true),"other-group-admin",SettlementCommand.SetAdministrator(2,true))
+        open(1)
+        click(1,"Администраторы бота")
+        click(1,"User 2")
+        click(1,"Назначить администратором")
+        assertTrue(bot.service.isAdmin(Access(-1,2)))
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Снять назначение" })
+        click(1,"Снять назначение")
+        assertFalse(bot.service.isAdmin(Access(-1,2)))
+        assertTrue(bot.service.isAdmin(Access(-2,2)),"The appointment in another group is independent")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Назначить администратором" })
+        open(2)
+        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Создать тренировку" })
+    }
 }
