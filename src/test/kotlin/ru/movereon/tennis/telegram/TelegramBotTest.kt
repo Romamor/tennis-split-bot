@@ -1057,7 +1057,7 @@ class TelegramBotTest {
         reply("250")
         assertEquals(250L,input().payments.single().amount)
         assertTrue(database.history(group).isEmpty())
-        bot.state.pruneExpiredActions()
+        TelegramStore(database,Clock.offset(clock,java.time.Duration.ofDays(8).plusSeconds(121))).pruneExpiredActions()
         assertNull(bot.state.action(pending.token))
     }
 
@@ -1082,7 +1082,7 @@ class TelegramBotTest {
         assertTrue(bot.state.completed(update.id))
         assertEquals(1,database.history(group).size)
         assertEquals(50L,database.balances(group)[ParticipantId("a")])
-        bot.state.pruneExpiredActions()
+        TelegramStore(database,Clock.offset(clock,java.time.Duration.ofDays(8).plusSeconds(121))).pruneExpiredActions()
         assertNull(bot.state.action(token))
     }
 
@@ -1106,6 +1106,50 @@ class TelegramBotTest {
         clickData(oldEdit)
         assertTrue(text().contains("Запись уже изменена"))
         assertFalse(input().players.any { it.participantId=="s" })
+    }
+
+    @Test fun `current personal menu and pinned group links work after ninety days`() {
+        seed(); open()
+        val create=button("Записать тренировку").callbackData!!
+        val groupMenu=api.messages.values.single { it.chat.id==chat }
+        val link=groupMenu.keyboard!!.rows.flatten().last().url!!.substringAfter("?start=")
+        val later=Clock.offset(clock,java.time.Duration.ofDays(90))
+        bot=TelegramBot(api,database,api.bot,later)
+        bot.maintainButtons()
+        assertNotNull(bot.state.action(create))
+        assertNotNull(bot.state.link(link))
+        clickData(create)
+        val today=java.time.LocalDate.now(later.withZone(java.time.ZoneId.of("Europe/Moscow"))).toString()
+        assertEquals(today,bot.state.editors(1,group).single().content.date)
+        bot.handle(message("/start $link"))
+        assertTrue(text().startsWith("🏓 Теннис"))
+    }
+
+    @Test fun `unconfirmed replacement preserves old and possibly visible controls until success`() {
+        seed(); open()
+        val old=button("Кто кому должен").callbackData!!
+        api.acceptThenFail={ target,_ -> target==1L }
+        bot.handle(message("/menu"))
+        val possiblyVisible=api.sent.last { it.chat.id==1L }.keyboard!!.rows.flatten().mapNotNull { it.callbackData }
+        bot=TelegramBot(api,database,api.bot,Clock.offset(clock,java.time.Duration.ofDays(30)))
+        bot.maintainButtons()
+        assertNotNull(bot.state.action(old))
+        assertTrue(possiblyVisible.all { bot.state.action(it)!=null })
+        bot.handle(message("/menu"))
+        val current=panel().keyboard!!.rows.flatten().mapNotNull { it.callbackData }.toSet()
+        TelegramStore(database,Clock.offset(clock,java.time.Duration.ofDays(30).plusSeconds(121))).pruneExpiredActions()
+        assertTrue(current.all { bot.state.action(it)!=null })
+        assertTrue(possiblyVisible.filterNot { it in current }.all { bot.state.action(it)==null })
+    }
+
+    @Test fun `resuming a planned creation preserves the date of the original click`() {
+        seed(); open()
+        val token=button("Записать тренировку").callbackData!!
+        val update=TgUpdate(updateId++,callback=TgCallback("pending-create",user(1),panel(),token))
+        bot.state.savePlan(update.id,SavedPlan(1,group,token,BotAction("create_draft",field="2026-09-08")))
+        bot=TelegramBot(api,database,api.bot,Clock.offset(clock,java.time.Duration.ofDays(90)))
+        bot.handle(update)
+        assertEquals("2026-09-08",bot.state.editors(1,group).single().content.date)
     }
 
 }

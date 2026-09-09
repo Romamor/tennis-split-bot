@@ -50,14 +50,34 @@ class ButtonLifecycleTest {
         }
     }
 
-    @Test fun `showing the same button extends its lifetime`() {
-        val action=BotAction("menu")
-        val token=state.action(1,"group",action)
-        assertEquals(token,day(6).action(1,"group",action))
-        assertEquals(0,day(8).pruneExpiredActions())
-        assertNotNull(day(8).action(token))
-        assertEquals(1,day(13).pruneExpiredActions())
-        assertNull(day(13).action(token))
+    @Test fun `current buttons never expire and replaced ones have a two-minute grace period`() {
+        val token=state.action(1,"group",BotAction("menu"))
+        state.protectPanelActions(1,listOf(token)); state.confirmPanelActions(1,listOf(token))
+        assertEquals(0,day(90).pruneExpiredActions())
+        assertNotNull(day(90).action(token))
+        val replacement=day(90).action(1,"group",BotAction("balances"))
+        day(90).protectPanelActions(1,listOf(replacement)); day(90).confirmPanelActions(1,listOf(replacement))
+        val beforeGrace=TelegramStore(db,Clock.offset(initial,Duration.ofDays(90).plusSeconds(119)))
+        val afterGrace=TelegramStore(db,Clock.offset(initial,Duration.ofDays(90).plusSeconds(120)))
+        assertEquals(0,beforeGrace.pruneExpiredActions())
+        assertEquals(1,afterGrace.pruneExpiredActions())
+        assertNull(afterGrace.action(token)); assertNotNull(afterGrace.action(replacement))
+    }
+
+    @Test fun `failed or uncertain replacement keeps previous controls and reused buttons stay active`() {
+        val old=state.action(1,"group",BotAction("menu"))
+        state.protectPanelActions(1,listOf(old)); state.confirmPanelActions(1,listOf(old))
+        val next=state.action(1,"group",BotAction("balances"))
+        val previous=state.protectPanelActions(1,listOf(old,next))
+        assertEquals(0,day(30).pruneExpiredActions())
+        state.rejectPanelActions(1,listOf(old,next),previous)
+        assertEquals(1,day(30).pruneExpiredActions())
+        assertNotNull(state.action(old))
+        val otherUser=state.action(2,"group",BotAction("menu"))
+        state.protectPanelActions(2,listOf(otherUser)); state.confirmPanelActions(2,listOf(otherUser))
+        state.confirmPanelActions(1,listOf(old))
+        assertEquals(0,day(60).pruneExpiredActions())
+        assertNotNull(state.action(old)); assertNotNull(state.action(otherUser))
     }
 
     @Test fun `cleanup keeps pending prompts and unfinished plans until they finish`() {
@@ -96,7 +116,7 @@ class ButtonLifecycleTest {
         db.verifyIntegrity()
     }
 
-    @Test fun `version four migration preserves old tokens and grants a full grace period`() {
+    @Test fun `migration expires untracked tokens without affecting permanent links`() {
         val path=directory.resolve("v4.sqlite")
         DriverManager.getConnection("jdbc:sqlite:$path").use { c -> c.createStatement().use { s ->
             listOf("001_accounting","002_workflow","003_telegram","004_editors").forEach { resource ->
@@ -108,14 +128,15 @@ class ButtonLifecycleTest {
             s.execute("INSERT INTO app_groups VALUES('old','UTC',1)")
             s.execute("INSERT INTO tg_groups VALUES('old',-100,'Old')")
             s.execute("INSERT INTO tg_actions VALUES('legacy',1,'old','{\"kind\":\"menu\"}')")
+            s.execute("INSERT INTO tg_sessions VALUES(1,'old',10,NULL)")
+            s.execute("INSERT INTO tg_links VALUES('permanent','old','{\"kind\":\"menu\"}')")
         } }
         val migrated=SqliteAccountingStore(path,initial)
         assertEquals("menu",TelegramStore(migrated,initial).action("legacy")!!.action.kind)
-        assertEquals(0,TelegramStore(migrated,Clock.offset(initial,Duration.ofDays(6))).pruneExpiredActions())
-        // Reopening must not renew the migration grace period.
-        val reopened=SqliteAccountingStore(path,Clock.offset(initial,Duration.ofDays(8)))
-        val expired=TelegramStore(reopened,Clock.offset(initial,Duration.ofDays(8)))
+        val expired=TelegramStore(migrated,Clock.offset(initial,Duration.ofSeconds(121)))
         assertEquals(1,expired.pruneExpiredActions())
+        assertNull(expired.action("legacy"))
+        assertNotNull(expired.link("permanent"))
         migrated.verifyIntegrity()
     }
 }

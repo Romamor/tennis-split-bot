@@ -19,12 +19,12 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
     private var nextButtonCleanup = Long.MIN_VALUE
     init { state.bind(identity) }
 
-    /** Hourly, bounded maintenance; a backlog is drained over subsequent polls. */
+    /** Bounded maintenance every 30 seconds; a backlog is drained over subsequent polls. */
     fun maintainButtons() {
         val now=clock.instant().epochSecond
         if(now<nextButtonCleanup) return
         val removed=state.pruneExpiredActions()
-        nextButtonCleanup=if(removed==1000) now else now+60*60
+        nextButtonCleanup=if(removed==1000) now else now+30
     }
 
     /** A single poller calls this sequentially. Failures leave the offset unchanged for retry. */
@@ -55,7 +55,9 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             currentPlan = raw
             val member = verify(raw.groupId,user.id)
             val plan = if(saved == null && raw.action.kind=="commit_editor")
-                raw.copy(action=raw.action.copy(command=state.planForToken(user.id,raw.groupId,raw.token)?.command ?: editing.commit(member,raw.action))) else raw
+                raw.copy(action=raw.action.copy(command=state.planForToken(user.id,raw.groupId,raw.token)?.command ?: editing.commit(member,raw.action)))
+                else if(saved == null && raw.action.kind=="create_draft") raw.copy(action=raw.action.copy(field=ui.today(member)))
+                else raw
             currentPlan = plan
             state.savePlan(update.id,plan)
             execute(update.id, member, plan, moveToBottom)
@@ -325,6 +327,8 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
     private fun privatePanel(userId: Long,groupId: String?,updateId: Long,text: String,keyboard: TgKeyboard?,moveToBottom: Boolean) {
         val session = state.session(userId)
         val previousPanelId = session.panelId
+        val tokens=keyboard?.rows?.flatten()?.mapNotNull { it.callbackData }.orEmpty()
+        val previouslyActive=state.protectPanelActions(userId,tokens)
         var panelId = if (moveToBottom) null else previousPanelId
         if(panelId != null) {
             try { api.edit(userId,panelId,text.take(4000),keyboard) }
@@ -333,7 +337,10 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
             }
         }
         if(panelId == null) panelId = delivery.sendOnce("panel:$userId:$updateId",groupId,userId,text,keyboard)
-        state.saveSession(session.copy(groupId=groupId,panelId=panelId))
+        state.saveSession(session.copy(groupId=groupId,panelId=panelId ?: previousPanelId))
+        if(panelId != null) state.confirmPanelActions(userId,tokens)
+        else if(state.delivery("panel:$userId:$updateId")?.status in setOf("FAILED","BLOCKED","RETRY"))
+            state.rejectPanelActions(userId,tokens,previouslyActive)
         if (moveToBottom && panelId != null && previousPanelId != null && panelId != previousPanelId) {
             // Retire old controls only after the new panel is confirmed delivered.
             // Cleanup failure must not retry the user's already completed action.

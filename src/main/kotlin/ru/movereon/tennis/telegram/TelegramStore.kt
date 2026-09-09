@@ -49,7 +49,7 @@ class TelegramStore(private val database: SqliteAccountingStore, private val clo
 
     /** A reused token keeps its immutable meaning, owner and group. Creation intents need fresh IDs. */
     fun actions(userId: Long,groupId: String,actions: List<BotAction>): List<String> = database.writeTransaction { c ->
-        val expires = clock.instant().epochSecond + BUTTON_LIFETIME_SECONDS
+        val expires = clock.instant().epochSecond + RETIRED_BUTTON_GRACE_SECONDS
         actions.map { action ->
             val payload = json.encodeToString(action)
             val reusable = action.kind !in setOf("create_draft","new_transfer","recover") && !(action.kind=="ask" && action.field=="name")
@@ -67,13 +67,34 @@ class TelegramStore(private val database: SqliteAccountingStore, private val clo
         }
     }
 
+    /** Protect possible visible controls before the network call; an uncertain result keeps both sets. */
+    fun protectPanelActions(userId: Long,tokens: List<String>): Set<String> = database.writeTransaction { c ->
+        val previous=query(c,"SELECT token FROM tg_actions WHERE user_id=? AND active=1",userId) { it.getString(1) }.toSet()
+        tokens.distinct().forEach { update(c,"UPDATE tg_actions SET active=1 WHERE user_id=? AND token=?",userId,it) }
+        previous
+    }
+
+    /** Only a confirmed screen replacement retires the old set. Reused tokens remain active. */
+    fun confirmPanelActions(userId: Long,tokens: List<String>) = database.writeTransaction { c ->
+        update(c,"UPDATE tg_actions SET active=0,expires_at=? WHERE user_id=? AND active=1",
+            clock.instant().epochSecond+RETIRED_BUTTON_GRACE_SECONDS,userId)
+        tokens.distinct().forEach { update(c,"UPDATE tg_actions SET active=1 WHERE user_id=? AND token=?",userId,it) }
+    }
+
+    fun rejectPanelActions(userId: Long,tokens: List<String>,previous: Set<String>) = database.writeTransaction { c ->
+        tokens.distinct().filterNot { it in previous }.forEach {
+            update(c,"UPDATE tg_actions SET active=0,expires_at=? WHERE user_id=? AND token=?",
+                clock.instant().epochSecond+RETIRED_BUTTON_GRACE_SECONDS,userId,it)
+        }
+    }
+
     /** Keep active prompts and unfinished processing, even beyond the normal lifetime. */
     fun pruneExpiredActions(limit: Int = 1000): Int {
         require(limit in 1..1000)
         return database.writeTransaction { c ->
             update(c,"""
                 DELETE FROM tg_actions WHERE token IN (
-                    SELECT a.token FROM tg_actions a WHERE a.expires_at<=?
+                    SELECT a.token FROM tg_actions a WHERE a.active=0 AND a.expires_at<=?
                     AND NOT EXISTS (
                         SELECT 1 FROM tg_sessions s WHERE s.user_id=a.user_id AND s.group_id=a.group_id
                         AND s.input_json IS NOT NULL AND json_extract(s.input_json,'$.token')=a.token
@@ -159,7 +180,7 @@ class TelegramStore(private val database: SqliteAccountingStore, private val clo
         query(c, "SELECT * FROM tg_deliveries WHERE group_id=? AND chat_id < 0 AND status IN ('UNKNOWN','FAILED','BLOCKED')", groupId, map = ::deliveryRow)
     }
     fun initialized(groupId: String): Boolean = database.readTransaction { c -> query(c, "SELECT group_id FROM app_groups WHERE group_id=?", groupId) { it.getString(1) }.isNotEmpty() }
-    companion object { const val BUTTON_LIFETIME_SECONDS = 7L * 24 * 60 * 60 }
+    companion object { const val RETIRED_BUTTON_GRACE_SECONDS = 120L }
 
     private fun token() = UUID.randomUUID().toString().replace("-", "")
     private fun groupRow(row: ResultSet) = BotGroup(row.getString("group_id"), row.getLong("chat_id"), row.getString("title"))

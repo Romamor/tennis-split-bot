@@ -243,7 +243,7 @@ class SqliteAccountingStore(path: Path, private val clock: Clock = Clock.systemU
                         statement.execute("PRAGMA user_version=1")
                     }
                 }
-                1, 2, 3, 4, 5 -> require(application == APPLICATION_ID) { "Database belongs to another application" }
+                1, 2, 3, 4, 5, 6 -> require(application == APPLICATION_ID) { "Database belongs to another application" }
                 else -> error("Unsupported database schema version: $version")
             }
             if (version < 2) {
@@ -274,6 +274,15 @@ class SqliteAccountingStore(path: Path, private val clock: Clock = Clock.systemU
                     // Legacy buttons have no last-shown timestamp; grant a full grace period.
                     statement.executeUpdate("UPDATE tg_actions SET expires_at=${clock.instant().epochSecond + 7 * 24 * 60 * 60}")
                     statement.execute("PRAGMA user_version=5")
+                }
+            }
+            if (version < 6) {
+                val sql = requireNotNull(javaClass.getResourceAsStream("/db/006_active_buttons.sql")).bufferedReader().use { it.readText() }
+                connection.createStatement().use { statement ->
+                    sql.split(';').filter { it.isNotBlank() }.forEach { statement.execute(it) }
+                    // Untracked controls expire normally; /menu creates a tracked panel.
+                    statement.executeUpdate("UPDATE tg_actions SET expires_at=${clock.instant().epochSecond + 120}")
+                    statement.execute("PRAGMA user_version=6")
                 }
             }
         }
