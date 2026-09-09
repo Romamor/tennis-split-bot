@@ -1032,4 +1032,80 @@ class TelegramBotTest {
         assertTrue(text(3).contains("Доступ к группе не подтверждён"))
     }
 
+    @Test fun `expired save button cannot duplicate a transfer and a new transfer is independent`() {
+        seed()
+        val saved=recordViaUi()
+        bot=TelegramBot(api,database,api.bot,Clock.offset(clock,java.time.Duration.ofDays(8)))
+        bot.maintainButtons()
+        assertNull(bot.state.action(saved))
+        clickData(saved)
+        assertTrue(text().contains("кнопка устарела"))
+        assertEquals(1,database.history(group).size)
+        recordViaUi()
+        // The date default is now different; this is a new transfer intent.
+        assertEquals(2,database.history(group).size)
+        assertEquals(200L,database.balances(group)[ParticipantId("a")])
+    }
+
+    @Test fun `pending amount reply survives expiry and cleanup across restart`() {
+        seed(); ready(); open(action=BotAction("payments",entity="training")); clickStarts("Андрей")
+        val pending=bot.state.session(1).input!!
+        bot=TelegramBot(api,database,api.bot,Clock.offset(clock,java.time.Duration.ofDays(8)))
+        bot.maintainButtons()
+        assertNotNull(bot.state.action(pending.token))
+        assertEquals(pending,bot.state.session(1).input)
+        reply("250")
+        assertEquals(250L,input().payments.single().amount)
+        assertTrue(database.history(group).isEmpty())
+        bot.state.pruneExpiredActions()
+        assertNull(bot.state.action(pending.token))
+    }
+
+    @Test fun `unfinished financial save can retry after expiry without being applied twice`() {
+        seed(); ready(); open(action=BotAction("draft",entity="training"))
+        val token=button("Записать тренировку").callbackData!!
+        val update=TgUpdate(updateId++,callback=TgCallback("save-before-outage",user(1),panel(),token))
+        val failing=object: TelegramApi by api {
+            override fun edit(chatId:Long,messageId:Long,text:String,keyboard:TgKeyboard?) {
+                if(chatId==1L) throw TelegramFailure(FailureKind.UNCERTAIN)
+                api.edit(chatId,messageId,text,keyboard)
+            }
+        }
+        bot=TelegramBot(failing,database,api.bot,clock)
+        assertFailsWith<TelegramFailure> { bot.handle(update) }
+        assertEquals(1,database.history(group).size)
+        assertFalse(bot.state.completed(update.id))
+        bot=TelegramBot(api,database,api.bot,Clock.offset(clock,java.time.Duration.ofDays(8)))
+        bot.maintainButtons()
+        assertNotNull(bot.state.action(token))
+        bot.handle(update)
+        assertTrue(bot.state.completed(update.id))
+        assertEquals(1,database.history(group).size)
+        assertEquals(50L,database.balances(group)[ParticipantId("a")])
+        bot.state.pruneExpiredActions()
+        assertNull(bot.state.action(token))
+    }
+
+    @Test fun `two new training buttons and two add-person prompts are separate intents`() {
+        seed(); open(); click("Записать тренировку")
+        open(); click("Записать тренировку")
+        assertEquals(2,bot.state.editors(1,group).size)
+        repeat(2) { i ->
+            open(); click("Ещё"); click("Участники"); click("Добавить по имени"); reply("Новый $i")
+        }
+        assertEquals(5,service.participants(member()).size)
+    }
+
+    @Test fun `editor navigation is reused while stale edit buttons retain their original version`() {
+        seed(); ready(); open(action=BotAction("add_players",entity="training"))
+        val navigation=button("Время и +1").callbackData!!
+        val oldEdit=button("⬜ Саша").callbackData!!
+        click("✅ Андрей")
+        assertEquals(navigation,button("Время и +1").callbackData)
+        assertNotEquals(oldEdit,button("⬜ Саша").callbackData)
+        clickData(oldEdit)
+        assertTrue(text().contains("Запись уже изменена"))
+        assertFalse(input().players.any { it.participantId=="s" })
+    }
+
 }

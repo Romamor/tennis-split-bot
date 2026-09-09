@@ -45,6 +45,7 @@ fun runBot() {
             println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
             while(!Thread.currentThread().isInterrupted) {
                 try {
+                    bot.maintainButtons()
                     bot.delivery.flush()
                     api.updates(bot.state.offset(),config.pollTimeout).sortedBy { it.id }.forEach(bot::handle)
                 } catch (failure: TelegramFailure) {

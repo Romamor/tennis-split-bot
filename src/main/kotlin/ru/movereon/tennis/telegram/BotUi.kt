@@ -471,13 +471,14 @@ class BotUi(private val service: GroupService, private val accounting: SqliteAcc
             else -> Screen("Открой нужный раздел из меню.",listOf(home()))
         }
         if(editor == null) return screen
-        val formKinds = setOf("draft","players","add_players","selection_more","player","payments","preview","time_choices","draft_more","training_details",
-            "edit","commit_editor","close_editor","reload_editor","reload_editor_confirm")
+        val navigationKinds = setOf("draft","players","add_players","selection_more","player","payments","preview","time_choices","draft_more","training_details")
+        val formKinds = navigationKinds + setOf("edit","commit_editor","close_editor","reload_editor","reload_editor_confirm")
         return screen.copy(buttons=screen.buttons.map { row -> row.map { (label,button) ->
             val belongs = button.entity==editor.draftId && (button.kind in formKinds ||
                 button.kind=="ask" && button.field in setOf("payment","draft_date") ||
                 button.command is WorkflowCommand.CancelDraft || button.command is WorkflowCommand.DiscardChanges)
-            label to if(belongs) button.copy(editorId=editor.id,editorVersion=editor.revision) else button
+            // Navigation renders fresh state; only editing buttons need the expected input version.
+            label to if(belongs) button.copy(editorId=editor.id,editorVersion=if(button.kind in navigationKinds) null else editor.revision) else button
         } })
     }
 

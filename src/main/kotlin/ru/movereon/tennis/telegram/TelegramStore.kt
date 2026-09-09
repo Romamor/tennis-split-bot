@@ -6,8 +6,11 @@ import ru.movereon.tennis.storage.SqliteAccountingStore
 import java.sql.Connection
 import java.sql.ResultSet
 import java.util.UUID
+import java.time.Clock
+import java.security.MessageDigest
+import java.util.HexFormat
 
-class TelegramStore(private val database: SqliteAccountingStore) {
+class TelegramStore(private val database: SqliteAccountingStore, private val clock: Clock = Clock.systemUTC()) {
     private val json = Json { encodeDefaults = true }
     fun bind(bot: TgUser) = database.writeTransaction { c ->
         val previous = query(c, "SELECT bot_id FROM tg_identity WHERE singleton=1") { it.getLong(1) }.singleOrNull()
@@ -42,12 +45,47 @@ class TelegramStore(private val database: SqliteAccountingStore) {
         update(c, "INSERT INTO tg_sessions VALUES(?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET group_id=excluded.group_id,panel_id=excluded.panel_id,input_json=excluded.input_json",
             session.userId, session.groupId, session.panelId, session.input?.let { json.encodeToString(it) })
     }
-    fun action(userId: Long, groupId: String, action: BotAction): String = database.writeTransaction { c ->
-        val token = token()
-        update(c, "INSERT INTO tg_actions VALUES(?,?,?,?)", token, userId, groupId, json.encodeToString(action)); token
-    }
+    fun action(userId: Long, groupId: String, action: BotAction): String = actions(userId,groupId,listOf(action)).single()
+
+    /** A reused token keeps its immutable meaning, owner and group. Creation intents need fresh IDs. */
     fun actions(userId: Long,groupId: String,actions: List<BotAction>): List<String> = database.writeTransaction { c ->
-        actions.map { action -> token().also { update(c,"INSERT INTO tg_actions VALUES(?,?,?,?)",it,userId,groupId,json.encodeToString(action)) } }
+        val expires = clock.instant().epochSecond + BUTTON_LIFETIME_SECONDS
+        actions.map { action ->
+            val payload = json.encodeToString(action)
+            val reusable = action.kind !in setOf("create_draft","new_transfer","recover") && !(action.kind=="ask" && action.field=="name")
+            val hash = if(reusable) HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(payload.toByteArray(Charsets.UTF_8))) else null
+            val old = if(hash == null) null else query(c,
+                "SELECT token FROM tg_actions WHERE user_id=? AND group_id=? AND payload_hash=? AND action_json=? ORDER BY expires_at DESC LIMIT 1",
+                userId,groupId,hash,payload) { it.getString(1) }.singleOrNull()
+            if(old != null) {
+                update(c,"UPDATE tg_actions SET expires_at=? WHERE token=?",expires,old)
+                old
+            } else token().also {
+                update(c,"INSERT INTO tg_actions(token,user_id,group_id,action_json,payload_hash,expires_at) VALUES(?,?,?,?,?,?)",
+                    it,userId,groupId,payload,hash,expires)
+            }
+        }
+    }
+
+    /** Keep active prompts and unfinished processing, even beyond the normal lifetime. */
+    fun pruneExpiredActions(limit: Int = 1000): Int {
+        require(limit in 1..1000)
+        return database.writeTransaction { c ->
+            update(c,"""
+                DELETE FROM tg_actions WHERE token IN (
+                    SELECT a.token FROM tg_actions a WHERE a.expires_at<=?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM tg_sessions s WHERE s.user_id=a.user_id AND s.group_id=a.group_id
+                        AND s.input_json IS NOT NULL AND json_extract(s.input_json,'$.token')=a.token
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1 FROM tg_plans p LEFT JOIN tg_updates u ON u.update_id=p.update_id
+                        WHERE p.user_id=a.user_id AND p.group_id=a.group_id AND p.token=a.token
+                        AND COALESCE(u.completed,0)=0
+                    ) ORDER BY a.expires_at,a.token LIMIT ?
+                )
+                """.trimIndent(),clock.instant().epochSecond,limit)
+        }
     }
     fun editor(userId: Long,groupId: String,id: String): DraftEditor? = database.readTransaction { c ->
         query(c,"SELECT editor_json FROM tg_editors WHERE user_id=? AND group_id=? AND editor_id=?",userId,groupId,id) {
@@ -121,6 +159,8 @@ class TelegramStore(private val database: SqliteAccountingStore) {
         query(c, "SELECT * FROM tg_deliveries WHERE group_id=? AND chat_id < 0 AND status IN ('UNKNOWN','FAILED','BLOCKED')", groupId, map = ::deliveryRow)
     }
     fun initialized(groupId: String): Boolean = database.readTransaction { c -> query(c, "SELECT group_id FROM app_groups WHERE group_id=?", groupId) { it.getString(1) }.isNotEmpty() }
+    companion object { const val BUTTON_LIFETIME_SECONDS = 7L * 24 * 60 * 60 }
+
     private fun token() = UUID.randomUUID().toString().replace("-", "")
     private fun groupRow(row: ResultSet) = BotGroup(row.getString("group_id"), row.getLong("chat_id"), row.getString("title"))
     private fun deliveryRow(row: ResultSet) = Delivery(row.getString("delivery_key"), row.getString("group_id"), row.getLong("chat_id"), row.getString("message_id")?.toLong(), row.getString("status"))

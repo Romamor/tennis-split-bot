@@ -10,16 +10,26 @@ import java.time.format.ResolverStyle
 
 class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAccountingStore,
     val identity: TgUser, private val clock: Clock = Clock.systemUTC(), private val defaultZone: String = "Europe/Moscow") {
-    val state = TelegramStore(accounting)
+    val state = TelegramStore(accounting,clock)
     private val service = GroupService(accounting,clock)
     private val membership = Membership(api,state,identity)
     val delivery = TelegramDelivery(api,state,accounting,service,identity)
     private val editing = DraftEditing(service,state)
     private val ui = BotUi(service,accounting,state,clock)
+    private var nextButtonCleanup = Long.MIN_VALUE
     init { state.bind(identity) }
+
+    /** Hourly, bounded maintenance; a backlog is drained over subsequent polls. */
+    fun maintainButtons() {
+        val now=clock.instant().epochSecond
+        if(now<nextButtonCleanup) return
+        val removed=state.pruneExpiredActions()
+        nextButtonCleanup=if(removed==1000) now else now+60*60
+    }
 
     /** A single poller calls this sequentially. Failures leave the offset unchanged for retry. */
     fun handle(update: TgUpdate) {
+        maintainButtons()
         if(state.completed(update.id)) return
         val message = update.message
         if(message != null && message.chat.type in setOf("group","supergroup")) {
@@ -113,7 +123,11 @@ class TelegramBot(private val api: TelegramApi, private val accounting: SqliteAc
     private fun resolve(update: TgUpdate,user: TgUser,verify: (String,Long)->VerifiedGroupMember): SavedPlan? {
         update.callback?.let { callback ->
             val action = callback.data?.let(state::action)
-            if(action == null || action.userId != user.id) throw BotAccessDenied()
+            if(action == null) {
+                privatePanel(user.id,state.session(user.id).groupId,update.id,"Эта кнопка устарела. Открой /menu и продолжи с нового экрана.",null,moveToBottom=true)
+                return null
+            }
+            if(action.userId != user.id) throw BotAccessDenied()
             if(action.action.kind=="groups") {
                 chooseGroup(user.id,update.id,action.action.page,verify)
                 return null

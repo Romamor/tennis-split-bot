@@ -53,7 +53,7 @@ class WorkflowMigrationTest {
         assertEquals(1, store.history("legacy").size)
         assertEquals(mapOf(a to 100L, b to -100L), store.balances("legacy"))
         DriverManager.getConnection("jdbc:sqlite:$path").use { connection -> connection.createStatement().use { statement ->
-            statement.executeQuery("PRAGMA user_version").use { rows -> rows.next(); assertEquals(4, rows.getInt(1)) }
+            statement.executeQuery("PRAGMA user_version").use { rows -> rows.next(); assertEquals(5, rows.getInt(1)) }
         } }
     }
 }
