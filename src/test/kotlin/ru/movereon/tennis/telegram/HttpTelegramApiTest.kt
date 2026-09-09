@@ -107,7 +107,8 @@ class HttpTelegramApiTest {
         assertEquals(73L, msg.ephemeralId)
         val parameters = bodies.last().second.getValue("ephemeral_message_parameters").jsonObject
         assertEquals(4503599627370000L, parameters.getValue("receiver_user_id").jsonPrimitive.long)
-        assertTrue(parameters.getValue("replace_callback_query_message").jsonPrimitive.boolean)
+        assertFalse(parameters.getValue("replace_callback_query_message").jsonPrimitive.boolean,
+            "The shared card is edited after joining and must not host the personal panel")
         api.editEphemeral(-100123,4503599627370000,73,"Обновлено",keyboard)
         assertEquals("editEphemeralMessageText", bodies.last().first)
         assertEquals(73L,bodies.last().second.getValue("ephemeral_message_id").jsonPrimitive.long)

@@ -100,7 +100,9 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         json.decodeFromJsonElement<TgMessage>(call("sendMessage", buildJsonObject {
             put("chat_id", chatId); put("text", text)
             put("ephemeral_message_parameters", buildJsonObject {
-                put("receiver_user_id", userId); put("callback_query_id", callbackId); put("replace_callback_query_message", true)
+                put("receiver_user_id", userId); put("callback_query_id", callbackId)
+                // Keep personal controls separate from the shared card, which is updated after every change.
+                put("replace_callback_query_message", false)
             })
             put("reply_markup", json.encodeToJsonElement(keyboard))
         })).also { if (it.receiver?.id != userId || it.ephemeralId == null) throw TelegramFailure(FailureKind.UNCERTAIN) }

@@ -45,8 +45,10 @@ class SelfServiceBotTest {
             }
         }
     }
-    private fun message(user: Long, text: String, chat: Long = user) {
-        bot.handle(TgUpdate(updateId++, TgMessage(1000 + updateId, TgChat(chat, if (chat < 0) "supergroup" else "private", if (chat == -1L) "Первая группа" else null), TgUser(user, firstName = "User $user"), text)))
+    private fun message(user: Long, text: String, chat: Long = user): TgUpdate {
+        val update = TgUpdate(updateId++, TgMessage(1000 + updateId, TgChat(chat, if (chat < 0) "supergroup" else "private", if (chat == -1L) "Первая группа" else null), TgUser(user, firstName = "User $user"), text))
+        bot.handle(update)
+        return update
     }
     private fun latest(user: Long) = fake.messages.values.last { it.chat.id == user }
     private fun click(user: Long, label: String, message: TgMessage = latest(user)): TgUpdate {
@@ -219,5 +221,70 @@ class SelfServiceBotTest {
         message(2,"1000")
         assertEquals(0,bot.service.trainings(Access(-1,1)).items.single().players.single().paid)
         assertTrue(latest(2).text!!.contains("Доступ только участникам"))
+    }
+
+    @Test fun `text input moves the private panel to a new reply while button clicks edit that reply`() {
+        setup(); open(1)
+        val original = latest(1)
+        click(1,"Создать тренировку")
+        assertEquals(original.id,latest(1).id)
+        val titlePrompt = latest(1)
+        message(1,"Вечерний теннис")
+        val datePrompt = latest(1)
+        assertNotEquals(titlePrompt.id,datePrompt.id)
+        assertEquals(titlePrompt,fake.messages[1L to titlePrompt.id],"The old prompt must not be edited above the user input")
+        click(1,"09.09.2026")
+        assertEquals(datePrompt.id,latest(1).id)
+        message(1,"не время")
+        assertNotEquals(datePrompt.id,latest(1).id)
+        assertTrue(latest(1).text!!.contains("Проверь формат"))
+        val errorReply = latest(1)
+        message(1,"/start")
+        assertNotEquals(errorReply.id,latest(1).id)
+    }
+
+    @Test fun `replaying a text event after delivery does not create another private reply`() {
+        setup(); open(1); click(1,"Создать тренировку")
+        val update = message(1,"Вечерний теннис")
+        val delivered = latest(1)
+        val count = fake.sent.size
+        bot.state.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET completed=0 WHERE update_id=?",update.id) }
+        bot.handle(update)
+        assertEquals(count,fake.sent.size)
+        assertEquals(delivered.id,latest(1).id)
+    }
+
+    @Test fun `unknown new reply is not resent on replay but new user input gets a fresh reply`() {
+        setup(); open(1); click(1,"Создать тренировку")
+        fake.acceptThenFail = { chat,_ -> chat==1L }
+        val update = message(1,"Вечерний теннис")
+        assertEquals("UNKNOWN",bot.state.delivery("personal:1:1")!!.status)
+        val count = fake.sent.size
+        bot.state.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET completed=0 WHERE update_id=?",update.id) }
+        bot.handle(update)
+        assertEquals(count,fake.sent.size)
+        message(1,"10.09.2026")
+        assertEquals(count+1,fake.sent.size)
+        assertEquals("SENT",bot.state.delivery("personal:1:1")!!.status)
+    }
+
+    @Test fun `updating the shared card preserves personal time payment and leave controls`() {
+        setup(); create()
+        click(2,"Присоединиться",publicCard())
+        bot.maintain()
+        val personal = ephemeralMessages.getValue(-1L to 2L)
+        val buttons = personal.keyboard!!.rows.flatten()
+        assertTrue(buttons.any { it.text=="+0,5 ч" })
+        assertTrue(buttons.any { it.text=="Платил · 300 ₽" })
+        assertTrue(buttons.any { it.text=="Выйти из тренировки" })
+        buttons.mapNotNull { it.callbackData?.removePrefix("n:") }.forEach { assertNotNull(bot.state.button(it)) }
+        click(2,"Платил",personal)
+        bot.maintain()
+        click(2,"Выйти из тренировки",ephemeralMessages.getValue(-1L to 2L))
+        bot.maintain()
+        val row = bot.service.trainings(Access(-1,1)).items.single().players.single()
+        assertFalse(row.playing)
+        assertEquals(300,row.paid)
+        assertEquals(1,fake.sent.count { it.chat.id==-1L },"No personal panels are posted as ordinary group messages")
     }
 }

@@ -5,6 +5,7 @@ import ru.movereon.tennis.core.*
 import ru.movereon.tennis.storage.*
 import ru.movereon.tennis.telegram.*
 import java.time.Clock
+import java.time.DateTimeException
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -61,7 +62,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 message.leftMember?.takeUnless { it.isBot }?.let { remember(it); service.rememberMembership(message.chat.id, it.id, false) }
             }
             val saved = state.plan(update.id)
-            val plan = saved ?: prepare(update, message, user)?.also { state.plan(update.id, it) }
+            val plan = saved ?: prepare(update, message, user)
+                ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
+                ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
             val a = if (plan.screen.group < 0) access(plan.screen.group, plan.user) else null
             var effective = plan
@@ -88,8 +91,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (failure.kind in setOf(FailureKind.UNCERTAIN, FailureKind.RETRY_LATER)) throw failure
             answer(callback, "Не удалось выполнить действие. Проверь доступ бота к этой группе.")
             state.complete(update.id)
-        } catch (failure: IllegalArgumentException) {
-            val explanation = if (failure is AccountingException) when (failure.code) {
+        } catch (failure: RuntimeException) {
+            if (failure !is IllegalArgumentException && failure !is DateTimeException) throw failure
+            val explanation = if (failure is DateTimeException) "Проверь формат даты и времени: ДД.ММ.ГГГГ и ЧЧ:ММ."
+            else if (failure is AccountingException) when (failure.code) {
                 ErrorCode.OUT_OF_RANGE -> "Слишком большое значение. Укажи меньшую сумму или время."
                 else -> failure.message ?: "Не удалось выполнить действие"
             } else failure.message?.takeIf { it.any { ch -> ch in 'А'..'я' } } ?: "Проверь формат введённых данных."
@@ -99,8 +104,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val group = form?.group ?: state.selectedGroup(user.id, message.chat.id)
                 val target = ScreenAction(if (form != null) "form" else if (group != null) "menu" else "groups", group ?: 0)
                 val a = group?.let { runCatching { access(it, user.id) }.getOrNull() }
-                deliver(update.id, EventPlan(user.id, message.chat.id, if (group != null && a == null) ScreenAction("groups", 0) else target,
-                    form = form.takeIf { a != null }, notice = explanation), a)
+                val errorPlan = positionAfterInput(EventPlan(user.id, message.chat.id,
+                    if (group != null && a == null) ScreenAction("groups", 0) else target,
+                    form = form.takeIf { a != null }, notice = explanation), true)
+                state.plan(update.id, errorPlan)
+                deliver(update.id, errorPlan, a)
             }
             state.complete(update.id)
         }
@@ -241,6 +249,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
     }
     private fun answer(callback: TgCallback?, text: String) { callback?.let { runCatching { api.answer(it.id, text.take(180), true) } } }
+    /** Freeze the old message identity with the input event, so retries cannot create another reply. */
+    private fun positionAfterInput(plan: EventPlan, incomingPrivateMessage: Boolean): EventPlan {
+        if (!incomingPrivateMessage) return plan
+        val key = "personal:${plan.user}:${plan.chat}"
+        val old = state.delivery(key)
+        // A new user message permits a fresh reply even if the previous reply never arrived.
+        if (old?.status == "UNKNOWN" && old.message == null) state.forgetDelivery(key)
+        return plan.copy(newPrivateMessage = true, previousPrivateMessage = old?.message)
+    }
     private fun deliver(event: Long, plan: EventPlan, a: Access?) {
         if (plan.screen.kind == "group_menu") {
             val token = state.button(ScreenAction("menu", plan.screen.group), null, "group-link:${plan.screen.group}", true)
@@ -267,6 +284,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val out = screens.render(plan.screen, a, scope, plan.user, plan.form, plan.notice)
         if (plan.chat < 0) {
             // Only training data already visible on the shared card is rendered inside the group.
+            val oldTokens = state.activeTokens(scope)
             state.protect(out.tokens)
             try {
                 if (plan.ephemeral != null) api.editEphemeral(plan.chat, plan.user, plan.ephemeral, out.text, out.keyboard)
@@ -274,12 +292,19 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 state.replace(scope, out.tokens)
             } catch (failure: TelegramFailure) {
                 if (failure.code in setOf(401, 409)) throw failure
-                plan.callback?.let { runCatching { api.answer(it, "Изменение сохранено. Открой «Мои данные» заново или кнопку «Открыть у бота» на общей карточке.", true) } }
+                System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
+                if (failure.kind != FailureKind.UNCERTAIN) state.replace(scope, oldTokens)
+                val notice = (if (plan.command != null) "Изменение сохранено. " else "") +
+                    "Панель не открылась. Нажми «Мои данные» ещё раз или «Открыть у бота» на общей карточке."
+                plan.callback?.let { runCatching { api.answer(it, notice, true) } }
                 if (failure.kind == FailureKind.RETRY_LATER) throw failure
+                return
             }
         } else {
             val key = "personal:${plan.user}:${plan.chat}"
-            if (state.delivery(key)?.status == "UNKNOWN" && state.plan(event) == null) state.forgetDelivery(key)
+            val old = state.delivery(key)
+            if (plan.newPrivateMessage && old?.message == plan.previousPrivateMessage && old?.status !in setOf("SENDING", "UNKNOWN"))
+                state.forgetDelivery(key)
             sendOrdinary(key, plan.screen.group, plan.chat, plan.user, out, scope)
             if (plan.form?.kind == "pick_account") {
                 val pickerKey = "picker:$event"
