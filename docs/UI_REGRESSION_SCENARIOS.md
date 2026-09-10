@@ -1,12 +1,18 @@
 # Постоянные сценарии текущей сверки
 
-10 сентября 2026. Локальный пакет, без разрешения на выкладку.
+10 сентября 2026. Состояние установки каждого выпуска — в DEPLOYMENT_STATUS.md.
 Тесты находятся в `src/test/kotlin/ru/movereon/tennis/`.
+
+После добавления восстановления отменённых тренировок проходят 81 автоматический тест.
 
 | Правило | Сценарий проверки |
 | --- | --- |
 | У участника два пункта меню | `member menu has two primary items and transfer amount edits preserve review` |
 | Названия учёта и исправления | `accounting controls use approved labels and preserve balances while correcting` |
+| Восстановление без повторного расчёта и потери переводов | `restoring cancelled training preserves input and transfers until explicitly accounted without duplicates` |
+| Восстановление отменённой открытой или исправляемой тренировки, права своей группы | `restore is group scoped admin only and works after cancelling an open or edited training` |
+| Восстановление из списка, история и обновление той же карточки | `admin restores cancelled training from history and updates the same public card` |
+| Снятые права при нажатии старой кнопки восстановления | `saved restore button checks live administrator rights` |
 | Произвольный перевод и правка суммы | Сценарий меню выше и `amount edit preserves review ownership and does not create a second transfer` |
 | Дубли за 24 часа, независимо от автора и указанной даты | `duplicates use a rolling 24 hour window regardless of recorder or stated date` |
 | Выход из несохранённого выбора | `back warns on unsaved selection and continues or discards without writing history` |

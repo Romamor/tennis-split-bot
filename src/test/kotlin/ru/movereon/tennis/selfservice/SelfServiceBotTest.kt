@@ -704,6 +704,43 @@ class SelfServiceBotTest {
         assertTrue(latest(1).text!!.contains("Учтена"))
     }
 
+    @Test fun `admin restores cancelled training from history and updates the same public card`() {
+        setup();create();click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт")
+        val auth=Access(-1,1,true)
+        val before=bot.service.trainings(auth).items.single()
+        val publicId=publicCard().id
+        click(1,"Отменить тренировку");click(1,"Да, отменить тренировку");bot.maintain()
+        assertTrue(publicCard().text!!.contains("Отменена"))
+        open(2);click(2,"Мои тренировки");click(2,before.title)
+        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Восстановить тренировку") })
+        open(1);click(1,"Управление тренировками");click(1,before.title)
+        val update=click(1,"Восстановить тренировку")
+        bot.handle(update);bot.maintain()
+        assertTrue(latest(1).text!!.contains("Открыта"))
+        assertTrue(latest(1).text!!.contains("Проверь данные"))
+        assertEquals(TrainingPhase.OPEN,bot.service.training(auth,before.id).phase)
+        assertTrue(bot.service.balances(auth).values.all { it==0L })
+        assertEquals(publicId,publicCard().id)
+        assertEquals(1,fake.sent.count { it.chat.id == -1L })
+        assertTrue(publicCard().text!!.contains("Открыта"))
+        click(1,"История изменений")
+        assertTrue(latest(1).text!!.contains("Восстановил тренировку; расчёт ещё не учтён"))
+        click(1,"Назад");click(1,"Учесть тренировку");click(1,"Подтвердить учёт");bot.maintain()
+        assertTrue(publicCard().text!!.contains("Учтена"))
+        assertEquals(before.players,bot.service.training(auth,before.id).players)
+    }
+
+    @Test fun `saved restore button checks live administrator rights`() {
+        setup();create();click(1,"Отменить тренировку");click(1,"Да, отменить тренировку")
+        val cancelled=bot.service.trainings(Access(-1,1)).items.single()
+        val card=latest(1)
+        fake.members[-1L to 1L]=TgMember("member")
+        click(1,"Восстановить тренировку",card)
+        assertTrue(answers.last().contains("администратору"))
+        assertEquals(cancelled,bot.service.training(Access(-1,1),cancelled.id))
+    }
+
     @Test fun `unchanged details exit directly and changed details require an explicit discard`() {
         setup();create();click(1,"Изменить название и время");click(1,"Отмена")
         assertFalse(latest(1).text!!.contains("несохранённые"))

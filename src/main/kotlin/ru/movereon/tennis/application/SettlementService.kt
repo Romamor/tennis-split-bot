@@ -180,6 +180,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         is SettlementCommand.FinishTraining -> command.id
                         is SettlementCommand.ReopenTraining -> command.id
                         is SettlementCommand.CancelTraining -> command.id
+                        is SettlementCommand.RestoreTraining -> command.id
                         else -> error("Unhandled training command")
                     }
                     val old = training(c, a.groupId, trainingId)
@@ -255,6 +256,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             entries = reverseTraining(c, a.groupId, trainingId)
                             sqlUpdate(c, "UPDATE trainings SET status='CANCELLED',applied_version=0 WHERE group_id=? AND id=?", a.groupId, trainingId)
                             sqlUpdate(c, "UPDATE training_players SET applied_playing=0 WHERE group_id=? AND training_id=?", a.groupId, trainingId)
+                        }
+                        is SettlementCommand.RestoreTraining -> {
+                            stale(old.version, command.version)
+                            state(old.phase == TrainingPhase.CANCELLED, "Восстановить можно только отменённую тренировку")
+                            // Cancellation already reversed the ledger. Keep the saved input for explicit accounting.
+                            sqlUpdate(c, "UPDATE trainings SET status='OPEN' WHERE group_id=? AND id=?", a.groupId, trainingId)
                         }
                         else -> error("Unhandled training command")
                     }

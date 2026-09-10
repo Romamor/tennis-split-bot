@@ -128,6 +128,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                         }
                         if (t.phase == TrainingPhase.CLOSED) row("✏️ Исправить тренировку", next("reopen", version = t.version))
                         if (t.phase != TrainingPhase.CANCELLED) row("🗑 Отменить тренировку", next("cancel_confirm", version = t.version).copy(back=action.copy(page=index)))
+                        else row("↩️ Восстановить тренировку", next("restore", version = t.version).copy(back=action.copy(page=index)))
                     }
                     row("История изменений", next("history").copy(back=action.copy(page=index)))
                     back(ScreenAction("trainings",action.group,option=if(service.isAdmin(a)) "all" else "mine"))
@@ -413,6 +414,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         "FinishTraining" -> "Учёл тренировку · ${state.json.decodeFromString<TrainingRecord>(a.after).players.sumOf { it.paid }} ₽"
         "ReopenTraining" -> "Открыл исправление тренировки; прежний расчёт сохранён"
         "CancelTraining" -> "Отменил тренировку и снял её расчёт"
+        "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
         "RecordTransfer" -> "Записал перевод"
         "ChangeTransfer" -> "Изменил состояние перевода"
         "SetAdministrator" -> if (a.after == "true") "Назначил администратора бота" else "Снял назначение администратора"

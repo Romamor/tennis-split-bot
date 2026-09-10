@@ -84,6 +84,56 @@ class SettlementServiceTest {
         assertTrue(s.database.verify().contains("целостность в порядке"))
     }
 
+    @Test fun `restoring cancelled training preserves input and transfers until explicitly accounted without duplicates`() {
+        val s=setup();s.sample()
+        s.run(SettlementCommand.RecordTransfer("advance",2,1,200,"2026-09-09"),member)
+        val accounted=s.balances(admin)
+        s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
+        val cancelled=s.training(admin,"t")
+        val transferOnly=s.balances(admin)
+        assertEquals(mapOf(1L to -200L,2L to 200L),transferOnly)
+        assertFalse(s.roster(admin).items.single { it.account.id==2L }.hasPlayed)
+        val command=SettlementCommand.RestoreTraining("t",cancelled.version)
+        val receipt=s.execute(admin,"restore",command)
+        assertEquals(receipt,s.execute(admin,"restore",command))
+        val restored=s.training(admin,"t")
+        assertEquals(cancelled.copy(phase=TrainingPhase.OPEN,version=cancelled.version+1),restored)
+        assertEquals(0,restored.appliedVersion)
+        assertEquals(transferOnly,s.balances(admin))
+        assertTrue(s.roster(admin).items.single { it.account.id==2L }.hasPlayed)
+        assertEquals(0,s.roster(admin).items.single { it.account.id==2L }.attendance)
+        assertEquals(1,s.history(admin,trainingId="t").items.count { it.kind=="RestoreTraining" })
+        assertFailsWith<AccountingException> { s.run(command) }
+        assertFailsWith<AccountingException> { s.run(command.copy(version=restored.version)) }
+        s.finish()
+        assertEquals(accounted,s.balances(admin))
+        assertEquals(1,s.roster(admin).items.single { it.account.id==2L }.attendance)
+        assertEquals(1,s.trainings(admin).total)
+        assertTrue(s.database.verify().contains("целостность в порядке"))
+    }
+
+    @Test fun `restore is group scoped admin only and works after cancelling an open or edited training`() {
+        val s=setup();s.create();s.change(1,AttendanceChange.JOIN)
+        s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
+        val cancelled=s.training(admin,"t")
+        val command=SettlementCommand.RestoreTraining("t",cancelled.version)
+        assertFailsWith<AccountingException> { s.run(command,member) }
+        assertFailsWith<AccountingException> { s.run(command,Access(-1,3)) } // Admin only in the other group.
+        assertFailsWith<AccountingException> { s.run(command,other) }
+        assertEquals(cancelled,s.training(admin,"t"))
+        s.run(SettlementCommand.SetAdministrator(2,true))
+        s.run(command,member)
+        s.change(1,AttendanceChange.MARK_PAID)
+        s.change(2,AttendanceChange.JOIN)
+        s.finish();s.reopen();s.change(1,AttendanceChange.SET_PAID,600)
+        s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
+        s.run(SettlementCommand.RestoreTraining("t",s.training(admin,"t").version),member)
+        assertTrue(s.balances(admin).values.all { it==0L })
+        assertEquals(600,s.training(admin,"t").players.single { it.userId==1L }.paid)
+        s.finish()
+        assertEquals(mapOf(1L to 300L,2L to -300L),s.balances(admin))
+    }
+
     @Test fun `membership and admin rights are scoped to group and ordinary members cannot change another player`() {
         val s = setup(); s.create(); s.create("elsewhere", other)
         assertFailsWith<AccountingException> { s.change(1, AttendanceChange.JOIN, who = member) }

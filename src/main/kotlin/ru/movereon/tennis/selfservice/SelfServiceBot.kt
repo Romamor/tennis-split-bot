@@ -315,6 +315,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "finish" -> plan(trainingScreen(), SettlementCommand.FinishTraining(action.id, action.version))
             "reopen" -> plan(trainingScreen(), SettlementCommand.ReopenTraining(action.id, action.version))
             "cancel" -> plan(trainingScreen(), SettlementCommand.CancelTraining(action.id, action.version))
+            "restore" -> plan(trainingScreen(), SettlementCommand.RestoreTraining(action.id, action.version))
+                .copy(notice="Тренировка восстановлена. Проверь данные и нажми «Учесть тренировку».")
             "set_admin" -> {
                 if (action.value==1L) {
                     val targetMember=api.member(action.group,action.user)
