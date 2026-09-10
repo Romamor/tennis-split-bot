@@ -9,36 +9,44 @@ import java.math.BigInteger
 import ru.movereon.tennis.core.*
 
 /** One normalized database. Pre-release legacy schemas are intentionally not migrated. */
-class Database(path: Path, private val trace:((String)->Unit)?=null) {
+class Database(path: Path, private val trace:((String)->Unit)?=null, private val readOnly:Boolean=false) {
     val readTransactions=java.util.concurrent.atomic.AtomicLong()
     val writeTransactions=java.util.concurrent.atomic.AtomicLong()
     val path=path.toAbsolutePath().normalize()
     init {
-        Files.createDirectories(this.path.parent)
-        write { c ->
-            val app=sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()
-            val version=sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single()
-            if(version==0) {
-                require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
-                val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=2") }
-            } else {
-                require(app==APPLICATION_ID && version in 1..2) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
-                if(version==1) {
-                    c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
-                    c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
-                    refreshAttendance(c)
-                    c.createStatement().use { it.execute("PRAGMA user_version=2") }
+        if(readOnly) {
+            require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
+            read { c ->
+                require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..2) { "Неизвестный формат базы бота" }
+            }
+        } else {
+            Files.createDirectories(this.path.parent)
+            write { c ->
+                val app=sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()
+                val version=sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single()
+                if(version==0) {
+                    require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
+                    val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=2") }
+                } else {
+                    require(app==APPLICATION_ID && version in 1..2) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    if(version==1) {
+                        c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
+                        c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
+                        refreshAttendance(c)
+                        c.createStatement().use { it.execute("PRAGMA user_version=2") }
+                    }
                 }
             }
+            connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
         }
-        connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
     }
-    private fun connect(): Connection = DriverManager.getConnection("jdbc:sqlite:$path").also { c ->
-        c.createStatement().use { s -> s.execute("PRAGMA foreign_keys=ON");s.execute("PRAGMA busy_timeout=5000");s.execute("PRAGMA synchronous=FULL") }
+    private fun connect(): Connection = DriverManager.getConnection(if(readOnly) "jdbc:sqlite:${path.toUri()}?mode=ro" else "jdbc:sqlite:$path").also { c ->
+        c.createStatement().use { s -> s.execute("PRAGMA foreign_keys=ON");s.execute("PRAGMA busy_timeout=5000");s.execute(if(readOnly) "PRAGMA query_only=ON" else "PRAGMA synchronous=FULL") }
     }
     fun <T> read(block:(Connection)->T):T=transaction(false,block)
-    fun <T> write(block:(Connection)->T):T=transaction(true,block)
+    fun <T> write(block:(Connection)->T):T { check(!readOnly) { "База открыта только для чтения" };return transaction(true,block) }
     private fun <T> transaction(write:Boolean,block:(Connection)->T):T=connect().use { c ->
         if(write) writeTransactions.incrementAndGet() else readTransactions.incrementAndGet()
         val previous=sqlTrace.get();sqlTrace.set(trace)
@@ -65,13 +73,23 @@ class Database(path: Path, private val trace:((String)->Unit)?=null) {
         check(totals.values.all { it==BigInteger.ZERO }) { "Несбалансированная операция" }
         val groups=sqlQuery(c,"SELECT id FROM groups") { it.getLong(1) }
         groups.forEach { validateBalances(balances(c,it).mapKeys { (id,_)->ParticipantId(id.toString()) }) }
-        "Схема 2 (новая модель): ${groups.size} групп, ${totals.size} денежных операций; целостность в порядке"
+        "Схема ${sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single()} (новая модель): ${groups.size} групп, ${totals.size} денежных операций; целостность в порядке"
     }
+    /** SQLite Online Backup includes committed WAL pages without migrating or changing the source. */
     fun backup(destination:Path):Path {
         val target=destination.toAbsolutePath().normalize();require(!Files.exists(target)) { "Копия уже существует" }
-        Files.createDirectories(target.parent);Files.createFile(target)
-        connect().use { c -> c.prepareStatement("VACUUM INTO ?").use { it.setString(1,target.toString());it.executeUpdate() } }
-        Database(target).verify();return target
+        Files.createDirectories(target.parent)
+        val privateFile=java.nio.file.attribute.PosixFilePermissions.asFileAttribute(java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"))
+        val temporary=Files.createTempFile(target.parent,".tennis-backup-",".sqlite",privateFile)
+        try {
+            connect().use { c ->
+                val result=(c as org.sqlite.SQLiteConnection).database.backup("main",temporary.toString(),null)
+                check(result==0) { "Не удалось завершить резервную копию: SQLite $result" }
+            }
+            Database(temporary,readOnly=true).verify()
+            Files.move(temporary,target)
+            return target
+        } finally { Files.deleteIfExists(temporary) }
     }
     companion object { const val APPLICATION_ID=0x54534e32 }
 }

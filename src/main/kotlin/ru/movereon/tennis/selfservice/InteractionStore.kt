@@ -52,7 +52,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             id, plan.user, plan.screen.group.takeIf { it < 0 }, json.encodeToString(plan))
     }
     fun complete(id: Long) = database.write { c ->
-        sqlUpdate(c, "INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1", id)
+        sqlUpdate(c, "INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1,plan_json=NULL", id)
     }
     fun form(user: Long, chat: Long): InputForm? = database.read { c ->
         sqlQuery(c, "SELECT input_json FROM bot_sessions WHERE user_id=? AND chat_id=?", user, chat) { it.getString(1)?.let { text -> json.decodeFromString<InputForm>(text) } }.singleOrNull()
@@ -106,6 +106,8 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         tokens.forEach { sqlUpdate(c, "UPDATE bot_buttons SET active=1 WHERE token=? AND scope=?", it, scope) }
     }
     fun cleanup() = database.write { c ->
+        // Keep completed IDs for deduplication, but retire their no-longer-needed recovery plans.
+        sqlUpdate(c,"UPDATE bot_events SET plan_json=NULL WHERE update_id IN (SELECT update_id FROM bot_events WHERE completed=1 AND plan_json IS NOT NULL LIMIT 1000)")
         sqlUpdate(c, "DELETE FROM bot_buttons WHERE token IN (SELECT token FROM bot_buttons WHERE active=0 AND permanent=0 AND expires_at<=? LIMIT 1000)", clock.instant().epochSecond)
     }
     fun delivery(key: String): Delivery? = database.read { c ->

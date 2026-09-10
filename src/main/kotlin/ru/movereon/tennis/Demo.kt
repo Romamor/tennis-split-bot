@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 private fun existing(path: String): Database {
     require(Files.isRegularFile(Path.of(path))) { "Файл базы не найден" }
-    return Database(Path.of(path))
+    return Database(Path.of(path),readOnly=true)
 }
 
 /** Maintenance commands never contact Telegram. Demonstrations use a separate database file. */

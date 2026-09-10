@@ -56,6 +56,16 @@ class SelfServiceBotTest {
         bot.handle(update)
         return update
     }
+    private fun crashAfterReply(text:String):TgUpdate {
+        val update=TgUpdate(updateId++,TgMessage(3000+updateId,TgChat(1,"private"),TgUser(1,firstName="User 1"),text))
+        bot.state.database.write { c -> c.createStatement().use {
+            it.execute("CREATE TRIGGER test_completion_failure BEFORE UPDATE OF completed ON bot_events WHEN NEW.update_id=${update.id} AND NEW.completed=1 BEGIN SELECT RAISE(ABORT,'simulated crash before completion'); END")
+        } }
+        assertFailsWith<java.sql.SQLException> { bot.handle(update) }
+        bot.state.database.write { c -> c.createStatement().use { it.execute("DROP TRIGGER test_completion_failure") } }
+        assertFalse(bot.state.completed(update.id));assertNotNull(bot.state.plan(update.id))
+        return update
+    }
     private fun latest(user: Long) = fake.messages.values.last { it.chat.id == user }
     private fun click(user: Long, label: String, message: TgMessage = latest(user)): TgUpdate {
         val button = requireNotNull(message.keyboard).rows.flatten().first { it.text.contains(label) }
@@ -261,10 +271,9 @@ class SelfServiceBotTest {
 
     @Test fun `replaying a text event after delivery does not create another private reply`() {
         setup(); open(1); click(1,"Создать тренировку")
-        val update = message(1,"Вечерний теннис")
+        val update = crashAfterReply("Вечерний теннис")
         val delivered = latest(1)
         val count = fake.sent.size
-        bot.state.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET completed=0 WHERE update_id=?",update.id) }
         bot.handle(update)
         assertEquals(count,fake.sent.size)
         assertEquals(delivered.id,latest(1).id)
@@ -273,10 +282,9 @@ class SelfServiceBotTest {
     @Test fun `unknown new reply is not resent on replay but new user input gets a fresh reply`() {
         setup(); open(1); click(1,"Создать тренировку")
         fake.acceptThenFail = { chat,_ -> chat==1L }
-        val update = message(1,"Вечерний теннис")
+        val update = crashAfterReply("Вечерний теннис")
         assertEquals("UNKNOWN",bot.state.delivery("personal:1:1")!!.status)
         val count = fake.sent.size
-        bot.state.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET completed=0 WHERE update_id=?",update.id) }
         bot.handle(update)
         assertEquals(count,fake.sent.size)
         message(1,"10.09.2026")
@@ -623,6 +631,7 @@ class SelfServiceBotTest {
     @Test fun `back from dirty attendance warns in group and discards only that input`() {
         setup();create();click(2,"Участие",publicCard());click(3,"Участие",publicCard())
         click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
+        assertEquals(listOf("Продолжить ввод","Сбросить и выйти"),ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text })
         click(2,"Продолжить ввод",ephemeralMessages.getValue(-1L to 2L))
         assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
         click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
@@ -705,6 +714,37 @@ class SelfServiceBotTest {
         assertEquals("Другое название",bot.state.form(1,1)!!.title)
         click(1,"Отмена");click(1,"Сбросить и выйти")
         assertEquals(before,bot.service.training(Access(-1,1),before.id))
+    }
+
+    @Test fun `completed event plans are released while incomplete recovery and financial history survive`() {
+        setup();create()
+        val completed=90001L;val pending=90002L
+        val plan=EventPlan(1,1,ScreenAction("menu",-1))
+        bot.state.plan(completed,plan);bot.state.complete(completed)
+        assertTrue(bot.state.completed(completed));assertNull(bot.state.plan(completed))
+        bot.state.plan(pending,plan)
+        bot.service.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET plan_json=? WHERE update_id=?",bot.state.json.encodeToString(EventPlan.serializer(),plan),completed) }
+        val history=bot.service.history(Access(-1,1)).items
+        bot.state.cleanup()
+        assertTrue(bot.state.completed(completed));assertNull(bot.state.plan(completed))
+        assertEquals(plan,bot.state.plan(pending));assertEquals(pending,bot.state.offset())
+        assertEquals(history,bot.service.history(Access(-1,1)).items)
+        val count=bot.service.history(Access(-1,1)).total
+        bot.handle(TgUpdate(completed,TgMessage(9,TgChat(1,"private"),TgUser(1,firstName="User 1"),"/start")))
+        assertEquals(count,bot.service.history(Access(-1,1)).total)
+    }
+
+    @Test fun `balance filter toggles do not accumulate an unbounded return chain`() {
+        setup();open(2);click(2,"Мои расчёты");click(2,"Баланс группы")
+        val sizes=mutableListOf<Int>()
+        repeat(25) {
+            click(2,"Нулевой баланс");click(2,"Баланс группы")
+            val button=latest(2).keyboard!!.rows.flatten().first { it.text.contains("Нулевой баланс") }
+            val action=bot.state.button(button.callbackData!!.removePrefix("n:"))!!.action
+            sizes+=bot.state.json.encodeToString(ScreenAction.serializer(),action).length
+        }
+        assertEquals(1,sizes.distinct().size)
+        click(2,"Назад");assertTrue(latest(2).text!!.contains("Мой баланс"))
     }
 
 }

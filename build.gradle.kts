@@ -20,6 +20,17 @@ dependencies {
 application { mainClass.set("ru.movereon.tennis.DemoKt") }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform { excludeTags("storage-simulation") }
     testLogging { events("failed", "skipped") }
+}
+
+tasks.register<Test>("storageSimulation") {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("storage-simulation") }
+    systemProperty("storage.dir", providers.gradleProperty("storageDir").getOrElse("build/storage-simulation"))
+    systemProperty("storage.trainings", providers.gradleProperty("storageTrainings").getOrElse("24"))
+    systemProperty("storage.members", providers.gradleProperty("storageMembers").getOrElse("27"))
+    systemProperty("storage.players", providers.gradleProperty("storagePlayers").getOrElse("8,16,27"))
+    outputs.upToDateWhen { false }
 }

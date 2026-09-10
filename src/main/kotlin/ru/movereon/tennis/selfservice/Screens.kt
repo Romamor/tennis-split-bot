@@ -169,7 +169,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 } else if (draft!=null) {
                     row("Убрать несохранённый ввод",next("discard_attendance",target=target,option=state.draftSignature(draft)))
                 } else if (inGroup) row("Закрыть",next("close_panel"))
-                if(draft?.returnPage!=null) row("К составу",next("roster",page=draft.returnPage,target=0,option="players"))
+                if(draft?.returnPage!=null) row("К составу",draft.origin ?: next("roster",page=draft.returnPage,target=0,option="players"))
                 else row("Карточка тренировки", draft?.origin ?: action.back ?: next("training", target = 0, option = ""))
                 "${clean(t.title, 60)} · ${date(t.date)}\n${name(target)}\n" +
                     (if (player?.playing == true) "Играл ${hours(player.minutes)}" else "Не играл") +
@@ -287,7 +287,8 @@ class Screens(private val service: SettlementService, private val state: Interac
             "balances", "settled" -> {
                 val p = service.roster(requireNotNull(a), action.page, balanceOnly = true, settled = action.kind == "settled")
                 pages(p.index, p.pages)
-                row(if(action.kind=="settled") "👥 Баланс группы" else "⚖️ Нулевой баланс",next(if(action.kind=="settled") "balances" else "settled").copy(back=action))
+                if(action.kind=="settled") row("👥 Баланс группы",action.back?.takeIf { it.kind=="balances" } ?: ScreenAction("balances",action.group,back=ScreenAction("debts",action.group)))
+                else row("⚖️ Нулевой баланс",next("settled").copy(back=action))
                 back(ScreenAction("debts",action.group))
                 (if(action.kind=="settled") "⚖️ Нулевой баланс" else "👥 Баланс группы")+" · ${p.total}\n\n"+
                     p.items.joinToString("\n") { "${clean(it.account.name,48)} · баланс: ${signed(it.balance)} ₽" }
@@ -386,7 +387,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
-        if (inGroup && action.kind !in setOf("public","player")) row("Закрыть", next("close_panel"))
+        if (inGroup && action.kind !in setOf("public","player","exit_confirm")) row("Закрыть", next("close_panel"))
         val header = if (group != null && action.kind != "groups") "${clean(group.title, 80)}\n\n" else ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text
