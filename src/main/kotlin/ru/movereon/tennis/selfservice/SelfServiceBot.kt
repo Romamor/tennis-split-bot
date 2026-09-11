@@ -298,7 +298,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
             }
-            "participation", "participation_time", "participation_payment", "participation_guests", "participation_change" -> {
+            "participation", "participation_time", "participation_payment", "participation_change" -> {
                 val auth=requireNotNull(a)
                 val t=service.training(auth,action.id)
                 val editable=t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW)

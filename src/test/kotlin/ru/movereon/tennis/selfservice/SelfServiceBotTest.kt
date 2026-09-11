@@ -107,6 +107,22 @@ class SelfServiceBotTest {
     private fun closeParticipation(user:Long) { panelClick(user,"Закрыть");bot.maintain() }
 
 
+    @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
+        setup();create();join(2)
+        fun rows()=ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.map { row -> row.map { it.text } }
+        assertEquals(listOf(listOf("Оплата · 0 ₽"),listOf("Время · 0 ч"),listOf("Добавить гостя"),listOf("Не участвую"),listOf("Закрыть")),rows())
+        panelClick(2,"Добавить гостя")
+        assertEquals(listOf("Добавить гостя","Убрать гостя"),rows()[2])
+        assertEquals(1,bot.service.trainings(Access(-1,2)).items.single().players.single().guestCount)
+        panelClick(2,"Убрать гостя")
+        assertEquals(listOf("Добавить гостя"),rows()[2])
+        panelClick(2,"Оплата")
+        assertEquals(listOf(listOf("+1 ₽","+10 ₽","+100 ₽","+1000 ₽"),listOf("−1 ₽","−10 ₽","−100 ₽","−1000 ₽"),listOf("⬅️ Назад","Закрыть")),rows())
+        panelClick(2,"Назад");panelClick(2,"Время")
+        assertEquals(listOf(listOf("+0,5 ч","+1 ч"),listOf("−0,5 ч","−1 ч"),listOf("⬅️ Назад","Закрыть")),rows())
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.contains("Статус: Открыта"))
+    }
+
     @Test fun `admin can correct a non-playing payers amount without rejoining them`() {
         setup();create();join(2,60);pay(2);panelClick(2,"Не участвую")
         click(1,"Игроки");click(1,"User 2");click(1,"Другая сумма");message(1,"450");click(1,"Всё правильно")
@@ -126,7 +142,7 @@ class SelfServiceBotTest {
 
     @Test fun `multiple guests share inviters time and tables show separate rounded balances`() {
         setup();create();join(1,60);pay(1,750);join(2,60)
-        panelClick(2,"Гости");panelClick(2,"+1 гость");panelClick(2,"+1 гость");bot.maintain()
+        panelClick(2,"Добавить гостя");panelClick(2,"Добавить гостя");bot.maintain()
         val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
         assertEquals(2,t.players.single { it.userId==2L }.guestCount)
         assertEquals(60,t.players.single { it.userId==2L }.guestMinutes)
@@ -135,7 +151,7 @@ class SelfServiceBotTest {
         assertTrue(html.contains("tg://user?id=2"))
         assertTrue(publicCard().text!!.contains("User 2 | 1 ч | 0 ₽ | -188 ₽"))
         assertTrue(bot.service.balances(auth).isEmpty())
-        panelClick(2,"Назад");panelClick(2,"Время");panelClick(2,"+0,5 ч");bot.maintain()
+        panelClick(2,"Время");panelClick(2,"+0,5 ч");bot.maintain()
         val changed=bot.service.training(auth,t.id).players.single { it.userId==2L }
         assertEquals(90,changed.minutes);assertEquals(90,changed.guestMinutes)
         assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 1L).text)

@@ -136,7 +136,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 }
                 body
             }
-            "participation", "participation_time", "participation_payment", "participation_guests" -> {
+            "participation", "participation_time", "participation_payment" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) || service.isAdmin(a),ErrorCode.INVALID_STATE,"Тренировка уже учтена или отменена. Изменения доступны администратору.")
                 val content=TrainingCard.render(t,action.page,service::account)
@@ -147,23 +147,22 @@ class Screens(private val service: SettlementService, private val state: Interac
                 if(open) when(action.kind) {
                     "participation_time" -> {
                         checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
                         rows+=listOf(change("+0,5 ч",AttendanceChange.ADJUST_MINUTES,30),change("+1 ч",AttendanceChange.ADJUST_MINUTES,60))
+                        rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
                     }
                     "participation_payment" -> {
                         checkAccounting(p?.playing==true || (p?.paid ?: 0)>0,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(1L,10L,100L,1000L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
                         rows+=listOf(1L,10L,100L,1000L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
-                    }
-                    "participation_guests" -> {
-                        checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        if(p!!.guestCount>0) rows+=listOf(change("−1 гость",AttendanceChange.ADJUST_GUESTS,-1))
-                        if(p.guestCount<99) rows+=listOf(change("+1 гость",AttendanceChange.ADJUST_GUESTS,1))
+                        rows+=listOf(1L,10L,100L,1000L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
                     }
                     else -> {
                         if(p?.playing==true) {
-                            rows+=listOf(button("Время · ${hours(p.minutes)}",next("participation_time",page=content.page)),button("Оплата · ${p.paid} ₽",next("participation_payment",page=content.page)))
-                            row("Гости · ${p.guestCount}",next("participation_guests",page=content.page))
+                            row("Оплата · ${p.paid} ₽",next("participation_payment",page=content.page))
+                            row("Время · ${hours(p.minutes)}",next("participation_time",page=content.page))
+                            rows+=buildList<TgButton> {
+                                if(p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
+                                if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
+                            }
                             rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
                         } else {
                             rows+=listOf(change("Присоединиться",AttendanceChange.JOIN))
@@ -172,12 +171,15 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                 }
                 pages(content.page,content.pages)
-                if(action.kind!="participation") row("⬅️ Назад",next("participation",page=content.page))
                 if(service.isAdmin(a)) {
                     val link=state.button(ScreenAction("training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
                     rows+=listOf(TgButton("✏️ Редактировать",url="https://t.me/$botName?start=n_$link"))
                 }
-                if(inGroup) row("Закрыть",next("close_panel")) else back(next("training"))
+                if(inGroup) rows+=buildList<TgButton> {
+                    if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=content.page)))
+                    add(button("Закрыть",next("close_panel")))
+                } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=content.page))
+                else back(next("training"))
                 content.text
             }
             "player" -> {
@@ -432,7 +434,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
-        if (inGroup && action.kind !in setOf("public","player","exit_confirm","participation","participation_time","participation_payment","participation_guests")) row("Закрыть", next("close_panel"))
+        if (inGroup && action.kind !in setOf("public","player","exit_confirm","participation","participation_time","participation_payment")) row("Закрыть", next("close_panel"))
         val header = if (group != null && action.kind != "groups" && richHtml==null) "${clean(group.title, 80)}\n\n" else ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text

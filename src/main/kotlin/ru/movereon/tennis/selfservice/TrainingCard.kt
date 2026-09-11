@@ -23,14 +23,14 @@ internal object TrainingCard {
         }
         val pages=maxOf(1,(rows.size+7)/8);val page=requestedPage.coerceIn(0,pages-1)
         val visible=rows.drop(page*8).take(8)
-        val whenText="Когда? ${Screens.date(t.date)} · ${t.startTime}"
+        val whenText="${Screens.date(t.date)} ${t.startTime}"
         val note=when {
             t.phase==TrainingPhase.REVIEW -> "Пока правки не применены, действует прежний расчёт."
             !known -> "Для расчёта укажи наигранное время."
             else -> "Баланс указан по этой тренировке."
         }
         val text=buildString {
-            append(t.title).append('\n').append(whenText).append('\n').append(Screens.phase(t.phase)).append("\n\n")
+            append(t.title).append('\n').append(whenText).append('\n').append("Статус: ${Screens.phase(t.phase)}").append("\n\n")
             if(rows.isEmpty()) append("Пока никто не зарегался")
             else {
                 append("Участник | Время | Оплата | Баланс\n")
@@ -40,7 +40,7 @@ internal object TrainingCard {
             if(pages>1) append("\nСтраница ${page+1} / $pages")
         }
         val html=buildString {
-            append("<h3>${escape(t.title)}</h3><p>${escape(whenText)}<br>${escape(Screens.phase(t.phase))}</p>")
+            append("<h3>${escape(t.title)}</h3><p>${escape(whenText)}<br>Статус: ${escape(Screens.phase(t.phase))}</p>")
             if(rows.isEmpty()) append("<p>Пока никто не зарегался</p>")
             else {
                 append("<table bordered striped compact><tr><th>Участник</th><th>Время</th><th>Оплата</th><th>Баланс</th></tr>")
