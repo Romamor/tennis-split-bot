@@ -79,6 +79,20 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
                 }
             }
+            if(effective.screen.kind=="retry_pin") {
+                checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Доступно администратору группы")
+                state.pinStatus("training:${a.groupId}:${effective.screen.id}","PENDING")
+                pinCards()
+                effective=effective.copy(screen=effective.screen.back ?: effective.screen.copy(kind="training"))
+            }
+            if(effective.screen.kind=="public_page") {
+                requireNotNull(a)
+                service.training(a,effective.screen.id)
+                state.displayPage("training:${a.groupId}:${effective.screen.id}",effective.screen.page)
+                refreshCard(a.groupId,effective.screen.id)
+                effective.callback?.let { api.answer(it) }
+                state.complete(update.id);return
+            }
             if (effective.screen.kind == "recover_card") {
                 checkAccounting(service.isAdmin(requireNotNull(a)), ErrorCode.FORBIDDEN, "Доступно администратору группы")
                 state.forgetDelivery("training:${a.groupId}:${effective.screen.id}")
@@ -139,7 +153,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (button == null) {
                 if (message.ephemeralId != null && message.from?.id == identity.id && message.receiver?.id == user.id)
                     closePanel(user.id, chat, message.ephemeralId)
-                answer(callback, "Это старое меню. Нажми «Участие» на актуальной карточке или /start в личном чате.")
+                answer(callback, "Это старое меню. Нажми «Открыть» на актуальной карточке или /start в личном чате.")
                 return null
             }
             checkAccounting(button.owner == null || button.owner == user.id, ErrorCode.FORBIDDEN, "Эта панель открыта для другого участника")
@@ -284,6 +298,19 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
             }
+            "participation", "participation_time", "participation_payment", "participation_guests", "participation_change" -> {
+                val auth=requireNotNull(a)
+                val t=service.training(auth,action.id)
+                val editable=t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW)
+                checkAccounting(editable || service.isAdmin(auth),ErrorCode.INVALID_STATE,"Тренировка уже учтена или отменена. Изменения доступны администратору.")
+                if(action.kind=="participation_change") {
+                    checkAccounting(editable,ErrorCode.INVALID_STATE,"Сначала открой исправление тренировки")
+                    val type=AttendanceChange.valueOf(action.option)
+                    checkAccounting(type in setOf(AttendanceChange.JOIN,AttendanceChange.LEAVE,AttendanceChange.ADJUST_PAID,AttendanceChange.ADJUST_MINUTES,AttendanceChange.ADJUST_GUESTS),ErrorCode.INVALID_INPUT,"Открой актуальные кнопки участия")
+                    val destination=(action.resume ?: action.copy(kind="participation")).copy(group=action.group,id=action.id,user=user.id)
+                    plan(destination,SettlementCommand.ChangeAttendance(action.id,user.id,type,action.value))
+                } else plan(action.copy(user=user.id))
+            }
             "player", "change", "reload_attendance" -> {
                 val target=action.user.takeIf { it>0 } ?: user.id
                 val auth=requireNotNull(a)
@@ -292,8 +319,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val existing=state.attendanceDraft(user.id,action.group)
                 if (requested.phase !in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && existing==null)
                     return plan(action.copy(kind="player",user=target))
-                var draft=if (action.kind=="reload_attendance") newAttendanceDraft(auth,action.id,target,false).copy(returnPage=existing?.returnPage,origin=existing?.origin)
-                    else existing ?: newAttendanceDraft(auth,action.id,target,action.kind=="player" && target==user.id)
+                var draft=if (action.kind=="reload_attendance") newAttendanceDraft(auth,action.id,target).copy(returnPage=existing?.returnPage,origin=existing?.origin)
+                    else existing ?: newAttendanceDraft(auth,action.id,target)
                         .copy(returnPage=action.page.takeIf { action.option=="roster" },origin=action.back)
                 val same=draft.training==action.id && draft.user==target
                 if (action.kind=="change" && same)
@@ -347,13 +374,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         return if(exiting && activeDraft!=null) result.copy(clearDraft=true,draft=activeDraft,clearDraftGroup=inputGroup) else result
     }
-    private fun newAttendanceDraft(a: Access, training: String, target: Long, join: Boolean): AttendanceDraft {
+    private fun newAttendanceDraft(a: Access, training: String, target: Long): AttendanceDraft {
         checkAccounting(target==a.userId || service.isAdmin(a),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
         val t=service.training(a,training)
         checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW),ErrorCode.INVALID_STATE,"Тренировка уже учтена. Попроси администратора открыть исправление")
         val before=t.players.firstOrNull { it.userId==target }
         val value=before ?: Attendance(target,false)
-        return AttendanceDraft(training,target,before,if (join) service.previewAttendance(value,AttendanceChange.JOIN) else value)
+        return AttendanceDraft(training,target,before,value)
     }
     private fun draftDirty(d:AttendanceDraft?):Boolean = d!=null && if(d.expected==null) d.value.playing || d.value.paid!=0L || d.value.guestMinutes!=0L else d.expected!=d.value
     private fun formDirty(f:InputForm?):Boolean = when {
@@ -378,7 +405,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "time" -> form(advance(f.copy(time = LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm")))))
             "paid" -> {
                 val amount = if (text == "0") 0 else parseAmount(text)
-                val draft=state.attendanceDraft(user.id,f.group) ?: newAttendanceDraft(auth,f.training,f.user,false)
+                val draft=state.attendanceDraft(user.id,f.group) ?: newAttendanceDraft(auth,f.training,f.user)
                 checkAccounting(draft.training==f.training && draft.user==f.user,ErrorCode.INVALID_STATE,"Сначала заверши уже открытый ввод")
                 checkAccounting(f.user==user.id || service.isAdmin(auth),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
                 EventPlan(user.id, chat, ScreenAction("player", f.group, f.training, user = f.user),
@@ -409,7 +436,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         if (plan.chat < 0 && plan.screen.kind in setOf("private_link", "close_panel")) {
             closePanel(plan.user, plan.chat, plan.ephemeral)
-            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Участие» на общей карточке." else null
+            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Открыть» на общей карточке." else null
             plan.callback?.let { runCatching { api.answer(it, text, text != null) } }
             return
         }
@@ -430,7 +457,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 var updated = false
                 if (current != null) {
                     try {
-                        api.editEphemeral(plan.chat, plan.user, current, out.text, out.keyboard)
+                        if(out.richHtml!=null) api.editEphemeralRich(plan.chat,plan.user,current,out.text,out.richHtml,out.keyboard)
+                        else api.editEphemeral(plan.chat, plan.user, current, out.text, out.keyboard)
                         state.rememberEphemeral(plan.user, plan.chat, current)
                         updated = true
                     } catch (failure: TelegramFailure) {
@@ -438,19 +466,21 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
                 if (!updated) {
-                    val sent = api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard)
+                    val sent = if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,requireNotNull(plan.callback),out.text,out.richHtml,out.keyboard)
+                        else api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard)
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
                 if (plan.ephemeral != null && plan.ephemeral != state.currentEphemeral(plan.user, plan.chat))
                     deletePanel(plan.user, plan.chat, plan.ephemeral)
                 state.replace(scope, out.tokens)
+                state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") })
             } catch (failure: TelegramFailure) {
                 if (failure.code in setOf(401, 409)) throw failure
                 System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
                 if (failure.kind != FailureKind.UNCERTAIN) state.replace(scope, oldTokens)
                 val notice = (if (plan.command != null) "Изменение сохранено. " else "") +
-                    "Панель не открылась. Нажми «Открыть у бота» на общей карточке."
+                    "Панель не открылась. Открой личный чат с ботом и выбери «Мои тренировки»."
                 plan.callback?.let { runCatching { api.answer(it, notice, true) } }
                 if (failure.kind == FailureKind.RETRY_LATER) throw failure
                 return
@@ -499,7 +529,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         state.sending(key, group, chat, user)
         try {
             if (old?.message != null) {
-                try { api.edit(chat, old.message, out.text, out.keyboard) }
+                try {
+                    if(out.richHtml!=null) api.editRich(chat,old.message,out.text,out.richHtml,out.keyboard)
+                    else api.edit(chat, old.message, out.text, out.keyboard)
+                }
                 catch (failure: TelegramFailure) {
                     if (failure.kind != FailureKind.MESSAGE_MISSING) throw failure
                     state.forgetDelivery(key)
@@ -507,7 +540,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
                 state.deliveryResult(key, "SENT", old.message)
             } else {
-                val msg = api.send(chat, out.text, out.keyboard)
+                val msg = if(out.richHtml!=null) api.sendRich(chat,out.text,out.richHtml,out.keyboard)
+                    else api.send(chat, out.text, out.keyboard)
                 state.deliveryResult(key, "SENT", msg.id)
             }
             state.replace(scope, out.tokens)
@@ -520,14 +554,58 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
     }
     fun maintain() {
+        checkedMembership.clear()
         val now = clock.instant().epochSecond
         if (lastCleanup == Long.MIN_VALUE || now - lastCleanup >= 30) { state.cleanup(); lastCleanup = now }
         state.pendingCards().forEach { (group, training, through) ->
             if (state.delivery("training:$group:$training")?.status != "FAILED") {
-                try { if (refreshCard(group, training)) state.cardDelivered(group, training, through) }
+                try { if (refreshCard(group, training)) {
+                    refreshPanels(group,training)
+                    state.cardDelivered(group, training, through)
+                } }
                 catch (failure: TelegramFailure) {
                     if (failure.kind != FailureKind.REJECTED || failure.code in setOf(401,409)) throw failure
                 }
+            }
+        }
+        pinCards()
+    }
+    private fun pinCards() {
+        state.pendingPins().forEach { (key,delivery) ->
+            state.pinStatus(key,"SENDING")
+            try { api.pin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"SENT") }
+            catch(f:TelegramFailure) {
+                state.pinStatus(key,when(f.kind) { FailureKind.UNCERTAIN -> "UNKNOWN";FailureKind.RETRY_LATER -> "PENDING";else -> "FAILED" })
+                if(f.kind==FailureKind.RETRY_LATER || f.code in setOf(401,409)) throw f
+            }
+        }
+    }
+    private fun refreshPanels(group:Long,training:String) {
+        state.panels(group,training).forEach { (user,screen) ->
+            try {
+                val auth=access(group,user)
+                val t=service.training(auth,training)
+                if(t.phase !in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && !service.isAdmin(auth)) {
+                    closePanel(user,group)
+                } else {
+                    val id=state.currentEphemeral(user,group) ?: return@forEach
+                    val scope="personal:$user:$group"
+                    val player=t.players.firstOrNull { it.userId==user }
+                    val available=player?.playing==true || screen.kind=="participation_payment" && (player?.paid ?: 0)>0
+                    val shown=if(available) screen else screen.copy(kind="participation")
+                    val out=screens.render(shown,auth,scope,user,inGroup=true)
+                    state.panel(user,group,shown)
+                    state.protect(out.tokens)
+                    api.editEphemeralRich(group,user,id,out.text,requireNotNull(out.richHtml),out.keyboard)
+                    state.replace(scope,out.tokens)
+                }
+            } catch(f:AccountingException) {
+                if(f.code!=ErrorCode.FORBIDDEN) throw f
+                closePanel(user,group)
+            } catch(f:TelegramFailure) {
+                if(f.kind==FailureKind.MESSAGE_MISSING || f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) {
+                    state.rememberEphemeral(user,group,null);state.replace("personal:$user:$group",emptySet())
+                } else throw f
             }
         }
     }
@@ -535,7 +613,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val author = service.database.read { c -> sqlQuery(c, "SELECT created_by FROM trainings WHERE group_id=? AND id=?", group, training) { it.getLong(1) }.single() }
         // Public information for its original chat. No private context or privileges are used for background delivery.
         val scope = "training:$group:$training"
-        val out = screens.render(ScreenAction("public", group, training), Access(group, author), scope, null)
+        val out = screens.render(ScreenAction("public", group, training,page=state.displayPage(scope)), Access(group, author), scope, null)
         return sendOrdinary(scope, group, group, null, out, scope)
     }
 }

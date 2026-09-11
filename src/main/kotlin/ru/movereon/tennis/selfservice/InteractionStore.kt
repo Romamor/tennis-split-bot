@@ -70,7 +70,25 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlQuery(c, "SELECT ephemeral_id FROM bot_sessions WHERE user_id=? AND chat_id=?", user, chat) { it.getString(1)?.toLong() }.singleOrNull()
     }
     fun rememberEphemeral(user: Long, chat: Long, id: Long?) = database.write { c ->
-        sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=? WHERE user_id=? AND chat_id=?", id, user, chat)
+        sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=?,panel_json=CASE WHEN ? IS NULL THEN NULL ELSE panel_json END WHERE user_id=? AND chat_id=?", id, id, user, chat)
+    }
+    fun panel(user:Long,group:Long,screen:ScreenAction?) = database.write { c ->
+        sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",screen?.let { json.encodeToString(it) },user,group)
+    }
+    fun panels(group:Long,training:String):List<Pair<Long,ScreenAction>> = database.read { c ->
+        sqlQuery(c,"SELECT user_id,panel_json FROM bot_sessions WHERE chat_id=? AND ephemeral_id IS NOT NULL AND json_extract(panel_json,'$.id')=?",group,training) {
+            it.getLong("user_id") to json.decodeFromString<ScreenAction>(it.getString("panel_json"))
+        }
+    }
+    fun displayPage(key:String):Int=database.read { c -> sqlQuery(c,"SELECT display_page FROM bot_deliveries WHERE delivery_key=?",key) { it.getInt(1) }.singleOrNull() ?: 0 }
+    fun displayPage(key:String,page:Int)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET display_page=? WHERE delivery_key=?",page.coerceAtLeast(0),key) }
+    fun pinStatus(key:String):String?=database.read { c -> sqlQuery(c,"SELECT pin_status FROM bot_deliveries WHERE delivery_key=?",key) { it.getString(1) }.singleOrNull() }
+    fun pinStatus(key:String,status:String)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET pin_status=? WHERE delivery_key=?",status,key) }
+    fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL LIMIT 20") {
+            val key=it.getString("delivery_key")
+            key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
+        }
     }
     private val buttonConnection=ThreadLocal<java.sql.Connection>()
     fun <T> buttonBatch(block:()->T):T {
@@ -120,10 +138,14 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             ON CONFLICT(delivery_key) DO UPDATE SET status='SENDING'""", key, group.takeIf { it < 0 }, chat, user)
     }
     fun deliveryResult(key: String, status: String, message: Long? = null, ephemeral: Long? = null) = database.write { c ->
-        sqlUpdate(c, "UPDATE bot_deliveries SET status=?,message_id=COALESCE(?,message_id),ephemeral_id=COALESCE(?,ephemeral_id) WHERE delivery_key=?", status, message, ephemeral, key)
+        sqlUpdate(c, """UPDATE bot_deliveries SET status=?,message_id=COALESCE(?,message_id),ephemeral_id=COALESCE(?,ephemeral_id),
+            pin_status=CASE WHEN delivery_key LIKE 'training:%' AND message_id IS NULL AND ? IS NOT NULL AND pin_status='NONE' THEN 'PENDING' ELSE pin_status END WHERE delivery_key=?""", status, message, ephemeral, message, key)
     }
     fun forgetDelivery(key: String) = database.write { c -> sqlUpdate(c, "DELETE FROM bot_deliveries WHERE delivery_key=?", key) }
-    fun interruptedSends() = database.write { c -> sqlUpdate(c, "UPDATE bot_deliveries SET status='UNKNOWN' WHERE status='SENDING'") }
+    fun interruptedSends() = database.write { c ->
+        sqlUpdate(c,"UPDATE bot_deliveries SET status='UNKNOWN' WHERE status='SENDING'")
+        sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNKNOWN' WHERE pin_status='SENDING'")
+    }
     /** Refresh existing live cards after an update, without creating new messages or changing training data. */
     fun refreshLiveCards() = database.write { c ->
         sqlUpdate(c, """UPDATE actions SET delivered_at=NULL WHERE id IN (

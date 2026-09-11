@@ -53,15 +53,13 @@ CREATE TABLE training_players (
     user_id INTEGER NOT NULL,
     playing INTEGER NOT NULL CHECK(playing IN (0,1)),
     applied_playing INTEGER NOT NULL DEFAULT 0 CHECK(applied_playing IN (0,1)),
-    minutes INTEGER NOT NULL DEFAULT 0 CHECK(minutes>=0 AND minutes%30=0),
+    minutes INTEGER NOT NULL DEFAULT 60 CHECK(minutes>0 AND minutes%30=0),
     guest_minutes INTEGER NOT NULL DEFAULT 0 CHECK(guest_minutes>=0 AND guest_minutes%30=0),
-    guest_count INTEGER NOT NULL DEFAULT 0 CHECK(guest_count BETWEEN 0 AND 99),
     paid INTEGER NOT NULL DEFAULT 0 CHECK(paid>=0),
     ordinal INTEGER NOT NULL CHECK(ordinal>=0),
     PRIMARY KEY(group_id,training_id,user_id),
     UNIQUE(group_id,training_id,ordinal),
     CHECK(playing=1 OR guest_minutes=0),
-    CHECK(playing=1 OR guest_count=0),
     FOREIGN KEY(group_id,training_id) REFERENCES trainings(group_id,id) ON UPDATE CASCADE,
     FOREIGN KEY(group_id,user_id) REFERENCES group_users(group_id,user_id) ON UPDATE CASCADE
 ) STRICT;
@@ -142,7 +140,6 @@ CREATE TABLE bot_sessions (
     message_id INTEGER,
     ephemeral_id INTEGER,
     input_json TEXT,
-    panel_json TEXT,
     PRIMARY KEY(user_id,chat_id)
 ) STRICT;
 CREATE TABLE bot_buttons (
@@ -166,7 +163,5 @@ CREATE TABLE bot_deliveries (
     user_id INTEGER REFERENCES users(id),
     message_id INTEGER,
     ephemeral_id INTEGER,
-    status TEXT NOT NULL CHECK(status IN ('SENDING','SENT','UNKNOWN','FAILED','BLOCKED','RETRY')),
-    display_page INTEGER NOT NULL DEFAULT 0 CHECK(display_page>=0),
-    pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN'))
+    status TEXT NOT NULL CHECK(status IN ('SENDING','SENT','UNKNOWN','FAILED','BLOCKED','RETRY'))
 ) STRICT;

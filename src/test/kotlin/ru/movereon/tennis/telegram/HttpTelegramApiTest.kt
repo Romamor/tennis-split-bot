@@ -34,6 +34,31 @@ class HttpTelegramApiTest {
     }
     @AfterEach fun stop() { server.stop(0) }
 
+    @Test fun `rich cards and ephemeral tables use Telegram rich message API and pin requests notify members`() {
+        response={ method -> 200 to if(method=="sendRichMessage")
+            """{"ok":true,"result":{"message_id":77,"chat":{"id":-123,"type":"supergroup"},"receiver_user":{"id":22},"ephemeral_message_id":73}}"""
+            else """{"ok":true,"result":true}"""
+        }
+        val keyboard=TgKeyboard(listOf(listOf(TgButton("Открыть",callbackData="n:test"))))
+        val html="<table><tr><td><a href=\"tg://user?id=22\">Игрок</a></td><td>0 ч</td></tr></table>"
+        api.sendRich(-123,"Игрок",html,keyboard)
+        assertEquals("sendRichMessage",bodies.last().first)
+        assertTrue(bodies.last().second.getValue("disable_notification").jsonPrimitive.boolean)
+        assertFalse(bodies.last().second.containsKey("text"))
+        api.editRich(-123,77,"Игрок",html,keyboard)
+        assertEquals(html,bodies.last().second.getValue("rich_message").jsonObject.getValue("html").jsonPrimitive.content)
+        api.ephemeralRich(-123,22,"callback","Игрок",html,keyboard)
+        assertFalse(bodies.last().second.getValue("ephemeral_message_parameters").jsonObject.getValue("replace_callback_query_message").jsonPrimitive.boolean)
+        api.editEphemeralRich(-123,22,73,"Игрок",html,keyboard)
+        assertEquals("editEphemeralMessageText",bodies.last().first)
+        assertEquals(html,bodies.last().second.getValue("rich_message").jsonObject.getValue("html").jsonPrimitive.content)
+        api.pin(-123,77)
+        assertEquals("pinChatMessage",bodies.last().first)
+        assertFalse(bodies.last().second.getValue("disable_notification").jsonPrimitive.boolean)
+        response={ 200 to """{"ok":true,"result":{"message_id":9,"chat":{"id":-123,"type":"supergroup"}}}""" }
+        assertEquals(FailureKind.UNCERTAIN,assertFailsWith<TelegramFailure> { api.ephemeralRich(-123,22,"cb","x",html,keyboard) }.kind)
+    }
+
     @Test fun `API requests preserve integer IDs and encode Telegram fields correctly`() {
         response={ method -> 200 to when(method) {
             "getMe" -> """{"ok":true,"result":{"id":123456,"is_bot":true,"first_name":"Бот","username":"test_bot","new_field":true}}"""

@@ -59,8 +59,8 @@ private fun validateTraining(training: Training, complete: Boolean): TrainingTot
     val guests = mutableSetOf<ParticipantId>()
     training.players.forEach { player ->
         checkAccounting(player.minutes > 0, ErrorCode.INVALID_INPUT, "Minutes must be positive")
-        val seen = if (player.plusOne) guests else mainPlayers
-        checkAccounting(seen.add(player.participant), ErrorCode.INVALID_INPUT, "Duplicate player slot")
+        if (player.plusOne) guests.add(player.participant)
+        else checkAccounting(mainPlayers.add(player.participant), ErrorCode.INVALID_INPUT, "Duplicate player slot")
     }
     checkAccounting(mainPlayers.containsAll(guests), ErrorCode.INVALID_INPUT, "A plus-one needs an inviting player")
     val minutes = training.players.fold(BigInteger.ZERO) { sum, player -> sum + player.minutes.toBigInteger() }

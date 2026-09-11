@@ -51,6 +51,11 @@ interface TelegramApi {
     fun send(chatId: Long, text: String, keyboard: TgKeyboard? = null, forceReply: Boolean = false): TgMessage
     fun edit(chatId: Long, messageId: Long, text: String, keyboard: TgKeyboard? = null)
     fun answer(callbackId: String, text: String? = null, alert: Boolean = false)
+    fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard)
+    fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) = edit(chatId,messageId,text,keyboard)
+    fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
+    fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
+    fun pin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun administrators(chatId: Long): List<TgMember> = emptyList()
     fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
         throw TelegramFailure(FailureKind.REJECTED)
@@ -94,6 +99,36 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     }
     override fun answer(callbackId: String, text: String?, alert: Boolean) {
         call("answerCallbackQuery", buildJsonObject { put("callback_query_id", callbackId); text?.let { put("text", it.take(180)) }; put("show_alert", alert) })
+    }
+
+    override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage =
+        json.decodeFromJsonElement(call("sendRichMessage",buildJsonObject {
+            put("chat_id",chatId);put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("disable_notification",chatId<0);put("reply_markup",json.encodeToJsonElement(keyboard))
+        }))
+    override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) {
+        try { call("editMessageText",buildJsonObject {
+            put("chat_id",chatId);put("message_id",messageId)
+            put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("reply_markup",json.encodeToJsonElement(keyboard))
+        }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
+    }
+    override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage =
+        json.decodeFromJsonElement<TgMessage>(call("sendRichMessage",buildJsonObject {
+            put("chat_id",chatId);put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("ephemeral_message_parameters",buildJsonObject {
+                put("receiver_user_id",userId);put("callback_query_id",callbackId);put("replace_callback_query_message",false)
+            });put("reply_markup",json.encodeToJsonElement(keyboard))
+        })).also { if(it.receiver?.id!=userId || it.ephemeralId==null) throw TelegramFailure(FailureKind.UNCERTAIN) }
+    override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) {
+        try { call("editEphemeralMessageText",buildJsonObject {
+            put("chat_id",chatId);put("receiver_user_id",userId);put("ephemeral_message_id",ephemeralId)
+            put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("reply_markup",json.encodeToJsonElement(keyboard))
+        }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
+    }
+    override fun pin(chatId:Long,messageId:Long) {
+        call("pinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId);put("disable_notification",false) })
     }
 
     override fun administrators(chatId: Long): List<TgMember> = json.decodeFromJsonElement(call("getChatAdministrators", buildJsonObject { put("chat_id", chatId) }))

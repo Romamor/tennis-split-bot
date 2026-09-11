@@ -196,9 +196,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             if (additions.isEmpty()) return@write ActionReceipt(0,old.version)
                             var ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1
                             additions.forEach { id ->
-                                sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,paid,ordinal)
-                                    VALUES(?,?,?,1,60,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                    playing=1,minutes=60,guest_minutes=0,paid=0""",a.groupId,trainingId,id,ordinal++)
+                                sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
+                                    VALUES(?,?,?,1,0,0,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                    playing=1,minutes=0,guest_minutes=0,guest_count=0""",a.groupId,trainingId,id,ordinal++)
                             }
                             validateDraftTraining(training(c,a.groupId,trainingId).calculation())
                         }
@@ -214,10 +214,11 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val row = old.players.firstOrNull { it.userId == command.userId }
                                 ?: Attendance(command.userId, false, ordinal = (old.players.maxOfOrNull { it.ordinal } ?: -1) + 1)
                             val changed = changeAttendance(row, command)
-                            sqlUpdate(c, """INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,paid,ordinal)
-                                VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,paid=excluded.paid""",
-                                a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.paid, changed.ordinal)
+                            if (changed==row) return@write ActionReceipt(0,old.version)
+                            sqlUpdate(c, """INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
+                                VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
+                                a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.guestCount, changed.paid, changed.ordinal)
                             validateDraftTraining(training(c, a.groupId, trainingId).calculation())
                         }
                         is SettlementCommand.SaveAttendance -> {
@@ -227,15 +228,16 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val current=old.players.firstOrNull { it.userId==command.userId }
                             checkAccounting(current==command.expected,ErrorCode.STALE_VERSION,"Эти данные уже изменили. Обнови форму перед сохранением")
                             val input=command.attendance
-                            require(input.userId==command.userId && input.minutes>0 && input.minutes%30==0L && input.guestMinutes>=0 && input.guestMinutes%30==0L && input.paid>=0)
-                            require(input.playing || input.paid==0L && input.guestMinutes==0L)
+                            require(input.userId==command.userId && input.minutes>=0 && input.minutes%30==0L && input.guestMinutes>=0 && input.guestMinutes%30==0L && input.paid>=0)
+                            require(input.guestCount in 0..99 && (input.playing || input.guestMinutes==0L && input.guestCount==0))
+                            if(input==current) return@write ActionReceipt(0,old.version)
                             val row=(current ?: Attendance(command.userId,false,ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1))
-                                .copy(playing=input.playing,minutes=input.minutes,guestMinutes=input.guestMinutes,paid=input.paid)
-                            if (row==current || current==null && !row.playing) return@write ActionReceipt(0,old.version)
-                            sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,paid,ordinal)
-                                VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,paid=excluded.paid""",
-                                a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.paid,row.ordinal)
+                                .copy(playing=input.playing,minutes=input.minutes,guestMinutes=if(input.guestCount>0) input.minutes else 0,guestCount=input.guestCount,paid=input.paid)
+                            if (row==current || current==null && !row.playing && row.paid==0L) return@write ActionReceipt(0,old.version)
+                            sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
+                                VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
+                                a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.guestCount,row.paid,row.ordinal)
                             validateDraftTraining(training(c,a.groupId,trainingId).calculation())
                         }
                         is SettlementCommand.FinishTraining -> {
@@ -284,51 +286,53 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
 
     fun previewAttendance(row: Attendance, change: AttendanceChange, value: Long=0): Attendance =
         changeAttendance(row,SettlementCommand.ChangeAttendance("input",row.userId,change,value))
-    private fun changeAttendance(row: Attendance, command: SettlementCommand.ChangeAttendance): Attendance = when (command.change) {
-        AttendanceChange.JOIN -> if (row.playing) row else row.copy(playing = true, minutes = 60)
-        AttendanceChange.LEAVE -> {
-            state(row.paid == 0L, "Указана оплата. Подтверди её удаление вместе с участием")
-            row.copy(playing = false, guestMinutes = 0)
+    private fun changeAttendance(row: Attendance, command: SettlementCommand.ChangeAttendance): Attendance {
+        fun participating() = state(row.playing, "Сначала присоединись к тренировке")
+        fun adjusted(value:Long,delta:Long):Long = try { Math.addExact(value,delta).coerceAtLeast(0) }
+            catch(_:ArithmeticException) { throw AccountingException(ErrorCode.OUT_OF_RANGE,"Слишком большое значение") }
+        val changed=when (command.change) {
+            AttendanceChange.JOIN -> if(row.playing) row else row.copy(playing=true,minutes=0)
+            AttendanceChange.LEAVE -> row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0)
+            AttendanceChange.LEAVE_AND_CLEAR_PAYMENT -> {
+                checkAccounting(row.paid==command.value,ErrorCode.STALE_VERSION,"Оплата изменилась. Открой форму заново")
+                row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0,paid=0)
+            }
+            AttendanceChange.MARK_PAID -> {
+                participating()
+                if(row.paid==0L) row.copy(paid=300) else row
+            }
+            AttendanceChange.ADJUST_PAID -> {
+                require(command.value in listOf(-1000L,-100L,-50L,-10L,-1L,1L,10L,50L,100L,1000L))
+                state(row.playing || row.paid>0,"Сначала присоединись к тренировке")
+                row.copy(paid=adjusted(row.paid,command.value))
+            }
+            AttendanceChange.SET_PAID -> {
+                require(command.value>=0)
+                row.copy(paid=command.value)
+            }
+            AttendanceChange.ADJUST_MINUTES -> {
+                require(command.value in listOf(-60L,-30L,30L,60L));participating()
+                row.copy(minutes=adjusted(row.minutes,command.value))
+            }
+            AttendanceChange.SET_MINUTES -> {
+                require(command.value>=0 && command.value%30==0L);participating()
+                row.copy(minutes=command.value)
+            }
+            AttendanceChange.GUEST, AttendanceChange.ADJUST_GUESTS -> {
+                participating()
+                val count=if(command.change==AttendanceChange.GUEST) command.value else {
+                    require(command.value in listOf(-1L,1L));row.guestCount.toLong()+command.value
+                }
+                require(count in 0L..99L) { "Можно добавить от 0 до 99 гостей" }
+                row.copy(guestCount=count.toInt())
+            }
+            AttendanceChange.SET_GUEST_MINUTES -> {
+                // An old button cannot give a guest a different duration under the new rules.
+                require(command.value==row.minutes || command.value==0L) { "Гости играют столько же, сколько пригласивший" }
+                participating();row.copy(guestCount=if(command.value==0L) 0 else maxOf(1,row.guestCount))
+            }
         }
-        AttendanceChange.LEAVE_AND_CLEAR_PAYMENT -> {
-            require(command.value > 0)
-            checkAccounting(row.paid == command.value, ErrorCode.STALE_VERSION, "Оплата изменилась. Открой подтверждение заново")
-            row.copy(playing = false, guestMinutes = 0, paid = 0)
-        }
-        AttendanceChange.MARK_PAID -> {
-            state(row.playing, "Сначала отметь «Играл»")
-            if (row.paid == 0L) row.copy(paid = 300) else row
-        }
-        AttendanceChange.ADJUST_PAID -> {
-            require(command.value == 50L || command.value == -50L)
-            state(row.playing, "Сначала отметь «Играл»")
-            row.copy(paid = Math.addExact(row.paid, command.value).coerceAtLeast(0))
-        }
-        AttendanceChange.SET_PAID -> {
-            require(command.value >= 0)
-            state(row.playing || command.value == 0L, "Сначала отметь «Играл»")
-            row.copy(paid = command.value)
-        }
-        AttendanceChange.ADJUST_MINUTES -> {
-            require(command.value == 30L || command.value == -30L)
-            state(row.playing, "Сначала отметь «Играл»")
-            row.copy(minutes = Math.addExact(row.minutes, command.value).coerceAtLeast(30))
-        }
-        AttendanceChange.SET_MINUTES -> {
-            require(command.value > 0 && command.value % 30 == 0L)
-            state(row.playing, "Сначала добавь игрока в тренировку")
-            row.copy(minutes = command.value)
-        }
-        AttendanceChange.GUEST -> {
-            state(row.playing, "Гость добавляется к играющему участнику")
-            require(command.value in 0L..1L)
-            row.copy(guestMinutes = if (command.value == 0L) 0 else row.minutes)
-        }
-        AttendanceChange.SET_GUEST_MINUTES -> {
-            state(row.playing, "Гость добавляется к играющему участнику")
-            require(command.value >= 0 && command.value % 30 == 0L)
-            row.copy(guestMinutes = command.value)
-        }
+        return if(changed==row) row else changed.copy(guestMinutes=if(changed.guestCount>0) changed.minutes else 0)
     }
 
     private fun transferParty(c: Connection, a: Access, parties: Set<Long>, onBehalfOf: Long?, absent: AbsentAccount?): Long {
@@ -348,7 +352,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun training(a: Access, id: String): TrainingRecord = database.read { known(it, a.groupId, a.userId); training(it, a.groupId, id) }
     internal fun training(c: Connection, group: Long, id: String): TrainingRecord {
         val players = sqlQuery(c, "SELECT * FROM training_players WHERE group_id=? AND training_id=? ORDER BY ordinal", group, id) {
-            Attendance(it.getLong("user_id"), it.getBoolean("playing"), it.getLong("minutes"), it.getLong("guest_minutes"), it.getLong("paid"), it.getInt("ordinal"), it.getBoolean("applied_playing"))
+            Attendance(it.getLong("user_id"), it.getBoolean("playing"), it.getLong("minutes"), it.getLong("guest_minutes"), it.getLong("paid"), it.getInt("ordinal"), it.getBoolean("applied_playing"),it.getInt("guest_count"))
         }
         return sqlQuery(c, "SELECT * FROM trainings WHERE group_id=? AND id=?", group, id) {
             TrainingRecord(group, id, it.getString("title"), it.getString("played_on"), it.getString("starts_at"), TrainingPhase.valueOf(it.getString("status")), it.getLong("version"), it.getLong("applied_version"), it.getLong("created_by"), players)

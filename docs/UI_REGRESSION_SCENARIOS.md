@@ -3,7 +3,8 @@
 10 сентября 2026. Состояние установки каждого выпуска — в DEPLOYMENT_STATUS.md.
 Тесты находятся в `src/test/kotlin/ru/movereon/tennis/`.
 
-После добавления восстановления отменённых тренировок проходят 81 автоматический тест.
+Проходят 92 теста. Набор дополнен сценариями задач #1 и #2: новая панель, таблицы,
+гости, закрепление и миграция.
 
 | Правило | Сценарий проверки |
 | --- | --- |
@@ -16,12 +17,12 @@
 | Произвольный перевод и правка суммы | Сценарий меню выше и `amount edit preserves review ownership and does not create a second transfer` |
 | Дубли за 24 часа, независимо от автора и указанной даты | `duplicates use a rolling 24 hour window regardless of recorder or stated date` |
 | Выход из несохранённого выбора | `back warns on unsaved selection and continues or discards without writing history` |
-| Выход из персональной панели | `back from dirty attendance warns in group and discards only that input` |
+| Выход из персональной панели | `leaving an unsaved admin edit warns and discards only that edit` |
 | Выход из текстовой формы | `unchanged details exit directly and changed details require an explicit discard` |
 | Назад по цепочке история → карточка → страница списка | `back from history returns to training and original training list page` |
 | Назад после правки игрока | `editing a player returns to the same roster page and keeps summary visible` |
 | Стабильный выбор и одинаковые имена | `selection order survives attendance changes and names have profile verification` |
-| Подтверждение одной правкой | `only confirmation records one change and unchanged confirmation records nothing` |
+| Подтверждение одной правкой | `admin attendance edits stay atomic and unchanged confirmation records nothing` |
 | Массовый выбор, страницы, перезапуск | `bulk selection survives pagination and restart with one confirmed history entry` |
 | Конкурентное участие и снятые права | `concurrent self registration and revoked administrator cannot be overwritten by bulk selection` |
 | Ограниченная история массовых изменений | `a page of bulk additions keeps history below Telegram message limit` |
@@ -32,8 +33,8 @@
 Также сохранены прежние сценарии изоляции групп, текущих ролей, повторов Telegram,
 положения личного меню, одной персональной панели, расчётов и истории финансов.
 Изменение теста при новой реализации требует сохранения его пользовательского смысла.
-Старый сценарий перехода в личку теперь начинается с подтверждённого участия:
-неподтверждённый ввод по новому решению пользователя вызывает предупреждение.
+Предупреждение о несохранённом вводе относится к формам администратора.
+Пользовательская панель сохраняет изменения немедленно и закрывается без подтверждения.
 
 ## Измерение
 
@@ -62,3 +63,18 @@ Mac показывает персональную панель или откры
 
 Отдельная задача `storageSimulation` не входит в обычный прогон тестов. Модельный год
 40/10/156 выполнен до и после очистки планов; финансовая история совпадает по SHA-256.
+
+## Задачи #1 и #2
+
+- Таблица, кликабельные имена, экранирование текста и отдельные строки гостей.
+- Вход с 0 ч, несколько гостей, общее время, распределение округления на аккаунт пригласившего.
+- Оплата после выхода, изменения без подтверждения, повторы команд без удвоения.
+- Обновление уже открытых панелей, сохранение страницы общей таблицы.
+- Закрытие панелей при учёте и запрет старых кнопок обычному участнику.
+- Закрепление только новой карточки, отказ прав, явный повтор и неизвестный результат.
+- HTTP-проверка sendRichMessage, rich_message, адресата и pinChatMessage.
+- ParticipationMigrationTest открывает настоящий формат версии 2 и проверяет сохранность
+  старого гостевого времени, всей истории и проводок, затем новый повторный учёт.
+
+Результаты искусственной годовой симуляции нового ввода — в STORAGE_REVIEW.md.
+Тесты отправляют запросы только подставному API и локальному HTTP-серверу.

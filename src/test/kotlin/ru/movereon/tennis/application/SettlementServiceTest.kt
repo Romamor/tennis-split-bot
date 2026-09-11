@@ -28,12 +28,16 @@ class SettlementServiceTest {
     private fun SettlementService.run(command: SettlementCommand, who: Access = admin) = execute(who, "test-${serial++}", command)
     private fun SettlementService.create(id: String = "t", who: Access = admin) = run(SettlementCommand.CreateTraining(id, "Теннис", "2026-09-09", "19:00"), who)
     private fun SettlementService.change(user: Long, change: AttendanceChange, value: Long = 0, who: Access = admin) = run(SettlementCommand.ChangeAttendance("t", user, change, value), who)
+    private fun SettlementService.joinForHour(user:Long,who:Access=admin) {
+        change(user,AttendanceChange.JOIN,who=who)
+        change(user,AttendanceChange.SET_MINUTES,60,who)
+    }
     private fun SettlementService.finish() = run(SettlementCommand.FinishTraining("t", training(admin, "t").version))
     private fun SettlementService.reopen() = run(SettlementCommand.ReopenTraining("t", training(admin, "t").version))
     private fun SettlementService.sample() {
         create()
-        change(1, AttendanceChange.JOIN)
-        change(2, AttendanceChange.JOIN)
+        joinForHour(1)
+        joinForHour(2)
         change(1, AttendanceChange.MARK_PAID)
         finish()
     }
@@ -49,14 +53,14 @@ class SettlementServiceTest {
         val t=s.training(admin,"t")
         assertEquals(2,t.version)
         assertEquals(3,t.players.size)
-        assertTrue(t.players.all { it.playing && it.minutes==60L && it.paid==0L && it.guestMinutes==0L })
+        assertTrue(t.players.all { it.playing && it.minutes==0L && it.paid==0L && it.guestMinutes==0L })
         assertEquals(2,s.history(admin).total)
         assertTrue(s.balances(admin).values.all { it==0L })
         assertEquals(0,s.trainings(other).total)
     }
 
     @Test fun `bulk addition preserves existing players and rejects stale or closed training`() {
-        val s=setup();s.create();s.change(2,AttendanceChange.JOIN);s.change(2,AttendanceChange.SET_PAID,600)
+        val s=setup();s.create();s.joinForHour(2);s.change(2,AttendanceChange.SET_PAID,600)
         s.change(2,AttendanceChange.SET_MINUTES,90)
         val before=s.training(admin,"t")
         assertFailsWith<AccountingException> { s.run(SettlementCommand.AddPlayers("t",1,listOf(1,2))) }
@@ -113,7 +117,7 @@ class SettlementServiceTest {
     }
 
     @Test fun `restore is group scoped admin only and works after cancelling an open or edited training`() {
-        val s=setup();s.create();s.change(1,AttendanceChange.JOIN)
+        val s=setup();s.create();s.joinForHour(1)
         s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
         val cancelled=s.training(admin,"t")
         val command=SettlementCommand.RestoreTraining("t",cancelled.version)
@@ -124,7 +128,7 @@ class SettlementServiceTest {
         s.run(SettlementCommand.SetAdministrator(2,true))
         s.run(command,member)
         s.change(1,AttendanceChange.MARK_PAID)
-        s.change(2,AttendanceChange.JOIN)
+        s.joinForHour(2)
         s.finish();s.reopen();s.change(1,AttendanceChange.SET_PAID,600)
         s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
         s.run(SettlementCommand.RestoreTraining("t",s.training(admin,"t").version),member)
@@ -136,16 +140,16 @@ class SettlementServiceTest {
 
     @Test fun `membership and admin rights are scoped to group and ordinary members cannot change another player`() {
         val s = setup(); s.create(); s.create("elsewhere", other)
-        assertFailsWith<AccountingException> { s.change(1, AttendanceChange.JOIN, who = member) }
+        assertFailsWith<AccountingException> { s.joinForHour(1, member) }
         assertFailsWith<AccountingException> { s.create("forbidden", Access(-1, 3)) }
         s.run(SettlementCommand.SetAdministrator(2, true))
         assertTrue(s.isAdmin(member))
         assertFalse(s.isAdmin(Access(-2, 2)))
         assertFailsWith<AccountingException> { s.run(SettlementCommand.SetAdministrator(3, true), member) }
-        s.change(1, AttendanceChange.JOIN, who = member)
+        s.joinForHour(1, member)
         assertFailsWith<AccountingException> { s.training(admin, "elsewhere") }
         assertFailsWith<AccountingException> { s.run(SettlementCommand.CancelTraining("elsewhere", 1)) }
-        assertFailsWith<AccountingException> { s.change(4, AttendanceChange.JOIN) }
+        assertFailsWith<AccountingException> { s.joinForHour(4) }
         assertEquals(listOf("t"), s.trainings(member).items.map { it.id })
         assertEquals(listOf("elsewhere"), s.trainings(other).items.map { it.id })
         s.run(SettlementCommand.SetAdministrator(2, false))
@@ -155,7 +159,7 @@ class SettlementServiceTest {
 
     @Test fun `idempotency belongs to request while repeated delta clicks accumulate`() {
         val s = setup(); s.create()
-        s.change(2, AttendanceChange.JOIN, who = member)
+        s.joinForHour(2, member)
         s.change(2, AttendanceChange.MARK_PAID, who = member)
         val delta = SettlementCommand.ChangeAttendance("t", 2, AttendanceChange.ADJUST_PAID, 50)
         val first = s.execute(member, "telegram:123", delta)
@@ -163,7 +167,7 @@ class SettlementServiceTest {
         s.execute(member, "telegram:124", delta)
         s.change(2, AttendanceChange.MARK_PAID, who = member)
         s.change(2, AttendanceChange.ADJUST_MINUTES, 30, member)
-        s.change(2, AttendanceChange.JOIN, who = member)
+        s.change(2,AttendanceChange.JOIN,who=member)
         val row = s.training(member, "t").players.single()
         assertEquals(400, row.paid)
         assertEquals(90, row.minutes)
@@ -172,7 +176,7 @@ class SettlementServiceTest {
     }
 
     @Test fun `concurrent updates are serialized and close rejects a stale preview`() {
-        val s = setup(); s.create(); s.change(2, AttendanceChange.JOIN, who = member)
+        val s = setup(); s.create(); s.joinForHour(2, member)
         val version = s.training(admin, "t").version
         Executors.newFixedThreadPool(4).use { pool ->
             val jobs = (1..20).map { index -> Callable {
@@ -214,16 +218,16 @@ class SettlementServiceTest {
         assertEquals(1, s.transfer(admin, "represented").createdBy)
     }
 
-    @Test fun `leaving with a payment requires confirmation and guest allocation stays stable`() {
+    @Test fun `leaving keeps payment and guest allocation stays stable`() {
         val s = setup(); s.create()
-        s.change(1, AttendanceChange.JOIN)
+        s.joinForHour(1)
         s.change(1, AttendanceChange.MARK_PAID)
-        assertFailsWith<AccountingException> { s.change(1, AttendanceChange.LEAVE) }
+        s.change(1, AttendanceChange.LEAVE)
         assertEquals(300,s.training(admin,"t").players.single().paid)
         s.change(1, AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,300)
-        s.change(2, AttendanceChange.JOIN)
+        s.joinForHour(2)
         s.change(2, AttendanceChange.GUEST, 1)
-        s.change(3, AttendanceChange.JOIN)
+        s.joinForHour(3)
         s.change(2, AttendanceChange.SET_PAID,300)
         s.finish()
         assertEquals(mapOf(2L to 100L, 3L to -100L), s.balances(admin))
@@ -244,19 +248,19 @@ class SettlementServiceTest {
         s.database.verify()
     }
 
-    @Test fun `table payment needs participation and stale removal cannot clear a changed payment`() {
+    @Test fun `payment can survive leaving and stale removal cannot clear a changed payment`() {
         val s=setup();s.create()
-        for (change in listOf(AttendanceChange.MARK_PAID,AttendanceChange.ADJUST_PAID,AttendanceChange.SET_PAID)) {
+        for (change in listOf(AttendanceChange.MARK_PAID,AttendanceChange.ADJUST_PAID)) {
             assertFailsWith<AccountingException> { s.change(2,change,50,member) }
         }
-        s.change(2,AttendanceChange.JOIN,who=member)
+        s.joinForHour(2, member)
         s.change(2,AttendanceChange.MARK_PAID,who=member)
         s.change(2,AttendanceChange.ADJUST_MINUTES,30,member)
         s.change(2,AttendanceChange.ADJUST_PAID,50,member)
         assertFailsWith<AccountingException> { s.change(2,AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,300,member) }
         assertEquals(350,s.training(member,"t").players.single().paid)
         s.change(2,AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,350,member)
-        s.change(2,AttendanceChange.JOIN,who=member)
+        s.joinForHour(2, member)
         assertEquals(60,s.training(member,"t").players.single().minutes)
         assertEquals(0,s.training(member,"t").players.single().paid)
     }
@@ -332,6 +336,9 @@ class SettlementServiceTest {
         val s=setup();s.sample()
         val before=s.training(admin,"t");val balances=s.balances(admin)
         s.database.write { c ->
+            sqlUpdate(c,"ALTER TABLE bot_sessions DROP COLUMN panel_json")
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_status")
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN display_page")
             sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN attendance_count")
             sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN has_played")
             c.createStatement().use { it.execute("PRAGMA user_version=1") }

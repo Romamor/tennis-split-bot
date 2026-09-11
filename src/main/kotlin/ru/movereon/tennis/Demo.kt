@@ -26,7 +26,10 @@ fun main(args: Array<String>) {
                 s.remember(Account(id, name)); s.rememberMembership(-1, id, true)
             }
             s.execute(a, "create", SettlementCommand.CreateTraining("training", "Теннис", "2026-09-09", "19:00"))
-            for (id in 1L..4L) s.execute(a, "join:$id", SettlementCommand.ChangeAttendance("training", id, AttendanceChange.JOIN))
+            for (id in 1L..4L) {
+                s.execute(a, "join:$id", SettlementCommand.ChangeAttendance("training", id, AttendanceChange.JOIN))
+                s.execute(a, "time:$id", SettlementCommand.ChangeAttendance("training", id, AttendanceChange.SET_MINUTES,60))
+            }
             s.execute(a, "paid:1", SettlementCommand.ChangeAttendance("training", 1, AttendanceChange.SET_PAID, 350))
             s.execute(a, "paid:2", SettlementCommand.ChangeAttendance("training", 2, AttendanceChange.SET_PAID, 400))
             s.execute(a, "finish", SettlementCommand.FinishTraining("training", s.training(a, "training").version))

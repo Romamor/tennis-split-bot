@@ -18,7 +18,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
             read { c ->
                 require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
-                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..2) { "Неизвестный формат базы бота" }
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..3) { "Неизвестный формат базы бота" }
             }
         } else {
             Files.createDirectories(this.path.parent)
@@ -28,18 +28,35 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                 if(version==0) {
                     require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                     val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=2") }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=3") }
                 } else {
-                    require(app==APPLICATION_ID && version in 1..2) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    require(app==APPLICATION_ID && version in 1..3) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
                     if(version==1) {
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
                         refreshAttendance(c)
                         c.createStatement().use { it.execute("PRAGMA user_version=2") }
                     }
+                    if(version<=2) migrateParticipation(c)
                 }
             }
             connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
+        }
+    }
+    private fun migrateParticipation(c:Connection) {
+        val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
+        val table=ddl.substringAfter("CREATE TABLE training_players (").substringBefore(") STRICT;")
+        c.createStatement().use { s ->
+            s.execute("CREATE TABLE training_players_next ($table) STRICT")
+            s.execute("""INSERT INTO training_players_next(group_id,training_id,user_id,playing,applied_playing,minutes,guest_minutes,guest_count,paid,ordinal)
+                SELECT group_id,training_id,user_id,playing,applied_playing,minutes,guest_minutes,CASE WHEN guest_minutes>0 THEN 1 ELSE 0 END,paid,ordinal FROM training_players""")
+            s.execute("DROP TABLE training_players")
+            s.execute("ALTER TABLE training_players_next RENAME TO training_players")
+            s.execute("CREATE INDEX player_trainings ON training_players(group_id,user_id,playing,training_id)")
+            s.execute("ALTER TABLE bot_sessions ADD COLUMN panel_json TEXT")
+            s.execute("ALTER TABLE bot_deliveries ADD COLUMN display_page INTEGER NOT NULL DEFAULT 0 CHECK(display_page>=0)")
+            s.execute("ALTER TABLE bot_deliveries ADD COLUMN pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN'))")
+            s.execute("PRAGMA user_version=3")
         }
     }
     private fun connect(): Connection = DriverManager.getConnection(if(readOnly) "jdbc:sqlite:${path.toUri()}?mode=ro" else "jdbc:sqlite:$path").also { c ->

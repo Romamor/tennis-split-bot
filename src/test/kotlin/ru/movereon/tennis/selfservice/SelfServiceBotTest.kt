@@ -23,6 +23,9 @@ class SelfServiceBotTest {
         override fun instant() = now
     }
     private val api = object : TelegramApi by fake {
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard) = ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
+
         override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
             TgMessage(chat = TgChat(chatId, "supergroup"), from = fake.bot, text = text, keyboard = keyboard,
                 receiver = TgUser(userId, firstName = "User $userId"), ephemeralId = nextEphemeral++).also { ephemeralMessages[chatId to userId] = it }
@@ -68,7 +71,7 @@ class SelfServiceBotTest {
     }
     private fun latest(user: Long) = fake.messages.values.last { it.chat.id == user }
     private fun click(user: Long, label: String, message: TgMessage = latest(user)): TgUpdate {
-        val button = requireNotNull(message.keyboard).rows.flatten().first { it.text.contains(label) }
+        val button = requireNotNull(message.keyboard).rows.flatten().firstOrNull { it.text.contains(label) } ?: error("Button $label not found: ${message.keyboard.rows.flatten().map { it.text }}")
         val update = TgUpdate(updateId++, callback = TgCallback("cb:$updateId", TgUser(user, firstName = "User $user"), message, button.callbackData))
         bot.handle(update)
         return update
@@ -84,51 +87,154 @@ class SelfServiceBotTest {
         bot.maintain()
     }
     private fun publicCard() = fake.messages.values.single { it.chat.id == -1L }
-    private fun confirm(user:Long) {
-        click(user,"Всё правильно",ephemeralMessages.getValue(-1L to user))
-        bot.maintain()
+    private fun panelClick(user:Long,label:String)=click(user,label,ephemeralMessages.getValue(-1L to user))
+    private fun join(user:Long,minutes:Long=0) {
+        click(user,"Открыть",publicCard());panelClick(user,"Присоединиться")
+        if(minutes>0) {
+            panelClick(user,"Время")
+            repeat((minutes/30).toInt()) { panelClick(user,"+0,5 ч") }
+            panelClick(user,"Назад")
+        }
+    }
+    private fun pay(user:Long,amount:Long=300) {
+        panelClick(user,"Оплата")
+        var rest=amount
+        for(step in listOf(1000L,100L,10L,1L)) {
+            repeat((rest/step).toInt()) { panelClick(user,"+$step ₽") };rest%=step
+        }
+        panelClick(user,"Назад")
+    }
+    private fun closeParticipation(user:Long) { panelClick(user,"Закрыть");bot.maintain() }
+
+
+    @Test fun `admin can correct a non-playing payers amount without rejoining them`() {
+        setup();create();join(2,60);pay(2);panelClick(2,"Не участвую")
+        click(1,"Игроки");click(1,"User 2");click(1,"Другая сумма");message(1,"450");click(1,"Всё правильно")
+        val player=bot.service.trainings(Access(-1,1)).items.single().players.single()
+        assertFalse(player.playing);assertEquals(450,player.paid);assertEquals(0,player.minutes)
+    }
+
+    @Test fun `payment increment overflow reports an error without crashing or changing financial data`() {
+        setup();create();join(2,60)
+        val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
+        bot.service.execute(auth,"maximum",SettlementCommand.ChangeAttendance(id,2,AttendanceChange.SET_PAID,Long.MAX_VALUE));bot.maintain()
+        val before=bot.service.training(auth,id);val history=bot.service.history(auth).total
+        panelClick(2,"Оплата");panelClick(2,"+1000 ₽")
+        assertTrue(answers.last().contains("Слишком большое"))
+        assertEquals(before,bot.service.training(auth,id));assertEquals(history,bot.service.history(auth).total)
+    }
+
+    @Test fun `multiple guests share inviters time and tables show separate rounded balances`() {
+        setup();create();join(1,60);pay(1,750);join(2,60)
+        panelClick(2,"Гости");panelClick(2,"+1 гость");panelClick(2,"+1 гость");bot.maintain()
+        val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
+        assertEquals(2,t.players.single { it.userId==2L }.guestCount)
+        assertEquals(60,t.players.single { it.userId==2L }.guestMinutes)
+        val html=fake.richMessages.getValue(-1L to publicCard().id)
+        assertTrue(html.contains("User 2 гость 1"));assertTrue(html.contains("User 2 гость 2"))
+        assertTrue(html.contains("tg://user?id=2"))
+        assertTrue(publicCard().text!!.contains("User 2 | 1 ч | 0 ₽ | -188 ₽"))
+        assertTrue(bot.service.balances(auth).isEmpty())
+        panelClick(2,"Назад");panelClick(2,"Время");panelClick(2,"+0,5 ч");bot.maintain()
+        val changed=bot.service.training(auth,t.id).players.single { it.userId==2L }
+        assertEquals(90,changed.minutes);assertEquals(90,changed.guestMinutes)
+        assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 1L).text)
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт")
+        assertEquals(mapOf(1L to 614L,2L to -614L),bot.service.balances(auth))
+    }
+
+    @Test fun `accounted training closes member panels and stale buttons cannot reopen or edit it`() {
+        setup();create();join(2,60);pay(2);click(3,"Открыть",publicCard());click(1,"Открыть",publicCard())
+        val stale=ephemeralMessages.getValue(-1L to 2L)
+        assertTrue(ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().any { it.text.contains("Редактировать") })
+        assertFalse(stale.keyboard!!.rows.flatten().any { it.text.contains("Редактировать") })
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт");bot.maintain()
+        assertFalse(ephemeralMessages.containsKey(-1L to 2L));assertFalse(ephemeralMessages.containsKey(-1L to 3L))
+        val before=bot.service.trainings(Access(-1,1)).items.single()
+        click(2,"Не участвую",stale);click(2,"Открыть",publicCard())
+        assertTrue(answers.last().contains("учтена"));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
+        assertEquals(before,bot.service.training(Access(-1,1),before.id))
+        assertTrue(ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().any { it.text.contains("Редактировать") })
+    }
+
+    @Test fun `public table pagination keeps its page through data updates and never pins twice`() {
+        setup();create();val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
+        val users=(5L..31L).toList()
+        users.forEach { bot.service.remember(Account(it,"Игрок $it"));bot.service.rememberMembership(-1,it,true) }
+        bot.service.execute(auth,"add",SettlementCommand.AddPlayers(id,1,users));bot.maintain()
+        val message=publicCard().id
+        click(2,"Дальше",publicCard())
+        assertTrue(publicCard().text!!.contains("Страница 2 / 4"))
+        bot.service.execute(auth,"paid",SettlementCommand.ChangeAttendance(id,5,AttendanceChange.SET_PAID,100));bot.maintain()
+        assertEquals(message,publicCard().id);assertTrue(publicCard().text!!.contains("Страница 2 / 4"))
+        assertEquals(9,Regex("<tr>").findAll(fake.richMessages.getValue(-1L to message)).count())
+        assertEquals(1,fake.pinned.size)
+        click(2,"Открыть",publicCard())
+        assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 2L).text)
+    }
+
+    @Test fun `pin rejection is visible to admin and retry pins only the existing card`() {
+        setup();fake.pinFailure=TelegramFailure(FailureKind.REJECTED,400);create()
+        val id=bot.service.trainings(Access(-1,1)).items.single().id
+        assertEquals("FAILED",bot.state.pinStatus("training:-1:$id"))
+        open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
+        assertTrue(latest(1).text!!.contains("право бота закреплять"))
+        fake.pinFailure=null;click(1,"Повторить закрепление")
+        assertEquals(listOf(-1L to publicCard().id),fake.pinned)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertEquals(1,fake.pinned.size);assertEquals(1,fake.sent.count { it.chat.id==-1L })
+    }
+
+    @Test fun `uncertain pin is not retried automatically after restart`() {
+        setup();fake.pinFailure=TelegramFailure(FailureKind.UNCERTAIN);create()
+        val id=bot.service.trainings(Access(-1,1)).items.single().id
+        assertEquals("UNKNOWN",bot.state.pinStatus("training:-1:$id"));assertEquals(1,fake.pinAttempts)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain();bot.maintain()
+        assertEquals(1,fake.pinAttempts)
+    }
+
+    @Test fun `rich table escapes user text instead of interpreting it as HTML`() {
+        setup();create();join(2,60)
+        val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
+        bot.service.remember(Account(2,"<script>& чужое имя"))
+        bot.service.execute(auth,"title",SettlementCommand.EditTraining(t.id,t.version,"<b> & название","2026-09-09","19:00"));bot.maintain()
+        val html=fake.richMessages.getValue(-1L to publicCard().id)
+        assertTrue(html.contains("&lt;b&gt; &amp; название"));assertTrue(html.contains("&lt;script&gt;&amp; чужое имя"))
+        assertFalse(html.contains("<script>"))
     }
 
     @Test fun `admin creates in private and group members use personal controls without public spam`() {
-        setup(); create()
-        assertEquals(1, bot.service.trainings(Access(-1, 1)).total)
-        val card = publicCard()
-        assertTrue(card.text!!.contains("Первая группа"))
-        assertFalse(card.keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") || it.text.contains("Применить правки") })
-        click(2, "Участие", card)
-        var personal = ephemeralMessages.getValue(-1L to 2L)
-        assertTrue(personal.text!!.contains("Играл 1 ч"))
-        assertFalse(personal.keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") || it.text.contains("Применить правки") })
-        click(2, "Платил", personal)
-        personal = ephemeralMessages.getValue(-1L to 2L)
-        val firstDelta = click(2, "+50", personal)
-        bot.handle(firstDelta)
-        click(2, "+50", ephemeralMessages.getValue(-1L to 2L))
-        click(2, "+0,5 ч", ephemeralMessages.getValue(-1L to 2L))
-        bot.maintain()
+        setup();create()
+        val card=publicCard()
+        assertFalse(card.text!!.contains("Первая группа"))
+        assertTrue(card.text!!.contains("Пока никто не зарегался"))
+        assertEquals(listOf("Открыть"),card.keyboard!!.rows.flatten().map { it.text })
+        assertEquals(listOf(-1L to card.id),fake.pinned)
+        click(2,"Открыть",card)
+        assertEquals(card.text,ephemeralMessages.getValue(-1L to 2L).text)
         assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty())
-        assertEquals(1,bot.service.history(Access(-1,2)).total)
-        confirm(2)
-        val row = bot.service.trainings(Access(-1, 2)).items.single().players.single()
-        assertEquals(400, row.paid)
-        assertEquals(90, row.minutes)
-        assertEquals(1, fake.sent.count { it.chat.id == -1L })
-        assertTrue(publicCard().text!!.contains("1,5 ч"))
-        assertTrue(publicCard().text!!.contains("400 ₽"))
-        assertFalse(publicCard().text!!.contains("мин"))
+        panelClick(2,"Присоединиться")
+        assertEquals(0,bot.service.trainings(Access(-1,2)).items.single().players.single().minutes)
+        pay(2,300);panelClick(2,"Оплата")
+        val delta=panelClick(2,"+100 ₽");bot.handle(delta)
+        panelClick(2,"Назад");panelClick(2,"Время");panelClick(2,"+1 ч");panelClick(2,"+0,5 ч");bot.maintain()
+        val row=bot.service.trainings(Access(-1,2)).items.single().players.single()
+        assertEquals(400,row.paid);assertEquals(90,row.minutes)
+        assertNull(bot.state.attendanceDraft(2,-1))
+        assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 2L).text)
+        assertTrue(fake.richMessages.getValue(-1L to card.id).contains("<table"))
+        assertEquals(1,fake.sent.count { it.chat.id==-1L });assertEquals(1,fake.pinned.size)
     }
 
     @Test fun `private group choice and public callbacks never inherit another group`() {
-        setup(); create(); open(2, "Вторая")
-        click(2, "Участие", publicCard())
-        assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.contains("Первая группа"))
-        confirm(2)
-        assertEquals(1, bot.service.trainings(Access(-1, 2), mine = true).total)
-        assertEquals(0, bot.service.trainings(Access(-2, 2), mine = true).total)
-        val wrongChat = publicCard().copy(chat = TgChat(-2, "supergroup", "Вторая группа"))
-        click(3, "Участие", wrongChat)
+        setup();create();open(2,"Вторая");join(2)
+        assertEquals(-1,bot.state.selectedGroup(2,-1))
+        assertEquals(1,bot.service.trainings(Access(-1,2),mine=true).total)
+        assertEquals(0,bot.service.trainings(Access(-2,2),mine=true).total)
+        val wrong=publicCard().copy(chat=TgChat(-2,"supergroup","Вторая группа"))
+        click(3,"Открыть",wrong)
         assertTrue(answers.last().contains("другой группе"))
-        assertEquals(1, bot.service.trainings(Access(-1, 1)).items.single().players.size)
+        assertEquals(1,bot.service.trainings(Access(-1,1)).items.single().players.size)
     }
 
     @Test fun `rights are checked live after revocation including saved admin buttons`() {
@@ -142,16 +248,16 @@ class SelfServiceBotTest {
         bot.handle(TgUpdate(updateId++, callback = TgCallback("forge", TgUser(2), TgMessage(2, TgChat(2, "private")), "n:$forged")))
         assertEquals(TrainingPhase.OPEN, bot.service.training(Access(-1, 2), training.id).phase)
         fake.members[-1L to 2L] = TgMember("left")
-        click(2, "Участие", publicCard())
+        click(2, "Открыть", publicCard())
         assertTrue(answers.last().contains("участникам"))
     }
 
     @Test fun `one users personal panel cannot be operated by another`() {
-        setup(); create(); click(2, "Участие", publicCard())
-        click(3, "Платил", ephemeralMessages.getValue(-1L to 2L))
+        setup();create();click(2,"Открыть",publicCard())
+        click(3,"Присоединиться",ephemeralMessages.getValue(-1L to 2L))
         assertTrue(answers.last().contains("другого участника"))
         assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.isEmpty())
-        assertEquals(0,bot.state.attendanceDraft(2,-1)!!.value.paid)
+        assertNull(bot.state.attendanceDraft(2,-1))
     }
 
     @Test fun `unknown public send is not automatically repeated and explicit recovery does not duplicate training`() {
@@ -183,20 +289,14 @@ class SelfServiceBotTest {
     }
 
     @Test fun `active and permanent buttons survive weeks replaced buttons expire and groups stay separate`() {
-        setup(); create()
-        val card = publicCard()
-        val token = card.keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
-        val permanent = card.keyboard!!.rows.flatten().last().url!!.substringAfter("n_")
-        val previousPrivate = latest(1).keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
-        message(1, "/start")
-        clock.now = clock.now.plusSeconds(15 * 86400)
-        bot.maintain()
-        assertNotNull(bot.state.button(token))
-        assertNotNull(bot.state.button(permanent))
-        assertNull(bot.state.button(previousPrivate))
-        click(2, "Участие", card)
-        confirm(2)
-        assertEquals(1, bot.service.trainings(Access(-1, 2)).items.single().players.size)
+        setup();create();click(1,"Открыть",publicCard())
+        val card=publicCard();val token=card.keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
+        val permanent=ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().single { it.text.contains("Редактировать") }.url!!.substringAfter("n_")
+        val previous=latest(1).keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
+        message(1,"/start");clock.now=clock.now.plusSeconds(15*86400);bot.maintain()
+        assertNotNull(bot.state.button(token));assertNotNull(bot.state.button(permanent));assertNull(bot.state.button(previous))
+        click(2,"Открыть",card);panelClick(2,"Присоединиться")
+        assertEquals(1,bot.service.trainings(Access(-1,2)).items.single().players.size)
     }
 
     @Test fun `27 players and a long history fit in paged messages`() {
@@ -241,12 +341,11 @@ class SelfServiceBotTest {
     }
 
     @Test fun `revoked membership during text input does not crash or apply a payment`() {
-        setup(); create(); click(2,"Участие",publicCard());confirm(2)
-        open(2); click(2,"Мои тренировки"); click(2,"09.09.2026"); click(2,"Изменить участие"); click(2,"Другая сумма")
-        fake.members[-1L to 2L] = TgMember("left")
-        message(2,"1000")
-        assertEquals(0,bot.service.trainings(Access(-1,1)).items.single().players.single().paid)
-        assertTrue(latest(2).text!!.contains("Доступ только участникам"))
+        setup();create();click(1,"Игроки");click(1,"Участники группы");click(1,"User 2");click(1,"Добавить ·")
+        click(1,"User 2");click(1,"Другая сумма")
+        fake.members[-1L to 1L]=TgMember("left");message(1,"1000")
+        assertEquals(0,bot.service.trainings(Access(-1,2)).items.single().players.single().paid)
+        assertTrue(latest(1).text!!.contains("Доступ только участникам"))
     }
 
     @Test fun `text input moves the private panel to a new reply while button clicks edit that reply`() {
@@ -293,29 +392,16 @@ class SelfServiceBotTest {
     }
 
     @Test fun `updating the shared card preserves personal time payment and leave controls`() {
-        setup(); create()
-        click(2,"Участие",publicCard())
-        bot.maintain()
-        val personal = ephemeralMessages.getValue(-1L to 2L)
-        val buttons = personal.keyboard!!.rows.flatten()
-        assertTrue(buttons.any { it.text=="+0,5 ч" })
-        assertTrue(buttons.any { it.text=="Платил · 300 ₽" })
-        assertTrue(buttons.any { it.text=="Не играл" })
-        buttons.mapNotNull { it.callbackData?.removePrefix("n:") }.forEach { assertNotNull(bot.state.button(it)) }
-        click(2,"Платил",personal)
-        bot.maintain()
-        click(2,"Не играл",ephemeralMessages.getValue(-1L to 2L))
-        assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
-        click(2,"Не играл — убрать 300 ₽",ephemeralMessages.getValue(-1L to 2L))
-        bot.maintain()
-        val row = bot.state.attendanceDraft(2,-1)!!.value
-        assertFalse(row.playing)
-        assertEquals(0,row.paid)
-        assertFalse(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("₽") })
-        confirm(2)
-        assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.isEmpty())
-        assertEquals(1,bot.service.history(Access(-1,1)).total)
-        assertEquals(1,fake.sent.count { it.chat.id==-1L },"No personal panels are posted as ordinary group messages")
+        setup();create();join(2,60);pay(2);join(3,60);bot.maintain()
+        val panel=ephemeralMessages.getValue(-1L to 2L)
+        assertTrue(panel.keyboard!!.rows.flatten().any { it.text.contains("Время") })
+        panelClick(2,"Не участвую");bot.maintain()
+        val row=bot.service.trainings(Access(-1,1)).items.single().players.single { it.userId==2L }
+        assertFalse(row.playing);assertEquals(0,row.minutes);assertEquals(300,row.paid)
+        assertTrue(publicCard().text!!.contains("User 2 | 0 ч | 300 ₽ | +300 ₽"))
+        assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 3L).text)
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Оплата") })
+        assertEquals(1,fake.sent.count { it.chat.id==-1L })
     }
 
     @Test fun `superadmin can appoint and remove a bot admin through the UI in one group only`() {
@@ -345,7 +431,7 @@ class SelfServiceBotTest {
     }
 
     @Test fun `startup refresh updates existing live cards without changing participation or publishing copies`() {
-        setup();create();click(2,"Участие",publicCard());bot.maintain()
+        setup();create();click(2,"Открыть",publicCard());bot.maintain()
         val before=bot.service.trainings(Access(-1,1)).items.single()
         val messageId=publicCard().id
         val sentCount=fake.sent.size
@@ -354,121 +440,87 @@ class SelfServiceBotTest {
         assertEquals(before,bot.service.trainings(Access(-1,1)).items.single())
         assertEquals(messageId,publicCard().id)
         assertEquals(sentCount,fake.sent.size)
-        assertTrue(publicCard().keyboard!!.rows.flatten().any { it.text=="Участие" })
+        assertTrue(publicCard().keyboard!!.rows.flatten().any { it.text=="Открыть" })
     }
 
-    @Test fun `group panel omits custom amount and only the private panel offers it`() {
-        setup();create();click(2,"Участие",publicCard())
+    @Test fun `group payment controls use requested steps while admin can type an exact amount`() {
+        setup();create();join(2)
         val panel=ephemeralMessages.getValue(-1L to 2L)
-        assertTrue(panel.text!!.contains("Играл 1 ч"))
         assertFalse(panel.keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
-        confirm(2)
-        open(2);click(2,"Мои тренировки");click(2,"09.09.2026");click(2,"Изменить участие")
-        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
+        panelClick(2,"Оплата")
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text }.containsAll(listOf("+1 ₽","+10 ₽","+100 ₽","+1000 ₽","−1 ₽","−10 ₽","−100 ₽","−1000 ₽")))
+        click(1,"Игроки");click(1,"User 2")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
     }
 
     @Test fun `reopening and closing personal panels does not remove another users panel or public card`() {
-        setup();create();click(2,"Участие",publicCard());click(3,"Участие",publicCard())
-        val old=ephemeralMessages.getValue(-1L to 2L)
-        val other=ephemeralMessages.getValue(-1L to 3L)
-        click(2,"Участие",publicCard())
-        val fresh=ephemeralMessages.getValue(-1L to 2L)
-        assertEquals(old.ephemeralId,fresh.ephemeralId)
-        assertFalse(deletedEphemerals.contains(Triple(-1L,2L,old.ephemeralId!!)))
+        setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
+        val old=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
+        click(2,"Открыть",publicCard())
+        assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        panelClick(2,"Закрыть")
+        assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
+        assertEquals(other,ephemeralMessages[-1L to 3L]);assertEquals(1,fake.sent.count { it.chat.id==-1L })
         assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty())
-        click(2,"Всё правильно",fresh)
-        assertNull(bot.state.currentEphemeral(2,-1))
-        assertFalse(ephemeralMessages.containsKey(-1L to 2L))
-        assertEquals(other,ephemeralMessages[-1L to 3L])
-        assertEquals(2,bot.service.trainings(Access(-1,2)).items.single().players.single().userId)
-        assertNull(bot.state.attendanceDraft(2,-1))
-        assertNotNull(bot.state.attendanceDraft(3,-1))
-        assertEquals(1,fake.sent.count { it.chat.id==-1L })
     }
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
-        setup();create();click(2,"Участие",publicCard());confirm(2);click(2,"Участие",publicCard())
-        click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
-        val panel=ephemeralMessages.getValue(-1L to 2L)
-        val link=panel.keyboard!!.rows.flatten().single { it.text=="В меню группы" }
-        assertNull(link.callbackData)
-        assertNotNull(link.url)
+        setup();create();click(1,"Открыть",publicCard())
+        val link=ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().single { it.text.contains("Редактировать") }
+        assertNull(link.callbackData);assertNotNull(link.url)
         val sent=fake.sent.count { it.chat.id==-1L }
-        message(2,"/start ${link.url!!.substringAfter("start=")}")
-        assertTrue(latest(2).text!!.contains("Что хочешь сделать"))
-        assertFalse(ephemeralMessages.containsKey(-1L to 2L))
-        assertEquals(sent,fake.sent.count { it.chat.id==-1L })
-        assertFalse(fake.sent.any { it.text?.contains("Это действие доступно в личном") == true })
+        message(1,"/start ${link.url!!.substringAfter("start=")}")
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Игроки" })
+        assertFalse(ephemeralMessages.containsKey(-1L to 1L));assertEquals(sent,fake.sent.count { it.chat.id==-1L })
+        assertFalse(fake.sent.any { it.text?.contains("Это действие доступно в личном")==true })
     }
 
     @Test fun `expired personal panel is replaced on the next participation click`() {
-        setup();create();click(2,"Участие",publicCard())
+        setup();create();click(2,"Открыть",publicCard())
         val expired=ephemeralMessages.remove(-1L to 2L)!!
-        click(2,"Участие",publicCard())
+        click(2,"Открыть",publicCard())
         val fresh=ephemeralMessages.getValue(-1L to 2L)
-        assertNotEquals(expired.ephemeralId,fresh.ephemeralId)
-        assertEquals(fresh.ephemeralId,bot.state.currentEphemeral(2,-1))
-        assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty())
-        assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
+        assertNotEquals(expired.ephemeralId,fresh.ephemeralId);assertEquals(fresh.ephemeralId,bot.state.currentEphemeral(2,-1))
+        assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty());assertNull(bot.state.attendanceDraft(2,-1))
     }
 
-    @Test fun `only confirmation records one change and unchanged confirmation records nothing`() {
-        setup();create();click(2,"Участие",publicCard())
-        val originalCard=publicCard()
-        click(2,"Платил",ephemeralMessages.getValue(-1L to 2L))
-        repeat(4) { click(2,"+50",ephemeralMessages.getValue(-1L to 2L)) }
-        click(2,"+0,5 ч",ephemeralMessages.getValue(-1L to 2L))
-        bot.maintain()
-        assertEquals(originalCard,publicCard())
-        assertEquals(1,bot.service.history(Access(-1,2)).total)
-        val confirmation=click(2,"Всё правильно",ephemeralMessages.getValue(-1L to 2L))
-        bot.handle(confirmation)
-        bot.maintain()
-        val saved=bot.service.trainings(Access(-1,2)).items.single()
-        assertEquals(500,saved.players.single().paid)
-        assertEquals(90,saved.players.single().minutes)
-        assertEquals(2,bot.service.history(Access(-1,2)).total)
-        assertEquals("SaveAttendance",bot.service.history(Access(-1,2)).items.first().kind)
-        click(2,"Участие",publicCard());confirm(2)
-        assertEquals(saved,bot.service.trainings(Access(-1,2)).items.single())
-        assertEquals(2,bot.service.history(Access(-1,2)).total)
+    @Test fun `admin attendance edits stay atomic and unchanged confirmation records nothing`() {
+        setup();create();click(1,"Игроки");click(1,"Участники группы");click(1,"User 2");click(1,"Добавить ·")
+        val history=bot.service.history(Access(-1,1)).total
+        click(1,"User 2");click(1,"Платил");repeat(4) { click(1,"+50") };click(1,"+0,5 ч")
+        assertEquals(history,bot.service.history(Access(-1,1)).total)
+        val save=click(1,"Всё правильно");bot.handle(save)
+        val saved=bot.service.trainings(Access(-1,1)).items.single()
+        assertEquals(500,saved.players.single().paid);assertEquals(30,saved.players.single().minutes)
+        assertEquals(history+1,bot.service.history(Access(-1,1)).total)
+        click(1,"User 2");click(1,"Всё правильно")
+        assertEquals(saved,bot.service.trainings(Access(-1,1)).items.single());assertEquals(history+1,bot.service.history(Access(-1,1)).total)
     }
 
-    @Test fun `unfinished draft resumes after restart and a different training does not replace it`() {
-        setup();create();click(2,"Участие",publicCard())
-        click(2,"Платил",ephemeralMessages.getValue(-1L to 2L))
-        click(2,"+0,5 ч",ephemeralMessages.getValue(-1L to 2L))
-        val draft=bot.state.attendanceDraft(2,-1)!!
-        val panelId=ephemeralMessages.getValue(-1L to 2L).ephemeralId
-        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
-        click(2,"Участие",publicCard())
-        assertEquals(draft,bot.state.attendanceDraft(2,-1))
+    @Test fun `saved participation survives restart and switching training reuses one personal panel`() {
+        setup();create();join(2,90);pay(2)
+        val saved=bot.service.trainings(Access(-1,2)).items.single();val panelId=ephemeralMessages.getValue(-1L to 2L).ephemeralId
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertEquals(saved,bot.service.training(Access(-1,2),saved.id));assertEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        bot.service.execute(Access(-1,1,true),"second-training",SettlementCommand.CreateTraining("second","Вторая","2026-09-10","20:00"));bot.maintain()
+        val second=fake.messages.values.single { it.chat.id==-1L && it.text!!.startsWith("Вторая") }
+        click(2,"Открыть",second)
         assertEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
-        bot.service.execute(Access(-1,1,true),"second-training",SettlementCommand.CreateTraining("second","Вторая","2026-09-10","20:00"))
-        bot.maintain()
-        val secondCard=fake.messages.values.single { it.chat.id==-1L && it.text!!.contains("Вторая ·") }
-        click(2,"Участие",secondCard)
-        assertEquals(draft,bot.state.attendanceDraft(2,-1))
-        assertEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
-        assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.contains("Сначала заверши"))
-        assertTrue(bot.service.training(Access(-1,2),"second").players.isEmpty())
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.startsWith("Вторая"))
+        assertEquals(saved,bot.service.training(Access(-1,2),saved.id));assertTrue(bot.service.training(Access(-1,2),"second").players.isEmpty())
     }
 
     @Test fun `confirmed player can edit attendance while another player joins through the same shared card`() {
-        setup();create();click(2,"Участие",publicCard());confirm(2)
-        open(2);click(2,"Мои тренировки");click(2,"09.09.2026")
-        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Играл" })
-        click(2,"Изменить участие");click(2,"+0,5 ч");click(2,"Всё правильно")
-        click(3,"Участие",publicCard());confirm(3)
+        setup();create();join(2,60);closeParticipation(2)
+        open(2);click(2,"Мои тренировки");click(2,"09.09.2026");click(2,"Открыть участие");click(2,"Время");click(2,"+0,5 ч")
+        join(3)
         val t=bot.service.trainings(Access(-1,2)).items.single()
-        assertEquals(90,t.players.single { it.userId==2L }.minutes)
-        assertEquals(60,t.players.single { it.userId==3L }.minutes)
-        click(2,"Изменить участие");click(2,"Не играл");click(2,"Всё правильно")
+        assertEquals(90,t.players.single { it.userId==2L }.minutes);assertEquals(0,t.players.single { it.userId==3L }.minutes)
+        click(2,"Назад");click(2,"Не участвую")
         assertFalse(bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.playing)
-        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text=="Играл" })
-        click(2,"Играл")
-        assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
-        assertFalse(bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.playing)
+        click(2,"Присоединиться")
+        assertTrue(bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.playing)
+        assertEquals(0,bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.minutes)
     }
 
     @Test fun `administrator can add a known first time player and an unknown Telegram member without crossing groups`() {
@@ -525,7 +577,7 @@ class SelfServiceBotTest {
     @Test fun `concurrent self registration and revoked administrator cannot be overwritten by bulk selection`() {
         setup();create();click(1,"Игроки");click(1,"Участники группы")
         click(1,"User 2");click(1,"User 3")
-        click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        join(2,60);pay(2);closeParticipation(2)
         click(1,"Добавить · 2")
         assertTrue(latest(1).text!!.contains("Состав изменился"))
         assertEquals(listOf(3L),bot.state.form(1,1)!!.selectedUsers)
@@ -552,10 +604,10 @@ class SelfServiceBotTest {
         ids.forEach { bot.service.remember(Account(it,"Player $it"));bot.service.rememberMembership(-1,it,true) }
         bot.service.execute(auth,"many",SettlementCommand.AddPlayers(t.id,t.version,ids))
         click(1,"Игроки");click(1,"Дальше")
-        click(1,"Player 13");click(1,"+0,5 ч");click(1,"Платил");click(1,"Добавить гостя")
+        click(1,"Player 13");click(1,"+0,5 ч");click(1,"Платил");click(1,"+1 гость")
         click(1,"Всё правильно")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="2 / 2" })
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Player 13 · 1,5 ч · +1 · 300 ₽" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Player 13 · 0,5 ч · гостей: 1 · 300 ₽" })
         assertEquals(1,bot.service.training(auth,t.id).players.count { it.paid>0 })
     }
 
@@ -575,25 +627,21 @@ class SelfServiceBotTest {
         assertEquals(216,bot.service.training(auth,id).players.size)
     }
 
-    @Test fun `confirmation cannot overwrite an administrator change and replay cannot erase a new draft`() {
-        setup();create();click(2,"Участие",publicCard());confirm(2)
-        click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L))
-        val draft=bot.state.attendanceDraft(2,-1)!!
-        bot.service.execute(Access(-1,1,true),"admin-correction",SettlementCommand.ChangeAttendance(draft.training,2,AttendanceChange.SET_PAID,400))
-        click(2,"Всё правильно",ephemeralMessages.getValue(-1L to 2L))
-        assertTrue(answers.last().contains("уже изменили"))
-        assertEquals(draft,bot.state.attendanceDraft(2,-1))
-        assertEquals(400,bot.service.training(Access(-1,2),draft.training).players.single().paid)
-        click(2,"Участие",publicCard());click(2,"Загрузить сохранённые",ephemeralMessages.getValue(-1L to 2L))
-        val confirmation=click(2,"Всё правильно",ephemeralMessages.getValue(-1L to 2L))
-        val count=bot.service.history(Access(-1,2)).total
-        click(2,"Участие",publicCard());click(2,"+50",ephemeralMessages.getValue(-1L to 2L))
-        val newDraft=bot.state.attendanceDraft(2,-1)
-        bot.state.database.write { c -> sqlUpdate(c,"UPDATE bot_events SET completed=0 WHERE update_id=?",confirmation.id) }
-        bot.handle(confirmation)
-        assertEquals(newDraft,bot.state.attendanceDraft(2,-1))
-        assertEquals(count,bot.service.history(Access(-1,2)).total)
+    @Test fun `admin draft cannot overwrite immediate user changes and replay cannot erase a new draft`() {
+        setup();create();join(2,60)
+        click(1,"Игроки");click(1,"User 2");click(1,"Платил")
+        val draft=bot.state.attendanceDraft(1,-1)!!
+        pay(2,400)
+        click(1,"Всё правильно")
+        assertTrue(answers.last().contains("уже изменили"));assertEquals(draft,bot.state.attendanceDraft(1,-1))
+        assertEquals(400,bot.service.training(Access(-1,1),draft.training).players.single().paid)
+        click(1,"К составу");click(1,"Продолжить ввод");click(1,"Загрузить сохранённые");val save=click(1,"Всё правильно")
+        click(1,"User 2");click(1,"+50")
+        val fresh=bot.state.attendanceDraft(1,-1);val count=bot.service.history(Access(-1,1)).total
+        bot.handle(save)
+        assertEquals(fresh,bot.state.attendanceDraft(1,-1));assertEquals(count,bot.service.history(Access(-1,1)).total)
     }
+
     @Test fun `member menu has two primary items and transfer amount edits preserve review`() {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои расчёты"),latest(2).keyboard!!.rows.flatten().map { it.text })
@@ -628,16 +676,15 @@ class SelfServiceBotTest {
         assertFalse(latest(1).text!!.contains("несохранённые"))
     }
 
-    @Test fun `back from dirty attendance warns in group and discards only that input`() {
-        setup();create();click(2,"Участие",publicCard());click(3,"Участие",publicCard())
-        click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
-        assertEquals(listOf("Продолжить ввод","Сбросить и выйти"),ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text })
-        click(2,"Продолжить ввод",ephemeralMessages.getValue(-1L to 2L))
-        assertTrue(bot.state.attendanceDraft(2,-1)!!.value.playing)
-        click(2,"Карточка тренировки",ephemeralMessages.getValue(-1L to 2L))
-        click(2,"Сбросить и выйти",ephemeralMessages.getValue(-1L to 2L))
-        assertNull(bot.state.attendanceDraft(2,-1));assertNotNull(bot.state.attendanceDraft(3,-1))
-        assertEquals(1,bot.service.history(Access(-1,1)).total)
+    @Test fun `leaving an unsaved admin edit warns and discards only that edit`() {
+        setup();create();join(2);join(3)
+        click(1,"Игроки");click(1,"User 2");click(1,"Платил")
+        click(1,"К составу")
+        assertTrue(latest(1).text!!.contains("несохранённые"))
+        click(1,"Продолжить ввод");assertEquals(300,bot.state.attendanceDraft(1,-1)!!.value.paid)
+        click(1,"К составу");click(1,"Сбросить и выйти")
+        assertNull(bot.state.attendanceDraft(1,-1))
+        assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.all { it.playing && it.paid==0L })
     }
 
     @Test fun `back from history returns to training and original training list page`() {
@@ -666,6 +713,7 @@ class SelfServiceBotTest {
         val auth=Access(-1,1,true)
         bot.service.execute(auth,"old-create",SettlementCommand.CreateTraining("old","Ранее","2026-09-08","19:00"))
         bot.service.execute(auth,"old-join",SettlementCommand.AddPlayers("old",1,listOf(16)))
+        bot.service.execute(auth,"old-time",SettlementCommand.ChangeAttendance("old",16,AttendanceChange.SET_MINUTES,60))
         bot.service.execute(auth,"old-pay",SettlementCommand.ChangeAttendance("old",16,AttendanceChange.MARK_PAID))
         bot.service.execute(auth,"old-finish",SettlementCommand.FinishTraining("old",bot.service.training(auth,"old").version))
         click(1,"Дальше");click(1,"Назад")
@@ -693,7 +741,7 @@ class SelfServiceBotTest {
     }
 
     @Test fun `accounting controls use approved labels and preserve balances while correcting`() {
-        setup();create();click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        setup();create();join(2,60);pay(2);closeParticipation(2)
         click(1,"Учесть тренировку");click(1,"Подтвердить учёт")
         assertTrue(latest(1).text!!.contains("Учтена"))
         val balances=bot.service.balances(Access(-1,1))
@@ -705,7 +753,7 @@ class SelfServiceBotTest {
     }
 
     @Test fun `admin restores cancelled training from history and updates the same public card`() {
-        setup();create();click(2,"Участие",publicCard());click(2,"Платил",ephemeralMessages.getValue(-1L to 2L));confirm(2)
+        setup();create();join(2,60);pay(2);closeParticipation(2)
         click(1,"Учесть тренировку");click(1,"Подтвердить учёт")
         val auth=Access(-1,1,true)
         val before=bot.service.trainings(auth).items.single()

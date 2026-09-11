@@ -57,18 +57,17 @@ class StorageSimulationTest {
                 command(SettlementCommand.CreateTraining(id,"Теннис",date,"19:00"),training=id)
                 val trainingUsers=listOf(1L,2L)+(0 until players-2).map { 3L+(trainingIndex*(players-2)+it)%(members-2) }
                 for(user in trainingUsers) {
-                    var draft=AttendanceDraft(id,user,null,Attendance(user,true))
-                    repeat(4) { step ->
-                        draft=draft.copy(value=draft.value.copy(minutes=if(step==1) 90 else 60,
-                            paid=if(step>=2) when(user) { 1L->350L;2L->400L;else->0L } else 0))
-                        val event=++update
-                        state.plan(event,EventPlan(user,user,ScreenAction("player",-1,id,user=user),draft=draft))
-                        state.attendanceDraft(user,-1,draft)
-                        render(ScreenAction("player",-1,id,user=user),user)
-                        state.complete(event);instant=instant.plusSeconds(3)
+                    command(SettlementCommand.ChangeAttendance(id,user,AttendanceChange.JOIN),user,id)
+                    command(SettlementCommand.ChangeAttendance(id,user,AttendanceChange.ADJUST_MINUTES,60),user,id)
+                    var payment=when(user) { 1L->350L;2L->400L;else->0L }
+                    for(step in listOf(1000L,100L,10L,1L)) {
+                        repeat((payment/step).toInt()) {
+                            command(SettlementCommand.ChangeAttendance(id,user,AttendanceChange.ADJUST_PAID,step),user,id)
+                            render(ScreenAction("participation_payment",-1,id,user=user),user)
+                        }
+                        payment%=step
                     }
-                    command(SettlementCommand.SaveAttendance(id,user,null,draft.value),user,id)
-                    state.attendanceDraft(user,-1,null)
+                    render(ScreenAction("participation",-1,id,user=user),user)
                 }
                 command(SettlementCommand.FinishTraining(id,service.training(admin,id).version),training=id)
                 command(SettlementCommand.ReopenTraining(id,service.training(admin,id).version),training=id)

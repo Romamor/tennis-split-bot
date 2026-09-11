@@ -31,6 +31,13 @@ class AccountingTest {
         assertEquals(mapOf(v to 450L, a to 150L), allocation.participantShares)
     }
 
+    @Test fun `several guests have separate rounded shares charged to the inviter`() {
+        val result=calculateTraining(Training(listOf(PlayerSlot(a,60),PlayerSlot(a,60,true),PlayerSlot(a,60,true),PlayerSlot(b,60)),listOf(ExpensePayment(b,751))))
+        assertEquals(listOf(188L,188L,188L,187L),result.slotShares)
+        assertEquals(mapOf(a to 564L,b to 187L),result.participantShares)
+        assertEquals(mapOf(a to -564L,b to 564L),applyEntries(emptyMap(),result.entries))
+    }
+
     @Test fun `a non-playing participant may pay for the table`() {
         val allocation = calculateTraining(Training(listOf(PlayerSlot(a, 60), PlayerSlot(b, 60)), listOf(ExpensePayment(v, 100))))
         assertEquals(mapOf(a to -50L, b to -50L, v to 100L), applyEntries(emptyMap(), allocation.entries))
@@ -58,7 +65,6 @@ class AccountingTest {
             normal.copy(players = listOf(PlayerSlot(a, -1))),
             normal.copy(players = listOf(PlayerSlot(a, 60, true))),
             normal.copy(players = listOf(PlayerSlot(a, 60), PlayerSlot(a, 30))),
-            normal.copy(players = listOf(PlayerSlot(a, 60), PlayerSlot(a, 30, true), PlayerSlot(a, 20, true))),
             normal.copy(payments = listOf(ExpensePayment(a, 0))),
             normal.copy(payments = listOf(ExpensePayment(a, -1))),
             normal.copy(payments = listOf(ExpensePayment(a, 100), ExpensePayment(a, 100))),
