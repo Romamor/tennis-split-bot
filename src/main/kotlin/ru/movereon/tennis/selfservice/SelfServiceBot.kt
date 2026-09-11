@@ -88,7 +88,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if(effective.screen.kind=="public_page") {
                 requireNotNull(a)
                 service.training(a,effective.screen.id)
-                state.displayPage("training:${a.groupId}:${effective.screen.id}",effective.screen.page)
+                // Previously sent page buttons now refresh the complete card.
                 refreshCard(a.groupId,effective.screen.id)
                 effective.callback?.let { api.answer(it) }
                 state.complete(update.id);return
@@ -613,7 +613,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val author = service.database.read { c -> sqlQuery(c, "SELECT created_by FROM trainings WHERE group_id=? AND id=?", group, training) { it.getLong(1) }.single() }
         // Public information for its original chat. No private context or privileges are used for background delivery.
         val scope = "training:$group:$training"
-        val out = screens.render(ScreenAction("public", group, training,page=state.displayPage(scope)), Access(group, author), scope, null)
+        val out = screens.render(ScreenAction("public", group, training), Access(group, author), scope, null)
         return sendOrdinary(scope, group, group, null, out, scope)
     }
 }

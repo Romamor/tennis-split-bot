@@ -173,18 +173,49 @@ class SelfServiceBotTest {
         assertTrue(ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().any { it.text.contains("Редактировать") })
     }
 
-    @Test fun `public table pagination keeps its page through data updates and never pins twice`() {
+    @Test fun `complete training roster survives updates and restart without pagination or duplicate pins`() {
         setup();create();val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
         val users=(5L..31L).toList()
         users.forEach { bot.service.remember(Account(it,"Игрок $it"));bot.service.rememberMembership(-1,it,true) }
         bot.service.execute(auth,"add",SettlementCommand.AddPlayers(id,1,users));bot.maintain()
         val message=publicCard().id
-        click(2,"Дальше",publicCard())
-        assertTrue(publicCard().text!!.contains("Страница 2 / 4"))
+        fun completeCard() {
+            assertEquals(message,publicCard().id)
+            assertFalse(publicCard().text!!.contains("Страница"))
+            assertEquals(listOf("Открыть"),publicCard().keyboard!!.rows.flatten().map { it.text })
+            assertEquals(28,Regex("<tr>").findAll(fake.richMessages.getValue(-1L to message)).count())
+            users.forEach { assertTrue(publicCard().text!!.contains("Игрок $it |")) }
+        }
+        completeCard()
         bot.service.execute(auth,"paid",SettlementCommand.ChangeAttendance(id,5,AttendanceChange.SET_PAID,100));bot.maintain()
-        assertEquals(message,publicCard().id);assertTrue(publicCard().text!!.contains("Страница 2 / 4"))
-        assertEquals(9,Regex("<tr>").findAll(fake.richMessages.getValue(-1L to message)).count())
-        assertEquals(1,fake.pinned.size)
+        completeCard();assertTrue(publicCard().text!!.contains("Игрок 5 | 0 ч | 100 ₽"))
+        // A saved page from the previous release cannot hide any players after restart.
+        bot.state.displayPage("training:-1:$id",3)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        completeCard();assertEquals(1,fake.pinned.size)
+        click(2,"Открыть",publicCard())
+        assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 2L).text)
+        assertFalse(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Дальше") })
+    }
+
+    @Test fun `40 players with guests fit in one rich card across training states`() {
+        setup();create();val auth=Access(-1,1,true);val original=bot.service.trainings(auth).items.single()
+        val users=(5L..44L).toList()
+        users.forEach { bot.service.remember(Account(it,"Участник $it " + "ДлинноеИмя".repeat(6)));bot.service.rememberMembership(-1,it,true) }
+        val players=users.mapIndexed { i,user -> Attendance(user,true,60,60,paid=if(i==0) 400 else 0,ordinal=i,guestCount=1) }
+        for(phase in TrainingPhase.entries) {
+            val content=TrainingCard.render(original.copy(players=players,phase=phase),bot.service::account)
+            assertEquals(81,Regex("<tr>").findAll(content.html).count())
+            assertTrue(content.text.length>4096);assertTrue(content.text.length<=32768)
+            assertFalse(content.text.contains("Страница"))
+            users.forEach { assertTrue(content.html.contains("tg://user?id=$it")) }
+        }
+        bot.service.execute(auth,"add",SettlementCommand.AddPlayers(original.id,1,users))
+        users.forEach { bot.service.execute(auth,"guest:$it",SettlementCommand.ChangeAttendance(original.id,it,AttendanceChange.ADJUST_GUESTS,1)) }
+        bot.maintain()
+        assertTrue(publicCard().text!!.length>4096)
+        val privateCard=bot.screens.render(ScreenAction("training",-1,original.id,page=12),auth,"test:full",1)
+        assertEquals(publicCard().text,privateCard.text)
         click(2,"Открыть",publicCard())
         assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 2L).text)
     }
@@ -315,7 +346,7 @@ class SelfServiceBotTest {
         assertEquals(1,bot.service.trainings(Access(-1,2)).items.single().players.size)
     }
 
-    @Test fun `27 players and a long history fit in paged messages`() {
+    @Test fun `27 players fit in a complete card while history and roster stay paged`() {
         setup(); create()
         val a = Access(-1, 1, true)
         val t = bot.service.trainings(a).items.single()
@@ -325,7 +356,7 @@ class SelfServiceBotTest {
             bot.service.execute(a, "join:$id", SettlementCommand.ChangeAttendance(t.id, id, AttendanceChange.JOIN))
         }
         bot.maintain()
-        for (kind in listOf("training", "history", "roster")) {
+        for (kind in listOf("history", "roster")) {
             val out = bot.screens.render(ScreenAction(kind, -1, t.id), a, "test:$kind", 1)
             assertTrue(out.text.length <= 4096)
             assertTrue(out.keyboard.rows.flatten().any { it.text == "Дальше ›" })

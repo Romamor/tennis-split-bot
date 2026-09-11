@@ -8,7 +8,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-/** All lists have an explicit page, including the text above their buttons. */
+/** Navigation lists are paged; a training card shows its complete roster. */
 class Screens(private val service: SettlementService, private val state: InteractionStore, private val botName: String) {
     data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
@@ -96,9 +96,9 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "training", "public" -> {
                 val t = service.training(requireNotNull(a), action.id)
-                val content=TrainingCard.render(t,action.page,service::account)
+                val content=TrainingCard.render(t,service::account)
                 richHtml=content.html
-                val index=content.page
+                val index=0
                 var body=content.text
                 if(action.kind=="training" && service.isAdmin(a)) {
                     val pin=state.pinStatus("training:${t.groupId}:${t.id}")
@@ -111,9 +111,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 }
                 if (action.kind == "public") {
                     row("Открыть",next("participation",page=index))
-                    pages(index,content.pages,action.copy(kind="public_page"))
                 } else {
-                    pages(index,content.pages)
                     if(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW))
                         row("Открыть участие",next("participation",page=index).copy(back=action.copy(page=index)))
                     if (service.isAdmin(a)) {
@@ -139,11 +137,11 @@ class Screens(private val service: SettlementService, private val state: Interac
             "participation", "participation_time", "participation_payment" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) || service.isAdmin(a),ErrorCode.INVALID_STATE,"Тренировка уже учтена или отменена. Изменения доступны администратору.")
-                val content=TrainingCard.render(t,action.page,service::account)
+                val content=TrainingCard.render(t,service::account)
                 richHtml=content.html
                 val p=t.players.firstOrNull { it.userId==a.userId }
                 val open=t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW)
-                fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=content.page,target=a.userId,value=value,option=type.name).copy(resume=action.copy(page=content.page)))
+                fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=a.userId,value=value,option=type.name).copy(resume=action.copy(page=0)))
                 if(open) when(action.kind) {
                     "participation_time" -> {
                         checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
@@ -157,8 +155,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                     else -> {
                         if(p?.playing==true) {
-                            row("Оплата · ${p.paid} ₽",next("participation_payment",page=content.page))
-                            row("Время · ${hours(p.minutes)}",next("participation_time",page=content.page))
+                            row("Оплата · ${p.paid} ₽",next("participation_payment",page=0))
+                            row("Время · ${hours(p.minutes)}",next("participation_time",page=0))
                             rows+=buildList<TgButton> {
                                 if(p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
                                 if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
@@ -166,19 +164,18 @@ class Screens(private val service: SettlementService, private val state: Interac
                             rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
                         } else {
                             rows+=listOf(change("Присоединиться",AttendanceChange.JOIN))
-                            if((p?.paid ?: 0)>0) row("Оплата · ${p!!.paid} ₽",next("participation_payment",page=content.page))
+                            if((p?.paid ?: 0)>0) row("Оплата · ${p!!.paid} ₽",next("participation_payment",page=0))
                         }
                     }
                 }
-                pages(content.page,content.pages)
                 if(service.isAdmin(a)) {
                     val link=state.button(ScreenAction("training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
                     rows+=listOf(TgButton("✏️ Редактировать",url="https://t.me/$botName?start=n_$link"))
                 }
                 if(inGroup) rows+=buildList<TgButton> {
-                    if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=content.page)))
+                    if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
                     add(button("Закрыть",next("close_panel")))
-                } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=content.page))
+                } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=0))
                 else back(next("training"))
                 content.text
             }
@@ -438,7 +435,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         val header = if (group != null && action.kind != "groups" && richHtml==null) "${clean(group.title, 80)}\n\n" else ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text
-        check(result.length <= 4096) { "Экран превышает допустимую длину" }
+        check(result.length <= if(richHtml==null) 4096 else 32768) { "Экран превышает допустимую длину" }
         return Output(result, TgKeyboard(rows), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it })
     }
     private fun playerLine(p: Attendance) = "${name(p.userId)}\n  ${if (p.playing) hours(p.minutes) else "Не играл"}" +
