@@ -23,7 +23,7 @@ internal object TrainingCard {
         }
         val whenText="${Screens.date(t.date)} ${t.startTime}"
         val note=when {
-            t.phase==TrainingPhase.OPEN -> "Предварительный расчёт: пока не влияет на баланс группы."
+            t.phase==TrainingPhase.OPEN -> null
             t.phase==TrainingPhase.CANCELLED -> "Тренировка отменена: не влияет на баланс группы."
             !known -> "Для расчёта укажи наигранное время."
             else -> null
