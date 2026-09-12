@@ -79,8 +79,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                 requireNotNull(a)
                 row("🏓 Мои тренировки", next("trainings", option = "mine"))
                 row("💰 Мои расчёты", next("debts"))
+                row("➕ Создать тренировку", next("new"))
                 if (service.isAdmin(a)) {
-                    row("➕ Создать тренировку", next("new"))
                     row("📋 Управление тренировками", next("trainings", option = "all"))
                 }
                 if (a.telegramAdmin) row("👥 Администраторы бота", next("administrators", option = ""))
@@ -122,12 +122,13 @@ class Screens(private val service: SettlementService, private val state: Interac
                         if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
                             row("Игроки", next("roster", option = "players").copy(back=action.copy(page=index)))
                             row("Изменить название и время", next("edit_details", version = t.version).copy(back=action.copy(page=index)))
-                            row(if(t.phase==TrainingPhase.REVIEW) "✅ Применить правки" else "🧮 Учесть тренировку", next("preview_finish", version = t.version).copy(back=action.copy(page=index)))
                         }
                         if (t.phase == TrainingPhase.CLOSED) row("✏️ Исправить тренировку", next("reopen", version = t.version))
                         if (t.phase != TrainingPhase.CANCELLED) row("🗑 Отменить тренировку", next("cancel_confirm", version = t.version).copy(back=action.copy(page=index)))
                         else row("↩️ Восстановить тренировку", next("restore", version = t.version).copy(back=action.copy(page=index)))
                     }
+                    if(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && service.canFinish(a,t))
+                        row(if(t.phase==TrainingPhase.REVIEW) "✅ Применить правки" else "🧮 Учесть тренировку", next("preview_finish", version = t.version).copy(back=action.copy(page=index)))
                     row("История изменений", next("history").copy(back=action.copy(page=index)))
                     back(ScreenAction("trainings",action.group,option=if(service.isAdmin(a)) "all" else "mine"))
                     menu()
@@ -150,8 +151,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                     "participation_payment" -> {
                         checkAccounting(p?.playing==true || (p?.paid ?: 0)>0,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(1L,10L,100L,1000L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
-                        rows+=listOf(1L,10L,100L,1000L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
+                        rows+=listOf(5L,50L,100L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
+                        rows+=listOf(5L,50L,100L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
                     }
                     else -> {
                         if(p?.playing==true) {
@@ -168,9 +169,9 @@ class Screens(private val service: SettlementService, private val state: Interac
                         }
                     }
                 }
-                if(service.isAdmin(a)) {
+                if(service.isAdmin(a) || open && service.canFinish(a,t)) {
                     val link=state.button(ScreenAction("training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
-                    rows+=listOf(TgButton("✏️ Редактировать",url="https://t.me/$botName?start=n_$link"))
+                    rows+=listOf(TgButton(if(service.isAdmin(a)) "✏️ Редактировать" else "🧮 Учесть тренировку",url="https://t.me/$botName?start=n_$link"))
                 }
                 if(inGroup) rows+=buildList<TgButton> {
                     if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
@@ -304,7 +305,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "preview_finish" -> {
                 val t = service.training(requireNotNull(a), action.id)
-                checkAccounting(service.isAdmin(a), ErrorCode.FORBIDDEN, "Доступно администратору группы")
+                checkAccounting(service.canFinish(a,t), ErrorCode.FORBIDDEN, "Учесть тренировку может её создатель или администратор этой группы")
                 val input=t.calculation()
                 require(input.players.isNotEmpty()) { "Укажи наигранное время хотя бы одного участника" }
                 require(input.payments.isNotEmpty()) { "Укажи оплату стола" }

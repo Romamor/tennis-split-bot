@@ -55,6 +55,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }, total, index)
     }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
+    fun canFinish(a:Access,t:TrainingRecord):Boolean = database.read { canFinish(it,a,t) }
+    private fun present(c:Connection,a:Access)=count(c,"SELECT COUNT(*) FROM group_users WHERE group_id=? AND user_id=? AND present=1",a.groupId,a.userId)==1
+    private fun canFinish(c:Connection,a:Access,t:TrainingRecord)=t.groupId==a.groupId && present(c,a) && (t.createdBy==a.userId || admin(c,a))
     fun administrators(a:Access,telegramAdmins:Set<Long>,candidates:Boolean=false,page:Int=0):Page<GroupRoleEntry> = database.read { c ->
         known(c,a.groupId,a.userId)
         allowed(a.telegramAdmin,"Управлять назначениями могут администраторы Telegram-группы")
@@ -164,7 +167,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             }
             else -> {
                 if (command is SettlementCommand.CreateTraining) {
-                    requireAdmin(c, a)
+                    allowed(present(c,a), "Создавать тренировку может участник этой группы")
                     trainingId = command.id
                     checkId(trainingId)
                     validateDetails(command.title, command.date, command.startTime)
@@ -186,7 +189,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     val old = training(c, a.groupId, trainingId)
                     before = json.encodeToString(old)
                     version = Math.addExact(old.version, 1)
-                    if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
+                    if(command is SettlementCommand.FinishTraining)
+                        allowed(canFinish(c,a,old), "Учесть тренировку может её создатель или администратор этой группы")
+                    else if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
                     when (command) {
                         is SettlementCommand.AddPlayers -> {
                             stale(old.version,command.version); editable(old)
@@ -302,7 +307,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 if(row.paid==0L) row.copy(paid=300) else row
             }
             AttendanceChange.ADJUST_PAID -> {
-                require(command.value in listOf(-1000L,-100L,-50L,-10L,-1L,1L,10L,50L,100L,1000L))
+                require(command.value in listOf(-1000L,-100L,-50L,-10L,-5L,-1L,1L,5L,10L,50L,100L,1000L))
                 state(row.playing || row.paid>0,"Сначала присоединись к тренировке")
                 row.copy(paid=adjusted(row.paid,command.value))
             }
@@ -360,8 +365,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     }
     fun trainings(a: Access, page: Int = 0, mine: Boolean = false, unfinished: Boolean = false): Page<TrainingRecord> = database.read { c ->
         known(c, a.groupId, a.userId)
-        val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0))" else "") + (if (unfinished) " AND t.status IN ('OPEN','REVIEW')" else "")
-        val args = if (mine) arrayOf<Any>(a.groupId, a.userId) else arrayOf<Any>(a.groupId)
+        val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND ((t.created_by=? AND t.status IN ('OPEN','REVIEW')) OR EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0)))" else "") + (if (unfinished) " AND t.status IN ('OPEN','REVIEW')" else "")
+        val args = if (mine) arrayOf<Any>(a.groupId, a.userId, a.userId) else arrayOf<Any>(a.groupId)
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val index = pageIndex(page, total)
         val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT 8 OFFSET ?", *args, index * 8) { it.getString(1) }

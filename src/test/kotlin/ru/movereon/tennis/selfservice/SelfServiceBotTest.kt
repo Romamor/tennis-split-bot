@@ -77,13 +77,13 @@ class SelfServiceBotTest {
         return update
     }
     private fun open(user: Long, group: String = "Первая") { message(user, "/start"); click(user, group) }
-    private fun create() {
-        open(1)
-        click(1, "Создать тренировку")
-        click(1, "Оставить")
-        click(1, "09.09.2026")
-        click(1, "19:00")
-        click(1, "Опубликовать")
+    private fun create(user:Long=1) {
+        open(user)
+        click(user, "Создать тренировку")
+        click(user, "Оставить")
+        click(user, "09.09.2026")
+        click(user, "19:00")
+        click(user, "Опубликовать")
         bot.maintain()
     }
     private fun publicCard() = fake.messages.values.single { it.chat.id == -1L }
@@ -99,13 +99,45 @@ class SelfServiceBotTest {
     private fun pay(user:Long,amount:Long=300) {
         panelClick(user,"Оплата")
         var rest=amount
-        for(step in listOf(1000L,100L,10L,1L)) {
+        for(step in listOf(100L,50L,5L)) {
             repeat((rest/step).toInt()) { panelClick(user,"+$step ₽") };rest%=step
         }
         panelClick(user,"Назад")
     }
     private fun closeParticipation(user:Long) { panelClick(user,"Закрыть");bot.maintain() }
 
+
+    @Test fun `member creates without playing finds training in mine and finishes while other member cannot`() {
+        setup();open(2);click(2,"Создать тренировку");click(2,"Оставить")
+        click(2,"09.09.2026");click(2,"19:00");click(2,"Опубликовать");bot.maintain()
+        val id=bot.service.trainings(Access(-1,2),mine=true).items.single().id
+        assertEquals(2,bot.service.training(Access(-1,2),id).createdBy)
+        open(2);click(2,"Мои тренировки");click(2,"09.09.2026")
+        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") })
+        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Игроки" })
+        join(3,60);pay(3,355)
+        assertEquals(355,bot.service.training(Access(-1,3),id).players.single().paid)
+        panelClick(3,"Оплата");panelClick(3,"−5 ₽");panelClick(3,"−50 ₽");panelClick(3,"−100 ₽")
+        assertEquals(200,bot.service.training(Access(-1,3),id).players.single().paid)
+        assertFalse(ephemeralMessages.getValue(-1L to 3L).keyboard!!.rows.flatten().any { it.text.contains("Учесть") })
+        val foreign=bot.screens.render(ScreenAction("training",-1,id),Access(-1,3),"foreign",3)
+        assertFalse(foreign.keyboard.rows.flatten().any { it.text.contains("Учесть") })
+        assertFailsWith<ru.movereon.tennis.core.AccountingException> { bot.screens.render(ScreenAction("preview_finish",-1,id),Access(-1,3),"forged",3) }
+        click(2,"Открыть",publicCard())
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Учесть тренировку") && it.url!=null })
+        click(2,"Учесть тренировку");click(2,"Подтвердить учёт");bot.maintain()
+        assertEquals(TrainingPhase.CLOSED,bot.service.training(Access(-1,2),id).phase)
+        assertEquals(0,bot.service.trainings(Access(-1,2),mine=true).total)
+        assertEquals(1,bot.service.trainings(Access(-1,3),mine=true).total)
+    }
+
+    @Test fun `creator loses closing permission after leaving even with an open confirmation`() {
+        setup();create();join(2,60);pay(2);click(1,"Учесть тренировку")
+        val id=bot.service.trainings(Access(-1,1)).items.single().id
+        fake.members[-1L to 1L]=TgMember("left")
+        click(1,"Подтвердить учёт")
+        assertEquals(TrainingPhase.OPEN,bot.service.training(Access(-1,2),id).phase)
+    }
 
     @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
         setup();create();join(2)
@@ -117,7 +149,7 @@ class SelfServiceBotTest {
         panelClick(2,"Убрать гостя")
         assertEquals(listOf("Добавить гостя"),rows()[2])
         panelClick(2,"Оплата")
-        assertEquals(listOf(listOf("+1 ₽","+10 ₽","+100 ₽","+1000 ₽"),listOf("−1 ₽","−10 ₽","−100 ₽","−1000 ₽"),listOf("⬅️ Назад","Закрыть")),rows())
+        assertEquals(listOf(listOf("+5 ₽","+50 ₽","+100 ₽"),listOf("−5 ₽","−50 ₽","−100 ₽"),listOf("⬅️ Назад","Закрыть")),rows())
         panelClick(2,"Назад");panelClick(2,"Время")
         assertEquals(listOf(listOf("+0,5 ч","+1 ч"),listOf("−0,5 ч","−1 ч"),listOf("⬅️ Назад","Закрыть")),rows())
         assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.contains("Статус: Открыта"))
@@ -135,7 +167,7 @@ class SelfServiceBotTest {
         val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
         bot.service.execute(auth,"maximum",SettlementCommand.ChangeAttendance(id,2,AttendanceChange.SET_PAID,Long.MAX_VALUE));bot.maintain()
         val before=bot.service.training(auth,id);val history=bot.service.history(auth).total
-        panelClick(2,"Оплата");panelClick(2,"+1000 ₽")
+        panelClick(2,"Оплата");panelClick(2,"+100 ₽")
         assertTrue(answers.last().contains("Слишком большое"))
         assertEquals(before,bot.service.training(auth,id));assertEquals(history,bot.service.history(auth).total)
     }
@@ -285,11 +317,11 @@ class SelfServiceBotTest {
     }
 
     @Test fun `rights are checked live after revocation including saved admin buttons`() {
-        setup(); create()
+        setup(); create(3);open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
         val adminCard = latest(1)
         fake.members[-1L to 1L] = TgMember("member")
         click(1, "Учесть тренировку", adminCard)
-        assertTrue(answers.last().contains("администратору"))
+        assertTrue(answers.last().contains("администратор"))
         val training = bot.service.trainings(Access(-1, 1)).items.single()
         val forged = bot.state.button(ScreenAction("finish", -1, training.id, version = training.version), 2, "personal:2:2")
         bot.handle(TgUpdate(updateId++, callback = TgCallback("forge", TgUser(2), TgMessage(2, TgChat(2, "private")), "n:$forged")))
@@ -474,7 +506,7 @@ class SelfServiceBotTest {
         assertTrue(bot.service.isAdmin(Access(-2,2)),"The appointment in another group is independent")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Назначить администратором" })
         open(2)
-        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Создать тренировку" })
+        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text=="➕ Создать тренировку" })
     }
 
     @Test fun `startup refresh updates existing live cards without changing participation or publishing copies`() {
@@ -495,7 +527,7 @@ class SelfServiceBotTest {
         val panel=ephemeralMessages.getValue(-1L to 2L)
         assertFalse(panel.keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
         panelClick(2,"Оплата")
-        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text }.containsAll(listOf("+1 ₽","+10 ₽","+100 ₽","+1000 ₽","−1 ₽","−10 ₽","−100 ₽","−1000 ₽")))
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text }.containsAll(listOf("+5 ₽","+50 ₽","+100 ₽","−5 ₽","−50 ₽","−100 ₽")))
         click(1,"Игроки");click(1,"User 2")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
     }
@@ -689,9 +721,9 @@ class SelfServiceBotTest {
         assertEquals(fresh,bot.state.attendanceDraft(1,-1));assertEquals(count,bot.service.history(Access(-1,1)).total)
     }
 
-    @Test fun `member menu has two primary items and transfer amount edits preserve review`() {
+    @Test fun `member menu includes training creation and transfer amount edits preserve review`() {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
-        assertEquals(listOf("🏓 Мои тренировки","💰 Мои расчёты"),latest(2).keyboard!!.rows.flatten().map { it.text })
+        assertEquals(listOf("🏓 Мои тренировки","💰 Мои расчёты","➕ Создать тренировку"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои расчёты");click(2,"Записать перевод");click(2,"User 1");click(2,"Я получил")
         message(2,"300");click(2,"Деньги переданы")
         val original=bot.service.transfers(Access(-1,2)).items.single()
@@ -832,7 +864,7 @@ class SelfServiceBotTest {
         val card=latest(1)
         fake.members[-1L to 1L]=TgMember("member")
         click(1,"Восстановить тренировку",card)
-        assertTrue(answers.last().contains("администратору"))
+        assertTrue(answers.last().contains("администратор"))
         assertEquals(cancelled,bot.service.training(Access(-1,1),cancelled.id))
     }
 

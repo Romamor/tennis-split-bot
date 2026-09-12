@@ -138,10 +138,45 @@ class SettlementServiceTest {
         assertEquals(mapOf(1L to 300L,2L to -300L),s.balances(admin))
     }
 
+    @Test fun `members create trainings and only the creator or this groups admin can finish`() {
+        val s=setup();s.create(who=member)
+        assertEquals(2,s.training(member,"t").createdBy)
+        assertEquals(1,s.trainings(member,mine=true).total)
+        s.joinForHour(2,member);s.change(2,AttendanceChange.SET_PAID,300,member)
+        val t=s.training(member,"t")
+        assertTrue(s.canFinish(member,t));assertTrue(s.canFinish(admin,t))
+        assertFalse(s.canFinish(Access(-1,3),t));assertFalse(s.canFinish(other,t))
+        val finish=SettlementCommand.FinishTraining("t",t.version)
+        val before=s.history(member).total
+        assertEquals(ErrorCode.FORBIDDEN,assertFailsWith<AccountingException> { s.run(finish,Access(-1,3)) }.code)
+        assertFailsWith<AccountingException> { s.run(finish,other) }
+        assertEquals(before,s.history(member).total)
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.EditTraining("t",t.version,"Правка","2026-09-09","19:00"),member) }
+        s.run(finish,member)
+        assertEquals(TrainingPhase.CLOSED,s.training(member,"t").phase)
+        s.run(SettlementCommand.ReopenTraining("t",s.training(admin,"t").version))
+        s.run(SettlementCommand.SetAdministrator(3,true))
+        s.run(SettlementCommand.FinishTraining("t",s.training(member,"t").version),Access(-1,3))
+        assertEquals(TrainingPhase.CLOSED,s.training(member,"t").phase)
+    }
+
+    @Test fun `departed creator cannot create or finish and another groups appointment grants no rights`() {
+        val s=setup();s.create(who=member);s.joinForHour(2,member);s.change(2,AttendanceChange.SET_PAID,300,member)
+        val t=s.training(member,"t")
+        s.run(SettlementCommand.SetAdministrator(3,true),other)
+        assertFalse(s.canFinish(Access(-1,3),t))
+        s.rememberMembership(-1,2,false)
+        assertFalse(s.canFinish(member,t))
+        assertFailsWith<AccountingException> { s.create("left",member) }
+        assertEquals(ErrorCode.FORBIDDEN,assertFailsWith<AccountingException> { s.run(SettlementCommand.FinishTraining("t",t.version),member) }.code)
+        s.run(SettlementCommand.FinishTraining("t",t.version),admin)
+        assertEquals(TrainingPhase.CLOSED,s.training(admin,"t").phase)
+    }
+
     @Test fun `membership and admin rights are scoped to group and ordinary members cannot change another player`() {
         val s = setup(); s.create(); s.create("elsewhere", other)
         assertFailsWith<AccountingException> { s.joinForHour(1, member) }
-        assertFailsWith<AccountingException> { s.create("forbidden", Access(-1, 3)) }
+        assertFailsWith<AccountingException> { s.create("forbidden", Access(-1, 4)) }
         s.run(SettlementCommand.SetAdministrator(2, true))
         assertTrue(s.isAdmin(member))
         assertFalse(s.isAdmin(Access(-2, 2)))

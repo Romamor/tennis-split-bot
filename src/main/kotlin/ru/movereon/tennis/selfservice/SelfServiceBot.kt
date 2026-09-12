@@ -260,7 +260,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     notice=if(action.kind=="save_players") "Состав изменился. Проверь выбор и подтверди добавление ещё раз." else null)
             }
             "new" -> {
-                checkAccounting(service.isAdmin(requireNotNull(a)), ErrorCode.FORBIDDEN, "Создавать может администратор группы")
+                requireNotNull(a) // Group membership was checked by access().
                 val f=InputForm("title", action.group, date = today(),origin=ScreenAction("menu",action.group))
                 formPlan(f.copy(baseline=formValues(f)))
             }
@@ -287,7 +287,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         val id = f.training.ifEmpty { UUID.randomUUID().toString() }
                         val command = if (f.training.isEmpty()) SettlementCommand.CreateTraining(id, f.title, f.date, f.time)
                             else SettlementCommand.EditTraining(id, f.version, f.title, f.date, f.time)
-                        plan(f.origin?.takeIf { it.kind=="training" } ?: ScreenAction("training", f.group, id,back=ScreenAction("trainings",f.group,option="all")), command)
+                        plan(f.origin?.takeIf { it.kind=="training" } ?: ScreenAction("training", f.group, id,back=ScreenAction("trainings",f.group,option=if(service.isAdmin(requireNotNull(a))) "all" else "mine")), command)
                     }
                     else -> {
                         require(f.kind in setOf("transfer_ready", "transfer_duplicate")) { "Сначала заполни перевод" }
