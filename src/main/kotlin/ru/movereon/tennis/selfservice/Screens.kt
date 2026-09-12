@@ -11,38 +11,17 @@ import java.time.format.DateTimeFormatter
 
 /** Navigation lists are paged; a training card shows its complete roster. */
 class Screens(private val service: SettlementService, private val state: InteractionStore, private val botName: String) {
+    private val trainingScreens=TrainingScreens(service,state)
     data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
     }
     private fun shortName(id: Long) = clean(service.account(id).name, 36)
-    fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null, inGroup: Boolean = false, telegramAdmins:Set<Long> = emptySet()): Output = state.buttonBatch {
-        renderInside(action,access,scope,user,form,notice,inGroup,telegramAdmins)
+    fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null, inGroup: Boolean = false, telegramAdmins:Set<Long> = emptySet(), groupOptions:List<GroupOption> = emptyList()): Output = state.buttonBatch {
+        renderInside(action,access,scope,user,form,notice,inGroup,telegramAdmins,groupOptions)
     }
-    private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>):Output {
-        val rows = mutableListOf<List<TgButton>>()
-        val tokens = mutableSetOf<String>()
-        fun button(label: String, next: ScreenAction): TgButton {
-            if (inGroup && next.kind in privateActions) {
-                val token = state.button(next, null, "private-link:${next.group}:${next.id}", permanent = true)
-                return TgButton(label, url = "https://t.me/$botName?start=n_$token")
-            }
-            val token = state.button(next, user, scope)
-            tokens += token
-            return TgButton(label, callbackData = "n:$token")
-        }
-        fun next(kind: String, id: String = action.id, page: Int = 0, target: Long = action.user, value: Long = 0, version: Long = action.version, option: String = action.option) =
-            ScreenAction(kind, action.group, id, page, target, value, version, option,back=action.back,resume=action.resume)
-        fun row(label: String, next: ScreenAction) { rows += listOf(button(label, next)) }
-        fun pages(index: Int, total: Int, base: ScreenAction = action) {
-            if (total > 1) rows += buildList<TgButton> {
-                if (index > 0) add(button("‹ Назад", base.copy(page = index - 1)))
-                add(button("${index + 1} / $total", base.copy(page = index)))
-                if (index + 1 < total) add(button("Дальше ›", base.copy(page = index + 1)))
-            }
-        }
-        fun menu() { row("В меню группы", ScreenAction("menu",action.group)) }
-        fun back(fallback:ScreenAction) { row("⬅️ Назад",action.back ?: fallback) }
+    private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>, groupOptions:List<GroupOption>):Output {
+        return with(ScreenLayout(action,state,botName,scope,user,inGroup)) {
         val group = if (action.group < 0) service.group(action.group) else null
         val a = access
         val accounts=if(a!=null) service.groupAccounts(a) else emptyList()
@@ -71,30 +50,40 @@ class Screens(private val service: SettlementService, private val state: Interac
                 "Есть несохранённые изменения. Сбросить их и выйти?"
             }
             "groups" -> {
-                val p = service.groups(requireNotNull(user), action.page)
-                p.items.forEach { row(clean(it.title, 60), ScreenAction("menu", it.id)) }
-                if (p.total > 0) pages(p.index, p.pages, action.copy(group = p.items.first().id))
-                "Выбери группу для расчётов." + if (p.total == 0) "\nДобавь бота в группу и отправь там /start. Затем открой личный чат снова." else ""
+                val choices=groupOptions.filter { when(action.option) { "manage"->it.admin;"administrators"->it.superAdmin;else->true } }
+                val index=action.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
+                choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),ScreenAction("select_group",0,value=it.group.id,option=action.option)) }
+                pages(index,maxOf(1,(choices.size+7)/8),action.copy(group=0))
+                row("Назад",ScreenAction(if(action.option=="administrators") "settings" else "menu",0))
+                "Выбери группу."+if(choices.isEmpty()) "\nНет доступных групп." else ""
             }
             "menu" -> {
-                requireNotNull(a)
-                row("🏓 Мои тренировки", next("trainings", option = "mine"))
-                row("💰 Мои расчёты", next("debts"))
-                row("➕ Создать тренировку", next("new"))
-                if (service.isAdmin(a)) {
-                    row("📋 Управление тренировками", next("trainings", option = "all"))
-                    row("⚙️ Настройки группы",next("settings"))
-                }
-                if(service.groups(a.userId).total>1) row("🔄 Сменить группу", ScreenAction("groups",action.group))
+                requireNotNull(user)
+                row("🏓 Мои тренировки",ScreenAction("my_trainings",0))
+                row("💰 Мои расчёты",ScreenAction("groups",0,option="debts"))
+                row("➕ Создать тренировку",ScreenAction("new",0))
+                row("⚙️ Настройки",ScreenAction("settings",0))
+                if(groupOptions.any { it.admin }) row("📋 Управление тренировками",ScreenAction("groups",0,option="manage"))
                 "Что хочешь сделать?"
             }
             "settings" -> {
-                requireNotNull(a)
-                checkAccounting(service.isAdmin(a),ErrorCode.FORBIDDEN,"Настройки доступны администратору этой группы")
-                row("Начало по умолчанию · ${requireNotNull(group).defaultStartTime}",next("default_time"))
-                if (a.telegramAdmin) row("👥 Администраторы группы", next("administrators", option = ""))
+                row("Тренировка",ScreenAction("training_settings",0))
+                if(groupOptions.any { it.superAdmin }) row("Администраторы групп",ScreenAction("groups",0,option="administrators"))
                 menu()
-                "Настройки группы\nВремя по умолчанию используется только для новых тренировок."
+                "Настройки"
+            }
+            "training_settings" -> {
+                row("Название",ScreenAction("default_title",0))
+                row("Время",ScreenAction("default_time",0))
+                rows+=listOf(button("Назад",ScreenAction("settings",0)),button("Меню",ScreenAction("menu",0)))
+                "Укажите параметры тренировки по умолчанию"
+            }
+            "my_trainings" -> {
+                val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
+                p.items.forEach { row("${date(it.date)} · ${clean(it.title,34)} · ${phase(it.phase)}",ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index))) }
+                pages(p.index,p.pages,ScreenAction("my_trainings",0,page=p.index))
+                row("Назад",ScreenAction("menu",0))
+                "Тренировок: ${p.total}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽"
             }
             "trainings" -> {
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")
@@ -103,90 +92,9 @@ class Screens(private val service: SettlementService, private val state: Interac
                 menu()
                 (if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else ""
             }
-            "training", "public" -> {
-                val t = service.training(requireNotNull(a), action.id)
-                val content=TrainingCard.render(t,service::account)
+            in TrainingScreens.kinds -> {
+                val content=trainingScreens.render(this,a,::personRow,::label)
                 richHtml=content.html
-                val index=0
-                var body=content.text
-                if(action.kind=="training" && service.isAdmin(a)) {
-                    val pin=state.pinStatus("training:${t.groupId}:${t.id}")
-                    val warning=when(pin) {
-                        "UNPIN_FAILED" -> "Не удалось снять карточку с закрепа. Проверь право бота закреплять сообщения."
-                        "FAILED" -> "Карточка не закреплена. Проверь право бота закреплять сообщения."
-                        "UNKNOWN" -> "Результат закрепления неизвестен. Проверь закреплённые сообщения перед повтором."
-                        else -> null
-                    }
-                    if(warning!=null) { body+="\n\n$warning";richHtml=content.html+"<p>${TrainingCard.escape(warning)}</p>" }
-                }
-                if (action.kind == "public") {
-                    val link=state.button(ScreenAction("edit_training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
-                    rows+=listOf(button("Открыть",next("participation",page=index)),TgButton("Редактировать",url="https://t.me/$botName?start=n_$link"))
-                } else {
-                    if(t.phase == TrainingPhase.OPEN)
-                        row("Открыть участие",next("participation",page=index).copy(back=action.copy(page=index)))
-                    if (service.isAdmin(a)) {
-                        if(state.pinStatus("training:${t.groupId}:${t.id}") in setOf("FAILED","UNKNOWN","UNPIN_FAILED"))
-                            row(if(t.phase in setOf(TrainingPhase.CLOSED,TrainingPhase.CANCELLED)) "📌 Повторить снятие закрепа" else "📌 Повторить закрепление",next("retry_pin").copy(back=action.copy(page=index)))
-                        if (state.delivery("training:${t.groupId}:${t.id}")?.status in setOf("UNKNOWN", "FAILED"))
-                            row("Восстановить сообщение в группе", next("recover_confirm").copy(back=action.copy(page=index)))
-                        if (t.phase != TrainingPhase.CANCELLED) row("🗑 Отменить тренировку", next("cancel_confirm", version = t.version).copy(back=action.copy(page=index)))
-                        else row("↩️ Восстановить тренировку", next("restore", version = t.version).copy(back=action.copy(page=index)))
-                    }
-                    if(service.canEdit(a,t)) {
-                        if (t.phase == TrainingPhase.OPEN) {
-                            row("Игроки", next("roster", option = "players").copy(back=action.copy(page=index)))
-                            row("Изменить название и время", next("edit_details", version = t.version).copy(back=action.copy(page=index)))
-                        }
-                        if (t.phase == TrainingPhase.CLOSED) row("↩️ Открыть заново", next("reopen", version = t.version))
-                    }
-                    if(t.phase == TrainingPhase.OPEN && service.canFinish(a,t))
-                        row("🧮 Учесть тренировку", next("preview_finish", version = t.version).copy(back=action.copy(page=index)))
-                    row("История изменений", next("history").copy(back=action.copy(page=index)))
-                    back(ScreenAction("trainings",action.group,option=if(service.isAdmin(a)) "all" else "mine"))
-                    menu()
-                }
-                body
-            }
-            "participation", "participation_time", "participation_payment" -> {
-                val t=service.training(requireNotNull(a),action.id)
-                service.requireOpen(t)
-                val content=TrainingCard.render(t,service::account)
-                richHtml=content.html
-                val p=t.players.firstOrNull { it.userId==a.userId }
-                val open=t.phase == TrainingPhase.OPEN
-                fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=a.userId,value=value,option=type.name).copy(resume=action.copy(page=0)))
-                if(open) when(action.kind) {
-                    "participation_time" -> {
-                        checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(change("+0,5 ч",AttendanceChange.ADJUST_MINUTES,30),change("+1 ч",AttendanceChange.ADJUST_MINUTES,60))
-                        rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
-                    }
-                    "participation_payment" -> {
-                        checkAccounting(p?.playing==true || (p?.paid ?: 0)>0,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(5L,50L,100L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
-                        rows+=listOf(5L,50L,100L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
-                    }
-                    else -> {
-                        if(p?.playing==true) {
-                            row("Оплата · ${p.paid} ₽",next("participation_payment",page=0))
-                            row("Время · ${hours(p.minutes)}",next("participation_time",page=0))
-                            rows+=buildList<TgButton> {
-                                if(p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
-                                if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
-                            }
-                            rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
-                        } else {
-                            rows+=listOf(change("Присоединиться",AttendanceChange.JOIN))
-                            if((p?.paid ?: 0)>0) row("Оплата · ${p!!.paid} ₽",next("participation_payment",page=0))
-                        }
-                    }
-                }
-                if(inGroup) rows+=buildList<TgButton> {
-                    if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
-                    add(button("Закрыть",next("close_panel")))
-                } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=0))
-                else back(next("training"))
                 content.text
             }
             "player" -> {
@@ -293,7 +201,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 pages(p.index,p.pages)
                 if (action.kind=="administrators") {
                     row("Назначить администратора",next("admin_candidates"))
-                    row("⬅️ Назад",ScreenAction("settings",action.group))
+                    row("⬅️ Назад",ScreenAction("settings",0))
                 } else back(next("administrators"))
                 if (action.kind=="administrators") "Администраторы группы · ${p.total}\nСуперадмины получают права из Telegram. Назначенные админы бота управляют тренировками, но не назначают других."
                 else "Кого назначить?\nВ этом списке только участники без административной роли."
@@ -421,9 +329,20 @@ class Screens(private val service: SettlementService, private val state: Interac
                         row(if(f.kind=="default_time") "✅ Сохранить время" else "Продолжить · ${f.time}",formAction(if(f.kind=="default_time") "save_default_time" else "form_next"))
                         "${if(f.kind=="default_time") "Начало по умолчанию" else "Начало тренировки"}: ${f.time}\nМожно написать время в формате ЧЧ:ММ."
                     }
+                    "group" -> {
+                        val choices=groupOptions.filter { it.canPublish }
+                        val index=f.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
+                        choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),formAction("form_group_select").copy(value=it.group.id)) }
+                        pages(index,maxOf(1,(choices.size+7)/8),formAction("form_group_page"))
+                        "Выбери группу для тренировки."+if(choices.isEmpty()) "\nНужна группа, в которой состоишь ты и бот с правами администратора." else ""
+                    }
+                    "default_title" -> {
+                        row("Сохранить название",formAction("save_default_title"))
+                        "Название по умолчанию: ${clean(f.title,100)}\nНапиши название тренировки."
+                    }
                     "ready" -> {
-                        row(if (f.training.isEmpty()) "Опубликовать в группе" else "Сохранить изменения", formAction("save_training"))
-                        row("Изменить название / время", formAction("form_restart"))
+                        row(if (f.training.isEmpty()) "Опубликовать" else "Сохранить изменения", formAction("save_training"))
+                        if(f.training.isNotEmpty()) row("Изменить название / время", formAction("form_restart"))
                         "${clean(f.title, 100)}\n${date(f.date)} · ${f.time}\n" + if (f.training.isEmpty()) "Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." else "Данные изменятся в существующей тренировке."
                     }
                     "paid" -> "${name(f.user)}\nНапиши общую сумму оплаты стола в рублях. Можно 0."
@@ -442,10 +361,18 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                     "transfer_date" -> "Напиши дату перевода: ДД.ММ.ГГГГ."
                     "transfer_note" -> "Напиши комментарий к переводу, не длиннее 300 символов."
-                    "pick_account", "pick_players" -> "Выбери реальный аккаунт кнопкой под строкой ввода. Он появится в составе этой группы."
+                    "pick_account", "pick_players", "pick_add_player" -> "Выбери реальный аккаунт кнопкой под строкой ввода. Он появится в составе этой группы."
                     else -> error("Unknown input form")
                 }.also {
-                    if(f.kind=="pick_players") row("Назад к выбору",next("add_players",id=f.training,page=f.page,option=state.formSignature(f)))
+                    if(f.kind in setOf("default_title","default_time")) {
+                        rows+=listOf(button("Назад",ScreenAction("training_settings",0)),button("Меню",ScreenAction("menu",0)))
+                    } else if(f.training.isEmpty() && f.kind in setOf("title","date","time","group","ready")) {
+                        rows.add(buildList<TgButton> {
+                            if(f.kind!="title") add(button("Назад",formAction("form_back")))
+                            add(button("Отмена",formAction("form_cancel")))
+                        })
+                    } else if(f.kind=="pick_add_player") row("Назад",requireNotNull(f.origin))
+                    else if(f.kind=="pick_players") row("Назад к выбору",next("add_players",id=f.training,page=f.page,option=state.formSignature(f)))
                     else row("Отмена",f.origin ?: next(if (f.training.isNotEmpty()) "training" else "debts", id = f.training))
                 }
             }
@@ -458,11 +385,12 @@ class Screens(private val service: SettlementService, private val state: Interac
             else -> error("Unknown screen: ${action.kind}")
         }
         if (inGroup && action.kind !in setOf("public","player","exit_confirm","participation","participation_time","participation_payment")) row("Закрыть", next("close_panel"))
-        val header = if (group != null && action.kind != "groups" && richHtml==null) "${clean(group.title, 80)}\n\n" else ""
+        val header = ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text
         check(result.length <= if(richHtml==null) 4096 else 32768) { "Экран превышает допустимую длину" }
-        return Output(result, TgKeyboard(rows), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it })
+        Output(result, TgKeyboard(rows), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it })
+        }
     }
     private fun playerLine(p: Attendance) = "${name(p.userId)}\n  ${if (p.playing) hours(p.minutes) else "Не играл"}" +
         (if (p.guestCount > 0) " · гостей: ${p.guestCount}, по ${hours(p.guestMinutes)}" else "") + " · оплатил ${p.paid} ₽"
@@ -491,6 +419,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         "ReopenTraining" -> if(state.json.parseToJsonElement(a.after).jsonObject["phase"]?.jsonPrimitive?.content=="REVIEW")
             "Открыл исправление по прежним правилам; расчёт оставался учтённым" else "Открыл тренировку заново; прежний расчёт отменён"
         "MigrateTrainingState" -> "При обновлении бота тренировку открыли заново; прежний расчёт отменён"
+        "RemovePlayer" -> "Исключил игрока"
         "CancelTraining" -> "Отменил тренировку и снял её расчёт"
         "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
         "RecordTransfer" -> "Записал перевод"
@@ -519,7 +448,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         else -> "Изменение записи"
     }
     companion object {
-        val privateActions = setOf("settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = setOf("training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

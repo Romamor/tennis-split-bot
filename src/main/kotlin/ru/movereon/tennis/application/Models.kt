@@ -11,7 +11,11 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 @Serializable data class Account(val id:Long,val firstName:String,val lastName:String="",val username:String?=null,val isBot:Boolean=false) {
     val name:String get()=(firstName+" "+lastName).trim().ifEmpty { "Участник $id" }
 }
-@Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String,val defaultStartTime:String="18:30")
+@Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String)
+@Serializable data class TrainingDefaults(val title:String="Теннис",val time:String="18:30")
+@Serializable data class DefaultTrainingUpdate(val field:String,val expected:String,val value:String)
+data class GroupOption(val group:SettlementGroup,val admin:Boolean,val superAdmin:Boolean,val canPublish:Boolean)
+data class MyTrainingPage(val page:Page<TrainingRecord>,val minutes:Long,val paid:Long)
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)
@@ -41,6 +45,7 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
     @Serializable data class ChangeAttendance(val id:String,val userId:Long,val change:AttendanceChange,val value:Long=0):SettlementCommand
     @Serializable data class SaveAttendance(val id:String,val userId:Long,val expected:Attendance?,val attendance:Attendance):SettlementCommand
     @Serializable data class AddPlayers(val id:String,val version:Long,val users:List<Long>):SettlementCommand
+    @Serializable data class RemovePlayer(val id:String,val userId:Long):SettlementCommand
     @Serializable data class FinishTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class ReopenTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class CancelTraining(val id:String,val version:Long):SettlementCommand

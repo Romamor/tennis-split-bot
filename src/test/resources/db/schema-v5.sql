@@ -3,16 +3,15 @@ CREATE TABLE users (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL DEFAULT '',
     username TEXT,
-    is_bot INTEGER NOT NULL DEFAULT 0 CHECK(is_bot IN (0,1)),
-    training_title TEXT NOT NULL DEFAULT 'Теннис' CHECK(length(training_title) BETWEEN 1 AND 100 AND training_title=trim(training_title)),
-    training_time TEXT NOT NULL DEFAULT '18:30' CHECK(training_time GLOB '[0-2][0-9]:[0-5][0-9]' AND substr(training_time,1,2)<='23')
+    is_bot INTEGER NOT NULL DEFAULT 0 CHECK(is_bot IN (0,1))
 ) STRICT;
 CREATE UNIQUE INDEX single_bot ON users(is_bot) WHERE is_bot=1;
 CREATE INDEX user_username ON users(username COLLATE NOCASE);
 CREATE TABLE groups (
     id INTEGER PRIMARY KEY CHECK(id<0),
     title TEXT NOT NULL,
-    time_zone TEXT NOT NULL
+    time_zone TEXT NOT NULL,
+    default_start_time TEXT NOT NULL DEFAULT '18:30' CHECK(default_start_time GLOB '[0-2][0-9]:[0-5][0-9]' AND substr(default_start_time,1,2)<='23')
 ) STRICT;
 CREATE TABLE group_users (
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
@@ -149,7 +148,7 @@ CREATE TABLE bot_sessions (
 ) STRICT;
 CREATE TABLE bot_buttons (
     token TEXT PRIMARY KEY,
-    group_id INTEGER REFERENCES groups(id) ON UPDATE CASCADE,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
     owner_id INTEGER REFERENCES users(id),
     scope TEXT NOT NULL,
     permanent INTEGER NOT NULL CHECK(permanent IN (0,1)),

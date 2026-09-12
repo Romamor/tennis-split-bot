@@ -85,6 +85,7 @@ class SettlementServiceTest {
         s.finish()
         assertEquals(mapOf(1L to -200L, 2L to 200L), s.balances(admin))
         assertEquals(0, s.roster(admin).items.single { it.account.id == 2L }.attendance)
+        s.reopen()
         s.run(SettlementCommand.CancelTraining("t", s.training(admin, "t").version))
         assertEquals(mapOf(1L to -200L, 2L to 200L), s.balances(admin))
         assertEquals(1, s.trainings(admin).total)
@@ -109,6 +110,7 @@ class SettlementServiceTest {
         val s=setup();s.sample()
         s.run(SettlementCommand.RecordTransfer("advance",2,1,200,"2026-09-09"),member)
         val accounted=s.balances(admin)
+        s.reopen()
         s.run(SettlementCommand.CancelTraining("t",s.training(admin,"t").version))
         val cancelled=s.training(admin,"t")
         val transferOnly=s.balances(admin)
@@ -190,15 +192,14 @@ class SettlementServiceTest {
         assertEquals(TrainingPhase.CLOSED,s.training(admin,"t").phase)
     }
 
-    @Test fun `default start time permissions are scoped and concurrent edits are rejected`() {
-        val s=setup();assertEquals("18:30",s.group(-1).defaultStartTime)
-        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("20:00","18:30"),member) }
-        s.run(SettlementCommand.SetAdministrator(2,true))
-        s.run(SettlementCommand.SetDefaultStartTime("20:00","18:30"),member)
-        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("21:00","18:30"),admin) }
-        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("21:00","18:30"),Access(-2,2)) }
-        s.register(SettlementGroup(-1,"New title","Europe/Moscow"))
-        assertEquals("20:00",s.group(-1).defaultStartTime);assertEquals("18:30",s.group(-2).defaultStartTime)
+    @Test fun `training defaults are personal and stale changes do not overwrite newer values`() {
+        val s=setup();assertEquals(TrainingDefaults(),s.trainingDefaults(2))
+        s.updateTrainingDefaults(2,DefaultTrainingUpdate("time","18:30","20:00"))
+        assertFailsWith<AccountingException> { s.updateTrainingDefaults(2,DefaultTrainingUpdate("time","18:30","21:00")) }
+        s.updateTrainingDefaults(2,DefaultTrainingUpdate("title","Теннис","Спарринг"))
+        s.remember(Account(2,"Новое имя"))
+        assertEquals(TrainingDefaults("Спарринг","20:00"),s.trainingDefaults(2))
+        assertEquals(TrainingDefaults(),s.trainingDefaults(1))
         assertTrue(s.balances(admin).isEmpty())
     }
 
@@ -400,7 +401,8 @@ class SettlementServiceTest {
         val s=setup();s.sample()
         val before=s.training(admin,"t");val balances=s.balances(admin)
         s.database.write { c ->
-            sqlUpdate(c,"ALTER TABLE groups DROP COLUMN default_start_time")
+            sqlUpdate(c,"ALTER TABLE users DROP COLUMN training_title")
+            sqlUpdate(c,"ALTER TABLE users DROP COLUMN training_time")
             sqlUpdate(c,"ALTER TABLE bot_sessions DROP COLUMN panel_json")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_status")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN display_page")

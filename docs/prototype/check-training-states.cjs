@@ -15,7 +15,7 @@ const path=require('node:path');
   await click('Открыть');assert.equal(await button('Редактировать').count(),0);
   await click('Закрыть');await click('Редактировать');assert.match(await text(),/создатель/);
   await f.locator('#tennis-role').selectOption('super');await click('Редактировать');
-  await click('🧮 Учесть тренировку');await click('✅ Подтвердить учёт');
+  await click('Изменить статус');await click('Завершена');
   assert.match(await text(),/Статус: Учтена/);
   assert.doesNotMatch(await text(),/Баланс указан по этой тренировке/);
   await click('В группе');
@@ -27,9 +27,9 @@ const path=require('node:path');
     }
   }
   await alerts('Тренировка завершена');
-  await click('Редактировать');await click('↩️ Открыть заново');
+  await click('Редактировать');await click('Изменить статус');await click('Открыта');
   assert.match(await text(),/Статус: Открыта/);assert.doesNotMatch(await text(),/Уточнение|Изменяется/);
-  await click('🗑 Отменить тренировку');await click('Да, отменить тренировку');await click('В группе');
+  await click('Изменить статус');await click('Отменена');await click('В группе');
   await alerts('Тренировка отменена');
   await click('Открыть');
   await f.getByRole('dialog').waitFor({state:'visible'});

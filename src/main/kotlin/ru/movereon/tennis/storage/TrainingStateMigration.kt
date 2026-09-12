@@ -4,18 +4,16 @@ import java.sql.Connection
 import java.time.Instant
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
-import ru.movereon.tennis.application.SettlementService
 import ru.movereon.tennis.core.*
 
 /** Runs in the schema transaction; existing audit records and money transfers stay immutable. */
 internal fun migrateTrainingStates(c:Connection, database:Database) {
     val json=Json { encodeDefaults=true }
-    val service=SettlementService(database)
     val pending=sqlQuery(c,"SELECT group_id,id FROM trainings WHERE status='REVIEW'") { it.getLong(1) to it.getString(2) }
     for((group,id) in pending) {
         // Read the retired state through the current model without accepting it in new operations.
         sqlUpdate(c,"UPDATE trainings SET status='OPEN' WHERE group_id=? AND id=?",group,id)
-        val old=service.training(c,group,id)
+        val old=readTraining(c,group,id)
         val before=JsonObject(json.encodeToJsonElement(old).jsonObject+("phase" to JsonPrimitive("REVIEW"))).toString()
         val entries=database.trainingEffect(c,group,id).filterValues { it!=0L }.map { (user,amount) ->
             BalanceEntry(ParticipantId(user.toString()),Math.negateExact(amount))
@@ -24,7 +22,7 @@ internal fun migrateTrainingStates(c:Connection, database:Database) {
         val version=Math.addExact(old.version,1)
         sqlUpdate(c,"UPDATE trainings SET applied_version=0,version=? WHERE group_id=? AND id=?",version,group,id)
         sqlUpdate(c,"UPDATE training_players SET applied_playing=0 WHERE group_id=? AND training_id=?",group,id)
-        val after=json.encodeToString(service.training(c,group,id))
+        val after=json.encodeToString(readTraining(c,group,id))
         sqlUpdate(c,"""INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
             VALUES(?,?,?,'MigrateTrainingState',?,?,?,?,?,?,1)""",group,"migration:v5:$id",old.createdBy,id,
             "{\"schema\":5,\"automatic\":true}",before,after,version,Instant.now().toString())

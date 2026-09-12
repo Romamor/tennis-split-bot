@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ru.movereon.tennis.application.SettlementCommand
+import ru.movereon.tennis.application.DefaultTrainingUpdate
 import ru.movereon.tennis.application.Attendance
 import ru.movereon.tennis.storage.*
 import java.security.MessageDigest
@@ -18,14 +19,15 @@ import java.util.UUID
     val amount: Long = 0, val direction: String = "out", val note: String = "", val request: Int = 0,
     val attendance: AttendanceDraft? = null, val selectedUsers: List<Long> = emptyList(), val page: Int = 0,
     val order: List<Long>? = null, val origin: ScreenAction? = null, val baseline: String? = null, val transfer: String = "",
-    val similar: List<String> = emptyList(), val originalTime:String?=null)
+    val similar: List<String> = emptyList(), val originalTime:String?=null,
+    val publishGroup:Long?=null,val defaultValue:String?=null)
 @Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
     val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
-    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null)
+    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
 
@@ -120,7 +122,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND action_json=? AND permanent=? AND (active=1 OR permanent=1 OR expires_at>?) LIMIT 1""", scope, owner, hash, payload, permanent, clock.instant().epochSecond) { it.getString(1) }.singleOrNull()
         found ?: UUID.randomUUID().toString().replace("-", "").also { token ->
             sqlUpdate(c, "INSERT INTO bot_buttons(token,group_id,owner_id,scope,permanent,payload_hash,action_json,expires_at) VALUES(?,?,?,?,?,?,?,?)",
-                token, action.group, owner, scope, permanent, hash, payload, clock.instant().epochSecond + 120)
+                token, action.group.takeIf { it<0 }, owner, scope, permanent, hash, payload, clock.instant().epochSecond + 120)
         }
     }
     fun button(token: String): ButtonRecord? = database.read { c ->

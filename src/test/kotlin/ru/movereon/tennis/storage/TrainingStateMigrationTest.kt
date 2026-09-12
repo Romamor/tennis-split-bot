@@ -35,8 +35,10 @@ class TrainingStateMigrationTest {
                 c.prepareStatement("ATTACH DATABASE ? AS seed").use { it.setString(1,source.path.toString());it.execute() }
                 val tables=sqlQuery(c,"SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'") { it.getString(1) }
                 for(table in tables) {
-                    val cols=sqlQuery(c,"PRAGMA table_info($table)") { it.getString("name") }.joinToString(",")
-                    stmt.execute("INSERT INTO $table($cols) SELECT $cols FROM seed.$table")
+                    val columns=sqlQuery(c,"PRAGMA table_info($table)") { it.getString("name") }
+                    val cols=columns.joinToString(",")
+                    val selected=columns.joinToString(",") { if(table=="groups" && it=="default_start_time") "'18:30'" else it }
+                    stmt.execute("INSERT INTO $table($cols) SELECT $selected FROM seed.$table")
                 }
                 stmt.execute("PRAGMA application_id=${Database.APPLICATION_ID}");stmt.execute("PRAGMA user_version=4")
                 stmt.execute("UPDATE trainings SET status='REVIEW' WHERE group_id=-1")
@@ -52,7 +54,7 @@ class TrainingStateMigrationTest {
         val oldEntries=old.read { sqlQuery(it,"SELECT action_id,entry_index,amount FROM balance_entries ORDER BY action_id,entry_index") { r->Triple(r.getLong(1),r.getInt(2),r.getLong(3)) } }
         val oldSecond=s.balances(Access(-2,1,true))
         val migrated=Database(file);val current=SettlementService(migrated);val a=Access(-1,1,true)
-        assertTrue(migrated.verify().contains("Схема 5"))
+        assertTrue(migrated.verify().contains("Схема 6"))
         assertEquals(TrainingPhase.OPEN,current.training(a,"t").phase)
         assertEquals(0,current.training(a,"t").appliedVersion)
         assertTrue(current.training(a,"t").players.none { it.appliedPlaying })

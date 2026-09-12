@@ -25,9 +25,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun register(group: SettlementGroup) = database.write { c ->
         require(group.id < 0 && group.title.isNotBlank())
         ZoneId.of(group.timeZone)
-        LocalTime.parse(group.defaultStartTime)
-        sqlUpdate(c, """INSERT INTO groups(id,title,time_zone,default_start_time) VALUES(?,?,?,?)
-            ON CONFLICT(id) DO UPDATE SET title=excluded.title""", group.id, group.title, group.timeZone,group.defaultStartTime)
+        sqlUpdate(c, """INSERT INTO groups(id,title,time_zone) VALUES(?,?,?)
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title""", group.id, group.title, group.timeZone)
     }
 
     /** Called for identities actually received from Telegram, never an arbitrary name or username. */
@@ -44,7 +43,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         .singleOrNull() ?: invalid("Аккаунт ещё не известен боту")
     private fun readAccount(r: ResultSet) = Account(r.getLong("id"), r.getString("first_name"), r.getString("last_name"), r.getString("username"), r.getBoolean("is_bot"))
     fun group(id: Long): SettlementGroup = database.read { c ->
-        sqlQuery(c, "SELECT * FROM groups WHERE id=?", id) { SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"),it.getString("default_start_time")) }
+        sqlQuery(c, "SELECT * FROM groups WHERE id=?", id) { SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone")) }
             .singleOrNull() ?: invalid("Группа не найдена")
     }
     fun groups(userId: Long, page: Int = 0): Page<SettlementGroup> = database.read { c ->
@@ -52,8 +51,42 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val total = count(c, "SELECT COUNT(*) $condition", userId)
         val index = pageIndex(page, total)
         Page(sqlQuery(c, "SELECT g.* $condition ORDER BY g.title,g.id LIMIT 8 OFFSET ?", userId, index * 8) {
-            SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"),it.getString("default_start_time"))
+            SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"))
         }, total, index)
+    }
+    fun knownGroups():List<SettlementGroup> = database.read { c ->
+        sqlQuery(c,"SELECT id,title,time_zone FROM groups ORDER BY title,id") { SettlementGroup(it.getLong(1),it.getString(2),it.getString(3)) }
+    }
+    fun trainingDefaults(user:Long):TrainingDefaults = database.read { c ->
+        account(c,user)
+        sqlQuery(c,"SELECT training_title,training_time FROM users WHERE id=?",user) { TrainingDefaults(it.getString(1),it.getString(2)) }.single()
+    }
+    fun updateTrainingDefaults(user:Long,update:DefaultTrainingUpdate) = database.write { c ->
+        account(c,user)
+        val column=when(update.field) {
+            "title" -> { require(update.value==update.value.trim() && update.value.length in 1..100) { "Название: от 1 до 100 символов" };"training_title" }
+            "time" -> { require(update.value.matches(Regex("[0-9]{2}:[0-9]{2}"))) { "Время: ЧЧ:ММ" };LocalTime.parse(update.value);"training_time" }
+            else -> error("Unknown default field")
+        }
+        val current=sqlQuery(c,"SELECT $column FROM users WHERE id=?",user) { it.getString(1) }.single()
+        if(current!=update.value) {
+            checkAccounting(current==update.expected,ErrorCode.STALE_VERSION,"Настройка уже изменилась. Открой её заново.")
+            sqlUpdate(c,"UPDATE users SET $column=? WHERE id=?",update.value,user)
+        }
+    }
+    fun myTrainings(user:Long,page:Int=0):MyTrainingPage = database.read { c ->
+        account(c,user)
+        val condition="""FROM trainings t LEFT JOIN training_players p ON p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=?
+            WHERE (t.created_by=? AND t.status='OPEN') OR p.playing=1 OR p.applied_playing=1 OR p.paid>0"""
+        var total=0
+        var minutes=java.math.BigInteger.ZERO
+        var paid=java.math.BigInteger.ZERO
+        sqlEach(c,"SELECT CASE WHEN p.playing=1 THEN p.minutes ELSE 0 END,COALESCE(p.paid,0) $condition",user,user) {
+            total++;minutes+=it.getLong(1).toBigInteger();paid+=it.getLong(2).toBigInteger()
+        }
+        val index=page.coerceIn(0,maxOf(0,(total-1)/3))
+        val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT 3 OFFSET ?",user,user,index*3) { it.getLong(1) to it.getString(2) }
+        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount())
     }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
     fun canFinish(a:Access,t:TrainingRecord):Boolean = canEdit(a,t)
@@ -99,16 +132,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         var version = 1L
         var after: String
         when (command) {
-            is SettlementCommand.SetDefaultStartTime -> {
-                requireAdmin(c,a)
-                require(command.startTime.matches(Regex("[0-9]{2}:[0-9]{2}"))) { "Время: ЧЧ:ММ" }
-                LocalTime.parse(command.startTime)
-                val old=sqlQuery(c,"SELECT default_start_time FROM groups WHERE id=?",a.groupId) { it.getString(1) }.single()
-                checkAccounting(old==command.expected,ErrorCode.STALE_VERSION,"Настройка уже изменилась. Открой её заново.")
-                if(old==command.startTime) return@write ActionReceipt(0,1)
-                before=json.encodeToString(old);after=json.encodeToString(command.startTime)
-                sqlUpdate(c,"UPDATE groups SET default_start_time=? WHERE id=?",command.startTime,a.groupId)
-            }
+            is SettlementCommand.SetDefaultStartTime -> invalid("Настройки тренировки теперь личные. Открой «Настройки».")
             is SettlementCommand.SetAdministrator -> {
                 allowed(a.telegramAdmin, "Назначать администраторов могут только администраторы этой группы Telegram")
                 known(c, a.groupId, command.userId)
@@ -193,18 +217,19 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         is SettlementCommand.ChangeAttendance -> command.id
                         is SettlementCommand.SaveAttendance -> command.id
                         is SettlementCommand.AddPlayers -> command.id
+                        is SettlementCommand.RemovePlayer -> command.id
                         is SettlementCommand.FinishTraining -> command.id
                         is SettlementCommand.ReopenTraining -> command.id
                         is SettlementCommand.CancelTraining -> command.id
                         is SettlementCommand.RestoreTraining -> command.id
                         else -> error("Unhandled training command")
                     }
-                    val old = training(c, a.groupId, trainingId)
+                    val old = readTraining(c, a.groupId, trainingId)
                     before = json.encodeToString(old)
                     version = Math.addExact(old.version, 1)
                     if(command is SettlementCommand.FinishTraining)
                         allowed(canManageTraining(c,a,old), "Учесть тренировку может её создатель или администратор этой группы")
-                    else if (command is SettlementCommand.EditTraining || command is SettlementCommand.AddPlayers || command is SettlementCommand.ReopenTraining)
+                    else if (command is SettlementCommand.EditTraining || command is SettlementCommand.AddPlayers || command is SettlementCommand.RemovePlayer || command is SettlementCommand.ReopenTraining || command is SettlementCommand.CancelTraining || command is SettlementCommand.RestoreTraining)
                         allowed(canManageTraining(c,a,old), "Редактировать тренировку может её создатель или администратор этой группы")
                     else if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
                     when (command) {
@@ -220,7 +245,14 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                     VALUES(?,?,?,1,0,0,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                     playing=1,minutes=0,guest_minutes=0,guest_count=0""",a.groupId,trainingId,id,ordinal++)
                             }
-                            validateDraftTraining(training(c,a.groupId,trainingId).calculation())
+                            validateDraftTraining(readTraining(c,a.groupId,trainingId).calculation())
+                        }
+                        is SettlementCommand.RemovePlayer -> {
+                            editable(old)
+                            val player=old.players.firstOrNull { it.userId==command.userId }
+                                ?: return@write ActionReceipt(0,old.version)
+                            state(player.paid==0L,"У игрока указана оплата. Сначала исправь её в управлении игроками")
+                            sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,command.userId)
                         }
                         is SettlementCommand.EditTraining -> {
                             stale(old.version, command.version); editable(old)
@@ -239,7 +271,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                 playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
                                 a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.guestCount, changed.paid, changed.ordinal)
-                            validateDraftTraining(training(c, a.groupId, trainingId).calculation())
+                            validateDraftTraining(readTraining(c, a.groupId, trainingId).calculation())
                         }
                         is SettlementCommand.SaveAttendance -> {
                             editable(old)
@@ -258,7 +290,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                 playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
                                 a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.guestCount,row.paid,row.ordinal)
-                            validateDraftTraining(training(c,a.groupId,trainingId).calculation())
+                            validateDraftTraining(readTraining(c,a.groupId,trainingId).calculation())
                         }
                         is SettlementCommand.FinishTraining -> {
                             stale(old.version, command.version); editable(old)
@@ -269,21 +301,23 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         }
                         is SettlementCommand.ReopenTraining -> {
                             stale(old.version, command.version)
-                            state(old.phase == TrainingPhase.CLOSED, "Открыть заново можно учтённую тренировку")
+                            TrainingLifecycle.requireTransition(old.phase,TrainingPhase.OPEN)
+                            state(old.phase==TrainingPhase.CLOSED,"Открыть заново можно учтённую тренировку")
                             entries = reverseTraining(c,a.groupId,trainingId)
                             sqlUpdate(c, "UPDATE trainings SET status='OPEN',applied_version=0 WHERE group_id=? AND id=?", a.groupId, trainingId)
                             sqlUpdate(c, "UPDATE training_players SET applied_playing=0 WHERE group_id=? AND training_id=?", a.groupId, trainingId)
                         }
                         is SettlementCommand.CancelTraining -> {
                             stale(old.version, command.version)
-                            state(old.phase != TrainingPhase.CANCELLED, "Тренировка уже отменена")
+                            TrainingLifecycle.requireTransition(old.phase,TrainingPhase.CANCELLED)
                             entries = reverseTraining(c, a.groupId, trainingId)
                             sqlUpdate(c, "UPDATE trainings SET status='CANCELLED',applied_version=0 WHERE group_id=? AND id=?", a.groupId, trainingId)
                             sqlUpdate(c, "UPDATE training_players SET applied_playing=0 WHERE group_id=? AND training_id=?", a.groupId, trainingId)
                         }
                         is SettlementCommand.RestoreTraining -> {
                             stale(old.version, command.version)
-                            state(old.phase == TrainingPhase.CANCELLED, "Восстановить можно только отменённую тренировку")
+                            TrainingLifecycle.requireTransition(old.phase,TrainingPhase.OPEN)
+                            state(old.phase==TrainingPhase.CANCELLED,"Восстановить можно только отменённую тренировку")
                             // Cancellation already reversed the ledger. Keep the saved input for explicit accounting.
                             sqlUpdate(c, "UPDATE trainings SET status='OPEN' WHERE group_id=? AND id=?", a.groupId, trainingId)
                         }
@@ -292,7 +326,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     sqlUpdate(c, "UPDATE trainings SET version=? WHERE group_id=? AND id=?", version, a.groupId, trainingId)
                 }
                 refreshAttendance(c,a.groupId)
-                after = json.encodeToString(training(c, a.groupId, trainingId))
+                after = json.encodeToString(readTraining(c, a.groupId, trainingId))
             }
         }
         // Validate the whole batch before writing any ledger rows. The transaction also covers the edited records.
@@ -308,55 +342,6 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
 
     fun previewAttendance(row: Attendance, change: AttendanceChange, value: Long=0): Attendance =
         changeAttendance(row,SettlementCommand.ChangeAttendance("input",row.userId,change,value))
-    private fun changeAttendance(row: Attendance, command: SettlementCommand.ChangeAttendance): Attendance {
-        fun participating() = state(row.playing, "Сначала присоединись к тренировке")
-        fun adjusted(value:Long,delta:Long):Long = try { Math.addExact(value,delta).coerceAtLeast(0) }
-            catch(_:ArithmeticException) { throw AccountingException(ErrorCode.OUT_OF_RANGE,"Слишком большое значение") }
-        val changed=when (command.change) {
-            AttendanceChange.JOIN -> if(row.playing) row else row.copy(playing=true,minutes=0)
-            AttendanceChange.LEAVE -> row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0)
-            AttendanceChange.LEAVE_AND_CLEAR_PAYMENT -> {
-                checkAccounting(row.paid==command.value,ErrorCode.STALE_VERSION,"Оплата изменилась. Открой форму заново")
-                row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0,paid=0)
-            }
-            AttendanceChange.MARK_PAID -> {
-                participating()
-                if(row.paid==0L) row.copy(paid=300) else row
-            }
-            AttendanceChange.ADJUST_PAID -> {
-                require(command.value in listOf(-1000L,-100L,-50L,-10L,-5L,-1L,1L,5L,10L,50L,100L,1000L))
-                state(row.playing || row.paid>0,"Сначала присоединись к тренировке")
-                row.copy(paid=adjusted(row.paid,command.value))
-            }
-            AttendanceChange.SET_PAID -> {
-                require(command.value>=0)
-                row.copy(paid=command.value)
-            }
-            AttendanceChange.ADJUST_MINUTES -> {
-                require(command.value in listOf(-60L,-30L,30L,60L));participating()
-                row.copy(minutes=adjusted(row.minutes,command.value))
-            }
-            AttendanceChange.SET_MINUTES -> {
-                require(command.value>=0 && command.value%30==0L);participating()
-                row.copy(minutes=command.value)
-            }
-            AttendanceChange.GUEST, AttendanceChange.ADJUST_GUESTS -> {
-                participating()
-                val count=if(command.change==AttendanceChange.GUEST) command.value else {
-                    require(command.value in listOf(-1L,1L));row.guestCount.toLong()+command.value
-                }
-                require(count in 0L..99L) { "Можно добавить от 0 до 99 гостей" }
-                row.copy(guestCount=count.toInt())
-            }
-            AttendanceChange.SET_GUEST_MINUTES -> {
-                // An old button cannot give a guest a different duration under the new rules.
-                require(command.value==row.minutes || command.value==0L) { "Гости играют столько же, сколько пригласивший" }
-                participating();row.copy(guestCount=if(command.value==0L) 0 else maxOf(1,row.guestCount))
-            }
-        }
-        return if(changed==row) row else changed.copy(guestMinutes=if(changed.guestCount>0) changed.minutes else 0)
-    }
-
     private fun transferParty(c: Connection, a: Access, parties: Set<Long>, onBehalfOf: Long?, absent: AbsentAccount?): Long {
         if (onBehalfOf == null) { allowed(a.userId in parties, "Записать или уточнить перевод может одна из его сторон"); return a.userId }
         requireAdmin(c, a)
@@ -369,17 +354,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         require(title == title.trim() && title.length in 1..100) { "Название: от 1 до 100 символов" }
         LocalDate.parse(date); LocalTime.parse(time)
     }
-    private fun editable(t: TrainingRecord) = state(t.phase == TrainingPhase.OPEN, if(t.phase==TrainingPhase.CANCELLED) "Тренировка отменена" else "Тренировка завершена")
+    private fun editable(t: TrainingRecord) = TrainingLifecycle.requireOpen(t)
 
-    fun training(a: Access, id: String): TrainingRecord = database.read { known(it, a.groupId, a.userId); training(it, a.groupId, id) }
-    internal fun training(c: Connection, group: Long, id: String): TrainingRecord {
-        val players = sqlQuery(c, "SELECT * FROM training_players WHERE group_id=? AND training_id=? ORDER BY ordinal", group, id) {
-            Attendance(it.getLong("user_id"), it.getBoolean("playing"), it.getLong("minutes"), it.getLong("guest_minutes"), it.getLong("paid"), it.getInt("ordinal"), it.getBoolean("applied_playing"),it.getInt("guest_count"))
-        }
-        return sqlQuery(c, "SELECT * FROM trainings WHERE group_id=? AND id=?", group, id) {
-            TrainingRecord(group, id, it.getString("title"), it.getString("played_on"), it.getString("starts_at"), TrainingPhase.valueOf(it.getString("status")), it.getLong("version"), it.getLong("applied_version"), it.getLong("created_by"), players)
-        }.singleOrNull() ?: invalid("Тренировка не найдена в этой группе")
-    }
+    fun training(a: Access, id: String): TrainingRecord = database.read { known(it, a.groupId, a.userId); readTraining(it, a.groupId, id) }
     fun trainings(a: Access, page: Int = 0, mine: Boolean = false, unfinished: Boolean = false): Page<TrainingRecord> = database.read { c ->
         known(c, a.groupId, a.userId)
         val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND ((t.created_by=? AND t.status='OPEN') OR EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0)))" else "") + (if (unfinished) " AND t.status='OPEN'" else "")
@@ -387,16 +364,16 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val index = pageIndex(page, total)
         val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT 8 OFFSET ?", *args, index * 8) { it.getString(1) }
-        Page(ids.map { training(c, a.groupId, it) }, total, index)
+        Page(ids.map { readTraining(c, a.groupId, it) }, total, index)
     }
     private fun recentSimilar(c:Connection,group:Long,from:Long,to:Long,amount:Long,exclude:String=""):List<String> =
         sqlQuery(c,"""SELECT id FROM transfers WHERE group_id=? AND from_user=? AND to_user=? AND amount=?
             AND id<>? AND status<>'CANCELLED' AND julianday(created_at)>=julianday(?)
             ORDER BY created_at DESC,id LIMIT 8""",group,from,to,amount,exclude,clock.instant().minusSeconds(86400).toString()) { it.getString(1) }
-    fun rosterIds(a:Access):List<Long> = database.read { c ->
+    fun rosterIds(a:Access,presentOnly:Boolean=false):List<Long> = database.read { c ->
         known(c,a.groupId,a.userId)
-        sqlQuery(c,"""SELECT u.id FROM group_users gu JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0
-            ORDER BY gu.attendance_count DESC,u.first_name COLLATE NOCASE,u.id""",a.groupId) { it.getLong(1) }
+        sqlQuery(c,"""SELECT u.id FROM group_users gu JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0 AND (?=0 OR gu.present=1)
+            ORDER BY gu.attendance_count DESC,u.first_name COLLATE NOCASE,u.id""",a.groupId,presentOnly) { it.getLong(1) }
     }
     fun groupAccounts(a:Access):List<Account> = database.read { c ->
         known(c,a.groupId,a.userId)
