@@ -55,6 +55,13 @@ class HttpTelegramApiTest {
         api.pin(-123,77)
         assertEquals("pinChatMessage",bodies.last().first)
         assertFalse(bodies.last().second.getValue("disable_notification").jsonPrimitive.boolean)
+        api.unpin(-123,77)
+        assertEquals("unpinChatMessage",bodies.last().first)
+        assertEquals(-123,bodies.last().second.getValue("chat_id").jsonPrimitive.long)
+        assertEquals(77,bodies.last().second.getValue("message_id").jsonPrimitive.long)
+        api.delete(22,78)
+        assertEquals("deleteMessage",bodies.last().first)
+        assertEquals(78,bodies.last().second.getValue("message_id").jsonPrimitive.long)
         response={ 200 to """{"ok":true,"result":{"message_id":9,"chat":{"id":-123,"type":"supergroup"}}}""" }
         assertEquals(FailureKind.UNCERTAIN,assertFailsWith<TelegramFailure> { api.ephemeralRich(-123,22,"cb","x",html,keyboard) }.kind)
     }

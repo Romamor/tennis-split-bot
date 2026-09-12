@@ -10,8 +10,7 @@ CREATE INDEX user_username ON users(username COLLATE NOCASE);
 CREATE TABLE groups (
     id INTEGER PRIMARY KEY CHECK(id<0),
     title TEXT NOT NULL,
-    time_zone TEXT NOT NULL,
-    default_start_time TEXT NOT NULL DEFAULT '18:30' CHECK(default_start_time GLOB '[0-2][0-9]:[0-5][0-9]' AND substr(default_start_time,1,2)<='23')
+    time_zone TEXT NOT NULL
 ) STRICT;
 CREATE TABLE group_users (
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
@@ -169,5 +168,5 @@ CREATE TABLE bot_deliveries (
     ephemeral_id INTEGER,
     status TEXT NOT NULL CHECK(status IN ('SENDING','SENT','UNKNOWN','FAILED','BLOCKED','RETRY')),
     display_page INTEGER NOT NULL DEFAULT 0 CHECK(display_page>=0),
-    pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN','UNPIN_PENDING','UNPIN_SENDING','UNPIN_FAILED','UNPINNED'))
+    pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN'))
 ) STRICT;

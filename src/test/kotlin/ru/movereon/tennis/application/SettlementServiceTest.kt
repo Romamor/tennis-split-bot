@@ -173,6 +173,18 @@ class SettlementServiceTest {
         assertEquals(TrainingPhase.CLOSED,s.training(admin,"t").phase)
     }
 
+    @Test fun `default start time permissions are scoped and concurrent edits are rejected`() {
+        val s=setup();assertEquals("18:30",s.group(-1).defaultStartTime)
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("20:00","18:30"),member) }
+        s.run(SettlementCommand.SetAdministrator(2,true))
+        s.run(SettlementCommand.SetDefaultStartTime("20:00","18:30"),member)
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("21:00","18:30"),admin) }
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.SetDefaultStartTime("21:00","18:30"),Access(-2,2)) }
+        s.register(SettlementGroup(-1,"New title","Europe/Moscow"))
+        assertEquals("20:00",s.group(-1).defaultStartTime);assertEquals("18:30",s.group(-2).defaultStartTime)
+        assertTrue(s.balances(admin).isEmpty())
+    }
+
     @Test fun `membership and admin rights are scoped to group and ordinary members cannot change another player`() {
         val s = setup(); s.create(); s.create("elsewhere", other)
         assertFailsWith<AccountingException> { s.joinForHour(1, member) }
@@ -371,6 +383,7 @@ class SettlementServiceTest {
         val s=setup();s.sample()
         val before=s.training(admin,"t");val balances=s.balances(admin)
         s.database.write { c ->
+            sqlUpdate(c,"ALTER TABLE groups DROP COLUMN default_start_time")
             sqlUpdate(c,"ALTER TABLE bot_sessions DROP COLUMN panel_json")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_status")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN display_page")

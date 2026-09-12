@@ -82,7 +82,7 @@ class SelfServiceBotTest {
         click(user, "Создать тренировку")
         click(user, "Оставить")
         click(user, "09.09.2026")
-        click(user, "19:00")
+        click(user, "18:30")
         click(user, "Опубликовать")
         bot.maintain()
     }
@@ -109,7 +109,7 @@ class SelfServiceBotTest {
 
     @Test fun `member creates without playing finds training in mine and finishes while other member cannot`() {
         setup();open(2);click(2,"Создать тренировку");click(2,"Оставить")
-        click(2,"09.09.2026");click(2,"19:00");click(2,"Опубликовать");bot.maintain()
+        click(2,"09.09.2026");click(2,"18:30");click(2,"Опубликовать");bot.maintain()
         val id=bot.service.trainings(Access(-1,2),mine=true).items.single().id
         assertEquals(2,bot.service.training(Access(-1,2),id).createdBy)
         open(2);click(2,"Мои тренировки");click(2,"09.09.2026")
@@ -137,6 +137,119 @@ class SelfServiceBotTest {
         fake.members[-1L to 1L]=TgMember("left")
         click(1,"Подтвердить учёт")
         assertEquals(TrainingPhase.OPEN,bot.service.training(Access(-1,2),id).phase)
+    }
+
+    @Test fun `accounted and cancelled cards are unpinned once without removing messages or other pins`() {
+        setup();create();join(2,60);pay(2)
+        val message=publicCard().id
+        fake.pinned+=-1L to 999L;fake.pinned+=-2L to message
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт");bot.maintain()
+        assertEquals(listOf(-1L to message),fake.unpinned)
+        assertEquals(message,publicCard().id)
+        assertEquals("UNPINNED",bot.state.pinStatus("training:-1:"+bot.service.trainings(Access(-1,1)).items.single().id))
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertEquals(1,fake.unpinned.size)
+        click(1,"Отменить тренировку");click(1,"Да, отменить");bot.maintain()
+        assertEquals(1,fake.unpinned.size)
+        click(1,"Восстановить тренировку");bot.maintain()
+        assertEquals(3,fake.pinned.size,"Restoring does not notify or pin again")
+        click(1,"Отменить тренировку");click(1,"Да, отменить");bot.maintain()
+        assertEquals(2,fake.unpinned.size)
+    }
+
+    @Test fun `old closed cards and interrupted unpin requests recover without repeating pins`() {
+        setup();create();val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
+        bot.service.execute(auth,"cancel-old",SettlementCommand.CancelTraining(t.id,t.version))
+        val key="training:-1:${t.id}";bot.state.pinStatus(key,"NONE")
+        fake.unpinFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        assertFailsWith<TelegramFailure> { bot.maintain() };assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
+        bot.state.pinStatus(key,"UNPIN_SENDING")
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        fake.unpinFailure=null;bot.maintain();bot.maintain()
+        assertEquals(listOf(-1L to publicCard().id),fake.unpinned);assertEquals(1,fake.pinAttempts)
+    }
+
+    @Test fun `rejected unpin has an admin retry and cannot repin a cancelled card`() {
+        setup();create();fake.unpinFailure=TelegramFailure(FailureKind.REJECTED,403)
+        click(1,"Отменить тренировку");click(1,"Да, отменить");bot.maintain()
+        val count=fake.unpinAttempts.size;bot.maintain();assertEquals(count,fake.unpinAttempts.size)
+        open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
+        assertTrue(latest(1).text!!.contains("Не удалось снять"))
+        fake.unpinFailure=null;click(1,"Повторить снятие закрепа")
+        assertEquals(1,fake.unpinned.size);assertEquals(1,fake.pinAttempts)
+    }
+
+    @Test fun `a cancelled card with a pending pin is never pinned`() {
+        setup();create();val t=bot.service.trainings(Access(-1,1)).items.single()
+        bot.state.pinStatus("training:-1:${t.id}","PENDING")
+        bot.service.execute(Access(-1,1,true),"cancel-pending",SettlementCommand.CancelTraining(t.id,t.version));bot.maintain()
+        assertEquals(1,fake.pinAttempts);assertEquals(1,fake.unpinned.size)
+    }
+
+    @Test fun `private menu cleanup survives restart and too old menus become short inactive messages`() {
+        setup();create();val old=latest(1)
+        fake.deleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        message(1,"/start");val current=latest(1)
+        assertNotEquals(old.id,current.id);assertNotNull(fake.messages[1L to old.id])
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,400);bot.maintain()
+        assertEquals("Меню обновлено. Используй последнее сообщение бота.",fake.messages[1L to old.id]!!.text)
+        assertTrue(fake.messages[1L to old.id]!!.keyboard!!.rows.isEmpty())
+        assertEquals(current.id,latest(1).id);assertTrue(bot.state.retiredPrivateMenus().isEmpty())
+        fake.deleteFailure=null;open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
+        val id=latest(1).id
+        repeat(3) { click(1,"В меню группы");click(1,"Управление тренировками");click(1,"09.09.2026") }
+        assertEquals(id,latest(1).id)
+    }
+
+    @Test fun `date arrows clamp calendar boundaries and clock buttons wrap within the selected day`() {
+        setup();open(2);click(2,"Создать тренировку");click(2,"Оставить")
+        val dateForm=bot.state.form(2,2)!!
+        bot.state.session(2,2,-1,dateForm.copy(date="2028-01-31"))
+        // Render through the fresh form so its signature matches the adjusted fixture date.
+        message(2,"/start");click(2,"Продолжить ввод")
+        click(2,"▲ Месяц");assertEquals("2028-02-29",bot.state.form(2,2)!!.date)
+        click(2,"▲ Год");assertEquals("2029-02-28",bot.state.form(2,2)!!.date)
+        click(2,"▲ День");assertEquals("2029-03-01",bot.state.form(2,2)!!.date)
+        click(2,"▼ День");assertEquals("2029-02-28",bot.state.form(2,2)!!.date)
+        click(2,"Продолжить ·");assertTrue(latest(2).text!!.contains("18:30"))
+        val selectedDay=bot.state.form(2,2)!!.date
+        repeat(5) { click(2,"+1 час") };click(2,"+30 мин")
+        assertEquals("00:00",bot.state.form(2,2)!!.time);assertEquals(selectedDay,bot.state.form(2,2)!!.date)
+        click(2,"−30 мин");click(2,"−1 час");assertEquals("22:30",bot.state.form(2,2)!!.time)
+        click(2,"Продолжить ·");click(2,"Опубликовать")
+        assertEquals("22:30",bot.service.trainings(Access(-1,2)).items.single().startTime)
+    }
+
+    @Test fun `admins set a group default for new trainings without changing existing ones`() {
+        setup();create();val existing=bot.service.trainings(Access(-1,1)).items.single()
+        assertEquals("18:30",existing.startTime)
+        open(1);click(1,"Настройки группы");click(1,"Начало по умолчанию");click(1,"+1 час");click(1,"+30 мин");click(1,"Сохранить время")
+        assertEquals("20:00",bot.service.group(-1).defaultStartTime)
+        assertEquals("18:30",bot.service.group(-2).defaultStartTime)
+        assertEquals(existing,bot.service.training(Access(-1,1),existing.id))
+        open(2);assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Настройки") })
+        click(2,"Создать тренировку");click(2,"Оставить");click(2,"09.09.2026")
+        assertTrue(latest(2).text!!.contains("20:00"))
+    }
+
+    @Test fun `old private menus discovered by stale callbacks are retired without deleting current menu`() {
+        setup();open(1);val old=latest(1);message(1,"/start");val current=latest(1)
+        fake.messages[1L to old.id]=old
+        clock.now=clock.now.plusSeconds(121);bot.state.cleanup()
+        click(1,"Мои тренировки",old)
+        assertNull(fake.messages[1L to old.id]);assertNotNull(fake.messages[1L to current.id])
+    }
+
+    @Test fun `restore cancels a delayed unpin and missing messages finish cleanup`() {
+        setup();create();val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single();val key="training:-1:${t.id}"
+        bot.service.execute(auth,"cancel",SettlementCommand.CancelTraining(t.id,t.version));bot.state.reconcilePins()
+        assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
+        bot.service.execute(auth,"restore",SettlementCommand.RestoreTraining(t.id,bot.service.training(auth,t.id).version));bot.maintain()
+        assertTrue(fake.unpinAttempts.isEmpty());assertEquals(1,fake.pinAttempts)
+        bot.service.execute(auth,"cancel-again",SettlementCommand.CancelTraining(t.id,bot.service.training(auth,t.id).version))
+        fake.unpinFailure=TelegramFailure(FailureKind.MESSAGE_MISSING,400);bot.maintain()
+        assertEquals("UNPINNED",bot.state.pinStatus(key));bot.maintain();assertEquals(1,fake.unpinAttempts.size)
     }
 
     @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
@@ -408,10 +521,10 @@ class SelfServiceBotTest {
 
     @Test fun `old form confirmation cannot publish a newly edited form`() {
         setup(); open(1); click(1,"Создать тренировку"); click(1,"Оставить")
-        click(1,"09.09.2026"); click(1,"19:00")
+        click(1,"09.09.2026"); click(1,"18:30")
         val oldPreview = latest(1)
         click(1,"Изменить название")
-        message(1,"Новое название"); click(1,"09.09.2026"); click(1,"19:00")
+        message(1,"Новое название"); click(1,"09.09.2026"); click(1,"18:30")
         click(1,"Опубликовать",oldPreview)
         assertEquals(0,bot.service.trainings(Access(-1,1)).total)
         assertTrue(answers.last().contains("Форма изменилась"))
@@ -436,7 +549,7 @@ class SelfServiceBotTest {
         message(1,"Вечерний теннис")
         val datePrompt = latest(1)
         assertNotEquals(titlePrompt.id,datePrompt.id)
-        assertEquals(titlePrompt,fake.messages[1L to titlePrompt.id],"The old prompt must not be edited above the user input")
+        assertNull(fake.messages[1L to titlePrompt.id],"The old menu must be removed after the new reply is delivered")
         click(1,"09.09.2026")
         assertEquals(datePrompt.id,latest(1).id)
         message(1,"не время")

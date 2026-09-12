@@ -81,8 +81,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             if(effective.screen.kind=="retry_pin") {
                 checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Доступно администратору группы")
-                state.pinStatus("training:${a.groupId}:${effective.screen.id}","PENDING")
-                pinCards()
+                val training=service.training(a,effective.screen.id)
+                state.pinStatus("training:${a.groupId}:${effective.screen.id}",if(training.phase in setOf(TrainingPhase.CLOSED,TrainingPhase.CANCELLED)) "UNPIN_PENDING" else "PENDING")
+                state.reconcilePins();unpinCards();pinCards()
                 effective=effective.copy(screen=effective.screen.back ?: effective.screen.copy(kind="training"))
             }
             if(effective.screen.kind=="public_page") {
@@ -148,6 +149,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val savedForm = state.form(user.id, chat)
         var action: ScreenAction
         if (callback != null) {
+            if(chat>0 && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
+                state.retirePrivateMenu(user.id,chat,message.id)
+                retirePrivateMenus(user.id)
+            }
             val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
             val button = token?.let(state::button)
             if (button == null) {
@@ -213,7 +218,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=setOf("menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
+        val exits=setOf("settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
         val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
         val exiting=action.kind in exits
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
@@ -259,9 +264,36 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 } else plan(action.copy(kind="add_players"),form=f).copy(
                     notice=if(action.kind=="save_players") "Состав изменился. Проверь выбор и подтверди добавление ещё раз." else null)
             }
+            "default_time" -> {
+                checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройки доступны администратору этой группы")
+                val time=service.group(a.groupId).defaultStartTime
+                val f=InputForm("default_time",a.groupId,time=time,originalTime=time,origin=ScreenAction("settings",a.groupId))
+                formPlan(f.copy(baseline=formValues(f)))
+            }
+            "form_date_adjust", "form_time_adjust", "save_default_time" -> {
+                val f=requireNotNull(savedForm) { "Открой форму заново" }
+                checkAccounting(f.group==action.group && action.option==state.formSignature(f),ErrorCode.STALE_VERSION,"Форма изменилась. Используй кнопки текущего сообщения")
+                when(action.kind) {
+                    "form_date_adjust" -> {
+                        require(f.kind=="date" && action.value in -1L..1L)
+                        val date=LocalDate.parse(f.date)
+                        val changed=when(action.user) { 0L -> date.plusDays(action.value);1L -> date.plusMonths(action.value);2L -> date.plusYears(action.value);else -> error("Unknown date part") }
+                        require(changed.year in 1..9999) { "Укажи год от 1 до 9999" }
+                        formPlan(f.copy(date=changed.toString()))
+                    }
+                    "form_time_adjust" -> {
+                        require(f.kind in setOf("time","default_time") && action.value in setOf(-60L,-30L,30L,60L))
+                        formPlan(f.copy(time=LocalTime.parse(f.time).plusMinutes(action.value).format(DateTimeFormatter.ofPattern("HH:mm"))))
+                    }
+                    else -> {
+                        require(f.kind=="default_time")
+                        plan(ScreenAction("settings",action.group),SettlementCommand.SetDefaultStartTime(f.time,requireNotNull(f.originalTime)))
+                    }
+                }
+            }
             "new" -> {
                 requireNotNull(a) // Group membership was checked by access().
-                val f=InputForm("title", action.group, date = today(),origin=ScreenAction("menu",action.group))
+                val f=InputForm("title", action.group, date = today(),time=service.group(action.group).defaultStartTime,origin=ScreenAction("menu",action.group))
                 formPlan(f.copy(baseline=formValues(f)))
             }
             "edit_details" -> {
@@ -403,6 +435,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "title" -> { require(text.length in 1..100) { "Название: от 1 до 100 символов" }; form(advance(f.copy(title = text))) }
             "date" -> form(advance(f.copy(date = parsedDate())))
             "time" -> form(advance(f.copy(time = LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm")))))
+            "default_time" -> form(f.copy(time=LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm"))))
             "paid" -> {
                 val amount = if (text == "0") 0 else parseAmount(text)
                 val draft=state.attendanceDraft(user.id,f.group) ?: newAttendanceDraft(auth,f.training,f.user)
@@ -488,9 +521,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         } else {
             val key = "personal:${plan.user}:${plan.chat}"
             val old = state.delivery(key)
-            if (plan.newPrivateMessage && old?.message == plan.previousPrivateMessage && old?.status !in setOf("SENDING", "UNKNOWN"))
+            if (plan.newPrivateMessage && old?.message!=null && old.message == plan.previousPrivateMessage) {
+                state.retirePrivateMenu(plan.user,plan.chat,old.message)
                 state.forgetDelivery(key)
-            sendOrdinary(key, plan.screen.group, plan.chat, plan.user, out, scope)
+            }
+            if(sendOrdinary(key, plan.screen.group, plan.chat, plan.user, out, scope)) retirePrivateMenus(plan.user)
             if (plan.form?.kind in setOf("pick_account","pick_players")) {
                 requireNotNull(plan.form)
                 val pickerKey = "picker:$event"
@@ -504,6 +539,25 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
         plan.callback?.let { runCatching { api.answer(it) } }
+    }
+    private fun retirePrivateMenus(user:Long?=null) {
+        state.retiredPrivateMenus(user).forEach { old ->
+            try {
+                try { api.delete(old.chat,requireNotNull(old.message)) }
+                catch(f:TelegramFailure) {
+                    if(f.kind==FailureKind.MESSAGE_MISSING) { state.forgetDelivery(old.key);return@forEach }
+                    if(f.kind!=FailureKind.REJECTED || f.code!=400) throw f
+                    // Telegram cannot delete messages older than 48 hours; remove the old menu instead.
+                    val text="Меню обновлено. Используй последнее сообщение бота."
+                    api.editRich(old.chat,requireNotNull(old.message),text,"<p>$text</p>",TgKeyboard(emptyList()))
+                }
+                state.forgetDelivery(old.key)
+            } catch(f:TelegramFailure) {
+                if(f.kind==FailureKind.MESSAGE_MISSING || f.kind==FailureKind.NOT_MODIFIED) state.forgetDelivery(old.key)
+                else if(f.kind==FailureKind.REJECTED) state.deliveryResult(old.key,"BLOCKED")
+                if(f.kind==FailureKind.RETRY_LATER || f.code in setOf(401,409)) throw f
+            }
+        }
     }
     private fun deletePanel(user: Long, chat: Long, id: Long) {
         try { api.deleteEphemeral(chat, user, id) }
@@ -557,6 +611,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         checkedMembership.clear()
         val now = clock.instant().epochSecond
         if (lastCleanup == Long.MIN_VALUE || now - lastCleanup >= 30) { state.cleanup(); lastCleanup = now }
+        state.reconcilePins()
+        unpinCards()
+        retirePrivateMenus()
         state.pendingCards().forEach { (group, training, through) ->
             if (state.delivery("training:$group:$training")?.status != "FAILED") {
                 try { if (refreshCard(group, training)) {
@@ -569,6 +626,19 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
         pinCards()
+    }
+    private fun unpinCards() {
+        state.pendingUnpins().forEach { (key,delivery) ->
+            state.pinStatus(key,"UNPIN_SENDING")
+            try { api.unpin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"UNPINNED") }
+            catch(f:TelegramFailure) {
+                when(f.kind) {
+                    FailureKind.MESSAGE_MISSING,FailureKind.NOT_MODIFIED -> state.pinStatus(key,"UNPINNED")
+                    FailureKind.UNCERTAIN,FailureKind.RETRY_LATER -> { state.pinStatus(key,"UNPIN_PENDING");throw f }
+                    else -> { state.pinStatus(key,"UNPIN_FAILED");if(f.code in setOf(401,409)) throw f }
+                }
+            }
+        }
     }
     private fun pinCards() {
         state.pendingPins().forEach { (key,delivery) ->

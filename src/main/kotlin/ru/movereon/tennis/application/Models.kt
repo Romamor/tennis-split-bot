@@ -11,7 +11,7 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 @Serializable data class Account(val id:Long,val firstName:String,val lastName:String="",val username:String?=null,val isBot:Boolean=false) {
     val name:String get()=(firstName+" "+lastName).trim().ifEmpty { "Участник $id" }
 }
-@Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String)
+@Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String,val defaultStartTime:String="18:30")
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)
@@ -35,6 +35,7 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
 @Serializable enum class AttendanceChange { JOIN,LEAVE,LEAVE_AND_CLEAR_PAYMENT,MARK_PAID,ADJUST_PAID,SET_PAID,ADJUST_MINUTES,SET_MINUTES,GUEST,ADJUST_GUESTS,SET_GUEST_MINUTES }
 @Serializable enum class TransferChange { REVIEW,CONFIRM,CANCEL }
 @Serializable sealed interface SettlementCommand {
+    @Serializable data class SetDefaultStartTime(val startTime:String,val expected:String):SettlementCommand
     @Serializable data class CreateTraining(val id:String,val title:String,val date:String,val startTime:String):SettlementCommand
     @Serializable data class EditTraining(val id:String,val version:Long,val title:String,val date:String,val startTime:String):SettlementCommand
     @Serializable data class ChangeAttendance(val id:String,val userId:Long,val change:AttendanceChange,val value:Long=0):SettlementCommand

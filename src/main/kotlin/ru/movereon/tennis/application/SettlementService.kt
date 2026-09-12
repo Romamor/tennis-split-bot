@@ -25,8 +25,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun register(group: SettlementGroup) = database.write { c ->
         require(group.id < 0 && group.title.isNotBlank())
         ZoneId.of(group.timeZone)
-        sqlUpdate(c, """INSERT INTO groups(id,title,time_zone) VALUES(?,?,?)
-            ON CONFLICT(id) DO UPDATE SET title=excluded.title""", group.id, group.title, group.timeZone)
+        LocalTime.parse(group.defaultStartTime)
+        sqlUpdate(c, """INSERT INTO groups(id,title,time_zone,default_start_time) VALUES(?,?,?,?)
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title""", group.id, group.title, group.timeZone,group.defaultStartTime)
     }
 
     /** Called for identities actually received from Telegram, never an arbitrary name or username. */
@@ -43,7 +44,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         .singleOrNull() ?: invalid("Аккаунт ещё не известен боту")
     private fun readAccount(r: ResultSet) = Account(r.getLong("id"), r.getString("first_name"), r.getString("last_name"), r.getString("username"), r.getBoolean("is_bot"))
     fun group(id: Long): SettlementGroup = database.read { c ->
-        sqlQuery(c, "SELECT * FROM groups WHERE id=?", id) { SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone")) }
+        sqlQuery(c, "SELECT * FROM groups WHERE id=?", id) { SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"),it.getString("default_start_time")) }
             .singleOrNull() ?: invalid("Группа не найдена")
     }
     fun groups(userId: Long, page: Int = 0): Page<SettlementGroup> = database.read { c ->
@@ -51,7 +52,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val total = count(c, "SELECT COUNT(*) $condition", userId)
         val index = pageIndex(page, total)
         Page(sqlQuery(c, "SELECT g.* $condition ORDER BY g.title,g.id LIMIT 8 OFFSET ?", userId, index * 8) {
-            SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"))
+            SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"),it.getString("default_start_time"))
         }, total, index)
     }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
@@ -96,6 +97,16 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         var version = 1L
         var after: String
         when (command) {
+            is SettlementCommand.SetDefaultStartTime -> {
+                requireAdmin(c,a)
+                require(command.startTime.matches(Regex("[0-9]{2}:[0-9]{2}"))) { "Время: ЧЧ:ММ" }
+                LocalTime.parse(command.startTime)
+                val old=sqlQuery(c,"SELECT default_start_time FROM groups WHERE id=?",a.groupId) { it.getString(1) }.single()
+                checkAccounting(old==command.expected,ErrorCode.STALE_VERSION,"Настройка уже изменилась. Открой её заново.")
+                if(old==command.startTime) return@write ActionReceipt(0,1)
+                before=json.encodeToString(old);after=json.encodeToString(command.startTime)
+                sqlUpdate(c,"UPDATE groups SET default_start_time=? WHERE id=?",command.startTime,a.groupId)
+            }
             is SettlementCommand.SetAdministrator -> {
                 allowed(a.telegramAdmin, "Назначать администраторов могут только администраторы этой группы Telegram")
                 known(c, a.groupId, command.userId)

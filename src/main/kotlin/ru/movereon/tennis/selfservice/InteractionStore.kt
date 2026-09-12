@@ -14,11 +14,11 @@ import java.util.UUID
     val user: Long = 0, val value: Long = 0, val version: Long = 0, val option: String = "",
     val back: ScreenAction? = null, val resume: ScreenAction? = null)
 @Serializable data class InputForm(val kind: String, val group: Long, val training: String = "", val user: Long = 0,
-    val version: Long = 0, val title: String = "Теннис", val date: String = "", val time: String = "19:00",
+    val version: Long = 0, val title: String = "Теннис", val date: String = "", val time: String = "18:30",
     val amount: Long = 0, val direction: String = "out", val note: String = "", val request: Int = 0,
     val attendance: AttendanceDraft? = null, val selectedUsers: List<Long> = emptyList(), val page: Int = 0,
     val order: List<Long>? = null, val origin: ScreenAction? = null, val baseline: String? = null, val transfer: String = "",
-    val similar: List<String> = emptyList())
+    val similar: List<String> = emptyList(), val originalTime:String?=null)
 @Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
     val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,
@@ -84,8 +84,22 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun displayPage(key:String,page:Int)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET display_page=? WHERE delivery_key=?",page.coerceAtLeast(0),key) }
     fun pinStatus(key:String):String?=database.read { c -> sqlQuery(c,"SELECT pin_status FROM bot_deliveries WHERE delivery_key=?",key) { it.getString(1) }.singleOrNull() }
     fun pinStatus(key:String,status:String)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET pin_status=? WHERE delivery_key=?",status,key) }
+    /** Desired pin state is derived from the training, including old cards after an upgrade. */
+    fun reconcilePins() = database.write { c ->
+        sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='NONE' WHERE pin_status LIKE 'UNPIN%'
+            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('OPEN','REVIEW'))""")
+        sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE message_id IS NOT NULL
+            AND pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN')
+            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('CLOSED','CANCELLED'))""")
+    }
+    fun pendingUnpins():List<Pair<String,Delivery>> = database.read { c ->
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL LIMIT 20") {
+            val key=it.getString("delivery_key")
+            key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,it.getString("status"))
+        }
+    }
     fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('OPEN','REVIEW')) LIMIT 20") {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
         }
@@ -133,6 +147,21 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             Delivery(key, it.getLong("chat_id"), it.getString("user_id")?.toLong(), it.getString("message_id")?.toLong(), it.getString("ephemeral_id")?.toLong(), it.getString("status"))
         }.singleOrNull()
     }
+    fun retirePrivateMenu(user:Long,chat:Long,message:Long) = database.write { c ->
+        require(chat>0 && user==chat && message>0)
+        sqlUpdate(c,"""INSERT INTO bot_deliveries(delivery_key,chat_id,user_id,message_id,status)
+            VALUES(?,?,?,?,'RETRY') ON CONFLICT(delivery_key) DO UPDATE SET status='RETRY'""",
+            "retired:$chat:$message",chat,user,message)
+    }
+    fun retiredPrivateMenus(user:Long?=null):List<Delivery> = database.read { c ->
+        sqlQuery(c,"""SELECT d.* FROM bot_deliveries d JOIN bot_deliveries live
+            ON live.delivery_key='personal:' || d.user_id || ':' || d.chat_id
+            WHERE d.delivery_key LIKE 'retired:%' AND d.status='RETRY' AND d.chat_id>0
+            AND live.status='SENT' AND live.message_id IS NOT NULL AND d.message_id<>live.message_id
+            AND (? IS NULL OR d.user_id=?) LIMIT 20""",user,user) {
+            Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
+        }
+    }
     fun sending(key: String, group: Long, chat: Long, user: Long?) = database.write { c ->
         sqlUpdate(c, """INSERT INTO bot_deliveries(delivery_key,group_id,chat_id,user_id,status) VALUES(?,?,?,?,'SENDING')
             ON CONFLICT(delivery_key) DO UPDATE SET status='SENDING'""", key, group.takeIf { it < 0 }, chat, user)
@@ -145,6 +174,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun interruptedSends() = database.write { c ->
         sqlUpdate(c,"UPDATE bot_deliveries SET status='UNKNOWN' WHERE status='SENDING'")
         sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNKNOWN' WHERE pin_status='SENDING'")
+        sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE pin_status='UNPIN_SENDING'")
     }
     /** Refresh existing live cards after an update, without creating new messages or changing training data. */
     fun refreshLiveCards() = database.write { c ->

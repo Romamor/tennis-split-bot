@@ -56,6 +56,8 @@ interface TelegramApi {
     fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
     fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
     fun pin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
+    fun unpin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
+    fun delete(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun administrators(chatId: Long): List<TgMember> = emptyList()
     fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
         throw TelegramFailure(FailureKind.REJECTED)
@@ -127,6 +129,12 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             put("reply_markup",json.encodeToJsonElement(keyboard))
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }
+    override fun delete(chatId:Long,messageId:Long) {
+        call("deleteMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId) })
+    }
+    override fun unpin(chatId:Long,messageId:Long) {
+        call("unpinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId) })
+    }
     override fun pin(chatId:Long,messageId:Long) {
         call("pinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId);put("disable_notification",false) })
     }
@@ -186,8 +194,8 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         val kind = when {
             code == 429 -> FailureKind.RETRY_LATER
             code >= 500 -> FailureKind.UNCERTAIN
-            "message is not modified" in description -> FailureKind.NOT_MODIFIED
-            "message to edit not found" in description -> FailureKind.MESSAGE_MISSING
+            "message is not modified" in description || method=="unpinChatMessage" && "message is not pinned" in description -> FailureKind.NOT_MODIFIED
+            "message to edit not found" in description || "message to unpin not found" in description || "message to delete not found" in description -> FailureKind.MESSAGE_MISSING
             else -> FailureKind.REJECTED
         }
         throw TelegramFailure(kind, code, envelope["parameters"]?.jsonObject?.get("retry_after")?.jsonPrimitive?.intOrNull)

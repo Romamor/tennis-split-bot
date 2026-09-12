@@ -18,7 +18,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
             read { c ->
                 require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
-                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..3) { "Неизвестный формат базы бота" }
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..4) { "Неизвестный формат базы бота" }
             }
         } else {
             Files.createDirectories(this.path.parent)
@@ -28,9 +28,9 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                 if(version==0) {
                     require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                     val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=3") }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=4") }
                 } else {
-                    require(app==APPLICATION_ID && version in 1..3) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    require(app==APPLICATION_ID && version in 1..4) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
                     if(version==1) {
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
@@ -38,9 +38,20 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                         c.createStatement().use { it.execute("PRAGMA user_version=2") }
                     }
                     if(version<=2) migrateParticipation(c)
+                    if(version<=3) migrateUnpin(c)
                 }
             }
             connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
+        }
+    }
+    private fun migrateUnpin(c:Connection) {
+        c.createStatement().use { s ->
+            s.execute("ALTER TABLE bot_deliveries ADD COLUMN pin_status_next TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status_next IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN','UNPIN_PENDING','UNPIN_SENDING','UNPIN_FAILED','UNPINNED'))")
+            s.execute("UPDATE bot_deliveries SET pin_status_next=pin_status")
+            s.execute("ALTER TABLE bot_deliveries DROP COLUMN pin_status")
+            s.execute("ALTER TABLE bot_deliveries RENAME COLUMN pin_status_next TO pin_status")
+            s.execute("ALTER TABLE groups ADD COLUMN default_start_time TEXT NOT NULL DEFAULT '18:30' CHECK(default_start_time GLOB '[0-2][0-9]:[0-5][0-9]' AND substr(default_start_time,1,2)<='23')")
+            s.execute("PRAGMA user_version=4")
         }
     }
     private fun migrateParticipation(c:Connection) {

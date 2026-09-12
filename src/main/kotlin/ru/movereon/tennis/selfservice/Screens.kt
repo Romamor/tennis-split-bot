@@ -82,10 +82,18 @@ class Screens(private val service: SettlementService, private val state: Interac
                 row("➕ Создать тренировку", next("new"))
                 if (service.isAdmin(a)) {
                     row("📋 Управление тренировками", next("trainings", option = "all"))
+                    row("⚙️ Настройки группы",next("settings"))
                 }
                 if (a.telegramAdmin) row("👥 Администраторы бота", next("administrators", option = ""))
                 if(service.groups(a.userId).total>1) row("🔄 Сменить группу", ScreenAction("groups",action.group))
                 "Что хочешь сделать?"
+            }
+            "settings" -> {
+                requireNotNull(a)
+                checkAccounting(service.isAdmin(a),ErrorCode.FORBIDDEN,"Настройки доступны администратору этой группы")
+                row("Начало по умолчанию · ${requireNotNull(group).defaultStartTime}",next("default_time"))
+                menu()
+                "Настройки группы\nВремя по умолчанию используется только для новых тренировок."
             }
             "trainings" -> {
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")
@@ -103,6 +111,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 if(action.kind=="training" && service.isAdmin(a)) {
                     val pin=state.pinStatus("training:${t.groupId}:${t.id}")
                     val warning=when(pin) {
+                        "UNPIN_FAILED" -> "Не удалось снять карточку с закрепа. Проверь право бота закреплять сообщения."
                         "FAILED" -> "Карточка не закреплена. Проверь право бота закреплять сообщения."
                         "UNKNOWN" -> "Результат закрепления неизвестен. Проверь закреплённые сообщения перед повтором."
                         else -> null
@@ -115,8 +124,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                     if(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW))
                         row("Открыть участие",next("participation",page=index).copy(back=action.copy(page=index)))
                     if (service.isAdmin(a)) {
-                        if(state.pinStatus("training:${t.groupId}:${t.id}") in setOf("FAILED","UNKNOWN"))
-                            row("📌 Повторить закрепление",next("retry_pin").copy(back=action.copy(page=index)))
+                        if(state.pinStatus("training:${t.groupId}:${t.id}") in setOf("FAILED","UNKNOWN","UNPIN_FAILED"))
+                            row(if(t.phase in setOf(TrainingPhase.CLOSED,TrainingPhase.CANCELLED)) "📌 Повторить снятие закрепа" else "📌 Повторить закрепление",next("retry_pin").copy(back=action.copy(page=index)))
                         if (state.delivery("training:${t.groupId}:${t.id}")?.status in setOf("UNKNOWN", "FAILED"))
                             row("Восстановить сообщение в группе", next("recover_confirm").copy(back=action.copy(page=index)))
                         if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
@@ -394,8 +403,22 @@ class Screens(private val service: SettlementService, private val state: Interac
                 }
                 when (f.kind) {
                     "title" -> { row("Оставить «${clean(f.title, 30)}»", formAction("form_next")); "Напиши название тренировки." }
-                    "date" -> { row("${date(f.date)}", formAction("form_next")); "Напиши дату: ДД.ММ.ГГГГ." }
-                    "time" -> { row("${f.time}", formAction("form_next")); "Во сколько начало? Напиши ЧЧ:ММ." }
+                    "date" -> {
+                        val d=LocalDate.parse(f.date)
+                        fun adjust(part:Long,delta:Long)=formAction("form_date_adjust").copy(user=part,value=delta)
+                        rows+=listOf(button("▲ День",adjust(0,1)),button("▲ Месяц",adjust(1,1)),button("▲ Год",adjust(2,1)))
+                        rows+=listOf(button("%02d".format(d.dayOfMonth),adjust(0,0)),button("%02d".format(d.monthValue),adjust(1,0)),button(d.year.toString(),adjust(2,0)))
+                        rows+=listOf(button("▼ День",adjust(0,-1)),button("▼ Месяц",adjust(1,-1)),button("▼ Год",adjust(2,-1)))
+                        row("Продолжить · ${date(f.date)}",formAction("form_next"))
+                        "Дата тренировки\nВыбери дату стрелками или напиши ДД.ММ.ГГГГ."
+                    }
+                    "time", "default_time" -> {
+                        fun adjust(delta:Long)=formAction("form_time_adjust").copy(value=delta)
+                        rows+=listOf(button("+30 мин",adjust(30)),button("+1 час",adjust(60)))
+                        rows+=listOf(button("−30 мин",adjust(-30)),button("−1 час",adjust(-60)))
+                        row(if(f.kind=="default_time") "✅ Сохранить время" else "Продолжить · ${f.time}",formAction(if(f.kind=="default_time") "save_default_time" else "form_next"))
+                        "${if(f.kind=="default_time") "Начало по умолчанию" else "Начало тренировки"}: ${f.time}\nМожно написать время в формате ЧЧ:ММ."
+                    }
                     "ready" -> {
                         row(if (f.training.isEmpty()) "Опубликовать в группе" else "Сохранить изменения", formAction("save_training"))
                         row("Изменить название / время", formAction("form_restart"))
@@ -442,6 +465,7 @@ class Screens(private val service: SettlementService, private val state: Interac
     private fun playerLine(p: Attendance) = "${name(p.userId)}\n  ${if (p.playing) hours(p.minutes) else "Не играл"}" +
         (if (p.guestCount > 0) " · гостей: ${p.guestCount}, по ${hours(p.guestMinutes)}" else "") + " · оплатил ${p.paid} ₽"
     private fun describe(a: AuditAction): String = when (a.kind) {
+        "SetDefaultStartTime" -> "Изменил начало по умолчанию · ${state.json.decodeFromString<String>(a.after)}"
         "CreateTraining" -> "Опубликовал тренировку"
         "EditTraining" -> {
             val after=state.json.decodeFromString<TrainingRecord>(a.after)
@@ -485,7 +509,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         else -> "Изменение записи"
     }
     companion object {
-        val privateActions = setOf("menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = setOf("settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

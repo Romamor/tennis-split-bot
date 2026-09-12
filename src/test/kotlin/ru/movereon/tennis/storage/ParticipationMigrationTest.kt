@@ -40,7 +40,7 @@ class ParticipationMigrationTest {
         assertEquals(old,service.training(admin,"old"))
         assertEquals(history,service.history(admin).items.single().after)
         assertEquals(mapOf(1L to 120L,2L to -120L),service.balances(admin))
-        assertEquals(3,service.database.read { sqlQuery(it,"PRAGMA user_version") { r -> r.getInt(1) }.single() })
+        assertEquals(4,service.database.read { sqlQuery(it,"PRAGMA user_version") { r -> r.getInt(1) }.single() })
         service.execute(admin,"reopen",SettlementCommand.ReopenTraining("old",1))
         val unchanged=service.training(admin,"old").players.first()
         assertEquals(0,service.execute(admin,"unchanged",SettlementCommand.SaveAttendance("old",1,unchanged,unchanged)).id)
