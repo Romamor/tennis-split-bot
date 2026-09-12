@@ -41,4 +41,11 @@ internal fun migrateTrainingStates(c:Connection, database:Database) {
         s.execute("PRAGMA user_version=5")
     }
     refreshAttendance(c)
+    // The editor moved to public cards. Refresh known messages of every phase once,
+    // including historical closed/cancelled cards that normal startup skips.
+    sqlUpdate(c,"""UPDATE actions SET delivered_at=NULL WHERE id IN (
+        SELECT MAX(a.id) FROM actions a JOIN bot_deliveries d
+        ON d.delivery_key='training:' || a.group_id || ':' || a.training_id
+        WHERE d.status='SENT' AND d.message_id IS NOT NULL AND a.needs_delivery=1
+        GROUP BY a.group_id,a.training_id)""")
 }

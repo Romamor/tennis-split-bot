@@ -97,7 +97,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (effective.screen.kind == "recover_card") {
                 checkAccounting(service.isAdmin(requireNotNull(a)), ErrorCode.FORBIDDEN, "Доступно администратору группы")
                 state.forgetDelivery("training:${a.groupId}:${effective.screen.id}")
-                refreshCard(a.groupId, effective.screen.id)
+                refreshCard(a.groupId, effective.screen.id,allowCreate=true)
                 effective = effective.copy(screen = effective.screen.copy(kind = "training"))
             }
             if (effective.clearDraft) {
@@ -579,8 +579,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             state.replace("personal:$user:$chat", emptySet())
         }
     }
-    private fun sendOrdinary(key: String, group: Long, chat: Long, user: Long?, out: Screens.Output, scope: String): Boolean {
+    private fun sendOrdinary(key: String, group: Long, chat: Long, user: Long?, out: Screens.Output, scope: String, recreateMissing:Boolean=true): Boolean {
         val old = state.delivery(key)
+        if(!recreateMissing && old?.message==null) return true
         if (old?.status == "UNKNOWN" && old.message == null) return false
         val oldTokens = state.activeTokens(scope)
         state.protect(out.tokens)
@@ -594,6 +595,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 catch (failure: TelegramFailure) {
                     if (failure.kind != FailureKind.MESSAGE_MISSING) throw failure
                     state.forgetDelivery(key)
+                    if(!recreateMissing) { state.replace(scope,emptySet());return true }
                     return sendOrdinary(key, group, chat, user, out, scope)
                 }
                 state.deliveryResult(key, "SENT", old.message)
@@ -683,11 +685,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    private fun refreshCard(group: Long, training: String): Boolean {
+    private fun refreshCard(group: Long, training: String, allowCreate:Boolean?=null): Boolean {
         val author = service.database.read { c -> sqlQuery(c, "SELECT created_by FROM trainings WHERE group_id=? AND id=?", group, training) { it.getLong(1) }.single() }
         // Public information for its original chat. No private context or privileges are used for background delivery.
         val scope = "training:$group:$training"
         val out = screens.render(ScreenAction("public", group, training), Access(group, author), scope, null)
-        return sendOrdinary(scope, group, group, null, out, scope)
+        val create=allowCreate ?: (service.training(Access(group,author),training).phase==TrainingPhase.OPEN)
+        return sendOrdinary(scope, group, group, null, out, scope,create)
     }
 }

@@ -376,6 +376,18 @@ class SelfServiceBotTest {
         assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Игроки" })
     }
 
+    @Test fun `refresh of a deleted closed card does not publish a historical message again`() {
+        setup();create();join(2,60);pay(2)
+        click(1,"Учесть тренировку");click(1,"Подтвердить учёт");bot.maintain()
+        val card=publicCard();fake.delete(-1,card.id)
+        val sent=fake.sent.size
+        bot.service.database.write { sqlUpdate(it,"UPDATE actions SET delivered_at=NULL WHERE training_id IS NOT NULL") }
+        bot.maintain()
+        assertEquals(sent,fake.sent.size)
+        assertTrue(bot.state.pendingCards().isEmpty())
+        assertTrue(fake.messages.values.none { it.chat.id==-1L })
+    }
+
     @Test fun `complete training roster survives updates and restart without pagination or duplicate pins`() {
         setup();create();val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
         val users=(5L..31L).toList()

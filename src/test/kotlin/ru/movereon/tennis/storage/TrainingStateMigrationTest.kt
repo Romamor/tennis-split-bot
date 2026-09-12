@@ -40,6 +40,8 @@ class TrainingStateMigrationTest {
                 }
                 stmt.execute("PRAGMA application_id=${Database.APPLICATION_ID}");stmt.execute("PRAGMA user_version=4")
                 stmt.execute("UPDATE trainings SET status='REVIEW' WHERE group_id=-1")
+                stmt.execute("UPDATE actions SET delivered_at='2026-09-12T10:00:00Z'")
+                stmt.execute("INSERT INTO bot_deliveries(delivery_key,group_id,chat_id,message_id,status) VALUES('training:-1:t',-1,-1,10,'SENT'),('training:-2:t',-2,-2,20,'SENT')")
             }
             val t=s.training(Access(-1,1,true),"t");val json=Json { encodeDefaults=true }
             val oldJson=JsonObject(json.encodeToJsonElement(t).jsonObject+("phase" to JsonPrimitive("REVIEW"))).toString()
@@ -62,11 +64,14 @@ class TrainingStateMigrationTest {
         }
         assertFails { migrated.write { sqlUpdate(it,"UPDATE trainings SET status='REVIEW' WHERE group_id=-1") } }
         val store=InteractionStore(migrated)
+        assertEquals(setOf(-1L,-2L),store.pendingCards().map { it.first }.toSet())
         val history=Screens(current,store,"demo_bot").render(ScreenAction("history",-1,"t"),a,"history",1)
         assertTrue(history.text.contains("Обновление бота"))
         assertFalse(history.text.contains("REVIEW"))
         val count=current.history(a).total
+        migrated.write { sqlUpdate(it,"UPDATE actions SET delivered_at='2026-09-12T11:00:00Z'") }
         assertEquals(count,SettlementService(Database(file)).history(a).total)
+        assertTrue(InteractionStore(Database(file)).pendingCards().isEmpty())
         val reopened=current.training(a,"t")
         current.execute(a,"new-finish",SettlementCommand.FinishTraining("t",reopened.version))
         assertEquals(mapOf(1L to 200L,2L to -200L),current.balances(a))
