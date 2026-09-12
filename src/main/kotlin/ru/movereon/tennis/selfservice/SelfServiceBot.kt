@@ -282,7 +282,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         formPlan(f.copy(date=changed.toString()))
                     }
                     "form_time_adjust" -> {
-                        require(f.kind in setOf("time","default_time") && action.value in setOf(-60L,-30L,30L,60L))
+                        require(f.kind in setOf("time","default_time") && action.value in setOf(-60L,-30L,0L,30L,60L))
                         formPlan(f.copy(time=LocalTime.parse(f.time).plusMinutes(action.value).format(DateTimeFormatter.ofPattern("HH:mm"))))
                     }
                     else -> {

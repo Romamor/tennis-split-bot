@@ -213,10 +213,15 @@ class SelfServiceBotTest {
         click(2,"▲ День");assertEquals("2029-03-01",bot.state.form(2,2)!!.date)
         click(2,"▼ День");assertEquals("2029-02-28",bot.state.form(2,2)!!.date)
         click(2,"Продолжить ·");assertTrue(latest(2).text!!.contains("18:30"))
+        assertEquals(listOf(listOf("▲ Часы","▲ Минуты"),listOf("18","30"),listOf("▼ Часы","▼ Минуты")),
+            latest(2).keyboard!!.rows.take(3).map { row -> row.map { it.text } })
+        val unchanged=bot.state.form(2,2)!!
+        click(2,"18");click(2,"30")
+        assertEquals(unchanged,bot.state.form(2,2))
         val selectedDay=bot.state.form(2,2)!!.date
-        repeat(5) { click(2,"+1 час") };click(2,"+30 мин")
+        repeat(5) { click(2,"▲ Часы") };click(2,"▲ Минуты")
         assertEquals("00:00",bot.state.form(2,2)!!.time);assertEquals(selectedDay,bot.state.form(2,2)!!.date)
-        click(2,"−30 мин");click(2,"−1 час");assertEquals("22:30",bot.state.form(2,2)!!.time)
+        click(2,"▼ Минуты");click(2,"▼ Часы");assertEquals("22:30",bot.state.form(2,2)!!.time)
         click(2,"Продолжить ·");click(2,"Опубликовать")
         assertEquals("22:30",bot.service.trainings(Access(-1,2)).items.single().startTime)
     }
@@ -224,7 +229,7 @@ class SelfServiceBotTest {
     @Test fun `admins set a group default for new trainings without changing existing ones`() {
         setup();create();val existing=bot.service.trainings(Access(-1,1)).items.single()
         assertEquals("18:30",existing.startTime)
-        open(1);click(1,"Настройки группы");click(1,"Начало по умолчанию");click(1,"+1 час");click(1,"+30 мин");click(1,"Сохранить время")
+        open(1);click(1,"Настройки группы");click(1,"Начало по умолчанию");click(1,"▲ Часы");click(1,"▲ Минуты");click(1,"Сохранить время")
         assertEquals("20:00",bot.service.group(-1).defaultStartTime)
         assertEquals("18:30",bot.service.group(-2).defaultStartTime)
         assertEquals(existing,bot.service.training(Access(-1,1),existing.id))

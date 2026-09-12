@@ -414,8 +414,10 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                     "time", "default_time" -> {
                         fun adjust(delta:Long)=formAction("form_time_adjust").copy(value=delta)
-                        rows+=listOf(button("+30 мин",adjust(30)),button("+1 час",adjust(60)))
-                        rows+=listOf(button("−30 мин",adjust(-30)),button("−1 час",adjust(-60)))
+                        val (hours,minutes)=f.time.split(":")
+                        rows+=listOf(button("▲ Часы",adjust(60)),button("▲ Минуты",adjust(30)))
+                        rows+=listOf(button(hours,adjust(0)),button(minutes,adjust(0)))
+                        rows+=listOf(button("▼ Часы",adjust(-60)),button("▼ Минуты",adjust(-30)))
                         row(if(f.kind=="default_time") "✅ Сохранить время" else "Продолжить · ${f.time}",formAction(if(f.kind=="default_time") "save_default_time" else "form_next"))
                         "${if(f.kind=="default_time") "Начало по умолчанию" else "Начало тренировки"}: ${f.time}\nМожно написать время в формате ЧЧ:ММ."
                     }
