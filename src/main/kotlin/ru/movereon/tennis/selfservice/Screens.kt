@@ -84,7 +84,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                     row("📋 Управление тренировками", next("trainings", option = "all"))
                     row("⚙️ Настройки группы",next("settings"))
                 }
-                if (a.telegramAdmin) row("👥 Администраторы бота", next("administrators", option = ""))
                 if(service.groups(a.userId).total>1) row("🔄 Сменить группу", ScreenAction("groups",action.group))
                 "Что хочешь сделать?"
             }
@@ -92,6 +91,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 requireNotNull(a)
                 checkAccounting(service.isAdmin(a),ErrorCode.FORBIDDEN,"Настройки доступны администратору этой группы")
                 row("Начало по умолчанию · ${requireNotNull(group).defaultStartTime}",next("default_time"))
+                if (a.telegramAdmin) row("👥 Администраторы группы", next("administrators", option = ""))
                 menu()
                 "Настройки группы\nВремя по умолчанию используется только для новых тренировок."
             }
@@ -293,9 +293,9 @@ class Screens(private val service: SettlementService, private val state: Interac
                 pages(p.index,p.pages)
                 if (action.kind=="administrators") {
                     row("Назначить администратора",next("admin_candidates"))
-                    menu()
+                    row("⬅️ Назад",ScreenAction("settings",action.group))
                 } else back(next("administrators"))
-                if (action.kind=="administrators") "Администраторы · ${p.total}\nСуперадмины получают права из Telegram. Назначенные админы бота управляют тренировками, но не назначают других."
+                if (action.kind=="administrators") "Администраторы группы · ${p.total}\nСуперадмины получают права из Telegram. Назначенные админы бота управляют тренировками, но не назначают других."
                 else "Кого назначить?\nВ этом списке только участники без административной роли."
             }
             "admin_person" -> {
