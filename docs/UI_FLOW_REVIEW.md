@@ -5,6 +5,9 @@
 о 1 ч при входе, одном госте и подтверждении каждого пользовательского ввода.
 Состояние установки отдельно описано в [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
 
+Редактируемые [схемы всех трёх ролей в .drawio](diagrams/BOT_USER_FLOWS.drawio)
+и [интерактивный прототип](prototype/README.md) сверены с текущим кодом.
+
 ## Основной путь
 
 ```mermaid
@@ -59,7 +62,7 @@ stateDiagram-v2
     state "Учтена" as Closed
     state "Уточнение" as Review
     state "Отменена" as Cancelled
-    [*] --> Open: Администратор публикует
+    [*] --> Open: Участник группы публикует
     Open --> Closed: Учесть тренировку
     Closed --> Review: Исправить тренировку
     Review --> Closed: Применить правки
