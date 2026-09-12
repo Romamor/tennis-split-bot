@@ -21,13 +21,13 @@ class PinMigrationTest {
         } }
         assertTrue(Database(file,readOnly=true).verify().contains("Схема 3"))
         val db=Database(file)
-        assertTrue(db.verify().contains("Схема 4"))
+        assertTrue(db.verify().contains("Схема 5"))
         db.read { c ->
             assertEquals("UNKNOWN",sqlQuery(c,"SELECT pin_status FROM bot_deliveries") { it.getString(1) }.single())
             assertEquals(42,sqlQuery(c,"SELECT message_id FROM bot_deliveries") { it.getInt(1) }.single())
             assertEquals("18:30",sqlQuery(c,"SELECT default_start_time FROM groups") { it.getString(1) }.single())
         }
         db.write { sqlUpdate(it,"UPDATE bot_deliveries SET pin_status='UNPIN_PENDING'") }
-        assertTrue(Database(file).verify().contains("Схема 4"))
+        assertTrue(Database(file).verify().contains("Схема 5"))
     }
 }

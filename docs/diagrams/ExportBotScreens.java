@@ -20,6 +20,11 @@ class ExportBotScreens {
   if(out.length()>1)out.append(',');out.append("{\"role\":").append(user).append(",\"key\":").append(q(key)).append(",\"group\":").append(group).append(",\"text\":").append(q(result.getText())).append(",\"html\":").append(q(result.getRichHtml())).append(",\"rows\":[");
   boolean firstRow=true;for(var row:result.getKeyboard().getRows()){if(!firstRow)out.append(',');firstRow=false;out.append('[');boolean first=true;for(var b:row){if(!first)out.append(',');first=false;ScreenAction target=null;String token=b.getCallbackData()!=null?b.getCallbackData().substring(2):b.getUrl()!=null&&b.getUrl().contains("n_")?b.getUrl().split("n_",2)[1]:null;if(token!=null&&store.button(token)!=null)target=store.button(token).getAction();out.append("{\"text\":").append(q(b.getText())).append(",\"target\":").append(target==null?"null":store.getJson().encodeToString(ScreenAction.Companion.serializer(),target)).append('}');}out.append(']');}out.append("]}");
  }
+ static void alert(String key,String id,String back){
+  String text;try{svc.requireOpen(svc.training(auth,id));throw new IllegalStateException("Expected closed training");}
+  catch(ru.movereon.tennis.core.AccountingException failure){text=failure.getMessage();}
+  if(out.length()>1)out.append(',');out.append("{\"role\":").append(user).append(",\"key\":").append(q(key)).append(",\"group\":true,\"text\":").append(q(text)).append(",\"html\":null,\"rows\":[[{\"text\":\"ОК\",\"target\":{\"kind\":\"alert_back\",\"option\":").append(q(back)).append("}}]]}");
+ }
  static void cap(String key,String kind,String id)throws Exception{capture(key,kind,id,"",null,false,null);}
  static void phase(String id,String phase)throws Exception{sql("UPDATE trainings SET status=? WHERE id=?",phase,id);}
  static void attendance(String id,boolean playing,int mins,int paid,int guests)throws Exception{sql("INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal) VALUES(-1,?,?,?,?,?,?,?,99) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid",id,user,playing?1:0,mins,playing&&guests>0?mins:0,playing?guests:0,paid);}
@@ -33,6 +38,9 @@ class ExportBotScreens {
   cap("groups","groups","");cap("menu","menu","");capture("mine","trainings","","\"option\":\"mine\"",null,false,null);
   cap("training_own","training","own");cap("training_other","training","other");cap("preview","preview_finish","own");cap("history","history","own");
   phase("own","CLOSED");cap("training_closed","training","own");capture("mine_closed","trainings","","\"option\":\"mine\"",null,false,null);phase("own","OPEN");
+  if(user==1){String denied;try{run(auth,new SettlementCommand.EditTraining("other",svc.training(auth,"other").getVersion(),"Не разрешено","2026-09-12","18:30"));throw new IllegalStateException("Expected denial");}catch(ru.movereon.tennis.core.AccountingException failure){denied=failure.getMessage();}capture("edit_denied","groups","","",null,false,denied);}
+  capture("public_own","public","own","",null,true,null);
+  for(String phase:List.of("CLOSED","CANCELLED")){phase("own",phase);String suffix=phase.toLowerCase();capture("public_"+suffix,"public","own","",null,true,null);alert("alert_"+suffix,"own","public_"+suffix);}phase("own","OPEN");
   capture("public","public","other","",null,true,null);capture("personal_before","participation","other","",null,true,null);
   attendance("other",true,0,0,0);capture("personal_joined","participation","other","",null,true,null);capture("personal_time","participation_time","other","",null,true,null);capture("personal_payment","participation_payment","other","",null,true,null);
   attendance("other",true,60,350,1);capture("personal_guest","participation","other","",null,true,null);
@@ -45,13 +53,19 @@ class ExportBotScreens {
   capture("profile","profile_preview","","\"user\":4,\"back\":{\"kind\":\"transfer_people\",\"group\":-1},\"resume\":{\"kind\":\"transfer_direction\",\"group\":-1,\"user\":4}",null,false,null);capture("exit","exit_confirm","own","\"back\":{\"kind\":\"menu\",\"group\":-1},\"resume\":{\"kind\":\"form\",\"group\":-1}",null,false,null);
   if(user>=2){
    cap("settings","settings","");capture("default_time","form","","",form("default_time","","\"originalTime\":\"18:30\",\"origin\":{\"kind\":\"settings\",\"group\":-1}"),false,null);
-   capture("all","trainings","","\"option\":\"all\"",null,false,null);cap("roster","roster","own");
+   capture("all","trainings","","\"option\":\"all\"",null,false,null);
+  }
+  {
+   cap("roster","roster","own");
    var p=svc.training(auth,"own").getPlayers().get(0);var d=new AttendanceDraft("own",4,p,p,0,action("roster","own",""));store.attendanceDraft(user,-1,d);capture("player","player","own","\"user\":4",null,false,null);
    capture("paid","form","own","",form("paid","own","\"user\":4,\"origin\":{\"kind\":\"player\",\"group\":-1,\"id\":\"own\",\"user\":4}"),false,null);
    sql("UPDATE training_players SET paid=400 WHERE training_id='own' AND user_id=4");capture("player_conflict","player","own","\"user\":4",null,false,null);store.attendanceDraft(user,-1,null);sql("UPDATE training_players SET paid=350 WHERE training_id='own' AND user_id=4");
    InputForm add=form("add_players","own","\"selectedUsers\":[8,9],\"origin\":{\"kind\":\"roster\",\"group\":-1,\"id\":\"own\"}");capture("add_players","add_players","own","",add,false,null);capture("pick_players","form","own","",form("pick_players","own",""),false,null);
    for(String kind:List.of("title","date","time","ready"))capture("edit_"+kind,"form","own","",form(kind,"own","\"origin\":{\"kind\":\"training\",\"group\":-1,\"id\":\"own\"}"),false,null);
-   phase("own","REVIEW");cap("training_review","training","own");cap("preview_review","preview_finish","own");cap("cancel","cancel_confirm","own");phase("own","CANCELLED");cap("training_cancelled","training","own");phase("own","OPEN");
+   phase("own","OPEN");cap("training_review","training","own");cap("preview_review","preview_finish","own");phase("own","CANCELLED");cap("training_cancelled","training","own");phase("own","OPEN");
+  }
+  if(user>=2){
+   cap("cancel","cancel_confirm","own");
    store.sending("training:-1:own",-1,-1,null);store.deliveryResult("training:-1:own","FAILED",null,null);store.pinStatus("training:-1:own","FAILED");cap("training_failure","training","own");cap("recover","recover_confirm","own");phase("own","CLOSED");store.pinStatus("training:-1:own","UNPIN_FAILED");cap("training_unpin_failure","training","own");phase("own","OPEN");
   }
   if(user==3){cap("administrators","administrators","");cap("candidates","admin_candidates","");capture("role_member","admin_person","","\"user\":8",null,false,null);capture("role_admin","admin_person","","\"user\":2",null,false,null);capture("role_super","admin_person","","\"user\":3",null,false,null);run(auth,new SettlementCommand.SetAdministrator(3,true));capture("role_super_extra","admin_person","","\"user\":3",null,false,null);}

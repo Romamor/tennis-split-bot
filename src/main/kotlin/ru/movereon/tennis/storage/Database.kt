@@ -18,7 +18,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
             read { c ->
                 require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
-                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..4) { "Неизвестный формат базы бота" }
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..5) { "Неизвестный формат базы бота" }
             }
         } else {
             Files.createDirectories(this.path.parent)
@@ -28,9 +28,9 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                 if(version==0) {
                     require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                     val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=4") }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=5") }
                 } else {
-                    require(app==APPLICATION_ID && version in 1..4) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    require(app==APPLICATION_ID && version in 1..5) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
                     if(version==1) {
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN has_played INTEGER NOT NULL DEFAULT 0 CHECK(has_played IN (0,1))") }
@@ -39,6 +39,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                     }
                     if(version<=2) migrateParticipation(c)
                     if(version<=3) migrateUnpin(c)
+                    if(version<=4) migrateTrainingStates(c,this)
                 }
             }
             connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
@@ -138,7 +139,7 @@ internal fun refreshAttendance(c:Connection,group:Long?=null) {
     sqlUpdate(c,"""UPDATE group_users SET attendance_count=(SELECT COUNT(*) FROM training_players p
         JOIN trainings t ON t.group_id=p.group_id AND t.id=p.training_id
         WHERE p.group_id=group_users.group_id AND p.user_id=group_users.user_id
-        AND p.applied_playing=1 AND t.status IN ('CLOSED','REVIEW')),
+        AND p.applied_playing=1 AND t.status='CLOSED'),
         has_played=EXISTS(SELECT 1 FROM training_players p JOIN trainings t ON t.group_id=p.group_id AND t.id=p.training_id
         WHERE p.group_id=group_users.group_id AND p.user_id=group_users.user_id AND t.status<>'CANCELLED'
         AND (p.playing=1 OR p.applied_playing=1))$where""",*params)

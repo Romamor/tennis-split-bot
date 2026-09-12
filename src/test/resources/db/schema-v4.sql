@@ -39,7 +39,7 @@ CREATE TABLE trainings (
     title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 100),
     played_on TEXT NOT NULL,
     starts_at TEXT NOT NULL,
-    status TEXT NOT NULL CHECK(status IN ('OPEN','CLOSED','CANCELLED')),
+    status TEXT NOT NULL CHECK(status IN ('OPEN','CLOSED','REVIEW','CANCELLED')),
     version INTEGER NOT NULL CHECK(version>0),
     applied_version INTEGER NOT NULL DEFAULT 0 CHECK(applied_version>=0),
     created_by INTEGER NOT NULL REFERENCES users(id),

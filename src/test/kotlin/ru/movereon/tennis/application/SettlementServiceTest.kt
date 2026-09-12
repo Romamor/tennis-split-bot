@@ -70,15 +70,18 @@ class SettlementServiceTest {
         assertFailsWith<AccountingException> { s.run(SettlementCommand.AddPlayers("t",s.training(admin,"t").version,listOf(3))) }
     }
 
-    @Test fun `reopen keeps previous balances and attendance until close and cancellation keeps actual transfers`() {
+    @Test fun `reopen reverses training balances immediately and cancellation keeps actual transfers`() {
         val s = setup(); s.sample()
         assertEquals(mapOf(1L to 150L, 2L to -150L), s.balances(admin))
         s.run(SettlementCommand.RecordTransfer("advance", 2, 1, 200, "2026-09-09"), member)
-        val before = s.balances(admin)
         s.reopen()
+        assertEquals(TrainingPhase.OPEN,s.training(admin,"t").phase)
+        assertEquals(0,s.training(admin,"t").appliedVersion)
+        assertEquals(mapOf(1L to -200L,2L to 200L),s.balances(admin))
+        assertEquals(0,s.roster(admin).items.single { it.account.id==2L }.attendance)
         s.change(2, AttendanceChange.LEAVE, who = member)
-        assertEquals(before, s.balances(admin))
-        assertEquals(1, s.roster(admin).items.single { it.account.id == 2L }.attendance)
+        assertEquals(mapOf(1L to -200L,2L to 200L),s.balances(admin))
+        assertEquals(0, s.roster(admin).items.single { it.account.id == 2L }.attendance)
         s.finish()
         assertEquals(mapOf(1L to -200L, 2L to 200L), s.balances(admin))
         assertEquals(0, s.roster(admin).items.single { it.account.id == 2L }.attendance)
@@ -86,6 +89,20 @@ class SettlementServiceTest {
         assertEquals(mapOf(1L to -200L, 2L to 200L), s.balances(admin))
         assertEquals(1, s.trainings(admin).total)
         assertTrue(s.database.verify().contains("целостность в порядке"))
+    }
+
+    @Test fun `reopening the same version twice cannot reverse balances twice`() {
+        val s=setup();s.sample()
+        val command=SettlementCommand.ReopenTraining("t",s.training(admin,"t").version)
+        val receipt=s.execute(admin,"open-once",command)
+        assertTrue(s.balances(admin).values.all { it==0L })
+        val count=s.history(admin).total
+        assertEquals(receipt,s.execute(admin,"open-once",command))
+        assertFailsWith<AccountingException> { s.execute(admin,"stale-open",command) }
+        assertEquals(count,s.history(admin).total)
+        assertTrue(s.balances(admin).values.all { it==0L })
+        s.finish()
+        assertEquals(mapOf(1L to 150L,2L to -150L),s.balances(admin))
     }
 
     @Test fun `restoring cancelled training preserves input and transfers until explicitly accounted without duplicates`() {
@@ -151,7 +168,7 @@ class SettlementServiceTest {
         assertEquals(ErrorCode.FORBIDDEN,assertFailsWith<AccountingException> { s.run(finish,Access(-1,3)) }.code)
         assertFailsWith<AccountingException> { s.run(finish,other) }
         assertEquals(before,s.history(member).total)
-        assertFailsWith<AccountingException> { s.run(SettlementCommand.EditTraining("t",t.version,"Правка","2026-09-09","19:00"),member) }
+        assertFailsWith<AccountingException> { s.run(SettlementCommand.EditTraining("t",t.version,"Правка","2026-09-09","19:00"),Access(-1,3)) }
         s.run(finish,member)
         assertEquals(TrainingPhase.CLOSED,s.training(member,"t").phase)
         s.run(SettlementCommand.ReopenTraining("t",s.training(admin,"t").version))

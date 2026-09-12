@@ -23,9 +23,10 @@ internal object TrainingCard {
         }
         val whenText="${Screens.date(t.date)} ${t.startTime}"
         val note=when {
-            t.phase==TrainingPhase.REVIEW -> "Пока правки не применены, действует прежний расчёт."
+            t.phase==TrainingPhase.OPEN -> "Предварительный расчёт: пока не влияет на баланс группы."
+            t.phase==TrainingPhase.CANCELLED -> "Тренировка отменена: не влияет на баланс группы."
             !known -> "Для расчёта укажи наигранное время."
-            else -> "Баланс указан по этой тренировке."
+            else -> null
         }
         val text=buildString {
             append(t.title).append('\n').append(whenText).append('\n').append("Статус: ${Screens.phase(t.phase)}").append("\n\n")
@@ -33,7 +34,7 @@ internal object TrainingCard {
             else {
                 append("Участник | Время | Оплата | Баланс\n")
                 rows.forEach { append("${it.name} | ${Screens.hours(it.minutes)} | ${it.paid} ₽ | ${it.balance?.let(Screens::signed) ?: "—"} ₽\n") }
-                append("\n$note")
+                if(note!=null) append("\n$note")
             }
         }
         val html=buildString {
@@ -46,7 +47,8 @@ internal object TrainingCard {
                     append("<td align=\"right\">${Screens.hours(it.minutes)}</td><td align=\"right\">${it.paid} ₽</td>")
                     append("<td align=\"right\">${it.balance?.let(Screens::signed) ?: "—"} ₽</td></tr>")
                 }
-                append("</table><p>${escape(note)}</p>")
+                append("</table>")
+                if(note!=null) append("<p>${escape(note)}</p>")
             }
         }
         return Content(text,html)

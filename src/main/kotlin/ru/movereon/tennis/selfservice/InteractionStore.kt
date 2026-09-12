@@ -87,7 +87,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     /** Desired pin state is derived from the training, including old cards after an upgrade. */
     fun reconcilePins() = database.write { c ->
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='NONE' WHERE pin_status LIKE 'UNPIN%'
-            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('OPEN','REVIEW'))""")
+            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN')""")
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE message_id IS NOT NULL
             AND pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN')
             AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('CLOSED','CANCELLED'))""")
@@ -99,7 +99,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }
     }
     fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('OPEN','REVIEW')) LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN') LIMIT 20") {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
         }
@@ -181,7 +181,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlUpdate(c, """UPDATE actions SET delivered_at=NULL WHERE id IN (
             SELECT MAX(a.id) FROM actions a JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
             JOIN bot_deliveries d ON d.delivery_key='training:' || t.group_id || ':' || t.id
-            WHERE t.status IN ('OPEN','REVIEW') AND d.status='SENT' AND a.needs_delivery=1
+            WHERE t.status='OPEN' AND d.status='SENT' AND a.needs_delivery=1
             GROUP BY a.group_id,a.training_id)""")
     }
     fun pendingCards(): List<Triple<Long, String, Long>> = database.read { c ->

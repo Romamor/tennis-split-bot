@@ -131,7 +131,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val group = form?.group ?: state.selectedGroup(user.id, message.chat.id)
                 val target = ScreenAction(if (form?.kind=="add_players") "add_players" else if (form != null) "form" else if (group != null) "menu" else "groups", group ?: 0,form?.training.orEmpty(),page=form?.page ?: 0)
                 val a = group?.let { runCatching { access(it, user.id) }.getOrNull() }
-                val safeForm=form.takeIf { a!=null && (it?.kind !in setOf("add_players","pick_players") || service.isAdmin(a)) }
+                val safeForm=form.takeIf { a!=null && (it?.kind !in setOf("add_players","pick_players") || canEdit(a,it!!.training)) }
                 val errorPlan = positionAfterInput(EventPlan(user.id, message.chat.id,
                     if (group != null && a == null) ScreenAction("groups", 0)
                     else if(form!=null && safeForm==null) ScreenAction("menu",group ?: 0) else target,
@@ -187,7 +187,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             } else if (message.usersShared != null && savedForm?.kind in setOf("pick_account","pick_players")) {
                 requireNotNull(savedForm)
                 val a = access(savedForm.group, user.id)
-                checkAccounting(service.isAdmin(a), ErrorCode.FORBIDDEN, "Добавлять аккаунты может администратор группы")
+                checkAccounting(canEdit(a,savedForm.training), ErrorCode.FORBIDDEN, "Добавлять аккаунты может создатель тренировки или администратор группы")
                 require(message.usersShared.requestId == savedForm.request && message.usersShared.users.size == 1) { "Открой выбор аккаунта заново" }
                 val shared = message.usersShared.users.single()
                 service.remember(Account(shared.id, shared.firstName, shared.lastName, shared.username))
@@ -199,7 +199,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 service.rememberMembership(a.groupId, shared.id, present)
                 if(savedForm.kind=="pick_players") {
                     val t=service.training(a,savedForm.training)
-                    checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW),ErrorCode.INVALID_STATE,"Тренировка уже учтена")
+                    checkAccounting(t.phase == TrainingPhase.OPEN,ErrorCode.INVALID_STATE,"Тренировка уже учтена")
                     val selected=(savedForm.selectedUsers+shared.id).distinct().filter { id -> t.players.none { it.userId==id && it.playing } }
                     return EventPlan(user.id,chat,ScreenAction("add_players",a.groupId,t.id,page=savedForm.page),
                         form=savedForm.copy(kind="add_players",selectedUsers=selected,order=(savedForm.order.orEmpty()+shared.id).distinct()))
@@ -210,6 +210,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         val a = if (action.group < 0) access(action.group, user.id) else null
+        if(action.kind=="edit_training") {
+            val auth=requireNotNull(a)
+            checkAccounting(service.canEdit(auth,service.training(auth,action.id)),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
+            action=action.copy(kind="training")
+        }
+        if(action.kind in setOf("participation","participation_time","participation_payment","participation_change","player","change","reload_attendance","ask_paid","save_attendance"))
+            service.requireOpen(service.training(requireNotNull(a),action.id))
         val personalOnly = Screens.privateActions
         if (chat < 0 && action.kind in personalOnly) return EventPlan(user.id, chat, action.copy(kind = "private_link"), callback = callback?.id, ephemeral = message.ephemeralId)
         fun plan(screen: ScreenAction = action, command: SettlementCommand? = null, form: InputForm? = null) =
@@ -240,10 +247,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "profile_preview" -> plan(form=savedForm)
             "add_players", "toggle_player", "save_players", "pick_players" -> {
                 val auth=requireNotNull(a)
-                checkAccounting(service.isAdmin(auth),ErrorCode.FORBIDDEN,"Добавлять может администратор этой группы")
+                checkAccounting(canEdit(auth,action.id),ErrorCode.FORBIDDEN,"Добавлять может создатель тренировки или администратор этой группы")
                 checkAccounting(state.attendanceDraft(user.id,action.group)==null,ErrorCode.INVALID_STATE,"Сначала заверши открытый ввод игрока кнопкой «Всё правильно»")
                 val t=service.training(auth,action.id)
-                checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW),ErrorCode.INVALID_STATE,"Тренировка уже учтена")
+                checkAccounting(t.phase == TrainingPhase.OPEN,ErrorCode.INVALID_STATE,"Тренировка уже учтена")
                 val previous=savedForm?.takeIf { it.kind in setOf("add_players","pick_players") && it.group==action.group && it.training==action.id }
                 if(action.kind!="add_players" || action.option.isNotEmpty())
                     checkAccounting(previous!=null && state.formSignature(previous)==action.option,ErrorCode.STALE_VERSION,"Выбор изменился. Используй текущие кнопки списка")
@@ -297,7 +304,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 formPlan(f.copy(baseline=formValues(f)))
             }
             "edit_details" -> {
-                checkAccounting(service.isAdmin(requireNotNull(a)), ErrorCode.FORBIDDEN, "Изменять может администратор группы")
+                checkAccounting(canEdit(requireNotNull(a),action.id), ErrorCode.FORBIDDEN, "Редактировать тренировку может её создатель или администратор этой группы")
                 val t = service.training(a, action.id)
                 val f=InputForm("title", action.group, t.id, version = t.version, title = t.title, date = t.date, time = t.startTime,origin=action.back)
                 formPlan(f.copy(baseline=formValues(f)))
@@ -333,10 +340,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "participation", "participation_time", "participation_payment", "participation_change" -> {
                 val auth=requireNotNull(a)
                 val t=service.training(auth,action.id)
-                val editable=t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW)
-                checkAccounting(editable || service.isAdmin(auth),ErrorCode.INVALID_STATE,"Тренировка уже учтена или отменена. Изменения доступны администратору.")
+                service.requireOpen(t)
                 if(action.kind=="participation_change") {
-                    checkAccounting(editable,ErrorCode.INVALID_STATE,"Сначала открой исправление тренировки")
                     val type=AttendanceChange.valueOf(action.option)
                     checkAccounting(type in setOf(AttendanceChange.JOIN,AttendanceChange.LEAVE,AttendanceChange.ADJUST_PAID,AttendanceChange.ADJUST_MINUTES,AttendanceChange.ADJUST_GUESTS),ErrorCode.INVALID_INPUT,"Открой актуальные кнопки участия")
                     val destination=(action.resume ?: action.copy(kind="participation")).copy(group=action.group,id=action.id,user=user.id)
@@ -346,11 +351,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "player", "change", "reload_attendance" -> {
                 val target=action.user.takeIf { it>0 } ?: user.id
                 val auth=requireNotNull(a)
-                checkAccounting(target==user.id || service.isAdmin(auth),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
-                val requested=service.training(auth,action.id)
+                checkAccounting(target==user.id || canEdit(auth,action.id),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
                 val existing=state.attendanceDraft(user.id,action.group)
-                if (requested.phase !in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && existing==null)
-                    return plan(action.copy(kind="player",user=target))
                 var draft=if (action.kind=="reload_attendance") newAttendanceDraft(auth,action.id,target).copy(returnPage=existing?.returnPage,origin=existing?.origin)
                     else existing ?: newAttendanceDraft(auth,action.id,target)
                         .copy(returnPage=action.page.takeIf { action.option=="roster" },origin=action.back)
@@ -399,17 +401,18 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 else -> TransferChange.CANCEL
             }))
             "pick_account" -> {
-                checkAccounting(service.isAdmin(requireNotNull(a)), ErrorCode.FORBIDDEN, "Добавлять может администратор группы")
+                checkAccounting(canEdit(requireNotNull(a),action.id), ErrorCode.FORBIDDEN, "Добавлять может создатель тренировки или администратор этой группы")
                 formPlan(InputForm("pick_account", action.group, action.id, request = (update.id % Int.MAX_VALUE).toInt()))
             }
             else -> plan()
         }
         return if(exiting && activeDraft!=null) result.copy(clearDraft=true,draft=activeDraft,clearDraftGroup=inputGroup) else result
     }
+    private fun canEdit(a:Access,training:String)=service.canEdit(a,service.training(a,training))
     private fun newAttendanceDraft(a: Access, training: String, target: Long): AttendanceDraft {
-        checkAccounting(target==a.userId || service.isAdmin(a),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
+        checkAccounting(target==a.userId || canEdit(a,training),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
         val t=service.training(a,training)
-        checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW),ErrorCode.INVALID_STATE,"Тренировка уже учтена. Попроси администратора открыть исправление")
+        service.requireOpen(t)
         val before=t.players.firstOrNull { it.userId==target }
         val value=before ?: Attendance(target,false)
         return AttendanceDraft(training,target,before,value)
@@ -426,6 +429,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> "ready"; else -> error("Форма уже заполнена") })
     private fun textInput(update: TgUpdate, user: TgUser, chat: Long, f: InputForm, text: String): EventPlan {
         val auth=access(f.group, user.id)
+        if(f.kind=="paid") service.requireOpen(service.training(auth,f.training))
         fun form(updated: InputForm) = EventPlan(user.id, chat, ScreenAction("form", f.group, f.training), form = updated)
         fun parsedDate() = runCatching { LocalDate.parse(text, DateTimeFormatter.ofPattern("dd.MM.uuuu").withResolverStyle(java.time.format.ResolverStyle.STRICT)) }.getOrElse { LocalDate.parse(text) }.toString()
         return when (f.kind) {
@@ -440,7 +444,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val amount = if (text == "0") 0 else parseAmount(text)
                 val draft=state.attendanceDraft(user.id,f.group) ?: newAttendanceDraft(auth,f.training,f.user)
                 checkAccounting(draft.training==f.training && draft.user==f.user,ErrorCode.INVALID_STATE,"Сначала заверши уже открытый ввод")
-                checkAccounting(f.user==user.id || service.isAdmin(auth),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
+                checkAccounting(f.user==user.id || canEdit(auth,f.training),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
                 EventPlan(user.id, chat, ScreenAction("player", f.group, f.training, user = f.user),
                     draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.SET_PAID,amount)))
             }
@@ -655,7 +659,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             try {
                 val auth=access(group,user)
                 val t=service.training(auth,training)
-                if(t.phase !in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && !service.isAdmin(auth)) {
+                if(t.phase != TrainingPhase.OPEN) {
                     closePanel(user,group)
                 } else {
                     val id=state.currentEphemeral(user,group) ?: return@forEach

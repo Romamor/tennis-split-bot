@@ -15,7 +15,7 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)
-@Serializable enum class TrainingPhase { OPEN,CLOSED,REVIEW,CANCELLED }
+@Serializable enum class TrainingPhase { OPEN,CLOSED,CANCELLED }
 @Serializable data class Attendance(val userId:Long,val playing:Boolean,val minutes:Long=0,val guestMinutes:Long=0,val paid:Long=0,val ordinal:Int=0,val appliedPlaying:Boolean=false,
     val guestCount:Int=if(guestMinutes>0) 1 else 0)
 @Serializable data class TrainingRecord(val groupId:Long,val id:String,val title:String,val date:String,val startTime:String,

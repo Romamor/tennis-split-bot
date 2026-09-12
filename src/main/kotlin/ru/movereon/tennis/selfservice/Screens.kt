@@ -3,6 +3,7 @@ package ru.movereon.tennis.selfservice
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.core.*
 import ru.movereon.tennis.telegram.*
+import kotlinx.serialization.json.*
 import java.time.LocalDate
 import java.time.Instant
 import java.time.ZoneId
@@ -119,25 +120,28 @@ class Screens(private val service: SettlementService, private val state: Interac
                     if(warning!=null) { body+="\n\n$warning";richHtml=content.html+"<p>${TrainingCard.escape(warning)}</p>" }
                 }
                 if (action.kind == "public") {
-                    row("Открыть",next("participation",page=index))
+                    val link=state.button(ScreenAction("edit_training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
+                    rows+=listOf(button("Открыть",next("participation",page=index)),TgButton("Редактировать",url="https://t.me/$botName?start=n_$link"))
                 } else {
-                    if(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW))
+                    if(t.phase == TrainingPhase.OPEN)
                         row("Открыть участие",next("participation",page=index).copy(back=action.copy(page=index)))
                     if (service.isAdmin(a)) {
                         if(state.pinStatus("training:${t.groupId}:${t.id}") in setOf("FAILED","UNKNOWN","UNPIN_FAILED"))
                             row(if(t.phase in setOf(TrainingPhase.CLOSED,TrainingPhase.CANCELLED)) "📌 Повторить снятие закрепа" else "📌 Повторить закрепление",next("retry_pin").copy(back=action.copy(page=index)))
                         if (state.delivery("training:${t.groupId}:${t.id}")?.status in setOf("UNKNOWN", "FAILED"))
                             row("Восстановить сообщение в группе", next("recover_confirm").copy(back=action.copy(page=index)))
-                        if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
-                            row("Игроки", next("roster", option = "players").copy(back=action.copy(page=index)))
-                            row("Изменить название и время", next("edit_details", version = t.version).copy(back=action.copy(page=index)))
-                        }
-                        if (t.phase == TrainingPhase.CLOSED) row("✏️ Исправить тренировку", next("reopen", version = t.version))
                         if (t.phase != TrainingPhase.CANCELLED) row("🗑 Отменить тренировку", next("cancel_confirm", version = t.version).copy(back=action.copy(page=index)))
                         else row("↩️ Восстановить тренировку", next("restore", version = t.version).copy(back=action.copy(page=index)))
                     }
-                    if(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) && service.canFinish(a,t))
-                        row(if(t.phase==TrainingPhase.REVIEW) "✅ Применить правки" else "🧮 Учесть тренировку", next("preview_finish", version = t.version).copy(back=action.copy(page=index)))
+                    if(service.canEdit(a,t)) {
+                        if (t.phase == TrainingPhase.OPEN) {
+                            row("Игроки", next("roster", option = "players").copy(back=action.copy(page=index)))
+                            row("Изменить название и время", next("edit_details", version = t.version).copy(back=action.copy(page=index)))
+                        }
+                        if (t.phase == TrainingPhase.CLOSED) row("↩️ Открыть заново", next("reopen", version = t.version))
+                    }
+                    if(t.phase == TrainingPhase.OPEN && service.canFinish(a,t))
+                        row("🧮 Учесть тренировку", next("preview_finish", version = t.version).copy(back=action.copy(page=index)))
                     row("История изменений", next("history").copy(back=action.copy(page=index)))
                     back(ScreenAction("trainings",action.group,option=if(service.isAdmin(a)) "all" else "mine"))
                     menu()
@@ -146,11 +150,11 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "participation", "participation_time", "participation_payment" -> {
                 val t=service.training(requireNotNull(a),action.id)
-                checkAccounting(t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW) || service.isAdmin(a),ErrorCode.INVALID_STATE,"Тренировка уже учтена или отменена. Изменения доступны администратору.")
+                service.requireOpen(t)
                 val content=TrainingCard.render(t,service::account)
                 richHtml=content.html
                 val p=t.players.firstOrNull { it.userId==a.userId }
-                val open=t.phase in setOf(TrainingPhase.OPEN,TrainingPhase.REVIEW)
+                val open=t.phase == TrainingPhase.OPEN
                 fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=a.userId,value=value,option=type.name).copy(resume=action.copy(page=0)))
                 if(open) when(action.kind) {
                     "participation_time" -> {
@@ -178,10 +182,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                         }
                     }
                 }
-                if(service.isAdmin(a) || open && service.canFinish(a,t)) {
-                    val link=state.button(ScreenAction("training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
-                    rows+=listOf(TgButton(if(service.isAdmin(a)) "✏️ Редактировать" else "🧮 Учесть тренировку",url="https://t.me/$botName?start=n_$link"))
-                }
                 if(inGroup) rows+=buildList<TgButton> {
                     if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
                     add(button("Закрыть",next("close_panel")))
@@ -192,11 +192,11 @@ class Screens(private val service: SettlementService, private val state: Interac
             "player" -> {
                 val t = service.training(requireNotNull(a), action.id)
                 val target = action.user.takeIf { it > 0 } ?: a.userId
-                checkAccounting(target == a.userId || service.isAdmin(a), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
+                checkAccounting(target == a.userId || service.canEdit(a,t), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
                 val stored = t.players.firstOrNull { it.userId == target }
                 val draft = state.attendanceDraft(a.userId,a.groupId)?.takeIf { it.training==t.id && it.user==target }
                 val player = draft?.value ?: stored
-                if (t.phase in setOf(TrainingPhase.OPEN, TrainingPhase.REVIEW)) {
+                if (t.phase == TrainingPhase.OPEN) {
                     fun change(label: String, type: AttendanceChange, value: Long = 0) = button(label, next("change", target = target, value = value, option = type.name))
                     if (player?.playing != true) rows += listOf(change("Присоединиться · 0 ч", AttendanceChange.JOIN))
                     else {
@@ -227,12 +227,12 @@ class Screens(private val service: SettlementService, private val state: Interac
                     (if ((player?.guestCount ?: 0) > 0) " · гостей: ${player!!.guestCount}, по ${hours(player.guestMinutes)}" else "") +
                     "\nОплатил стол: ${player?.paid ?: 0} ₽" +
                     (if (draft!=null && draft.expected!=stored) "\nСохранённые данные уже изменились. Обнови форму перед подтверждением." else if (draft!=null) "\nСохраним после «Всё правильно»." else "") +
-                    if (t.phase == TrainingPhase.CLOSED) "\nТренировка учтена. Исправить данные может администратор через «Исправить тренировку»." else ""
+                    if (t.phase == TrainingPhase.CLOSED) "\nТренировка учтена. Создатель или администратор может выбрать «Открыть заново»: прежний расчёт будет отменён." else ""
             }
             "leave_confirm" -> {
                 val t = service.training(requireNotNull(a), action.id)
                 val target = action.user.takeIf { it > 0 } ?: a.userId
-                checkAccounting(target == a.userId || service.isAdmin(a), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
+                checkAccounting(target == a.userId || service.canEdit(a,t), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
                 val pending=state.attendanceDraft(a.userId,a.groupId)?.takeIf { it.training==t.id && it.user==target }
                 val p = requireNotNull(pending?.value ?: t.players.firstOrNull { it.userId == target }) { "Участник не найден в тренировке" }
                 row(if (p.paid > 0) "Не играл — убрать ${p.paid} ₽" else "Подтвердить: не играл",
@@ -245,7 +245,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "roster" -> {
                 val t=service.training(requireNotNull(a),action.id)
-                checkAccounting(service.isAdmin(a),ErrorCode.FORBIDDEN,"Доступно администратору группы")
+                checkAccounting(service.canEdit(a,t),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
                 val players=t.players.filter { it.playing || it.paid>0 }.sortedBy { it.ordinal }
                 val index=action.page.coerceIn(0,maxOf(0,(players.size-1)/8))
                 players.drop(index*8).take(8).forEach { p ->
@@ -259,7 +259,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "add_players" -> {
                 val t=service.training(requireNotNull(a),action.id)
-                checkAccounting(service.isAdmin(a),ErrorCode.FORBIDDEN,"Доступно администратору группы")
+                checkAccounting(service.canEdit(a,t),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
                 val f=requireNotNull(form)
                 val playing=t.players.filter { it.playing }.map { it.userId }.toSet()
                 val order=f.order ?: service.rosterIds(a).filter { it !in playing }
@@ -322,7 +322,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val p = calc.entries
                 val index = action.page.coerceIn(0, maxOf(0, (p.size - 1) / 8))
                 pages(index, maxOf(1, (p.size + 7) / 8))
-                row(if(t.phase==TrainingPhase.REVIEW) "✅ Подтвердить правки" else "✅ Подтвердить учёт", next("finish", version = t.version))
+                row("✅ Подтвердить учёт", next("finish", version = t.version))
                 back(next("training"))
                 "Проверка расчёта · ${date(t.date)}\nВсего: ${calc.total} ₽\n\n" + p.drop(index * 8).take(8).joinToString("\n") {
                     "${shortName(it.participant.value.toLong())}: ${signed(it.amount)} ₽"
@@ -453,7 +453,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val p = service.history(requireNotNull(a), action.id.takeIf { it.isNotEmpty() && action.kind=="history" }, action.page,action.id.takeIf { action.kind=="transfer_history" })
                 pages(p.index, p.pages)
                 back(next(if(action.kind=="transfer_history") "transfer" else if (action.id.isEmpty()) "menu" else "training"))
-                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(ZoneId.of(requireNotNull(group).timeZone)).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${shortName(it.actorId)}\n${describe(it).take(330)}" }
+                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(ZoneId.of(requireNotNull(group).timeZone)).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${describe(it).take(330)}" }
             }
             else -> error("Unknown screen: ${action.kind}")
         }
@@ -466,12 +466,18 @@ class Screens(private val service: SettlementService, private val state: Interac
     }
     private fun playerLine(p: Attendance) = "${name(p.userId)}\n  ${if (p.playing) hours(p.minutes) else "Не играл"}" +
         (if (p.guestCount > 0) " · гостей: ${p.guestCount}, по ${hours(p.guestMinutes)}" else "") + " · оплатил ${p.paid} ₽"
+    // Historical JSON is immutable; normalize only the retired phase when reading old snapshots.
+    private fun historyTraining(text:String):TrainingRecord {
+        val value=state.json.parseToJsonElement(text).jsonObject
+        val compatible=if(value["phase"]?.jsonPrimitive?.content=="REVIEW") JsonObject(value+("phase" to JsonPrimitive("OPEN"))) else value
+        return state.json.decodeFromJsonElement(TrainingRecord.serializer(),compatible)
+    }
     private fun describe(a: AuditAction): String = when (a.kind) {
         "SetDefaultStartTime" -> "Изменил начало по умолчанию · ${state.json.decodeFromString<String>(a.after)}"
         "CreateTraining" -> "Опубликовал тренировку"
         "EditTraining" -> {
-            val after=state.json.decodeFromString<TrainingRecord>(a.after)
-            val before=state.json.decodeFromString<TrainingRecord>(requireNotNull(a.before))
+            val after=historyTraining(a.after)
+            val before=historyTraining(requireNotNull(a.before))
             listOfNotNull(if(before.title!=after.title) "Название: ${clean(before.title,100)} → ${clean(after.title,100)}" else null,
                 if(before.date!=after.date) "Дата: ${date(before.date)} → ${date(after.date)}" else null,
                 if(before.startTime!=after.startTime) "Начало: ${before.startTime} → ${after.startTime}" else null).joinToString("\n")
@@ -481,22 +487,24 @@ class Screens(private val service: SettlementService, private val state: Interac
             val after=state.json.decodeFromString<MoneyTransfer>(a.after)
             "Исправил сумму перевода: ${before.amount} ₽ → ${after.amount} ₽"
         }
-        "FinishTraining" -> "Учёл тренировку · ${state.json.decodeFromString<TrainingRecord>(a.after).players.sumOf { it.paid }} ₽"
-        "ReopenTraining" -> "Открыл исправление тренировки; прежний расчёт сохранён"
+        "FinishTraining" -> "Учёл тренировку · ${historyTraining(a.after).players.sumOf { it.paid }} ₽"
+        "ReopenTraining" -> if(state.json.parseToJsonElement(a.after).jsonObject["phase"]?.jsonPrimitive?.content=="REVIEW")
+            "Открыл исправление по прежним правилам; расчёт оставался учтённым" else "Открыл тренировку заново; прежний расчёт отменён"
+        "MigrateTrainingState" -> "При обновлении бота тренировку открыли заново; прежний расчёт отменён"
         "CancelTraining" -> "Отменил тренировку и снял её расчёт"
         "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
         "RecordTransfer" -> "Записал перевод"
         "ChangeTransfer" -> "Изменил состояние перевода"
         "SetAdministrator" -> if (a.after == "true") "Назначил администратора бота" else "Снял назначение администратора"
         "AddPlayers" -> {
-            val after=state.json.decodeFromString<TrainingRecord>(a.after)
-            val before=a.before?.let { state.json.decodeFromString<TrainingRecord>(it) }
+            val after=historyTraining(a.after)
+            val before=a.before?.let { historyTraining(it) }
             val added=after.players.filter { p -> p.playing && before?.players?.any { it.userId==p.userId && it.playing }!=true }
             "Добавил игроков: ${added.size} · "+added.take(3).joinToString(", ") { shortName(it.userId) }+if(added.size>3) ", ещё ${added.size-3}" else ""
         }
         "ChangeAttendance", "SaveAttendance" -> {
-            val after = state.json.decodeFromString<TrainingRecord>(a.after)
-            val before = a.before?.let { state.json.decodeFromString<TrainingRecord>(it) }
+            val after = historyTraining(a.after)
+            val before = a.before?.let { historyTraining(it) }
             val changed = after.players.filter { p -> before?.players?.find { it.userId == p.userId } != p }
             changed.joinToString("\n") { p ->
                 val old=before?.players?.find { it.userId==p.userId }
@@ -518,7 +526,6 @@ class Screens(private val service: SettlementService, private val state: Interac
         fun phase(value: TrainingPhase) = when (value) {
             TrainingPhase.OPEN -> "Открыта"
             TrainingPhase.CLOSED -> "Учтена"
-            TrainingPhase.REVIEW -> "Уточнение"
             TrainingPhase.CANCELLED -> "Отменена"
         }
         fun signed(value: Long) = if (value > 0) "+$value" else value.toString()

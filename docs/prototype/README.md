@@ -55,6 +55,7 @@ python3 docs/prototype/render-preview.py /tmp/tennis-prototype.html
 node docs/prototype/check.cjs /tmp/tennis-prototype.html
 node docs/prototype/check-extra.cjs /tmp/tennis-prototype.html
 node docs/prototype/check-calendar.cjs /tmp/tennis-prototype.html
+node docs/prototype/check-training-states.cjs /tmp/tennis-prototype.html
 ```
 
 Вместо Chromium Playwright можно задать путь к локальному Chrome через `CHROME_BIN`.
@@ -68,3 +69,9 @@ node docs/prototype/check-calendar.cjs /tmp/tennis-prototype.html
 
 Назначения доступны суперадминистратору по пути «Настройки группы» →
 «Администраторы группы», с возвратом в настройки.
+
+Общая карточка содержит «Открыть» / «Редактировать». Редактор доступен создателю
+и администратору; из персональных панелей ссылка убрана. Для учтённых и отменённых
+тренировок «Открыть» и старые кнопки участия показывают окно с «ОК» для любой роли.
+Только три статуса: Открыта, Учтена, Отменена. «Открыть заново» сразу снимает расчёт;
+повторный учёт применяет новый. Нейтральная подпись о балансе этой тренировки убрана.
