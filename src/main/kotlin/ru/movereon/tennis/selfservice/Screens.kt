@@ -122,7 +122,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                         if (player.paid == 0L) rows += listOf(change("Платил · 300 ₽", AttendanceChange.MARK_PAID))
                         else rows += listOf(change("−50 ₽", AttendanceChange.ADJUST_PAID, -50), change("+50 ₽", AttendanceChange.ADJUST_PAID, 50))
                         if (!inGroup) row("Другая сумма", next("ask_paid", target = target))
-                        if(player.playing) rows += listOf(change("Не играл · оплату сохранить", AttendanceChange.LEAVE))
+                        if(player.playing) rows += listOf(change("Не участвую", AttendanceChange.LEAVE))
                     }
                     if (draft != null) {
                         if (draft.expected==stored) row("Всё правильно",next("save_attendance",target=target,option=state.draftSignature(draft)))

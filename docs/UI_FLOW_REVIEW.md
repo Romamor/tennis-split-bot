@@ -26,7 +26,7 @@ flowchart TD
     Time --> Save[Немедленное сохранение и обновление карточек]
     Payment --> Save
     Guests --> Save
-    Joined -->|Не участвую| Leave[Участие и гости убраны, оплата сохранена]
+    Joined -->|Не участвую| Leave[Строка участника, время, гости и оплата удалены]
     Personal -->|Закрыть| Public
     Personal -->|Редактировать: права отозваны| EditError[Ошибка в группе: ОК]
     EditError -->|ОК| Personal

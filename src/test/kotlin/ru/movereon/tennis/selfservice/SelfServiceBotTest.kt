@@ -294,11 +294,14 @@ class SelfServiceBotTest {
         assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.contains("Статус: Открыта"))
     }
 
-    @Test fun `admin can correct a non-playing payers amount without rejoining them`() {
-        setup();create();join(2,60);pay(2);panelClick(2,"Не участвую")
-        legacyRoster(1);click(1,"User 2");click(1,"Другая сумма");message(1,"450");click(1,"Всё правильно")
-        val player=bot.service.trainings(Access(-1,1)).items.single().players.single()
-        assertFalse(player.playing);assertEquals(450,player.paid);assertEquals(0,player.minutes)
+    @Test fun `admin managed leave removes the player payment and guests`() {
+        setup();create();join(2,60);pay(2);panelClick(2,"Добавить гостя")
+        click(1,"Управление игроками");click(1,"User 2");click(1,"Не участвую");bot.maintain()
+        assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.isEmpty())
+        assertFalse(publicCard().text!!.contains("User 2"))
+        assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("Оплата") })
+        click(1,"Назад")
+        assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("User 2") })
     }
 
     @Test fun `payment increment overflow reports an error without crashing or changing financial data`() {
@@ -757,11 +760,10 @@ class SelfServiceBotTest {
         val panel=ephemeralMessages.getValue(-1L to 2L)
         assertTrue(panel.keyboard!!.rows.flatten().any { it.text.contains("Время") })
         panelClick(2,"Не участвую");bot.maintain()
-        val row=bot.service.trainings(Access(-1,1)).items.single().players.single { it.userId==2L }
-        assertFalse(row.playing);assertEquals(0,row.minutes);assertEquals(300,row.paid)
-        assertTrue(publicCard().text!!.contains("User 2 | 0 ч | 300 ₽ | +300 ₽"))
+        assertTrue(bot.service.trainings(Access(-1,1)).items.single().players.none { it.userId==2L })
+        assertFalse(publicCard().text!!.contains("User 2"))
         assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 3L).text)
-        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Оплата") })
+        assertFalse(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Оплата") })
         assertEquals(1,fake.sent.count { it.chat.id==-1L })
     }
 
@@ -887,7 +889,7 @@ class SelfServiceBotTest {
         val t=bot.service.trainings(Access(-1,2)).items.single()
         assertEquals(90,t.players.single { it.userId==2L }.minutes);assertEquals(0,t.players.single { it.userId==3L }.minutes)
         click(2,"Назад");click(2,"Не участвую")
-        assertFalse(bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.playing)
+        assertTrue(bot.service.training(Access(-1,2),t.id).players.none { it.userId==2L })
         click(2,"Присоединиться")
         assertTrue(bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.playing)
         assertEquals(0,bot.service.training(Access(-1,2),t.id).players.single { it.userId==2L }.minutes)

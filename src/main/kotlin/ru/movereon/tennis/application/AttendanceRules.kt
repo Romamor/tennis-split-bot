@@ -9,7 +9,7 @@ internal fun changeAttendance(row: Attendance, command: SettlementCommand.Change
         catch(_:ArithmeticException) { throw AccountingException(ErrorCode.OUT_OF_RANGE,"Слишком большое значение") }
     val changed=when (command.change) {
         AttendanceChange.JOIN -> if(row.playing) row else row.copy(playing=true,minutes=0)
-        AttendanceChange.LEAVE -> row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0)
+        AttendanceChange.LEAVE -> row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0,paid=0)
         AttendanceChange.LEAVE_AND_CLEAR_PAYMENT -> {
             checkAccounting(row.paid==command.value,ErrorCode.STALE_VERSION,"Оплата изменилась. Открой форму заново")
             row.copy(playing=false,minutes=0,guestMinutes=0,guestCount=0,paid=0)
@@ -51,4 +51,3 @@ internal fun changeAttendance(row: Attendance, command: SettlementCommand.Change
     }
     return if(changed==row) row else changed.copy(guestMinutes=if(changed.guestCount>0) changed.minutes else 0)
 }
-

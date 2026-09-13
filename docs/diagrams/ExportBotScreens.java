@@ -47,7 +47,7 @@ class ExportBotScreens {
   phase("other","CANCELLED");cap("my_cancelled","my_training","other");phase("other","OPEN");capture("public","public","other","",null,true,null);capture("personal_before","participation","other","",null,true,null);
   attendance("other",true,0,0,0);capture("personal_joined","participation","other","",null,true,null);capture("personal_time","participation_time","other","",null,true,null);capture("personal_payment","participation_payment","other","",null,true,null);
   attendance("other",true,60,350,1);capture("personal_guest","participation","other","",null,true,null);
-  attendance("other",false,0,350,0);capture("personal_left","participation","other","",null,true,null);capture("personal_owner","participation","own","",null,true,null);
+  run(auth,new SettlementCommand.ChangeAttendance("other",user,AttendanceChange.LEAVE,0));capture("personal_left","participation","other","",null,true,null);capture("personal_owner","participation","own","",null,true,null);
   sql("DELETE FROM training_players WHERE training_id='other' AND user_id=?",user);
   for(String kind:List.of("title","date","time","group","ready"))capture("new_"+kind,"form","","",form(kind,"","\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
   cap("finance","finance","");cap("finance_debtors","finance_debtors","");

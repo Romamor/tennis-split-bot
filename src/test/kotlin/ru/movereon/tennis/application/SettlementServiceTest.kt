@@ -283,23 +283,43 @@ class SettlementServiceTest {
         assertEquals(1, s.transfer(admin, "represented").createdBy)
     }
 
-    @Test fun `leaving keeps payment and guest allocation stays stable`() {
+    @Test fun `leaving removes payment while remaining guest allocation stays stable`() {
         val s = setup(); s.create()
         s.joinForHour(1)
         s.change(1, AttendanceChange.MARK_PAID)
         s.change(1, AttendanceChange.LEAVE)
-        assertEquals(300,s.training(admin,"t").players.single().paid)
-        s.change(1, AttendanceChange.LEAVE_AND_CLEAR_PAYMENT,300)
+        assertTrue(s.training(admin,"t").players.isEmpty())
         s.joinForHour(2)
         s.change(2, AttendanceChange.GUEST, 1)
         s.joinForHour(3)
         s.change(2, AttendanceChange.SET_PAID,300)
         s.finish()
         assertEquals(mapOf(2L to 100L, 3L to -100L), s.balances(admin))
-        assertEquals(3, s.training(admin, "t").players.size)
+        assertEquals(2, s.training(admin, "t").players.size)
         assertEquals(0, s.roster(admin).items.single { it.account.id == 1L }.attendance)
         s.reopen(); s.finish()
         assertEquals(mapOf(2L to 100L, 3L to -100L), s.balances(admin))
+    }
+
+    @Test fun `leaving removes only this training entry and preserves transfers and audit`() {
+        val s=setup();s.create();s.create("another")
+        s.joinForHour(2,member);s.change(2,AttendanceChange.SET_PAID,350,member)
+        s.change(2,AttendanceChange.ADJUST_GUESTS,1,member)
+        s.run(SettlementCommand.ChangeAttendance("another",2,AttendanceChange.JOIN),member)
+        s.create("t",other);s.change(2,AttendanceChange.JOIN,who=Access(-2,2))
+        s.run(SettlementCommand.RecordTransfer("separate-transfer",2,1,100,"2026-09-09"),member)
+        val balances=s.balances(member);val before=s.history(member).total
+        val another=s.training(member,"another");val otherGroup=s.training(Access(-2,2),"t")
+        s.change(2,AttendanceChange.LEAVE,who=member)
+        assertTrue(s.training(member,"t").players.isEmpty())
+        assertEquals(before+1,s.history(member).total)
+        assertEquals(balances,s.balances(member));assertEquals(100,s.transfer(member,"separate-transfer").amount)
+        assertEquals(another,s.training(member,"another"));assertEquals(otherGroup,s.training(Access(-2,2),"t"))
+        s.change(2,AttendanceChange.LEAVE,who=member)
+        assertEquals(before+1,s.history(member).total)
+        s.change(2,AttendanceChange.JOIN,who=member)
+        val fresh=s.training(member,"t").players.single()
+        assertTrue(fresh.playing);assertEquals(0,fresh.paid);assertEquals(0,fresh.minutes);assertEquals(0,fresh.guestCount)
     }
 
     @Test fun `failed financial overflow rolls back the record audit and ledger together`() {
@@ -313,7 +333,7 @@ class SettlementServiceTest {
         s.database.verify()
     }
 
-    @Test fun `payment can survive leaving and stale removal cannot clear a changed payment`() {
+    @Test fun `stale explicit payment removal cannot clear a changed payment`() {
         val s=setup();s.create()
         for (change in listOf(AttendanceChange.MARK_PAID,AttendanceChange.ADJUST_PAID)) {
             assertFailsWith<AccountingException> { s.change(2,change,50,member) }
