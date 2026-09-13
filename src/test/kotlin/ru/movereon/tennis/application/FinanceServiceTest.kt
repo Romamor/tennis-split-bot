@@ -79,6 +79,34 @@ class FinanceServiceTest {
         assertTrue(s.balances(payer).values.all { it==0L })
         assertTrue(s.database.verify().contains("целостность в порядке"))
     }
+    @Test fun `a newly accounted training offers only the new amount while earlier payment awaits receipt`() {
+        setup()
+        run(SettlementCommand.SendPayment("earlier",1,150),payer)
+        val earlier=s.transfer(recipient,"earlier")
+        run(SettlementCommand.CreateTraining("next","Следующая тренировка","2026-09-14","18:30"))
+        run(SettlementCommand.AddPlayers("next",1,listOf(1,2)))
+        for(u in 1L..2L) run(SettlementCommand.ChangeAttendance("next",u,AttendanceChange.ADJUST_MINUTES,60))
+        run(SettlementCommand.ChangeAttendance("next",1,AttendanceChange.SET_PAID,500))
+        run(SettlementCommand.FinishTraining("next",s.training(recipient,"next").version))
+        assertEquals(mapOf(1L to 400L,2L to -400L),s.balances(payer))
+        val proposal=s.paymentSuggestions(payer).items.single()
+        assertEquals("1",proposal.to.value);assertEquals(250L,proposal.amount)
+        assertEquals(earlier,s.transfer(recipient,"earlier"))
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("stale",1,150),payer) }
+        run(SettlementCommand.SendPayment("later",1,250),payer)
+        assertEquals(0,s.paymentSuggestions(payer).total)
+        assertEquals(setOf(150L,250L),s.financePayments(recipient,incomingOnly=true).items.map { it.amount }.toSet())
+        assertEquals(2,s.financePayments(recipient,incomingOnly=true).total)
+        // Receipt order must not merge the records or reserve the older amount twice.
+        run(SettlementCommand.ReceivePayment("later"))
+        assertEquals(mapOf(1L to 150L,2L to -150L),s.balances(payer))
+        assertEquals(0,s.paymentSuggestions(payer).total)
+        assertEquals(earlier,s.transfer(recipient,"earlier"))
+        run(SettlementCommand.ReceivePayment("earlier"))
+        assertTrue(s.balances(payer).values.all { it==0L })
+        assertEquals(2,s.financePayments(recipient).total)
+        assertTrue(s.financePayments(recipient).items.all { it.status==PaymentStatus.ACTIVE })
+    }
     @Test fun `sending and receiving require current membership even for administrators`() {
         setup();s.rememberMembership(-1,2,false)
         assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("p",1,150),Access(-1,2,true)) }

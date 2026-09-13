@@ -41,7 +41,7 @@ internal object TrainingCard {
             append("<h3>${escape(t.title)}</h3><p>${escape(whenText)}<br>Статус: ${escape(Screens.phase(t.phase))}</p>")
             if(rows.isEmpty()) append("<p>Пока никто не зарегался</p>")
             else {
-                append("<table bordered striped compact><tr><th>Участник</th><th>Время</th><th>Оплата</th><th>Баланс</th></tr>")
+                append(RichTable.OPEN+"<tr><th>Участник</th><th>Время</th><th>Оплата</th><th>Баланс</th></tr>")
                 rows.forEach {
                     append("<tr><td><a href=\"tg://user?id=${it.user}\">${escape(it.name)}</a></td>")
                     append("<td align=\"right\">${Screens.hours(it.minutes)}</td><td align=\"right\">${it.paid} ₽</td>")

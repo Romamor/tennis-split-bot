@@ -54,7 +54,7 @@ internal class FinanceScreens(private val service:SettlementService) {
     }
     private fun table(title:String,headers:List<String>,values:List<List<String>>):ScreenContent {
         val plain=title+if(values.isEmpty()) "\nСписок пуст." else "\n"+(listOf(headers)+values).joinToString("\n") { it.joinToString(" | ") }
-        val html="<h3>${TrainingCard.escape(title)}</h3>"+if(values.isEmpty()) "<p>Список пуст.</p>" else "<table><tr>"+headers.joinToString("") { "<th>${TrainingCard.escape(it)}</th>" }+"</tr>"+values.joinToString("") { row -> "<tr>"+row.joinToString("") { "<td>${TrainingCard.escape(it)}</td>" }+"</tr>" }+"</table>"
+        val html="<h3>${TrainingCard.escape(title)}</h3>"+if(values.isEmpty()) "<p>Список пуст.</p>" else RichTable.OPEN+"<tr>"+headers.joinToString("") { "<th>${TrainingCard.escape(it)}</th>" }+"</tr>"+values.joinToString("") { row -> "<tr>"+row.mapIndexed { index,value -> "<td${if(headers[index]=="Сумма") " align=\"right\"" else ""}>${TrainingCard.escape(value)}</td>" }.joinToString("")+"</tr>" }+"</table>"
         return ScreenContent(plain,html)
     }
     companion object {

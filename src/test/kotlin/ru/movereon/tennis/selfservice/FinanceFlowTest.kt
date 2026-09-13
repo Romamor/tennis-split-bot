@@ -35,12 +35,12 @@ class FinanceFlowTest {
         return TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),source,button.callbackData)).also(bot::handle)
     }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"💰 Мои финансы");click(u,group) }
-    private fun seedBalance() {
-        run(SettlementCommand.CreateTraining("t","Теннис","2026-09-13","18:30"))
-        run(SettlementCommand.AddPlayers("t",1,listOf(1,2)))
-        for(u in 1L..2L) run(SettlementCommand.ChangeAttendance("t",u,AttendanceChange.ADJUST_MINUTES,60))
-        run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
-        run(SettlementCommand.FinishTraining("t",bot.service.training(Access(-1,1),"t").version))
+    private fun seedBalance(id:String="t",paid:Long=300) {
+        run(SettlementCommand.CreateTraining(id,"Теннис","2026-09-13","18:30"))
+        run(SettlementCommand.AddPlayers(id,1,listOf(1,2)))
+        for(u in 1L..2L) run(SettlementCommand.ChangeAttendance(id,u,AttendanceChange.ADJUST_MINUTES,60))
+        run(SettlementCommand.ChangeAttendance(id,1,AttendanceChange.SET_PAID,paid))
+        run(SettlementCommand.FinishTraining(id,bot.service.training(Access(-1,1),id).version))
     }
     @Test fun `send and receive screens follow the diagram and return to the right menus`() {
         setup();seedBalance();open(2)
@@ -53,13 +53,30 @@ class FinanceFlowTest {
         assertEquals("Нет доступных платежей",latest(2).text)
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
         click(2,"⬅️ Назад");click(2,"История платежей")
-        assertTrue(latest(2).text!!.contains("В процессе"));assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table>"))
+        assertTrue(latest(2).text!!.contains("В процессе"));assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
         open(1);click(1,"Принять платеж");click(1,"Игрок 2 · 150 ₽ · 13.09.2026")
         assertEquals("Нет доступных платежей",latest(1).text)
         assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
         click(1,"⬅️ Назад");click(1,"История платежей");assertTrue(latest(1).text!!.contains("Выполнен"))
         click(1,"⬅️ Назад");click(1,"Назад");assertEquals("Что хочешь сделать?",latest(1).text)
         assertTrue(fake.messages.values.none { it.chat.id<0 })
+    }
+    @Test fun `pending payment stays out of sends while a later training creates a separate suggestion`() {
+        setup();seedBalance();open(2);click(2,"Отправить платеж")
+        click(2,"Игрок 1 · 150 ₽");click(2,"Платеж отправлен · 150 ₽")
+        assertEquals("Нет доступных платежей",latest(2).text)
+        seedBalance("next",500)
+        click(2,"⬅️ Назад");click(2,"Отправить платеж")
+        assertEquals(listOf("Игрок 1 · 250 ₽"),rows(2).flatten().filter { it.startsWith("Игрок ") })
+        click(2,"Игрок 1 · 250 ₽");click(2,"Платеж отправлен · 250 ₽")
+        assertEquals("Нет доступных платежей",latest(2).text)
+        open(1);click(1,"Принять платеж")
+        assertTrue(rows(1).flatten().containsAll(listOf("Игрок 2 · 150 ₽ · 13.09.2026","Игрок 2 · 250 ₽ · 13.09.2026")))
+        click(1,"Игрок 2 · 250 ₽ · 13.09.2026")
+        assertTrue(rows(1).flatten().contains("Игрок 2 · 150 ₽ · 13.09.2026"))
+        click(1,"Игрок 2 · 150 ₽ · 13.09.2026")
+        assertEquals("Нет доступных платежей",latest(1).text)
+        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
     }
     @Test fun `empty lists and another group never show payments from the first group`() {
         setup();seedBalance();run(SettlementCommand.SendPayment("p",1,150),Access(-1,2))
@@ -80,6 +97,7 @@ class FinanceFlowTest {
         assertEquals(5,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
         for(u in 3L..11L) run(SettlementCommand.RecordTransfer("reverse$u",2,u,60,"2026-09-13"),Access(-1,2))
         open(2);click(2,"Должники")
+        assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
         assertEquals(6,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
         assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
         assertEquals(5,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
