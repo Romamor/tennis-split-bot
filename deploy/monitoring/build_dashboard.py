@@ -42,8 +42,33 @@ panel('Возраст дополнительных показателей',[
 panel('Перезапуски и OOM контейнера',[
  ('Перезапуски','vds_bot_restart_count'+S),('Последняя остановка из-за OOM','vds_bot_oom_killed'+S)],12,28,12,6,'none')
 
+P.append({'id':len(P)+1,'title':'VPN · состояние, ресурсы и трафик','type':'row','collapsed':False,'panels':[],'gridPos':{'x':0,'y':34,'w':24,'h':1}})
+panel('Состояние VPN',[('{{vpn}}','vds_vpn_running'+S)],0,35,12,4,'none','stat','1 — контейнер запущен; доступность туннеля снаружи этим не проверяется.')
+P[-1]['fieldConfig']['defaults']['mappings']=[{'type':'value','options':{'0':{'text':'Остановлен','color':'red'},'1':{'text':'Запущен','color':'green'}}}]
+panel('Сбор метрик VPN',[('{{vpn}}','vds_vpn_collector_success'+S)],12,35,12,4,'none','stat','0 — не удалось прочитать показатели; это не нулевое потребление ресурсов.')
+P[-1]['fieldConfig']['defaults']['mappings']=[{'type':'value','options':{'0':{'text':'Ошибка чтения','color':'red'},'1':{'text':'ОК','color':'green'}}}]
+panel('Память VPN',[
+ ('{{vpn}} · RAM','vds_vpn_memory_bytes'+S),('{{vpn}} · swap','vds_vpn_swap_bytes'+S)],0,39,12,8,'bytes')
+panel('CPU VPN',[
+ ('{{vpn}}','100 * rate(vds_vpn_cpu_seconds_total'+S+'[5m])')],12,39,12,8,'percent',description='100% соответствует одному логическому ядру. Сетевую работу ядра Linux нужно сопоставлять с общей загрузкой CPU.')
+panel('Трафик туннелей VPN',[
+ ('{{vpn}} · принято','rate(vds_vpn_receive_bytes_total'+S+'[5m])'),
+ ('{{vpn}} · передано','rate(vds_vpn_transmit_bytes_total'+S+'[5m])')],0,47,12,8,'Bps',description='Байт/с на одном выбранном туннельном интерфейсе. Внешний зашифрованный трафик повторно не суммируется. Это текущий трафик, не проверка максимальной скорости VPN.')
+panel('Сеть виртуалки',[
+ ('{{device}} · принято','rate(node_network_receive_bytes_total'+S+'[5m])'),
+ ('{{device}} · передано','rate(node_network_transmit_bytes_total'+S+'[5m])')],12,47,12,8,'Bps',description='Трафик внешних интерфейсов хоста. Включает VPN, бота и мониторинг. Его не нужно складывать с графиком туннелей.')
+panel('Ошибки и потери на интерфейсах VPN',[
+ ('{{vpn}} · ошибки вход','rate(vds_vpn_receive_errors_total'+S+'[5m])'),
+ ('{{vpn}} · ошибки выход','rate(vds_vpn_transmit_errors_total'+S+'[5m])'),
+ ('{{vpn}} · отброшено вход','rate(vds_vpn_receive_drops_total'+S+'[5m])'),
+ ('{{vpn}} · отброшено выход','rate(vds_vpn_transmit_drops_total'+S+'[5m])')],0,55,12,8,'ops',description='Ошибки и отброшенные пакеты интерфейса в секунду. Не измеряет потери на всём пути до клиента.')
+panel('Перезапуски и OOM VPN',[
+ ('{{vpn}} · счётчик перезапусков Docker','vds_vpn_restarts_total'+S),
+ ('{{vpn}} · последняя остановка OOM','vds_vpn_oom_killed'+S),
+ ('{{vpn}} · OOM текущей cgroup','vds_vpn_oom_kills_total'+S)],12,55,12,8,'none',description='Счётчики сбрасываются при пересоздании контейнера / cgroup. Короткое событие между опросами может не попасть в снимок.')
+
 dashboard={'__inputs':[{'name':'DS_METRICS','label':'Grafana Cloud Metrics','description':'Выбери Prometheus-источник метрик своего облака.','type':'datasource','pluginId':'prometheus','pluginName':'Prometheus'}],
-           'id':None,'uid':'vds-memory','title':'VDS · память и VMware','tags':['vds','memory'],'timezone':'browser','schemaVersion':39,'version':1,'editable':True,'refresh':'1m',
+           'id':None,'uid':'vds-memory','title':'VDS · память и VMware','tags':['vds','memory'],'timezone':'browser','schemaVersion':39,'version':2,'editable':True,'refresh':'1m',
            'time':{'from':'now-6h','to':'now'},'panels':P,'templating':{'list':[{'name':'instance','label':'Виртуалка','type':'query','datasource':DS,'query':{'query':'label_values(node_memory_MemTotal_bytes{job="integrations/node_exporter"}, instance)','refId':'instance'},'refresh':1,'multi':False,'includeAll':False,'current':{'selected':True,'text':'vds-1','value':'vds-1'}}]}}
 Path(__file__).with_name('vds-memory.dashboard.json').write_text(json.dumps(dashboard,ensure_ascii=False,indent=2)+'\n')
 print('Dashboard panels:',len(P))

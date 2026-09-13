@@ -4,7 +4,10 @@ logging {
 }
 
 prometheus.exporter.unix "host" {
-  set_collectors = ["cpu", "loadavg", "meminfo", "vmstat", "pressure", "stat", "filesystem", "diskstats", "time", "textfile"]
+  set_collectors = ["cpu", "loadavg", "meminfo", "vmstat", "pressure", "stat", "filesystem", "diskstats", "netdev", "time", "textfile"]
+  netdev {
+    device_exclude = "^(lo|veth.*|docker.*|br-.*|amn.*)$"
+  }
   textfile {
     directory = "/var/lib/vds-monitoring/textfile"
   }
