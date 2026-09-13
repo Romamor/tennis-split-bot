@@ -10,12 +10,12 @@ internal data class ScreenContent(val text:String,val html:String?=null)
 
 /** Cards, editor and shared live attendance controls. No Telegram calls or financial writes. */
 internal class TrainingScreens(private val service:SettlementService,private val state:InteractionStore) {
-    fun render(layout:ScreenLayout,a:Access?,personRow:(Long,String,ScreenAction)->Unit,label:(Long)->String):ScreenContent = with(layout) {
+    fun render(layout:ScreenLayout,a:Access?,personRow:(Long,String,ScreenAction)->Unit,label:(Long)->String,account:(Long)->Account):ScreenContent = with(layout) {
         var richHtml:String?=null
         val text=when(action.kind) {
             "training", "public", "my_training" -> {
                 val t = service.training(requireNotNull(a), action.id)
-                val content=TrainingCard.render(t,service::account)
+                val content=TrainingCard.render(t,account)
                 richHtml=content.html
                 val index=0
                 var body=content.text
@@ -80,7 +80,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
             "participation", "participation_time", "participation_payment" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 service.requireOpen(t)
-                val content=TrainingCard.render(t,service::account)
+                val content=TrainingCard.render(t,account)
                 richHtml=content.html
                 val target=action.user.takeIf { it>0 } ?: a.userId
                 checkAccounting(target==a.userId || service.canEdit(a,t),ErrorCode.FORBIDDEN,"Можно менять только свои данные")

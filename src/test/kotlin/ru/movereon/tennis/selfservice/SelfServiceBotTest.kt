@@ -602,19 +602,18 @@ class SelfServiceBotTest {
         assertEquals(2, fake.sent.count { it.chat.id == -1L })
     }
 
-    @Test fun `manual amount and real transfer confirmation work without changing another user`() {
-        setup(); create(); open(2)
-        click(2,"Мои расчёты"); click(2, "Записать перевод"); click(2, "User 1"); click(2, "Я отправил")
-        message(2, "450")
-        assertEquals(emptyMap(), bot.service.balances(Access(-1, 2)))
-        val recorded = click(2, "Деньги переданы")
-        bot.handle(recorded)
-        assertEquals(mapOf(1L to -450L, 2L to 450L), bot.service.balances(Access(-1, 2)))
-        assertNull(bot.state.form(2, 2))
-        click(2, "Уточнить")
-        assertEquals(mapOf(1L to 0L, 2L to 0L), bot.service.balances(Access(-1, 2)))
-        click(2, "Всё верно")
-        assertEquals(mapOf(1L to -450L, 2L to 450L), bot.service.balances(Access(-1, 2)))
+    @Test fun `payment is posted only after recipient acceptance without duplicate ledger entries`() {
+        setup();create();join(1,60);join(2,60);pay(1)
+        val a=Access(-1,1,true);val t=bot.service.trainings(a).items.single()
+        bot.service.execute(a,"finish-finance",SettlementCommand.FinishTraining(t.id,t.version))
+        open(2);click(2,"Мои финансы");click(2,"Отправить платеж");click(2,"User 1")
+        val sent=click(2,"Платеж отправлен");bot.handle(sent)
+        assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(a))
+        assertEquals("Нет доступных платежей",latest(2).text)
+        open(1);click(1,"Мои финансы");click(1,"Принять платеж")
+        val received=click(1,"User 2");bot.handle(received)
+        assertTrue(bot.service.balances(a).values.all { it==0L })
+        assertEquals(1,bot.service.history(a).items.count { it.kind=="ReceivePayment" })
     }
 
     @Test fun `active and permanent buttons survive weeks replaced buttons expire and groups stay separate`() {
@@ -981,24 +980,13 @@ class SelfServiceBotTest {
         assertEquals(fresh,bot.state.attendanceDraft(1,-1));assertEquals(count,bot.service.history(Access(-1,1)).total)
     }
 
-    @Test fun `member menu includes training creation and transfer amount edits preserve review`() {
+    @Test fun `member menu opens group scoped finances with empty payment lists`() {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
-        assertEquals(listOf("🏓 Мои тренировки","💰 Мои расчёты","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
-        click(2,"Мои расчёты");click(2,"Записать перевод");click(2,"User 1");click(2,"Я получил")
-        message(2,"300");click(2,"Деньги переданы")
-        val original=bot.service.transfers(Access(-1,2)).items.single()
-        click(2,"Уточнить перевод");click(2,"Исправить сумму");message(2,"450");click(2,"Сохранить сумму")
-        val edited=bot.service.transfer(Access(-1,2),original.id)
-        assertEquals(450,edited.amount);assertEquals(PaymentStatus.REVIEW,edited.status)
-        click(2,"История изменений")
-        assertTrue(latest(2).text!!.contains("300 ₽ → 450 ₽"));assertFalse(latest(2).text!!.contains(" UTC"))
-        click(2,"Назад")
-        assertTrue(bot.service.balances(Access(-1,2)).values.all { it==0L })
-        click(2,"Всё верно")
-        assertEquals(mapOf(1L to 450L,2L to -450L),bot.service.balances(Access(-1,2)))
-        click(2,"Назад");click(2,"Назад");click(2,"Баланс группы")
-        assertTrue(latest(2).text!!.contains("User 2 · баланс: -450 ₽"))
-        assertFalse(Regex("долг|долж",RegexOption.IGNORE_CASE).containsMatchIn(latest(2).text!!))
+        assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
+        click(2,"Мои финансы");click(2,"Первая")
+        assertEquals(listOf(listOf("Отправить платеж","Принять платеж"),listOf("История платежей"),listOf("Должники"),listOf("Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        click(2,"Отправить платеж");assertEquals("Нет доступных платежей",latest(2).text)
+        click(2,"Назад");click(2,"Принять платеж");assertEquals("Нет доступных платежей",latest(2).text)
     }
 
     @Test fun `back warns on unsaved selection and continues or discards without writing history`() {
@@ -1160,17 +1148,17 @@ class SelfServiceBotTest {
         assertEquals(count,bot.service.history(Access(-1,1)).total)
     }
 
-    @Test fun `balance filter toggles do not accumulate an unbounded return chain`() {
-        setup();open(2);click(2,"Мои расчёты");click(2,"Баланс группы")
+    @Test fun `finance list navigation does not accumulate an unbounded return chain`() {
+        setup();open(2);click(2,"Мои финансы");click(2,"Первая")
         val sizes=mutableListOf<Int>()
         repeat(25) {
-            click(2,"Нулевой баланс");click(2,"Баланс группы")
-            val button=latest(2).keyboard!!.rows.flatten().first { it.text.contains("Нулевой баланс") }
+            click(2,"Должники");click(2,"Назад")
+            val button=latest(2).keyboard!!.rows.flatten().first { it.text=="Должники" }
             val action=bot.state.button(button.callbackData!!.removePrefix("n:"))!!.action
             sizes+=bot.state.json.encodeToString(ScreenAction.serializer(),action).length
         }
         assertEquals(1,sizes.distinct().size)
-        click(2,"Назад");assertTrue(latest(2).text!!.contains("Мой баланс"))
+        click(2,"Назад");assertEquals("Что хочешь сделать?",latest(2).text)
     }
 
 }

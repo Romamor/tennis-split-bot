@@ -1,0 +1,15 @@
+const {chromium}=require('playwright');
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
+ const page=await browser.newPage({viewport:{width:360,height:850},colorScheme:'dark'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(require('node:url').pathToFileURL(require('node:path').resolve(process.argv[2])).href);
+ const f=page.frameLocator('iframe'),click=async name=>f.getByRole('button',{name,exact:true}).click(),text=()=>f.locator('#tennis-screen').innerText(),assert=(v,m)=>{if(!v)throw Error(m)};
+ await click('У бота');await click('➕ Создать тренировку');await f.getByRole('textbox',{name:'Ответ'}).fill('Расчёт вдвоём');await click('Отправить');await click('Продолжить · 13.09.2026');await click('Продолжить · 18:30');await click('Теннис по субботам');await click('Опубликовать');await click('Редактировать');await click('Добавить игрока');await click('Алексей');await click('Борис');await click('⬅️ Назад');await click('Управление игроками');
+ for(const name of ['Алексей','Борис']) { await click(name);await click('Время · 0 ч');await click('+1 ч');await click('⬅️ Назад');if(name==='Борис'){await click('Оплата · 0 ₽');await click('+100 ₽');await click('⬅️ Назад')}await click('⬅️ Назад') }
+ await click('⬅️ Назад');await click('Изменить статус');await click('Завершена');await click('Меню');
+ await click('💰 Мои финансы');await click('Теннис по субботам');await click('Отправить платеж');await click('Борис · 50 ₽');await click('⬅️ Назад');await click('Борис · 50 ₽');await click('Платеж отправлен · 50 ₽');assert((await text()).includes('Нет доступных платежей'),'pending amount must not be suggested again');await click('⬅️ Назад');await click('История платежей');assert((await text()).includes('В процессе'),'pending history');
+ await page.screenshot({path:require('node:path').join(require('node:os').tmpdir(),'tennis-finance-mobile.png')});
+ assert(await f.locator('.tg-finance-table').evaluate(e=>e.scrollWidth<=e.closest('#tennis-screen').clientWidth),'finance table fits mobile');
+ await f.locator('#tennis-role').selectOption('admin');await click('💰 Мои финансы');await click('Вечерний теннис');await click('Принять платеж');assert((await text()).includes('Нет доступных платежей'),'group isolation');await click('Меню');await click('💰 Мои финансы');await click('Теннис по субботам');await click('Принять платеж');await click('Алексей · 50 ₽ · 13.09.2026');assert((await text()).includes('Нет доступных платежей'),'receipt removed');await click('⬅️ Назад');await click('История платежей');assert((await text()).includes('Выполнен'),'completed history');await click('⬅️ Назад');await click('Должники');assert((await text()).includes('Список пуст.'),'settled');
+ assert(!errors.length,errors.join('\n'));console.log('PASS: finance send, receipt, reservation, statuses, returns, group isolation, mobile table');await browser.close();
+})();

@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter
 /** Navigation lists are paged; a training card shows its complete roster. */
 class Screens(private val service: SettlementService, private val state: InteractionStore, private val botName: String) {
     private val trainingScreens=TrainingScreens(service,state)
+    private val financeScreens=FinanceScreens(service)
     data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
@@ -22,9 +23,10 @@ class Screens(private val service: SettlementService, private val state: Interac
     }
     private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>, groupOptions:List<GroupOption>):Output {
         return with(ScreenLayout(action,state,botName,scope,user,inGroup)) {
-        val group = if (action.group < 0) service.group(action.group) else null
         val a = access
         val accounts=if(a!=null) service.groupAccounts(a) else emptyList()
+        val accountCache=accounts.associateBy { it.id }.toMutableMap()
+        fun account(id:Long)=accountCache.getOrPut(id) { service.account(id) }
         val collisions=accounts.groupBy { clean(it.name,36).lowercase() }.filterValues { it.size>1 }
         val labels=accounts.associate { account ->
             account.id to (clean(account.name,36)+if(clean(account.name,36).lowercase() in collisions && !account.username.isNullOrBlank()) " · @${clean(account.username,32)}" else "")
@@ -60,7 +62,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             "menu" -> {
                 requireNotNull(user)
                 row("🏓 Мои тренировки",ScreenAction("my_trainings",0))
-                row("💰 Мои расчёты",ScreenAction("groups",0,option="debts"))
+                row("💰 Мои финансы",ScreenAction("groups",0,option="finance"))
                 row("➕ Создать тренировку",ScreenAction("new",0))
                 row("⚙️ Настройки",ScreenAction("settings",0))
                 if(groupOptions.any { it.admin }) row("📋 Управление тренировками",ScreenAction("groups",0,option="manage"))
@@ -92,8 +94,12 @@ class Screens(private val service: SettlementService, private val state: Interac
                 menu()
                 (if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else ""
             }
+            in FinanceScreens.kinds -> {
+                val content=financeScreens.render(this,a,::account,::personRow)
+                richHtml=content.html;content.text
+            }
             in TrainingScreens.kinds -> {
-                val content=trainingScreens.render(this,a,::personRow,::label)
+                val content=trainingScreens.render(this,a,::personRow,::label,::account)
                 richHtml=content.html
                 content.text
             }
@@ -378,9 +384,10 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "history", "transfer_history" -> {
                 val p = service.history(requireNotNull(a), action.id.takeIf { it.isNotEmpty() && action.kind=="history" }, action.page,action.id.takeIf { action.kind=="transfer_history" })
+                val historyZone=ZoneId.of(service.group(action.group).timeZone)
                 pages(p.index, p.pages)
                 back(next(if(action.kind=="transfer_history") "transfer" else if (action.id.isEmpty()) "menu" else "training"))
-                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(ZoneId.of(requireNotNull(group).timeZone)).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${describe(it).take(330)}" }
+                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(historyZone).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${describe(it).take(330)}" }
             }
             else -> error("Unknown screen: ${action.kind}")
         }
@@ -422,6 +429,8 @@ class Screens(private val service: SettlementService, private val state: Interac
         "RemovePlayer" -> "Исключил игрока"
         "CancelTraining" -> "Отменил тренировку и снял её расчёт"
         "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
+        "SendPayment" -> "Отметил отправку платежа"
+        "ReceivePayment" -> "Подтвердил получение платежа"
         "RecordTransfer" -> "Записал перевод"
         "ChangeTransfer" -> "Изменил состояние перевода"
         "SetAdministrator" -> if (a.after == "true") "Назначил администратора бота" else "Снял назначение администратора"
@@ -448,7 +457,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         else -> "Изменение записи"
     }
     companion object {
-        val privateActions = setOf("training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = FinanceScreens.kinds + setOf("finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

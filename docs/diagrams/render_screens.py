@@ -15,6 +15,8 @@ titles={'my_training':'Моя тренировка · просмотр','my_clos
 categories=[('Участие в общем чате',['public','personal_before','personal_joined','personal_payment','personal_owner','personal_left','personal_guest','personal_time']),('Личное меню, создание и учёт',['groups','menu','mine','my_training','my_closed','my_cancelled','training_other','new_title','new_date','new_time','new_group','new_ready','training_own','preview','training_closed','mine_closed','history']),('Мои расчёты и запись перевода',['choose_debts','debts','people','direction','transfer_amount','transfer_ready','transfer_date','transfer_note','transfer_duplicate','balances','settled','profile']),('История и правка переводов',['transfers','transfer','edit_transfer_amount','edit_transfer_ready','edit_transfer_duplicate','transfer_review','transfer_cancelled','transfer_history','exit']),('Создатель / администратор: состав и ввод',['choose_manage','all','roster','player','paid','player_conflict','add_players','pick_players']),('Создатель / администратор: детали и состояния',['edit_title','edit_date','edit_time','edit_ready','training_review','preview_review','cancel','training_cancelled','training_failure','recover']),('Карточки и блокировка после завершения',['edit_denied','public_own','public_closed','alert_closed','public_cancelled','alert_cancelled']),('Настройки и снятие закрепа',['settings','training_settings','default_title','default_time','training_unpin_failure']),('Суперадминистратор: назначения',['choose_admins','administrators','candidates','role_member','role_admin','role_super','role_super_extra'])]
 titles.update({'add_player_list':'Добавление игрока','exclude_player_list':'Исключение игрока','manage_players':'Управление игроками','managed_participation':'Участие выбранного игрока','managed_participation_time':'Время выбранного игрока','managed_participation_payment':'Оплата выбранного игрока','pick_add_player':'Добавить через Telegram','status_open':'Статус открытой тренировки','status_closed':'Статус завершённой тренировки','status_cancelled':'Статус отменённой тренировки'})
 categories.insert(5,('Редактор: игроки и статусы',['add_player_list','exclude_player_list','manage_players','managed_participation','managed_participation_time','managed_participation_payment','pick_add_player','status_open','status_closed','status_cancelled']))
+titles.update({'choose_finance':'Группа для финансов','finance':'Мои финансы','finance_send':'Отправка платежа','finance_send_confirm':'Подтверждение отправки','finance_receive':'Принятие платежа','finance_history':'История платежей','finance_debtors':'Должники','finance_send_empty':'Нет доступных платежей для отправки','finance_receive_empty':'Нет платежей для принятия'})
+categories.insert(2,('Мои финансы: отправка и подтверждение',['choose_finance','finance','finance_send','finance_send_confirm','finance_receive','finance_history','finance_debtors','finance_send_empty','finance_receive_empty']))
 # Same-screen arrows indicate updating values; data in each screen is an illustrative snapshot.
 def resolve(key,b):
  a=b.get('target');label=b['text']
@@ -26,18 +28,21 @@ def resolve(key,b):
  if k=='add_player':return ['add_player_list']
  if k=='remove_player':return ['exclude_player_list']
  if k.startswith('participation') and (key.startswith('managed_') or key=='manage_players'):return ['managed_'+('participation' if k=='participation_change' else k)]
+ if k in ('finance','finance_send','finance_receive','finance_history','finance_debtors','finance_send_confirm'):return [k]
+ if k=='finance_send_save':return ['finance_send_empty']
+ if k=='finance_receive_save':return ['finance_receive_empty']
  if k=='menu':return ['menu']
  if k in ('settings','training_settings','default_time','default_title'):return [k]
  if k=='my_trainings':return ['mine']
  if k=='my_training':return ['my_training']
- if k=='select_group':return ['all' if opt=='manage' else 'administrators' if opt=='administrators' else 'debts']
+ if k=='select_group':return ['all' if opt=='manage' else 'administrators' if opt=='administrators' else 'finance']
  if k=='form_group_select':return ['new_ready']
  if k=='form_group_page':return ['new_group']
  if k=='form_back':return [{'new_date':'new_title','new_time':'new_date','new_group':'new_time','new_ready':'new_group'}[key]]
  if k=='form_cancel':return ['menu']
  if k in ('save_default_time','save_default_title'):return ['training_settings']
  if k in ('form_date_adjust','form_time_adjust'):return [key]
- if k=='groups':return ['choose_manage' if opt=='manage' else 'choose_admins' if opt=='administrators' else 'choose_debts']
+ if k=='groups':return ['choose_manage' if opt=='manage' else 'choose_admins' if opt=='administrators' else 'choose_finance']
  if k=='alert_back':return [opt]
  if k=='edit_training' and role==1 and id!='own':return ['edit_denied']
  if k=='edit_training':return ['training_closed' if key=='public_closed' else 'training_cancelled' if key=='public_cancelled' else 'training_own' if id=='own' else 'training_other']

@@ -14,7 +14,7 @@
 | Восстановление отменённой открытой или исправляемой тренировки, права своей группы | `restore is group scoped admin only and works after cancelling an open or edited training` |
 | Восстановление из списка, история и обновление той же карточки | `admin restores cancelled training from history and updates the same public card` |
 | Снятые права при нажатии старой кнопки восстановления | `saved restore button checks live administrator rights` |
-| Произвольный перевод и правка суммы | Сценарий меню выше и `amount edit preserves review ownership and does not create a second transfer` |
+| Платежи после задачи #3 | `FinanceServiceTest`, `FinanceFlowTest`; прежний произвольный ввод в меню недоступен |
 | Дубли за 24 часа, независимо от автора и указанной даты | `duplicates use a rolling 24 hour window regardless of recorder or stated date` |
 | Выход из несохранённого выбора | `back warns on unsaved selection and continues or discards without writing history` |
 | Выход из персональной панели | `leaving an unsaved admin edit warns and discards only that edit` |
@@ -26,7 +26,7 @@
 | Массовый выбор, страницы, перезапуск | `bulk selection survives pagination and restart with one confirmed history entry` |
 | Конкурентное участие и снятые права | `concurrent self registration and revoked administrator cannot be overwritten by bulk selection` |
 | Ограниченная история массовых изменений | `a page of bulk additions keeps history below Telegram message limit` |
-| История суммы «до → после», местное время | Сценарий меню выше открывает историю конкретного перевода |
+| История платежей: дата, стороны, статус | `FinanceFlowTest`, пять строк на страницу |
 | Обновление схемы без потери финансов | `cached attendance migration preserves records and includes open participation in zero balances` |
 | Пакет кнопок и подготовленная посещаемость | `render batches button writes and roster reads use prepared attendance` |
 
@@ -188,3 +188,22 @@ Mac показывает персональную панель или откры
   и недоступная проверка членства не приводят к переходу.
 - HTTP-проверка: `answerCallbackQuery` с URL только для разрешённого перехода,
   `cache_time=0`; отказ — `show_alert=true` без URL.
+
+## Мои финансы: задача #3 (заменяет прежние сценарии произвольных переводов)
+
+- Выбор группы обязателен; в другой группе нет платежей и предложений первой.
+- Отправитель видит три предложения на странице. Назад из инструкции сохраняет страницу.
+- Отметка отправки создаёт «В процессе», не меняет баланс и убирает сумму из предложений.
+- Устаревшая сумма, другой получатель и параллельные разные запросы не обходят резерв.
+- Подтверждает только текущий получатель. Отправитель, другой администратор и бывший
+  участник не могут принять платёж. Принятие добавляет проводки один раз.
+- Повтор Telegram-события и новое нажатие уже принятого платежа не повторяют проводок.
+- Принятие: три записи на страницу, нажатая строка исчезает; история: пять строк,
+  две стороны, сумма, дата и два статуса. Должники: пять строк на страницу.
+- Пустые списки отправки и принятия содержат точный текст «Нет доступных платежей».
+- Старые кнопки, формы и сохранённые команды не записывают перевод по прежним правилам.
+- Открытие учтённой тренировки и перезапуск бота сохраняют ожидающий перевод;
+  принятие затем учитывает именно реальный перевод независимо от тренировки.
+
+Проверки: `FinanceServiceTest`, `FinanceFlowTest`, обновлённые сценарии
+`SelfServiceBotTest` и браузерный `docs/prototype/check-finance.cjs`.

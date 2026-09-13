@@ -50,14 +50,21 @@ class ExportBotScreens {
   attendance("other",false,0,350,0);capture("personal_left","participation","other","",null,true,null);capture("personal_owner","participation","own","",null,true,null);
   sql("DELETE FROM training_players WHERE training_id='other' AND user_id=?",user);
   for(String kind:List.of("title","date","time","group","ready"))capture("new_"+kind,"form","","",form(kind,"","\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
-  cap("debts","debts","");cap("balances","balances","");cap("settled","settled","");cap("transfers","transfers","");cap("transfer","transfer",pay);cap("transfer_history","transfer_history",pay);cap("people","transfer_people","");capture("direction","transfer_direction","","\"user\":4",null,false,null);
-  for(String kind:List.of("transfer_amount","transfer_ready","transfer_duplicate","transfer_date","transfer_note","edit_transfer_amount","edit_transfer_ready","edit_transfer_duplicate"))capture(kind,"form","","",form(kind,"","\"user\":4,\"amount\":100,\"transfer\":"+q(pay)+",\"similar\":["+q(pay)+"],\"origin\":{\"kind\":\"transfer\",\"group\":-1,\"id\":"+q(pay)+"}"),false,null);
-  transferState(pay,"REVIEW");cap("transfer_review","transfer",pay);transferState(pay,"CANCELLED");cap("transfer_cancelled","transfer",pay);transferState(pay,"ACTIVE");
-  capture("profile","profile_preview","","\"user\":4,\"back\":{\"kind\":\"transfer_people\",\"group\":-1},\"resume\":{\"kind\":\"transfer_direction\",\"group\":-1,\"user\":4}",null,false,null);capture("exit","exit_confirm","own","\"back\":{\"kind\":\"menu\",\"group\":-1},\"resume\":{\"kind\":\"form\",\"group\":-1}",null,false,null);
+  cap("finance","finance","");cap("finance_debtors","finance_debtors","");
+  run(new Access(-1,4,true),new SettlementCommand.RecordTransfer("seed-finance",4,user,300,"2026-09-12","",null,false));
+  cap("finance_send","finance_send","");
+  capture("finance_send_confirm","finance_send_confirm","","\"user\":4,\"value\":200,\"back\":{\"kind\":\"finance_send\",\"group\":-1}",null,false,null);
+  run(new Access(-1,4,true),new SettlementCommand.RecordTransfer("pending-in",4,user,150,"2026-09-12","",null,false));
+  run(new Access(-1,4,true),new SettlementCommand.ChangeTransfer("pending-in",1,TransferChange.REVIEW,null));
+  cap("finance_receive","finance_receive","");cap("finance_history","finance_history","");
+  run(auth,new SettlementCommand.SendPayment("pending-out",4,350));cap("finance_send_empty","finance_send","");
+  run(auth,new SettlementCommand.ReceivePayment("pending-in"));cap("finance_receive_empty","finance_receive","");
+  capture("profile","profile_preview","","\"user\":4,\"back\":{\"kind\":\"finance_send\",\"group\":-1},\"resume\":{\"kind\":\"finance_send_confirm\",\"group\":-1,\"user\":4,\"value\":200}",null,false,null);
+  capture("exit","exit_confirm","own","\"back\":{\"kind\":\"menu\",\"group\":-1},\"resume\":{\"kind\":\"form\",\"group\":-1}",null,false,null);
   cap("settings","settings","");cap("training_settings","training_settings","");
   capture("default_time","form","","",form("default_time","","\"defaultValue\":\"18:30\""),false,null);
   capture("default_title","form","","",form("default_title","","\"defaultValue\":\"Теннис\""),false,null);
-  capture("choose_debts","groups","","\"option\":\"debts\"",null,false,null);
+  capture("choose_finance","groups","","\"option\":\"finance\"",null,false,null);
   if(user>=2){
    capture("choose_manage","groups","","\"option\":\"manage\"",null,false,null);
    capture("all","trainings","","\"option\":\"all\"",null,false,null);

@@ -36,13 +36,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         checkAccounting(member.present, ErrorCode.FORBIDDEN, "Доступ только участникам этой Telegram-группы")
         return Access(group, user, member.admin).also { checkedMembership[group to user] = it }
     }
-    private fun groupOptions(user:Long):List<GroupOption> = service.knownGroups().mapNotNull { group ->
+    private fun groupOptions(user:Long,forPublication:Boolean=false):List<GroupOption> = service.knownGroups().mapNotNull { group ->
         try {
             val member=api.member(group.id,user)
             service.rememberMembership(group.id,user,member.present)
             if(!member.present) null else {
-                val bot=api.member(group.id,identity.id)
-                GroupOption(group,service.isAdmin(Access(group.id,user,member.admin)),member.admin,bot.present && bot.admin)
+                val auth=Access(group.id,user,member.admin)
+                checkedMembership[group.id to user]=auth
+                val canPublish=forPublication && api.member(group.id,identity.id).let { it.present && it.admin }
+                GroupOption(group,service.isAdmin(auth),member.admin,canPublish)
             }
         } catch(f:TelegramFailure) {
             if(f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) null else throw f
@@ -79,7 +81,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 message.newMembers.filterNot { it.isBot }.forEach { remember(it); service.rememberMembership(message.chat.id, it.id, true) }
                 message.leftMember?.takeUnless { it.isBot }?.let { remember(it); service.rememberMembership(message.chat.id, it.id, false) }
             }
-            val saved = state.plan(update.id)
+            val saved = state.plan(update.id)?.let { previous ->
+                if(FinanceScreens.retiredCommand(previous.command) || previous.screen.kind in FinanceScreens.retiredActions || FinanceScreens.retiredForm(previous.form)) previous.copy(command=null,form=null,screen=ScreenAction("finance",previous.screen.group),notice="Меню платежей обновилось. Используй «Отправить платеж» или «Принять платеж».")
+                else previous
+            }
             val plan = saved ?: prepare(update, message, user)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
                 ?.also { state.plan(update.id, it) }
@@ -240,6 +245,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         form=savedForm.copy(kind="add_players",selectedUsers=selected,order=(savedForm.order.orEmpty()+shared.id).distinct()))
                 }
                 action = ScreenAction("player", a.groupId, savedForm.training, user = shared.id)
+            } else if(FinanceScreens.retiredForm(savedForm)) {
+                return EventPlan(user.id,chat,ScreenAction("finance",requireNotNull(savedForm).group),notice="Меню платежей обновилось. Используй «Отправить платеж» или «Принять платеж».")
             } else if (savedForm != null) return textInput(update, user, chat, savedForm, text)
             else action = ScreenAction("groups", 0)
         }
@@ -252,9 +259,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             action=when(action.option) {
                 "manage" -> { checkAccounting(choice.admin,ErrorCode.FORBIDDEN,"Доступно администратору этой группы");ScreenAction("trainings",choice.group.id,option="all") }
                 "administrators" -> { checkAccounting(choice.superAdmin,ErrorCode.FORBIDDEN,"Назначать могут администраторы Telegram-группы");ScreenAction("administrators",choice.group.id) }
-                else -> ScreenAction("debts",choice.group.id)
+                else -> ScreenAction("finance",choice.group.id)
             }
         }
+        if(FinanceScreens.retiredForm(savedForm) && action.kind in setOf("form","form_next","form_restart","form_date_adjust","form_time_adjust"))
+            action=ScreenAction("finance",requireNotNull(savedForm).group)
+        if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         val a = if (action.group < 0) access(action.group, user.id) else null
         if(action.kind=="edit_training") {
@@ -277,7 +287,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=setOf("my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
+        val exits=FinanceScreens.kinds+setOf("my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
         val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
         val exiting=action.kind in exits
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
@@ -288,7 +298,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if(action.kind=="exit_continue") return plan(requireNotNull(action.resume),form=savedForm)
             return plan(requireNotNull(action.back)).copy(clearDraft=activeDraft!=null,draft=activeDraft,clearDraftGroup=inputGroup)
         }
-        if(exiting && (formDirty(savedForm) || draftDirty(activeDraft))) {
+        if(exiting && ((!FinanceScreens.retiredForm(savedForm) && formDirty(savedForm)) || draftDirty(activeDraft))) {
             val resume=if(savedForm?.kind=="paid" || savedForm!=null && savedForm.kind !in setOf("attendance","add_players"))
                 ScreenAction("form",inputGroup,savedForm.training,back=savedForm.origin)
                 else if(activeDraft!=null) ScreenAction("player",inputGroup,activeDraft.training,user=activeDraft.user,back=activeDraft.origin)
@@ -296,6 +306,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             return plan(ScreenAction("exit_confirm",inputGroup,option=signature,back=action,resume=resume),form=savedForm)
         }
         val result = when (action.kind) {
+            "finance_send_save" -> plan(action.back ?: ScreenAction("finance_send",action.group),SettlementCommand.SendPayment(UUID.randomUUID().toString(),action.user,action.value))
+            "finance_receive_save" -> plan(action.back ?: ScreenAction("finance_receive",action.group),SettlementCommand.ReceivePayment(action.id))
             "set_training_status" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 val target=TrainingPhase.valueOf(action.option)
@@ -580,7 +592,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 remember(it);service.rememberMembership(plan.screen.group,it.id,true)
             }.map { it.id }.toSet()+plan.user
         } else emptySet()
-        val options=if(plan.screen.kind in setOf("menu","groups","settings") || plan.form?.kind=="group") groupOptions(plan.user) else emptyList()
+        val options=if(plan.screen.kind in setOf("menu","groups","settings") || plan.form?.kind=="group") groupOptions(plan.user,forPublication=plan.form?.kind=="group") else emptyList()
         val out = screens.render(plan.screen, a, scope, plan.user, plan.form, plan.notice, inGroup = plan.chat < 0, telegramAdmins=administrators,groupOptions=options)
         if (plan.chat < 0) {
             // Only training data already visible on the shared card is rendered inside the group.

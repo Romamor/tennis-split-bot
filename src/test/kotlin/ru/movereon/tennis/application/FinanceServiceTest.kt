@@ -1,0 +1,90 @@
+package ru.movereon.tennis.application
+
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import ru.movereon.tennis.core.AccountingException
+import ru.movereon.tennis.storage.Database
+import java.nio.file.Path
+import java.util.concurrent.Executors
+import kotlin.test.*
+
+class FinanceServiceTest {
+    @TempDir lateinit var dir:Path
+    private lateinit var s:SettlementService
+    private var seq=0
+    private val payer=Access(-1,2)
+    private val recipient=Access(-1,1)
+    private fun run(c:SettlementCommand,a:Access=recipient)=s.execute(a,"seed${seq++}",c)
+    private fun setup() {
+        s=SettlementService(Database(dir.resolve("finance.sqlite")))
+        for(g in -2L..-1L) {
+            s.register(SettlementGroup(g,"Группа","Europe/Moscow"))
+            for(u in 1L..12L) { s.remember(Account(u,"Игрок $u"));s.rememberMembership(g,u,true) }
+        }
+        run(SettlementCommand.CreateTraining("t","Теннис","2026-09-13","18:30"))
+        run(SettlementCommand.AddPlayers("t",1,listOf(1,2)))
+        for(u in 1L..2L) run(SettlementCommand.ChangeAttendance("t",u,AttendanceChange.ADJUST_MINUTES,60))
+        run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
+        run(SettlementCommand.FinishTraining("t",s.training(recipient,"t").version))
+    }
+    @Test fun `sending reserves amount while only recipient confirmation changes posted balances`() {
+        setup();val before=s.balances(payer)
+        val sent=s.execute(payer,"send",SettlementCommand.SendPayment("p",1,150))
+        assertEquals(sent,s.execute(payer,"send",SettlementCommand.SendPayment("p",1,150)))
+        assertEquals(before,s.balances(payer));assertEquals(0,s.paymentSuggestions(payer).total)
+        assertEquals(1,s.financePayments(recipient,incomingOnly=true).total)
+        assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("p"),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("p"),Access(-1,3,true)) }
+        val receipt=s.execute(recipient,"receive",SettlementCommand.ReceivePayment("p"))
+        assertEquals(receipt,s.execute(recipient,"receive",SettlementCommand.ReceivePayment("p")))
+        assertEquals(0,s.execute(recipient,"another-receive",SettlementCommand.ReceivePayment("p")).id)
+        assertTrue(s.balances(payer).values.all { it==0L })
+        assertEquals(0,s.financePayments(recipient,incomingOnly=true).total)
+        assertEquals(PaymentStatus.ACTIVE,s.transfer(recipient,"p").status)
+    }
+    @Test fun `stale suggestions arbitrary recipients and cross group identifiers cannot send money`() {
+        setup();val before=s.balances(payer)
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("wrong",1,149),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("wrong-to",3,150),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("elsewhere",1,150),Access(-2,2)) }
+        run(SettlementCommand.SendPayment("p",1,150),payer)
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("again",1,150),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("p"),Access(-2,1,true)) }
+        assertEquals(before,s.balances(payer));assertEquals(1,s.financePayments(payer).total)
+    }
+    @Test fun `new payments cannot be accepted or rewritten through retired commands`() {
+        setup();run(SettlementCommand.SendPayment("p",1,150),payer)
+        val t=s.transfer(payer,"p");val before=s.balances(payer)
+        assertFailsWith<AccountingException> { run(SettlementCommand.ChangeTransfer("p",t.version,TransferChange.CONFIRM),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.EditTransferAmount("p",t.version,300),recipient) }
+        assertEquals(before,s.balances(payer));assertEquals(t,s.transfer(payer,"p"))
+    }
+    @Test fun `concurrent different send requests reserve a suggestion once`() {
+        setup();val pool=Executors.newFixedThreadPool(2)
+        try {
+            val calls=(1..2).map { i -> pool.submit<Boolean> { runCatching { s.execute(payer,"parallel$i",SettlementCommand.SendPayment("p$i",1,150)) }.isSuccess } }
+            assertEquals(1,calls.count { it.get() })
+            assertEquals(1,s.financePayments(payer).total)
+            assertEquals(mapOf(1L to 150L,2L to -150L),s.balances(payer))
+        } finally { pool.shutdownNow() }
+    }
+    @Test fun `pending payment survives training reopen and restart without posting until receipt`() {
+        setup();run(SettlementCommand.SendPayment("p",1,150),payer)
+        run(SettlementCommand.ReopenTraining("t",s.training(recipient,"t").version))
+        assertTrue(s.balances(payer).values.all { it==0L })
+        s=SettlementService(Database(dir.resolve("finance.sqlite")))
+        run(SettlementCommand.ReceivePayment("p"))
+        assertEquals(mapOf(1L to -150L,2L to 150L),s.balances(payer))
+        run(SettlementCommand.FinishTraining("t",s.training(recipient,"t").version))
+        assertTrue(s.balances(payer).values.all { it==0L })
+        assertTrue(s.database.verify().contains("целостность в порядке"))
+    }
+    @Test fun `sending and receiving require current membership even for administrators`() {
+        setup();s.rememberMembership(-1,2,false)
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendPayment("p",1,150),Access(-1,2,true)) }
+        s.rememberMembership(-1,2,true);run(SettlementCommand.SendPayment("p",1,150),payer)
+        s.rememberMembership(-1,1,false)
+        assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("p"),Access(-1,1,true)) }
+        assertEquals(PaymentStatus.REVIEW,s.transfer(payer,"p").status)
+    }
+}
