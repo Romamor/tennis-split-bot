@@ -24,10 +24,10 @@
         <mxCell id="section2" value="Мои финансы: отправка и подтверждение" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="5807" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section3" value="Мои расчёты и запись перевода" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section3" value="Проверка профиля" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="7668" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section4" value="История и правка переводов" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section4" value="Несохранённый ввод" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="8362" width="2340" height="48" />
         </mxCell>
         <mxCell id="section5" value="Редактор: игроки и статусы" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
@@ -3767,10 +3767,10 @@
         <mxCell id="section2" value="Мои финансы: отправка и подтверждение" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="5999" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section3" value="Мои расчёты и запись перевода" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section3" value="Проверка профиля" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="7860" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section4" value="История и правка переводов" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section4" value="Несохранённый ввод" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="8554" width="2340" height="48" />
         </mxCell>
         <mxCell id="section5" value="Создатель / администратор: состав и ввод" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
@@ -7960,10 +7960,10 @@
         <mxCell id="section2" value="Мои финансы: отправка и подтверждение" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="5999" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section3" value="Мои расчёты и запись перевода" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section3" value="Проверка профиля" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="7860" width="2340" height="48" />
         </mxCell>
-        <mxCell id="section4" value="История и правка переводов" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="section4" value="Несохранённый ввод" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="8554" width="2340" height="48" />
         </mxCell>
         <mxCell id="section5" value="Создатель / администратор: состав и ввод" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
