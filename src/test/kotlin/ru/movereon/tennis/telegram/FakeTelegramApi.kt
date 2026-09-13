@@ -22,6 +22,8 @@ class FakeTelegramApi : TelegramApi {
     override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard).also { richMessages[chatId to it.id]=html }
     override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) { edit(chatId,messageId,text,keyboard);richMessages[chatId to messageId]=html }
 
+    val privateRedirects=mutableListOf<Pair<String,String>>()
+    override fun openPrivate(callbackId:String,url:String) { privateRedirects+=callbackId to url }
     val membershipCalls = mutableListOf<Pair<Long,Long>>()
     var memberFailure = false
     var memberRejected = false

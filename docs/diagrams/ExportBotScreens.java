@@ -23,6 +23,9 @@ class ExportBotScreens {
  static void alert(String key,String id,String back){
   String text;try{svc.requireOpen(svc.training(auth,id));throw new IllegalStateException("Expected closed training");}
   catch(ru.movereon.tennis.core.AccountingException failure){text=failure.getMessage();}
+  popup(key,text,back);
+ }
+ static void popup(String key,String text,String back){
   if(out.length()>1)out.append(',');out.append("{\"role\":").append(user).append(",\"key\":").append(q(key)).append(",\"group\":true,\"text\":").append(q(text)).append(",\"html\":null,\"rows\":[[{\"text\":\"ОК\",\"target\":{\"kind\":\"alert_back\",\"option\":").append(q(back)).append("}}]]}");
  }
  static void cap(String key,String kind,String id)throws Exception{capture(key,kind,id,"",null,false,null);}
@@ -38,7 +41,7 @@ class ExportBotScreens {
   cap("groups","groups","");cap("menu","menu","");cap("mine","my_trainings","");
   cap("training_own","training","own");cap("my_training","my_training","own");cap("training_other",user==1?"my_training":"training","other");cap("history","history","own");
   phase("own","CLOSED");cap("training_closed","training","own");cap("my_closed","my_training","own");cap("mine_closed","my_trainings","");phase("own","OPEN");
-  if(user==1){String denied;try{run(auth,new SettlementCommand.EditTraining("other",svc.training(auth,"other").getVersion(),"Не разрешено","2026-09-12","18:30"));throw new IllegalStateException("Expected denial");}catch(ru.movereon.tennis.core.AccountingException failure){denied=failure.getMessage();}capture("edit_denied","groups","","",null,false,denied);}
+  if(user==1){String denied;try{run(auth,new SettlementCommand.EditTraining("other",svc.training(auth,"other").getVersion(),"Не разрешено","2026-09-12","18:30"));throw new IllegalStateException("Expected denial");}catch(ru.movereon.tennis.core.AccountingException failure){denied=failure.getMessage();}popup("edit_denied",denied,"public");}
   capture("public_own","public","own","",null,true,null);
   for(String phase:List.of("CLOSED","CANCELLED")){phase("own",phase);String suffix=phase.toLowerCase();capture("public_"+suffix,"public","own","",null,true,null);alert("alert_"+suffix,"own","public_"+suffix);}phase("own","OPEN");
   phase("other","CANCELLED");cap("my_cancelled","my_training","other");phase("other","OPEN");capture("public","public","other","",null,true,null);capture("personal_before","participation","other","",null,true,null);

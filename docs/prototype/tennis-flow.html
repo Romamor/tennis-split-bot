@@ -57,7 +57,7 @@ function suggested(){const b=balances(),give=Object.entries(b).filter(([,v])=>v<
 function mine(training){return ((training.creator===state.actor)&&training.phase==='OPEN')||training.players.some(p=>p.id===state.actor&&(p.playing||p.paid>0))||training.appliedPlayers.includes(state.actor)}
 const tx=()=>g().transfers.find(x=>x.id===state.transfer);
 function form(kind,values={}){state.form={kind,dirty:false,...values};go('form',{},false)}
-function err(message){if(['Тренировка завершена','Тренировка отменена'].includes(message)){let dialog=document.createElement('dialog');dialog.setAttribute('aria-label','Тренировка недоступна');let text=document.createElement('p');text.textContent=message;let ok=document.createElement('button');ok.textContent='ОК';ok.onclick=()=>{dialog.close();dialog.remove()};dialog.append(text,ok);root.append(dialog);dialog.showModal();return}state.error=message;render()}
+function err(message){if(['Тренировка завершена','Тренировка отменена','Редактировать тренировку может её создатель или администратор этой группы'].includes(message)){let dialog=document.createElement('dialog');dialog.setAttribute('aria-label','Тренировка недоступна');let text=document.createElement('p');text.textContent=message;let ok=document.createElement('button');ok.textContent='ОК';ok.onclick=()=>{dialog.close();dialog.remove()};dialog.append(text,ok);root.append(dialog);dialog.showModal();return}state.error=message;render()}
 function need(condition,message){if(!condition)throw Error(message)}
 function render(){
  const v=state.view,isAdmin=admin(),p=personal();let content='',buttons=[],composer='';

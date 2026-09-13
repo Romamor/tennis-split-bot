@@ -51,6 +51,7 @@ interface TelegramApi {
     fun send(chatId: Long, text: String, keyboard: TgKeyboard? = null, forceReply: Boolean = false): TgMessage
     fun edit(chatId: Long, messageId: Long, text: String, keyboard: TgKeyboard? = null)
     fun answer(callbackId: String, text: String? = null, alert: Boolean = false)
+    fun openPrivate(callbackId:String,url:String) { throw TelegramFailure(FailureKind.REJECTED) }
     fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard)
     fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) = edit(chatId,messageId,text,keyboard)
     fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
@@ -101,6 +102,12 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     }
     override fun answer(callbackId: String, text: String?, alert: Boolean) {
         call("answerCallbackQuery", buildJsonObject { put("callback_query_id", callbackId); text?.let { put("text", it.take(180)) }; put("show_alert", alert) })
+    }
+
+    override fun openPrivate(callbackId:String,url:String) {
+        call("answerCallbackQuery",buildJsonObject {
+            put("callback_query_id",callbackId);put("url",url);put("show_alert",false);put("cache_time",0)
+        })
     }
 
     override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage =

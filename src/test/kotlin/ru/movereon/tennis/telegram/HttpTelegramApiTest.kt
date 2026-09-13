@@ -83,6 +83,19 @@ class HttpTelegramApiTest {
         assertFalse(body.containsKey("parse_mode"))
     }
 
+    @Test fun `private redirect answers the callback without caching authorization or sending a message`() {
+        api.openPrivate("edit-click","https://t.me/test_bot?start=n_example")
+        val (method,body)=bodies.single()
+        assertEquals("answerCallbackQuery",method)
+        assertEquals("edit-click",body.getValue("callback_query_id").jsonPrimitive.content)
+        assertEquals("https://t.me/test_bot?start=n_example",body.getValue("url").jsonPrimitive.content)
+        assertEquals(0,body.getValue("cache_time").jsonPrimitive.int)
+        assertFalse(body.getValue("show_alert").jsonPrimitive.boolean)
+        api.answer("denied","Редактировать может создатель или администратор",true)
+        assertTrue(bodies.last().second.getValue("show_alert").jsonPrimitive.boolean)
+        assertFalse(bodies.last().second.containsKey("url"))
+    }
+
     @Test fun `polling sends persisted offset and filters supported update types`() {
         response={ 200 to """{"ok":true,"result":[{"update_id":42,"message":{"message_id":1,"chat":{"id":9,"type":"private"},"from":{"id":9,"first_name":"Имя"},"text":"/start"}}]}""" }
         val result=api.updates(41,25)

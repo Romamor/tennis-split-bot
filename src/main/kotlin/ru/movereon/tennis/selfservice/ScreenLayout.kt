@@ -28,7 +28,6 @@ internal class ScreenLayout(
             if (index + 1 < total) add(button("Дальше ›", base.copy(page = index + 1)))
         }
     }
-    fun privateUrl(token:String)="https://t.me/$botName?start=n_$token"
     fun menu() { row("Меню", ScreenAction("menu",0)) }
     fun back(fallback:ScreenAction) { row("⬅️ Назад",action.back ?: fallback) }
 }

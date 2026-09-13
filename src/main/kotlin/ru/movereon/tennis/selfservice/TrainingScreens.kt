@@ -30,8 +30,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
                     if(warning!=null) { body+="\n\n$warning";richHtml=content.html+"<p>${TrainingCard.escape(warning)}</p>" }
                 }
                 if (action.kind == "public") {
-                    val link=state.button(ScreenAction("edit_training",t.groupId,t.id),null,"edit-link:${t.groupId}:${t.id}",permanent=true)
-                    rows+=listOf(button("Открыть",next("participation",page=index)),TgButton("Редактировать",url=privateUrl(link)))
+                    rows+=listOf(button("Открыть",next("participation",page=index)),button("Редактировать",ScreenAction("edit_training",t.groupId,t.id)))
                 } else if(action.kind=="my_training") {
                     if(t.phase==TrainingPhase.OPEN) row("Открыть",next("participation").copy(back=action))
                     if(service.canEdit(a,t)) row("Редактировать",next("edit_training").copy(back=action))

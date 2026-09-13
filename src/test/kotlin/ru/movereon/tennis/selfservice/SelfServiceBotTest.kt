@@ -381,10 +381,12 @@ class SelfServiceBotTest {
         setup();create(2)
         val card=publicCard()
         assertEquals(listOf(listOf("Открыть","Редактировать")),card.keyboard!!.rows.map { row->row.map { it.text } })
-        val start="/start "+card.keyboard!!.rows.flatten().single { it.text=="Редактировать" }.url!!.substringAfter("start=")
-        message(3,start)
-        assertTrue(latest(3).text!!.contains("создатель"))
-        assertFalse(latest(3).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
+        val sent=fake.sent.size
+        click(3,"Редактировать",card)
+        assertTrue(answers.last().contains("создатель"));assertTrue(answerAlerts.last())
+        assertTrue(fake.privateRedirects.isEmpty());assertEquals(sent,fake.sent.size)
+        click(2,"Редактировать",card)
+        val start="/start "+fake.privateRedirects.last().second.substringAfter("start=")
         message(2,start);click(2,"Изменить название и время");message(2,"Новое название")
         click(2,"Продолжить ·");click(2,"Продолжить ·");click(2,"Сохранить изменения")
         assertEquals("Новое название",bot.service.trainings(Access(-1,2)).items.single().title)
@@ -394,6 +396,51 @@ class SelfServiceBotTest {
         message(1,start);assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
         fake.members[-1L to 2L]=TgMember("left");message(2,start)
         assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
+    }
+
+    @Test fun `public edit checks every phase without opening a private chat for non editors`() {
+        setup();create(2);join(2,60);pay(2)
+        val auth=Access(-1,1,true);val id=bot.service.trainings(auth).items.single().id
+        bot.service.rememberMembership(-1,4,true);fake.members[-1L to 4L]=TgMember("member")
+        bot.service.execute(auth,"appoint-editor",SettlementCommand.SetAdministrator(4,true))
+        for(phase in TrainingPhase.entries) {
+            if(phase==TrainingPhase.CLOSED) bot.service.execute(auth,"finish-popup",SettlementCommand.FinishTraining(id,bot.service.training(auth,id).version))
+            if(phase==TrainingPhase.CANCELLED) {
+                bot.service.execute(auth,"reopen-popup",SettlementCommand.ReopenTraining(id,bot.service.training(auth,id).version))
+                bot.service.execute(auth,"cancel-popup",SettlementCommand.CancelTraining(id,bot.service.training(auth,id).version))
+            }
+            bot.maintain()
+            val messages=fake.messages.toMap();val panels=ephemeralMessages.toMap();val before=bot.service.training(auth,id)
+            val redirects=fake.privateRedirects.size;val history=bot.service.history(auth).total
+            click(3,"Редактировать",publicCard())
+            assertTrue(answers.last().contains("создатель"));assertTrue(answerAlerts.last())
+            assertEquals(redirects,fake.privateRedirects.size)
+            assertEquals(messages,fake.messages);assertEquals(panels,ephemeralMessages)
+            for(user in listOf(1L,2L,4L)) {
+                val count=fake.privateRedirects.size
+                click(user,"Редактировать",publicCard())
+                assertEquals(count+1,fake.privateRedirects.size)
+                val token=fake.privateRedirects.last().second.substringAfter("start=n_")
+                assertEquals(ScreenAction("edit_training",-1,id),bot.state.button(token)!!.action)
+            }
+            assertEquals(before,bot.service.training(auth,id));assertEquals(history,bot.service.history(auth).total)
+            assertEquals(messages,fake.messages);assertEquals(panels,ephemeralMessages)
+        }
+    }
+
+    @Test fun `saved edit redirect rechecks revoked group rights and cannot cross chats`() {
+        setup();create(2);val card=publicCard();val id=bot.service.trainings(Access(-1,2)).items.single().id
+        val update=TgUpdate(updateId++,callback=TgCallback("pending-edit",TgUser(1),card,card.keyboard!!.rows.flatten().single { it.text=="Редактировать" }.callbackData))
+        bot.state.plan(update.id,EventPlan(1,-1,ScreenAction("edit_redirect",-1,id),callback="pending-edit"))
+        fake.members[-1L to 1L]=TgMember("member")
+        bot.handle(update)
+        assertTrue(answers.last().contains("администратор"));assertTrue(answerAlerts.last())
+        assertTrue(fake.privateRedirects.isEmpty());assertTrue(bot.state.completed(update.id))
+        click(2,"Редактировать",card.copy(chat=TgChat(-2,"supergroup")))
+        assertTrue(answers.last().contains("другой группе"));assertTrue(fake.privateRedirects.isEmpty())
+        fake.memberFailure=true
+        assertFailsWith<TelegramFailure> { click(2,"Редактировать",card) }
+        assertTrue(fake.privateRedirects.isEmpty())
     }
 
     @Test fun `refresh of a deleted closed card does not publish a historical message again`() {
@@ -573,7 +620,8 @@ class SelfServiceBotTest {
     @Test fun `active and permanent buttons survive weeks replaced buttons expire and groups stay separate`() {
         setup();create();click(1,"Открыть",publicCard())
         val card=publicCard();val token=card.keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
-        val permanent=publicCard().keyboard!!.rows.flatten().single { it.text.contains("Редактировать") }.url!!.substringAfter("n_")
+        click(1,"Редактировать",card)
+        val permanent=fake.privateRedirects.last().second.substringAfter("start=n_")
         val previous=latest(1).keyboard!!.rows.flatten().first().callbackData!!.removePrefix("n:")
         message(1,"/start");clock.now=clock.now.plusSeconds(15*86400);bot.maintain()
         assertNotNull(bot.state.button(token));assertNotNull(bot.state.button(permanent));assertNull(bot.state.button(previous))
@@ -757,9 +805,10 @@ class SelfServiceBotTest {
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
         setup();create();click(1,"Открыть",publicCard())
         val link=publicCard().keyboard!!.rows.flatten().single { it.text.contains("Редактировать") }
-        assertNull(link.callbackData);assertNotNull(link.url)
+        assertNotNull(link.callbackData);assertNull(link.url)
         val sent=fake.sent.count { it.chat.id==-1L }
-        message(1,"/start ${link.url!!.substringAfter("start=")}")
+        click(1,"Редактировать",publicCard())
+        message(1,"/start ${fake.privateRedirects.last().second.substringAfter("start=")}")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
         assertFalse(ephemeralMessages.containsKey(-1L to 1L));assertEquals(sent,fake.sent.count { it.chat.id==-1L })
         assertFalse(fake.sent.any { it.text?.contains("Это действие доступно в личном")==true })

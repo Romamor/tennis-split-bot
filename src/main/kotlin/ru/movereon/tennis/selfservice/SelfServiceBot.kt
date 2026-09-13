@@ -98,6 +98,17 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
                 }
             }
+            if(effective.screen.kind=="edit_redirect") {
+                // Recheck on replay too: a saved event never preserves administrative rights.
+                val auth=requireNotNull(a)
+                checkAccounting(service.canEdit(auth,service.training(auth,effective.screen.id)),ErrorCode.FORBIDDEN,
+                    "Редактировать тренировку может её создатель или администратор этой группы")
+                val target=ScreenAction("edit_training",auth.groupId,effective.screen.id)
+                val token=state.button(target,null,"edit-link:${auth.groupId}:${target.id}",permanent=true)
+                api.openPrivate(requireNotNull(effective.callback),"https://t.me/${identity.username}?start=n_$token")
+                state.complete(update.id)
+                return
+            }
             if(effective.screen.kind=="retry_pin") {
                 checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Доступно администратору группы")
                 val training=service.training(a,effective.screen.id)
@@ -249,6 +260,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind=="edit_training") {
             val auth=requireNotNull(a)
             checkAccounting(service.canEdit(auth,service.training(auth,action.id)),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
+            if(chat<0) return EventPlan(user.id,chat,action.copy(kind="edit_redirect"),callback=callback?.id)
             action=action.copy(kind="training")
         }
         if(action.kind in setOf("training","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player"))

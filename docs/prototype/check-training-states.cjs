@@ -13,7 +13,7 @@ const path=require('node:path');
   const click=name=>button(name).click();
   const text=()=>f.locator('#tennis-screen').innerText();
   await click('Открыть');assert.equal(await button('Редактировать').count(),0);
-  await click('Закрыть');await click('Редактировать');assert.match(await text(),/создатель/);
+  await click('Закрыть');await click('Редактировать');assert.match(await f.getByRole('dialog').innerText(),/создатель/);await f.getByRole('dialog').getByRole('button',{name:'ОК',exact:true}).click();assert.equal(await button('Открыть').count(),1);
   await f.locator('#tennis-role').selectOption('super');await click('Редактировать');
   await click('Изменить статус');await click('Завершена');
   assert.match(await text(),/Статус: Учтена/);
