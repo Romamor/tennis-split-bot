@@ -56,7 +56,7 @@ interface TelegramApi {
     fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) = edit(chatId,messageId,text,keyboard)
     fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
     fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
-    fun pin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
+    fun pin(chatId:Long,messageId:Long,silent:Boolean=false) { throw TelegramFailure(FailureKind.REJECTED) }
     fun unpin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun delete(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun administrators(chatId: Long): List<TgMember> = emptyList()
@@ -142,8 +142,8 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     override fun unpin(chatId:Long,messageId:Long) {
         call("unpinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId) })
     }
-    override fun pin(chatId:Long,messageId:Long) {
-        call("pinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId);put("disable_notification",false) })
+    override fun pin(chatId:Long,messageId:Long,silent:Boolean) {
+        call("pinChatMessage",buildJsonObject { put("chat_id",chatId);put("message_id",messageId);put("disable_notification",silent) })
     }
 
     override fun administrators(chatId: Long): List<TgMember> = json.decodeFromJsonElement(call("getChatAdministrators", buildJsonObject { put("chat_id", chatId) }))

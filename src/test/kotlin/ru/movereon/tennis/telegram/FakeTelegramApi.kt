@@ -10,6 +10,7 @@ class FakeTelegramApi : TelegramApi {
     var deleteFailure:TelegramFailure?=null
     override fun delete(chatId:Long,messageId:Long) { deleteFailure?.let { throw it };deleted+=chatId to messageId;messages.remove(chatId to messageId);richMessages.remove(chatId to messageId) }
     val pinned=mutableListOf<Pair<Long,Long>>()
+    val silentPins=mutableListOf<Pair<Long,Long>>()
     val richMessages=mutableMapOf<Pair<Long,Long>,String>()
     var pinFailure:TelegramFailure?=null
     var pinAttempts=0
@@ -18,7 +19,7 @@ class FakeTelegramApi : TelegramApi {
     var unpinFailure:TelegramFailure?=null
     override fun unpin(chatId:Long,messageId:Long) { unpinAttempts+=chatId to messageId;unpinFailure?.let { throw it };unpinned+=chatId to messageId }
 
-    override fun pin(chatId:Long,messageId:Long) { pinAttempts++;pinFailure?.let { throw it };pinned+=chatId to messageId }
+    override fun pin(chatId:Long,messageId:Long,silent:Boolean) { pinAttempts++;pinFailure?.let { throw it };pinned+=chatId to messageId;if(silent) silentPins+=chatId to messageId }
     override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard).also { richMessages[chatId to it.id]=html }
     override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) { edit(chatId,messageId,text,keyboard);richMessages[chatId to messageId]=html }
 

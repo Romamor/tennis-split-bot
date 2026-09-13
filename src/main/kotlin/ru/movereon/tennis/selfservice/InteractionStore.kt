@@ -86,8 +86,14 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun displayPage(key:String,page:Int)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET display_page=? WHERE delivery_key=?",page.coerceAtLeast(0),key) }
     fun pinStatus(key:String):String?=database.read { c -> sqlQuery(c,"SELECT pin_status FROM bot_deliveries WHERE delivery_key=?",key) { it.getString(1) }.singleOrNull() }
     fun pinStatus(key:String,status:String)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET pin_status=? WHERE delivery_key=?",status,key) }
-    /** Desired pin state is derived from the training, including old cards after an upgrade. */
+    /** Re-pin on an explicit group command, including after a manual unpin or a permission fix. */
+    fun requestGroupMenuPin(group:Long)=database.write { c ->
+        sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='PENDING' WHERE delivery_key=? AND group_id=? AND chat_id=? AND status='SENT' AND message_id IS NOT NULL","group-menu:$group",group,group)
+    }
+    /** Keep group menus pinned independently of training state, including existing menus after an upgrade. */
     fun reconcilePins() = database.write { c ->
+        sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='PENDING' WHERE delivery_key='group-menu:' || group_id
+            AND chat_id=group_id AND status='SENT' AND message_id IS NOT NULL AND pin_status='NONE'""")
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='NONE' WHERE pin_status LIKE 'UNPIN%'
             AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN')""")
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE message_id IS NOT NULL
@@ -101,7 +107,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }
     }
     fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN') LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND ((delivery_key='group-menu:' || group_id AND chat_id=group_id) OR EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN')) LIMIT 20") {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
         }
@@ -175,7 +181,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun forgetDelivery(key: String) = database.write { c -> sqlUpdate(c, "DELETE FROM bot_deliveries WHERE delivery_key=?", key) }
     fun interruptedSends() = database.write { c ->
         sqlUpdate(c,"UPDATE bot_deliveries SET status='UNKNOWN' WHERE status='SENDING'")
-        sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNKNOWN' WHERE pin_status='SENDING'")
+        sqlUpdate(c,"UPDATE bot_deliveries SET pin_status=CASE WHEN delivery_key='group-menu:' || group_id AND chat_id=group_id THEN 'PENDING' ELSE 'UNKNOWN' END WHERE pin_status='SENDING'")
         sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE pin_status='UNPIN_SENDING'")
     }
     /** Refresh existing live cards after an update, without creating new messages or changing training data. */

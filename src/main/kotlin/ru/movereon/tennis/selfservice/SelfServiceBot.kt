@@ -576,7 +576,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if (plan.screen.kind == "group_menu") {
             val token = state.button(ScreenAction("menu", plan.screen.group), null, "group-link:${plan.screen.group}", true)
             val out = Screens.Output("Открой личное меню бота для тренировок и расчётов.", TgKeyboard(listOf(listOf(TgButton("Открыть меню", url = "https://t.me/${identity.username}?start=n_$token")))), emptySet())
-            sendOrdinary("group-menu:${plan.screen.group}", plan.screen.group, plan.chat, null, out, "group-menu:${plan.screen.group}")
+            if(sendOrdinary("group-menu:${plan.screen.group}", plan.screen.group, plan.chat, null, out, "group-menu:${plan.screen.group}"))
+                state.requestGroupMenuPin(plan.screen.group)
             return
         }
         if (plan.chat < 0 && plan.screen.kind in setOf("private_link", "close_panel")) {
@@ -757,11 +758,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     }
     private fun pinCards() {
         state.pendingPins().forEach { (key,delivery) ->
+            val groupMenu=key=="group-menu:${delivery.chat}"
             state.pinStatus(key,"SENDING")
-            try { api.pin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"SENT") }
+            try { api.pin(delivery.chat,requireNotNull(delivery.message),silent=groupMenu);state.pinStatus(key,"SENT") }
             catch(f:TelegramFailure) {
-                state.pinStatus(key,when(f.kind) { FailureKind.UNCERTAIN -> "UNKNOWN";FailureKind.RETRY_LATER -> "PENDING";else -> "FAILED" })
-                if(f.kind==FailureKind.RETRY_LATER || f.code in setOf(401,409)) throw f
+                // Menu pins are silent, so uncertain requests can be retried without repeated notifications.
+                val retry=f.kind==FailureKind.RETRY_LATER || groupMenu && f.kind==FailureKind.UNCERTAIN
+                state.pinStatus(key,when { retry -> "PENDING";f.kind==FailureKind.UNCERTAIN -> "UNKNOWN";else -> "FAILED" })
+                if(retry || f.code in setOf(401,409)) throw f
             }
         }
     }
