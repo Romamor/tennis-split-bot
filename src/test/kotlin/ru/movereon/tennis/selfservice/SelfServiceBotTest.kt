@@ -79,7 +79,7 @@ class SelfServiceBotTest {
             click(user,preferredGroup[user] ?: "Первая",message)
             return click(user,label)
         }
-        if(choices.none { it.text.contains(label) } && message.chat.id>0 && choices.any { it.text=="Редактировать" } && label in setOf("Игроки","Изменить статус","Изменить название и время","История изменений","Изменить статус")) {
+        if(choices.none { it.text.contains(label) } && message.chat.id>0 && choices.any { it.text.endsWith("Редактировать") } && label in setOf("Игроки","Изменить статус","Изменить название и время","История изменений","Изменить статус")) {
             click(user,"Редактировать",message)
             return click(user,label)
         }
@@ -134,7 +134,7 @@ class SelfServiceBotTest {
         assertEquals(2,bot.service.training(Access(-1,2),id).createdBy)
         open(2);click(2,"Мои тренировки");click(2,"09.09.2026")
         assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Изменить статус") })
-        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+        assertTrue(latest(2).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
         join(3,60);pay(3,355)
         assertEquals(355,bot.service.training(Access(-1,3),id).players.single().paid)
         panelClick(3,"Оплата");panelClick(3,"−5 ₽");panelClick(3,"−50 ₽");panelClick(3,"−100 ₽")
@@ -143,7 +143,7 @@ class SelfServiceBotTest {
         assertFailsWith<ru.movereon.tennis.core.AccountingException> { bot.screens.render(ScreenAction("training",-1,id),Access(-1,3),"foreign",3) }
         assertFailsWith<ru.movereon.tennis.core.AccountingException> { bot.screens.render(ScreenAction("preview_finish",-1,id),Access(-1,3),"forged",3) }
         click(2,"Открыть",publicCard())
-        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+        assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
         click(2,"Изменить статус");click(2,"Завершена");bot.maintain()
         assertEquals(TrainingPhase.CLOSED,bot.service.training(Access(-1,2),id).phase)
         assertEquals(0,bot.service.trainings(Access(-1,2),mine=true).total)
@@ -281,12 +281,12 @@ class SelfServiceBotTest {
     @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
         setup();create();join(2)
         fun rows()=ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.map { row -> row.map { it.text } }
-        assertEquals(listOf(listOf("Оплата · 0 ₽"),listOf("Время · 0 ч"),listOf("Добавить гостя"),listOf("Не участвую"),listOf("Закрыть")),rows())
+        assertEquals(listOf(listOf("💵 Оплата · 0 ₽"),listOf("🕒 Время · 0 ч"),listOf("👥 Добавить гостя"),listOf("🚪 Не участвую"),listOf("✖️ Закрыть")),rows())
         panelClick(2,"Добавить гостя")
         assertEquals(listOf("Добавить гостя","Убрать гостя"),rows()[2])
         assertEquals(1,bot.service.trainings(Access(-1,2)).items.single().players.single().guestCount)
         panelClick(2,"Убрать гостя")
-        assertEquals(listOf("Добавить гостя"),rows()[2])
+        assertEquals(listOf("👥 Добавить гостя"),rows()[2])
         panelClick(2,"Оплата")
         assertEquals(listOf(listOf("+5 ₽","+50 ₽","+100 ₽"),listOf("−5 ₽","−50 ₽","−100 ₽"),listOf("⬅️ Назад","Закрыть")),rows())
         panelClick(2,"Назад");panelClick(2,"Время")
@@ -336,7 +336,7 @@ class SelfServiceBotTest {
     @Test fun `accounted training closes member panels and stale buttons cannot reopen or edit it`() {
         setup();create();join(2,60);pay(2);click(3,"Открыть",publicCard());click(1,"Открыть",publicCard())
         val stale=ephemeralMessages.getValue(-1L to 2L)
-        assertTrue(ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+        assertTrue(ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
         assertFalse(stale.keyboard!!.rows.flatten().any { it.text.contains("Редактировать") })
         click(1,"Изменить статус");click(1,"Завершена");bot.maintain()
         assertFalse(ephemeralMessages.containsKey(-1L to 2L));assertFalse(ephemeralMessages.containsKey(-1L to 3L))
@@ -383,10 +383,10 @@ class SelfServiceBotTest {
     @Test fun `personal edit button grants creator access only to their own training`() {
         setup();create(2)
         val card=publicCard()
-        assertEquals(listOf(listOf("Открыть")),card.keyboard!!.rows.map { row->row.map { it.text } })
+        assertEquals(listOf(listOf("🏓 Открыть")),card.keyboard!!.rows.map { row->row.map { it.text } })
         val sent=fake.sent.size
         click(3,"Открыть",card)
-        assertFalse(ephemeralMessages.getValue(-1L to 3L).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+        assertFalse(ephemeralMessages.getValue(-1L to 3L).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
         assertTrue(fake.privateRedirects.isEmpty());assertEquals(sent,fake.sent.size)
         click(2,"Открыть",card);panelClick(2,"Редактировать")
         val start="/start "+fake.privateRedirects.last().second.substringAfter("start=")
@@ -396,9 +396,9 @@ class SelfServiceBotTest {
         legacyRoster(2);click(2,"Участники группы");click(2,"User 3");click(2,"Добавить ·")
         click(2,"User 3");click(2,"+0,5 ч");click(2,"Всё правильно")
         assertEquals(30,bot.service.trainings(Access(-1,2)).items.single().players.single { it.userId==3L }.minutes)
-        message(1,start);assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
+        message(1,start);assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Управление игроками") })
         fake.members[-1L to 2L]=TgMember("left");message(2,start)
-        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
+        assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.endsWith("Управление игроками") })
     }
 
     @Test fun `edit appears only in own main panel for group editors`() {
@@ -408,12 +408,12 @@ class SelfServiceBotTest {
         bot.service.execute(auth,"appoint-panel-editor",SettlementCommand.SetAdministrator(4,true))
         for(user in 1L..4L) {
             click(user,"Открыть",publicCard())
-            assertEquals(user!=3L,ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+            assertEquals(user!=3L,ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
             join(user,30)
-            assertEquals(user!=3L,ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+            assertEquals(user!=3L,ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
             for(label in listOf("Время","Оплата")) {
                 panelClick(user,label)
-                assertFalse(ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text=="Редактировать" })
+                assertFalse(ephemeralMessages.getValue(-1L to user).keyboard!!.rows.flatten().any { it.text.endsWith("Редактировать") })
                 panelClick(user,"Назад")
             }
         }
@@ -422,7 +422,7 @@ class SelfServiceBotTest {
         click(3,"Редактировать",own)
         assertEquals(redirects,fake.privateRedirects.size)
         val managed=bot.screens.render(ScreenAction("participation",-1,id,user=1,back=ScreenAction("manage_players",-1,id)),auth,"managed-self",1)
-        assertFalse(managed.keyboard.rows.flatten().any { it.text=="Редактировать" })
+        assertFalse(managed.keyboard.rows.flatten().any { it.text.endsWith("Редактировать") })
     }
 
     private fun legacyEditCard():TgMessage {
@@ -443,7 +443,7 @@ class SelfServiceBotTest {
                 bot.service.execute(auth,"cancel-popup",SettlementCommand.CancelTraining(id,bot.service.training(auth,id).version))
             }
             bot.maintain()
-            assertEquals(listOf(listOf("Открыть")),publicCard().keyboard!!.rows.map { row->row.map { it.text } })
+            assertEquals(listOf(listOf("🏓 Открыть")),publicCard().keyboard!!.rows.map { row->row.map { it.text } })
             val messages=fake.messages.toMap();val panels=ephemeralMessages.toMap();val before=bot.service.training(auth,id)
             val redirects=fake.privateRedirects.size;val history=bot.service.history(auth).total
             click(3,"Редактировать",legacyEditCard())
@@ -464,7 +464,7 @@ class SelfServiceBotTest {
 
     @Test fun `saved edit redirect rechecks revoked group rights and cannot cross chats`() {
         setup();create(2);click(1,"Открыть",publicCard());val card=ephemeralMessages.getValue(-1L to 1L);val id=bot.service.trainings(Access(-1,2)).items.single().id
-        val update=TgUpdate(updateId++,callback=TgCallback("pending-edit",TgUser(1),card,card.keyboard!!.rows.flatten().single { it.text=="Редактировать" }.callbackData))
+        val update=TgUpdate(updateId++,callback=TgCallback("pending-edit",TgUser(1),card,card.keyboard!!.rows.flatten().single { it.text.endsWith("Редактировать") }.callbackData))
         bot.state.plan(update.id,EventPlan(1,-1,ScreenAction("edit_redirect",-1,id),callback="pending-edit"))
         fake.members[-1L to 1L]=TgMember("member")
         bot.handle(update)
@@ -499,7 +499,7 @@ class SelfServiceBotTest {
         fun completeCard() {
             assertEquals(message,publicCard().id)
             assertFalse(publicCard().text!!.contains("Страница"))
-            assertEquals(listOf("Открыть"),publicCard().keyboard!!.rows.flatten().map { it.text })
+            assertEquals(listOf("🏓 Открыть"),publicCard().keyboard!!.rows.flatten().map { it.text })
             assertEquals(28,Regex("<tr>").findAll(fake.richMessages.getValue(-1L to message)).count())
             users.forEach { assertTrue(publicCard().text!!.contains("Игрок $it |")) }
         }
@@ -572,7 +572,7 @@ class SelfServiceBotTest {
         val card=publicCard()
         assertFalse(card.text!!.contains("Первая группа"))
         assertTrue(card.text!!.contains("Пока никто не зарегался"))
-        assertEquals(listOf("Открыть"),card.keyboard!!.rows.flatten().map { it.text })
+        assertEquals(listOf("🏓 Открыть"),card.keyboard!!.rows.flatten().map { it.text })
         assertEquals(listOf(-1L to card.id),fake.pinned)
         click(2,"Открыть",card)
         assertEquals(card.text,ephemeralMessages.getValue(-1L to 2L).text)
@@ -785,7 +785,7 @@ class SelfServiceBotTest {
         assertTrue(bot.service.isAdmin(Access(-1,2)))
         open(2);click(2,"Настройки")
         assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Администраторы") })
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Снять назначение" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Снять назначение") })
         click(1,"Назад")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.contains("User 2") && it.text.contains("Админ бота") })
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.contains("User 1") && it.text.contains("Суперадмин") })
@@ -794,7 +794,7 @@ class SelfServiceBotTest {
         click(1,"Снять назначение")
         assertFalse(bot.service.isAdmin(Access(-1,2)))
         assertTrue(bot.service.isAdmin(Access(-2,2)),"The appointment in another group is independent")
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Назначить администратором" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Назначить администратором") })
         click(1,"Назад");click(1,"Назад")
         assertTrue(latest(1).text!!.contains("Настройки"))
         open(2)
@@ -811,17 +811,17 @@ class SelfServiceBotTest {
         assertEquals(before,bot.service.trainings(Access(-1,1)).items.single())
         assertEquals(messageId,publicCard().id)
         assertEquals(sentCount,fake.sent.size)
-        assertTrue(publicCard().keyboard!!.rows.flatten().any { it.text=="Открыть" })
+        assertTrue(publicCard().keyboard!!.rows.flatten().any { it.text.endsWith("Открыть") })
     }
 
     @Test fun `group payment controls use requested steps while admin can type an exact amount`() {
         setup();create();join(2)
         val panel=ephemeralMessages.getValue(-1L to 2L)
-        assertFalse(panel.keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
+        assertFalse(panel.keyboard!!.rows.flatten().any { it.text.endsWith("Другая сумма") })
         panelClick(2,"Оплата")
         assertTrue(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().map { it.text }.containsAll(listOf("+5 ₽","+50 ₽","+100 ₽","−5 ₽","−50 ₽","−100 ₽")))
         legacyRoster(1);click(1,"User 2")
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Другая сумма" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Другая сумма") })
     }
 
     @Test fun `reopening and closing personal panels does not remove another users panel or public card`() {
@@ -837,12 +837,12 @@ class SelfServiceBotTest {
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
         setup();create();click(1,"Открыть",publicCard())
-        val link=ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().single { it.text=="Редактировать" }
+        val link=ephemeralMessages.getValue(-1L to 1L).keyboard!!.rows.flatten().single { it.text.endsWith("Редактировать") }
         assertNotNull(link.callbackData);assertNull(link.url)
         val sent=fake.sent.count { it.chat.id==-1L }
         panelClick(1,"Редактировать")
         message(1,"/start ${fake.privateRedirects.last().second.substringAfter("start=")}")
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Управление игроками" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Управление игроками") })
         assertFalse(ephemeralMessages.containsKey(-1L to 1L));assertEquals(sent,fake.sent.count { it.chat.id==-1L })
         assertFalse(fake.sent.any { it.text?.contains("Это действие доступно в личном")==true })
     }
@@ -979,7 +979,7 @@ class SelfServiceBotTest {
         click(1,"Player 13");click(1,"+0,5 ч");click(1,"Платил");click(1,"+1 гость")
         click(1,"Всё правильно")
         assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="2 / 2" })
-        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text=="Player 13 · 0,5 ч · гостей: 1 · 300 ₽" })
+        assertTrue(latest(1).keyboard!!.rows.flatten().any { it.text.endsWith("Player 13 · 0,5 ч · гостей: 1 · 300 ₽") })
         assertEquals(1,bot.service.training(auth,t.id).players.count { it.paid>0 })
     }
 
@@ -1018,7 +1018,7 @@ class SelfServiceBotTest {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои финансы");click(2,"Первая")
-        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("Баланс группы"),listOf("Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("💰 Баланс группы"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
         click(2,"Отправить платеж");assertEquals("Нет доступных платежей",latest(2).text)
         click(2,"Назад");click(2,"Принять платеж");assertEquals("Нет доступных платежей",latest(2).text)
     }
@@ -1187,7 +1187,7 @@ class SelfServiceBotTest {
         val sizes=mutableListOf<Int>()
         repeat(25) {
             click(2,"Баланс группы");click(2,"Назад")
-            val button=latest(2).keyboard!!.rows.flatten().first { it.text=="Баланс группы" }
+            val button=latest(2).keyboard!!.rows.flatten().first { it.text.endsWith("Баланс группы") }
             val action=bot.state.button(button.callbackData!!.removePrefix("n:"))!!.action
             sizes+=bot.state.json.encodeToString(ScreenAction.serializer(),action).length
         }

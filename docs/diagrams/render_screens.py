@@ -175,9 +175,10 @@ for role,name in roles.items():
    rh=48+(20 if max((len(b['text']) for b in row),default=0)>37 else 0);bw=(w-5*(len(row)-1))/len(row)
    for bi,b in enumerate(row):
     bid=f'{gid}-button{ri}-{bi}';bx=bi*(bw+5)
-    vertex(bid,b['text'],bx,ry,bw,rh-5,parent=gid,style='rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;',html_mode=False)
+    color={'primary':'#2479c4','danger':'#bd454c','success':'#32814e'}.get(b.get('style'),'#414b55')
+    vertex(bid,b['text'],bx,ry,bw,rh-5,parent=gid,style=f'rounded=1;arcSize=10;fillColor={color};strokeColor={color};fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;',html_mode=False)
     buttons_geo[bid]=(x+bx,sy+ry,bw,rh-5,key,b)
-    preview.append(f'<div class="button" style="left:{bx}px;top:{ry}px;width:{bw}px;height:{rh-5}px">{html.escape(b["text"])}</div>')
+    preview.append(f'<div class="button" style="left:{bx}px;top:{ry}px;width:{bw}px;height:{rh-5}px;background:{color}">{html.escape(b["text"])}</div>')
    ry+=rh
   if key in input_next:
    bid=gid+'-input';label='Выбрать аккаунт Telegram →' if key=='pick_players' else 'Написать ответ · Отправить →'

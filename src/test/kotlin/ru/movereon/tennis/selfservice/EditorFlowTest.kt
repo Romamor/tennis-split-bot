@@ -40,7 +40,7 @@ class EditorFlowTest {
         bot.handle(TgUpdate(sequence++,TgMessage(sequence,TgChat(user,"private"),TgUser(user,firstName="Игрок $user"),text)))
     }
     private fun click(text:String,user:Long=1,source:TgMessage=latest(user)):TgUpdate {
-        val button=source.keyboard!!.rows.flatten().single { it.text==text }
+        val button=source.keyboard!!.rows.flatten().single { it.text==text || it.text.endsWith(" $text") }
         return TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),source,button.callbackData)).also(bot::handle)
     }
     private fun openEditor(user:Long=1) {
@@ -52,21 +52,21 @@ class EditorFlowTest {
 
     @Test fun `editor layout and back route depend on entry point`() {
         setup()
-        assertEquals(listOf(listOf("Изменить статус"),listOf("Изменить название и время"),listOf("Добавить игрока","Исключить игрока"),listOf("Управление игроками"),listOf("История изменений"),listOf("Меню")),rows())
+        assertEquals(listOf(listOf("🔄 Изменить статус"),listOf("✏️ Изменить название и время"),listOf("Добавить игрока","Исключить игрока"),listOf("👥 Управление игроками"),listOf("📜 История изменений"),listOf("🏠 Меню")),rows())
         assertEquals(TrainingCard.render(training(),bot.service::account).text,latest().text)
         message("/start");click("🏓 Мои тренировки")
         click(rows().first().single());click("Редактировать")
         assertEquals(listOf("Назад","Меню"),rows().last())
-        click("Назад");assertEquals(listOf("Открыть","Редактировать","Назад"),rows().flatten())
+        click("Назад");assertEquals(listOf("🏓 Открыть","✏️ Редактировать","⬅️ Назад"),rows().flatten())
         openEditor(3);assertTrue(latest(3).text!!.contains("создатель"))
-        openEditor(2);assertTrue(rows(2).flatten().contains("Изменить статус"))
+        openEditor(2);assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
     }
 
     @Test fun `adding excluding and managing players save immediately with the real editor in history`() {
         setup();click("Добавить игрока")
-        assertEquals(8,rows().flatten().count { it.startsWith("Игрок ") })
-        assertFalse(rows().flatten().contains("Игрок 14"))
-        click("Игрок 1");assertFalse(rows().flatten().contains("Игрок 1"))
+        assertEquals(8,rows().flatten().count { it.contains("Игрок ") })
+        assertFalse(rows().flatten().any { it.endsWith("Игрок 14") })
+        click("Игрок 1");assertFalse(rows().flatten().any { it.endsWith("Игрок 1") })
         click("Игрок 2");click("⬅️ Назад");click("Управление игроками");click("Игрок 2")
         assertFalse(rows().flatten().contains("Закрыть"));assertFalse(rows().flatten().contains("Присоединиться"))
         click("Время · 0 ч");click("+1 ч")
@@ -81,7 +81,7 @@ class EditorFlowTest {
         click("⬅️ Назад");click("⬅️ Назад");click("Исключить игрока")
         val before=training();click("Игрок 2")
         assertTrue(alerts.last().contains("оплата"));assertEquals(before,training())
-        click("Игрок 1");assertFalse(rows().flatten().contains("Игрок 1"));assertTrue(training().players.none { it.userId==1L })
+        click("Игрок 1");assertFalse(rows().flatten().any { it.endsWith("Игрок 1") });assertTrue(training().players.none { it.userId==1L })
         assertEquals("RemovePlayer",bot.service.history(creator,trainingId="t").items.first().kind)
     }
 
@@ -93,7 +93,7 @@ class EditorFlowTest {
         bot.handle(update);bot.handle(update)
         assertEquals(99,training().players.single().userId)
         assertTrue(training().players.single().playing)
-        assertTrue(rows().flatten().contains("Добавить через Telegram"))
+        assertTrue(rows().flatten().any { it.endsWith("Добавить через Telegram") })
         assertFalse(rows().flatten().contains("Гость"))
         assertNull(bot.state.form(1,1))
         assertEquals(1,bot.service.history(creator,trainingId="t").items.count { it.kind=="AddPlayers" })
@@ -107,12 +107,12 @@ class EditorFlowTest {
         run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
         run(SettlementCommand.RecordTransfer("transfer",3,1,50,"2026-09-13"))
         openEditor();click("Изменить статус")
-        assertEquals(listOf("Отменена","Завершена","⬅️ Назад"),rows().flatten())
+        assertEquals(listOf("🚫 Отменена","✅ Завершена","⬅️ Назад"),rows().flatten())
         val stale=latest();click("Завершена")
         assertEquals(mapOf(1L to 100L,3L to -100L),bot.service.balances(creator))
         assertFailsWith<AccountingException> { run(SettlementCommand.CancelTraining("t",training().version)) }
         click("Отменена",source=stale);assertEquals(TrainingPhase.CLOSED,training().phase)
-        click("Изменить статус");assertEquals(listOf("Открыта","⬅️ Назад"),rows().flatten());click("Открыта")
+        click("Изменить статус");assertEquals(listOf("🔓 Открыта","⬅️ Назад"),rows().flatten());click("Открыта")
         assertEquals(mapOf(1L to -50L,3L to 50L),bot.service.balances(creator))
         status("Отменена");assertEquals(mapOf(1L to -50L,3L to 50L),bot.service.balances(creator))
         click("Изменить статус");val replay=click("Открыта");bot.handle(replay)

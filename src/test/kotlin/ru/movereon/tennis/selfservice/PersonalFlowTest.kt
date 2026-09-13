@@ -38,7 +38,7 @@ class PersonalFlowTest {
         bot.handle(TgUpdate(sequence++,TgMessage(sequence,TgChat(user,"private"),TgUser(user,firstName="Игрок $user"),text)))
     }
     private fun click(label:String,user:Long=1) {
-        val m=latest(user);val b=m.keyboard!!.rows.flatten().single { it.text==label }
+        val m=latest(user);val choices=m.keyboard!!.rows.flatten();val b=choices.firstOrNull { it.text==label } ?: choices.single { it.text.endsWith(" $label") }
         bot.handle(TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),m,b.callbackData)))
     }
     private fun toGroupStep() {
@@ -49,7 +49,7 @@ class PersonalFlowTest {
     @Test fun `creation is groupless preserves fields on back and cancels directly to the main menu`() {
         setup();message("/start");click("➕ Создать тренировку")
         assertEquals("Напиши название тренировки.",latest().text)
-        assertEquals(listOf("Отмена"),rows().last())
+        assertEquals(listOf("✖️ Отмена"),rows().last())
         assertEquals(0,bot.state.form(1,1)!!.group)
         message("Спарринг");assertEquals(listOf("Назад","Отмена"),rows().last())
         message("21.09.2026");click("▲ Часы");click("Назад")
@@ -62,24 +62,24 @@ class PersonalFlowTest {
 
     @Test fun `group eligibility is checked at selection and again at publication`() {
         setup();toGroupStep()
-        assertEquals(listOf(listOf("Группа 1"),listOf("Назад","Отмена")),rows())
+        assertEquals(listOf(listOf("👥 Группа 1"),listOf("Назад","Отмена")),rows())
         api.members[-1L to api.bot.id]=TgMember("member",user=api.bot)
         click("Группа 1");assertEquals("group",bot.state.form(1,1)!!.kind)
         api.members[-1L to api.bot.id]=TgMember("administrator",user=api.bot)
         click("Группа 1")
-        assertEquals(listOf(listOf("Опубликовать"),listOf("Назад","Отмена")),rows())
+        assertEquals(listOf(listOf("✅ Опубликовать"),listOf("Назад","Отмена")),rows())
         click("Назад");assertEquals("group",bot.state.form(1,1)!!.kind)
         click("Группа 1");api.members[-1L to 1L]=TgMember("left")
         click("Опубликовать");assertEquals(0,bot.service.myTrainings(1).page.total)
         api.members[-1L to 1L]=TgMember("member");click("Опубликовать")
         assertEquals(1,bot.service.myTrainings(1).page.total)
-        assertEquals(listOf("Открыть","Редактировать","Назад"),rows().flatten())
+        assertEquals(listOf("🏓 Открыть","✏️ Редактировать","⬅️ Назад"),rows().flatten())
     }
 
     @Test fun `personal settings and main menu work before joining any group`() {
         setup(groups=false);message("/start");click("⚙️ Настройки");click("Тренировка")
         assertEquals("Укажите параметры тренировки по умолчанию",latest().text)
-        assertEquals(listOf(listOf("Название"),listOf("Время"),listOf("Назад","Меню")),rows())
+        assertEquals(listOf(listOf("📝 Название"),listOf("🕒 Время"),listOf("Назад","Меню")),rows())
         click("Название");message("Спарринг");click("Сохранить название")
         click("Время");click("▲ Часы");click("✅ Сохранить время")
         assertEquals(TrainingDefaults("Спарринг","19:30"),bot.service.trainingDefaults(1))
@@ -98,7 +98,7 @@ class PersonalFlowTest {
             api.members[g to 1L]=TgMember("member")
             api.members[g to api.bot.id]=TgMember("administrator",user=api.bot)
         }
-        toGroupStep();assertEquals(8,rows().flatten().count { it.startsWith("Группа")||it.startsWith("Новая") })
+        toGroupStep();assertEquals(8,rows().flatten().count { it.contains("Группа")||it.contains("Новая") })
         click("Дальше ›");val selected=rows().first().single()
         assertEquals(1,bot.state.form(1,1)!!.page)
         click(selected);click("Назад")
@@ -123,14 +123,14 @@ class PersonalFlowTest {
         message("/start");click("🏓 Мои тренировки")
         assertEquals("Тренировок: 5\nВремя: 7,5 ч\nПотрачено денег: 750 ₽",latest().text)
         val first=rows().take(3).flatten();assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
-        click(first[2]);assertEquals(listOf(listOf("Назад")),rows())
+        click(first[2]);assertEquals(listOf(listOf("⬅️ Назад")),rows())
         assertFalse(latest().text!!.contains("не влияет на баланс"));click("Назад")
         assertEquals(first,rows().take(3).flatten())
-        click(first[1]);assertEquals(listOf(listOf("Редактировать"),listOf("Назад")),rows())
-        click("Редактировать");click("Изменить статус");assertEquals(listOf("Открыта","⬅️ Назад"),rows().flatten());click("⬅️ Назад")
+        click(first[1]);assertEquals(listOf(listOf("✏️ Редактировать"),listOf("⬅️ Назад")),rows())
+        click("Редактировать");click("Изменить статус");assertEquals(listOf("🔓 Открыта","⬅️ Назад"),rows().flatten());click("⬅️ Назад")
         click("Назад");click("Назад");click("Дальше ›")
         val second=rows().take(2).flatten();assertTrue(second[0].contains("Тренировка 2"));assertTrue(second[1].contains("Тренировка 1"))
-        click(second[1]);assertEquals(listOf(listOf("Открыть"),listOf("Назад")),rows())
+        click(second[1]);assertEquals(listOf(listOf("🏓 Открыть"),listOf("⬅️ Назад")),rows())
         click("Назад");assertEquals(second,rows().take(2).flatten())
     }
 }

@@ -15,7 +15,7 @@ import java.time.Duration
     @SerialName("first_name") val firstName: String = "", val username: String? = null,
     @SerialName("last_name") val lastName: String = "")
 @Serializable data class TgChat(val id: Long, val type: String, val title: String? = null)
-@Serializable data class TgButton(val text: String, @SerialName("callback_data") val callbackData: String? = null, val url: String? = null)
+@Serializable data class TgButton(val text: String, @SerialName("callback_data") val callbackData: String? = null, val url: String? = null, val style:String?=null)
 @Serializable data class TgKeyboard(@SerialName("inline_keyboard") val rows: List<List<TgButton>>)
 @Serializable data class TgMessage(@SerialName("message_id") val id: Long = 0, val chat: TgChat, val from: TgUser? = null,
     val text: String? = null, @SerialName("reply_to_message") val replyTo: TgMessage? = null,
@@ -171,7 +171,7 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             put("reply_markup", buildJsonObject {
                 put("resize_keyboard", true); put("one_time_keyboard", true)
                 put("keyboard", buildJsonArray { add(buildJsonArray { add(buildJsonObject {
-                    put("text", "Выбрать аккаунт Telegram")
+                    put("text", "👤 Выбрать аккаунт Telegram")
                     put("request_users", buildJsonObject {
                         put("request_id", requestId); put("user_is_bot", false); put("max_quantity", 1)
                         put("request_name", true); put("request_username", true)

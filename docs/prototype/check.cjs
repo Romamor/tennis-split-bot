@@ -1,7 +1,8 @@
+const {buttonName}=require('./button-locators.cjs');
 const {chromium}=require('playwright');
 (async()=>{const browser=await chromium.launch({headless:true,...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});const page=await browser.newPage({viewport:{width:700,height:950}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(require('node:url').pathToFileURL(require('node:path').resolve(process.argv[2])).href);
-const f=page.frameLocator('iframe'),btn=(name)=>f.getByRole('button',{name,exact:true}),click=async n=>btn(n).click(),text=async()=>f.locator('#tennis-screen').innerText();
+const f=page.frameLocator('iframe'),btn=(name)=>f.getByRole('button',{name:buttonName(name)}),click=async n=>btn(n).click(),text=async()=>f.locator('#tennis-screen').innerText();
 const assert=(v,msg)=>{if(!v)throw Error(msg)};
 await click('Открыть');assert(!(await text()).includes('+5 ₽'),'submenu should be separate');await click('Присоединиться');await click('Время · 0 ч');await click('+1 ч');await click('⬅️ Назад');await click('Оплата · 0 ₽');
 for(const n of ['+5 ₽','+50 ₽','+100 ₽','−5 ₽','−50 ₽','−100 ₽'])assert(await btn(n).count()===1,n);

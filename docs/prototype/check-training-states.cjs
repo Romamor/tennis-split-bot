@@ -1,3 +1,4 @@
+const {buttonName}=require('./button-locators.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const {pathToFileURL}=require('node:url');
@@ -9,11 +10,11 @@ const path=require('node:path');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(pathToFileURL(path.resolve(process.argv[2])).href);
   const f=page.frameLocator('iframe');
-  const button=name=>f.getByRole('button',{name,exact:true});
+  const button=name=>f.getByRole('button',{name:buttonName(name)});
   const click=name=>button(name).click();
   const text=()=>f.locator('#tennis-screen').innerText();
   await click('Открыть');assert.equal(await button('Редактировать').count(),0);
-  await click('Закрыть');assert.deepEqual(await f.locator('.tg-keyboard button').allTextContents(),['Открыть']);
+  await click('Закрыть');assert.deepEqual(await f.locator('.tg-keyboard button').allTextContents(),['🏓 Открыть']);
   await f.locator('#tennis-role').selectOption('super');await click('Открыть');await click('Редактировать');
   await click('Изменить статус');await click('Завершена');
   assert.match(await text(),/Статус: Учтена/);

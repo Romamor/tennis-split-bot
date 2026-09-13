@@ -579,7 +579,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun deliver(event: Long, plan: EventPlan, a: Access?) {
         if (plan.screen.kind == "group_menu") {
             val token = state.button(ScreenAction("menu", plan.screen.group), null, "group-link:${plan.screen.group}", true)
-            val out = Screens.Output("Открой личное меню бота для тренировок и расчётов.", TgKeyboard(listOf(listOf(TgButton("Открыть меню", url = "https://t.me/${identity.username}?start=n_$token")))), emptySet())
+            val out = Screens.Output("Открой личное меню бота для тренировок и расчётов.", ButtonAppearance.keyboard(listOf(listOf(TgButton("Открыть меню", url = "https://t.me/${identity.username}?start=n_$token")))), emptySet())
             if(sendOrdinary("group-menu:${plan.screen.group}", plan.screen.group, plan.chat, null, out, "group-menu:${plan.screen.group}"))
                 state.requestGroupMenuPin(plan.screen.group)
             return

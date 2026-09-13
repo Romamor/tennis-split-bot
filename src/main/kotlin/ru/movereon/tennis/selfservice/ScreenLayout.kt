@@ -9,14 +9,16 @@ internal class ScreenLayout(
 ) {
     val rows = mutableListOf<List<TgButton>>()
     val tokens = mutableSetOf<String>()
+    private val actions=mutableMapOf<TgButton,ScreenAction>()
+    fun keyboard()=ButtonAppearance.keyboard(rows,actions)
     fun button(label: String, next: ScreenAction): TgButton {
         if (inGroup && next.kind in Screens.privateActions) {
             val token = state.button(next, null, "private-link:${next.group}:${next.id}", permanent = true)
-            return TgButton(label, url = "https://t.me/$botName?start=n_$token")
+            return TgButton(label, url = "https://t.me/$botName?start=n_$token").also { actions[it]=next }
         }
         val token = state.button(next, user, scope)
         tokens += token
-        return TgButton(label, callbackData = "n:$token")
+        return TgButton(label, callbackData = "n:$token").also { actions[it]=next }
     }
     fun next(kind: String, id: String = action.id, page: Int = 0, target: Long = action.user, value: Long = 0, version: Long = action.version, option: String = action.option) =
         ScreenAction(kind, action.group, id, page, target, value, version, option,back=action.back,resume=action.resume)

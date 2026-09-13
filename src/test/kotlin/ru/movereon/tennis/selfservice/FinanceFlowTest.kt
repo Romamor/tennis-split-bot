@@ -31,7 +31,7 @@ class FinanceFlowTest {
     private fun rows(u:Long)=latest(u).keyboard!!.rows.map { row->row.map { it.text } }
     private fun message(u:Long,text:String) { bot.handle(TgUpdate(seq++,TgMessage(seq,TgChat(u,"private"),TgUser(u,firstName="Игрок $u"),text))) }
     private fun click(u:Long,text:String,source:TgMessage=latest(u)):TgUpdate {
-        val button=source.keyboard!!.rows.flatten().single { it.text==text }
+        val button=source.keyboard!!.rows.flatten().single { it.text==text || it.text.endsWith(" $text") }
         return TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),source,button.callbackData)).also(bot::handle)
     }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"💰 Мои финансы");click(u,group) }
@@ -49,9 +49,9 @@ class FinanceFlowTest {
     @Test fun `send and receive screens follow the diagram and return to the right menus`() {
         setup();seedBalance();open(2)
         assertEquals("Мои финансы:",latest(2).text)
-        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("Баланс группы"),listOf("Назад")),rows(2))
+        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("💰 Баланс группы"),listOf("⬅️ Назад")),rows(2))
         click(2,"Отправить платеж");click(2,"Игрок 1 · 150 ₽")
-        assertEquals(listOf(listOf("Платеж отправлен · 150 ₽"),listOf("⬅️ Назад","Меню")),rows(2))
+        assertEquals(listOf(listOf("💸 Платеж отправлен · 150 ₽"),listOf("⬅️ Назад","Меню")),rows(2))
         assertTrue(latest(2).text!!.contains("Отправь Игрок 1 150 ₽"))
         click(2,"⬅️ Назад");click(2,"Игрок 1 · 150 ₽");val saved=click(2,"Платеж отправлен · 150 ₽");bot.handle(saved)
         assertEquals("Нет доступных платежей",latest(2).text)
@@ -71,13 +71,13 @@ class FinanceFlowTest {
         assertEquals("Нет доступных платежей",latest(2).text)
         seedBalance("next",500)
         click(2,"⬅️ Назад");click(2,"Отправить платеж")
-        assertEquals(listOf("Игрок 1 · 250 ₽"),rows(2).flatten().filter { it.startsWith("Игрок ") })
+        assertEquals(listOf("💸 Игрок 1 · 250 ₽"),rows(2).flatten().filter { it.contains("Игрок ") })
         click(2,"Игрок 1 · 250 ₽");click(2,"Платеж отправлен · 250 ₽")
         assertEquals("Нет доступных платежей",latest(2).text)
         open(1);receive(1)
-        assertTrue(rows(1).flatten().containsAll(listOf("Игрок 2 · 150 ₽ · 13.09.2026","Игрок 2 · 250 ₽ · 13.09.2026")))
+        assertTrue(rows(1).flatten().containsAll(listOf("📥 Игрок 2 · 150 ₽ · 13.09.2026","📥 Игрок 2 · 250 ₽ · 13.09.2026")))
         accept(1,"Игрок 2 · 250 ₽ · 13.09.2026")
-        assertTrue(rows(1).flatten().contains("Игрок 2 · 150 ₽ · 13.09.2026"))
+        assertTrue(rows(1).flatten().contains("📥 Игрок 2 · 150 ₽ · 13.09.2026"))
         accept(1,"Игрок 2 · 150 ₽ · 13.09.2026")
         assertEquals("Нет доступных платежей",latest(1).text)
         assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
@@ -92,7 +92,7 @@ class FinanceFlowTest {
         setup()
         for(u in 3L..11L) run(SettlementCommand.RecordTransfer("seed$u",u,2,30,"2026-09-13"),Access(-1,u))
         open(2);click(2,"Отправить платеж")
-        assertEquals(3,rows(2).flatten().count { it.startsWith("Игрок ") })
+        assertEquals(3,rows(2).flatten().count { it.contains("Игрок ") })
         click(2,"Дальше ›");val row=rows(2).first().single();click(2,row);click(2,"⬅️ Назад")
         assertTrue(rows(2).flatten().contains("2 / 3"));assertEquals(row,rows(2).first().single())
         click(2,"⬅️ Назад");click(2,"История платежей")
@@ -113,7 +113,7 @@ class FinanceFlowTest {
             run(SettlementCommand.ChangeTransfer("incoming$i",1,TransferChange.REVIEW))
         }
         open(2);receive(2)
-        assertEquals(3,rows(2).flatten().count { it.startsWith("Игрок ") });val row=rows(2).first().single()
+        assertEquals(3,rows(2).flatten().count { it.contains("Игрок ") });val row=rows(2).first().single()
         accept(2,row);assertFalse(rows(2).flatten().contains(row))
         assertEquals(6,bot.service.financePayments(Access(-1,2),incomingOnly=true).total)
         assertEquals(1,bot.service.financePayments(Access(-1,2)).items.count { it.status==PaymentStatus.ACTIVE })
@@ -139,7 +139,7 @@ class FinanceFlowTest {
         val before=latest(2).id
         message(2,"125");assertTrue(latest(2).id>before)
         click(2,"Другой платёж",menu);assertEquals(125,bot.state.form(2,2)!!.amount)
-        assertEquals(listOf(listOf("Платёж отправлен"),listOf("Назад","Отмена")),rows(2))
+        assertEquals(listOf(listOf("✅ Платёж отправлен"),listOf("Назад","Отмена")),rows(2))
         click(2,"Назад");assertEquals(125,bot.state.form(2,2)!!.amount)
         message(2,"125");val submit=click(2,"Платёж отправлен");bot.handle(submit)
         assertNull(bot.state.form(2,2));assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
@@ -166,7 +166,7 @@ class FinanceFlowTest {
         assertEquals(0,bot.service.pendingPaymentCount(Access(-1,3)))
         open(3);click(3,"История платежей");click(3,rows(3).first().single())
         assertTrue(latest(3).text!!.contains("Записал администратор: Игрок 1"))
-        assertEquals(listOf(listOf("Назад")),rows(3))
+        assertEquals(listOf(listOf("⬅️ Назад")),rows(3))
         open(1,"Группа 2");assertFalse(rows(1).flatten().contains("Записать платёж за участников"))
     }
     @Test fun `incoming counter includes every page while forms reject stale and cross group buttons`() {

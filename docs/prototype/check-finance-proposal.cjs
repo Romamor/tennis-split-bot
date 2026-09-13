@@ -1,3 +1,4 @@
+const {buttonName}=require('./button-locators.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const {pathToFileURL}=require('node:url');
@@ -5,12 +6,12 @@ const {pathToFileURL}=require('node:url');
 const browser=await chromium.launch({headless:true,...(process.env.CHROME_BIN?{executablePath:process.env.CHROME_BIN}:{})});
 const page=await browser.newPage({viewport:{width:430,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(pathToFileURL(require('node:path').resolve(process.argv[2])).href);
-const f=page.frameLocator('iframe'),button=name=>f.getByRole('button',{name,exact:true}),click=name=>button(name).click(),text=()=>f.locator('#fp-screen').innerText();
+const f=page.frameLocator('iframe'),button=name=>f.getByRole('button',{name:buttonName(name)}),click=name=>button(name).click(),text=()=>f.locator('#fp-screen').innerText();
 const role=id=>f.locator('#fp-role').selectOption(String(id));
 const amount=async n=>{await f.getByLabel('Сумма в рублях').fill(String(n));await click('Отправить сумму')};
 assert.equal(await button('Записать платёж за участников').count(),0);
 assert.deepEqual(await f.locator('.fp-keys .fp-row').evaluateAll(rows=>rows.map(r=>[...r.querySelectorAll('button')].map(b=>b.textContent))),[
- ['Отправить платёж','Принять платёж(0)'],['Другой платёж','История платежей'],['Баланс группы'],['Назад']]);
+ ['Отправить платёж','Принять платёж(0)'],['Другой платёж','История платежей'],['💰 Баланс группы'],['⬅️ Назад']]);
 assert.equal(await button('Должники').count(),0);
 await click('Баланс группы');
 const balances=()=>f.locator('tbody tr').evaluateAll(rows=>rows.map(r=>[...r.querySelectorAll('td')].map(x=>x.textContent)));

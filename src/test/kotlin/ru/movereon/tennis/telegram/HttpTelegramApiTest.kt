@@ -69,6 +69,24 @@ class HttpTelegramApiTest {
         assertEquals(FailureKind.UNCERTAIN,assertFailsWith<TelegramFailure> { api.ephemeralRich(-123,22,"cb","x",html,keyboard) }.kind)
     }
 
+    @Test fun `button styles reach ordinary rich and personal Telegram messages`() {
+        response={ 200 to """{"ok":true,"result":{"message_id":77,"chat":{"id":-123,"type":"supergroup"},"receiver_user":{"id":22},"ephemeral_message_id":73}}""" }
+        val keyboard=TgKeyboard(listOf(listOf(TgButton("🏓 Открыть",callbackData="open",style="primary")),
+            listOf(TgButton("🚪 Не участвую",callbackData="leave",style="danger")),listOf(TgButton("⬅️ Назад",callbackData="back"))))
+        api.send(-123,"Экран",keyboard);api.edit(-123,77,"Экран",keyboard)
+        api.sendRich(-123,"Экран","<p>Экран</p>",keyboard);api.editRich(-123,77,"Экран","<p>Экран</p>",keyboard)
+        api.ephemeralRich(-123,22,"cb","Экран","<p>Экран</p>",keyboard)
+        api.editEphemeralRich(-123,22,73,"Экран","<p>Экран</p>",keyboard)
+        assertEquals(6,bodies.size)
+        for((_,body) in bodies) {
+            val rows=body.getValue("reply_markup").jsonObject.getValue("inline_keyboard").jsonArray
+            assertEquals("primary",rows[0].jsonArray[0].jsonObject.getValue("style").jsonPrimitive.content)
+            assertEquals("danger",rows[1].jsonArray[0].jsonObject.getValue("style").jsonPrimitive.content)
+            assertEquals("leave",rows[1].jsonArray[0].jsonObject.getValue("callback_data").jsonPrimitive.content)
+            assertFalse(rows[2].jsonArray[0].jsonObject.containsKey("style"))
+        }
+    }
+
     @Test fun `API requests preserve integer IDs and encode Telegram fields correctly`() {
         response={ method -> 200 to when(method) {
             "getMe" -> """{"ok":true,"result":{"id":123456,"is_bot":true,"first_name":"Бот","username":"test_bot","new_field":true}}"""
