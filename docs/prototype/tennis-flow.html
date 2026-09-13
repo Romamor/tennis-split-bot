@@ -75,7 +75,7 @@ function render(){
  else if(v==='trainings'){let list=g().trainings.filter(x=>state.filter!=='mine'||mine(x));content=scope()+`<h2>${state.filter==='mine'?'Мои тренировки':'Тренировки группы'} · ${list.length}</h2>`;let pages=paging(list);slice(list).forEach(x=>buttons.push(row(key(date(x.date)+' · '+x.title+' · '+phase(x.phase),'training',x.id))));buttons.push(pages,nav('Меню','menu'));if(!list.length)content+='<p>Записей пока нет.</p>'}
  else if(['public','training','my_training','participation','participation_time','participation_payment'].includes(v)){
   content=table();
-  if(v==='public')buttons.push(row(key('Открыть','open'),key('Редактировать','private-training')));
+  if(v==='public')buttons.push(row(key('Открыть','open')));
   else if(v==='my_training'){if(editable())buttons.push(row(key('Открыть','open')));if(canEdit())buttons.push(row(key('Редактировать','private-training')));buttons.push(row(key('Назад','back')))}
   else if(v==='training'){
    need(canEdit(),'Редактировать тренировку может её создатель или администратор этой группы');
@@ -90,6 +90,7 @@ function render(){
      else if(v==='participation_payment'){buttons.push(row(...[5,50,100].map(n=>key('+'+n+' ₽','money',n))),row(...[5,50,100].map(n=>key('−'+n+' ₽','money',-n))))}
      else{if(p?.playing){buttons.push(nav('Оплата · '+rub(p.paid),'participation_payment'),nav('Время · '+hours(p.minutes),'participation_time'),row(key('Добавить гостя','guest',1,p.guests>=99),...(p.guests?[key('Убрать гостя','guest',-1)]:[])),row(key('Не участвую','leave')))}else{buttons.push(row(key('Присоединиться','join')));if(p?.paid>0)buttons.push(nav('Оплата · '+rub(p.paid),'participation_payment'))}}
     }
+    if(v==='participation'&&!state.managed&&canEdit())buttons.push(row(key('Редактировать','private-training')));
     buttons.push(state.context==='group'?row(...(v!=='participation'?[key('⬅️ Назад','nav','participation')]:[]),key('Закрыть','close')):row(key('⬅️ Назад',v!=='participation'?'nav':state.managed?'nav':'back',v!=='participation'?'participation':'manage_players')));
    }
   }

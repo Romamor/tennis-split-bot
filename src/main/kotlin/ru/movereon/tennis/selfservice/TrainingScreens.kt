@@ -30,7 +30,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
                     if(warning!=null) { body+="\n\n$warning";richHtml=content.html+"<p>${TrainingCard.escape(warning)}</p>" }
                 }
                 if (action.kind == "public") {
-                    rows+=listOf(button("Открыть",next("participation",page=index)),button("Редактировать",ScreenAction("edit_training",t.groupId,t.id)))
+                    row("Открыть",next("participation",page=index))
                 } else if(action.kind=="my_training") {
                     if(t.phase==TrainingPhase.OPEN) row("Открыть",next("participation").copy(back=action))
                     if(service.canEdit(a,t)) row("Редактировать",next("edit_training").copy(back=action))
@@ -113,6 +113,8 @@ internal class TrainingScreens(private val service:SettlementService,private val
                         }
                     }
                 }
+                if(action.kind=="participation" && target==a.userId && action.back?.kind!="manage_players" && service.canEdit(a,t))
+                    row("Редактировать",ScreenAction("edit_training",t.groupId,t.id,back=action.back))
                 if(inGroup) rows+=buildList<TgButton> {
                     if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
                     add(button("Закрыть",next("close_panel")))

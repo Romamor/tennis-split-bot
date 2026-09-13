@@ -13,8 +13,8 @@ const path=require('node:path');
   const click=name=>button(name).click();
   const text=()=>f.locator('#tennis-screen').innerText();
   await click('Открыть');assert.equal(await button('Редактировать').count(),0);
-  await click('Закрыть');await click('Редактировать');assert.match(await f.getByRole('dialog').innerText(),/создатель/);await f.getByRole('dialog').getByRole('button',{name:'ОК',exact:true}).click();assert.equal(await button('Открыть').count(),1);
-  await f.locator('#tennis-role').selectOption('super');await click('Редактировать');
+  await click('Закрыть');assert.deepEqual(await f.locator('.tg-keyboard button').allTextContents(),['Открыть']);
+  await f.locator('#tennis-role').selectOption('super');await click('Открыть');await click('Редактировать');
   await click('Изменить статус');await click('Завершена');
   assert.match(await text(),/Статус: Учтена/);
   assert.doesNotMatch(await text(),/Баланс указан по этой тренировке/);
@@ -27,7 +27,9 @@ const path=require('node:path');
     }
   }
   await alerts('Тренировка завершена');
-  await click('Редактировать');await click('Изменить статус');await click('Открыта');
+  await click('У бота');await click('📋 Управление тренировками');await click('Теннис по субботам');
+  await f.locator('.tg-keyboard button').filter({hasText:'Теннис в субботу'}).click();
+  await click('Изменить статус');await click('Открыта');
   assert.match(await text(),/Статус: Открыта/);assert.doesNotMatch(await text(),/Уточнение|Изменяется/);
   await click('Изменить статус');await click('Отменена');await click('В группе');
   await alerts('Тренировка отменена');
@@ -35,5 +37,5 @@ const path=require('node:path');
   await f.getByRole('dialog').waitFor({state:'visible'});
   await page.screenshot({path:path.join(require('node:os').tmpdir(),'tennis-training-alert.png')});
   assert.deepEqual(errors,[]);await browser.close();
-  console.log('PASS: public editing, internal button removed, three states, alerts with OK for every role');
+  console.log('PASS: single public Open button, personal editing, three states, alerts with OK for every role');
 })();

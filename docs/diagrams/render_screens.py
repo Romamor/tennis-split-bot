@@ -45,7 +45,7 @@ def resolve(key,b):
  if k=='groups':return ['choose_manage' if opt=='manage' else 'choose_admins' if opt=='administrators' else 'choose_finance']
  if k=='alert_back':return [opt]
  if k=='edit_training' and role==1 and id!='own':return ['edit_denied']
- if k=='edit_training':return ['training_closed' if key=='public_closed' else 'training_cancelled' if key=='public_cancelled' else 'training_own' if id=='own' else 'training_other']
+ if k=='edit_training':return ['training_closed' if key in ('public_closed','my_closed') else 'training_cancelled' if key in ('public_cancelled','my_cancelled') else 'training_own' if id=='own' else 'training_other']
  if k=='training':return [('training_closed' if key=='preview' else 'training_review' if key=='preview_review' else 'training_own') if id=='own' else 'training_other']
  if k=='trainings':return ['all' if opt=='all' else 'mine_closed' if key=='training_closed' else 'mine']
  if k=='new':return ['new_title']
