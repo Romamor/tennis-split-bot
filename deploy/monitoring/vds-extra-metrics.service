@@ -1,0 +1,16 @@
+[Unit]
+Description=Collect numeric VMware and bot memory metrics
+After=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/vds-monitoring/collector.env
+ExecStart=/usr/bin/python3 /usr/local/lib/vds-monitoring/collect_extra.py --container ${BOT_CONTAINER} --output /var/lib/vds-monitoring/textfile/extra.prom
+TimeoutStartSec=15
+Nice=10
+MemoryMax=48M
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/vds-monitoring/textfile

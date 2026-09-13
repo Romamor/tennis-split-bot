@@ -18,3 +18,7 @@ deploy/bot.env
 deploy/data/
 deploy/app/
 data/
+
+# Python monitoring helpers
+__pycache__/
+*.py[cod]

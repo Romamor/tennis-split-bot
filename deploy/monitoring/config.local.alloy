@@ -1,0 +1,30 @@
+// Local verification: collect metrics without forwarding them to any service.
+logging {
+  level = "warn"
+}
+
+prometheus.exporter.unix "host" {
+  set_collectors = ["cpu", "loadavg", "meminfo", "vmstat", "pressure", "stat", "filesystem", "diskstats", "time", "textfile"]
+  textfile {
+    directory = "/var/lib/vds-monitoring/textfile"
+  }
+}
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+  rule {
+    target_label = "instance"
+    replacement = "vds-1"
+  }
+  rule {
+    target_label = "job"
+    replacement = "integrations/node_exporter"
+  }
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host.output
+  scrape_interval = "60s"
+  scrape_timeout = "10s"
+  forward_to = []
+}

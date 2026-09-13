@@ -1,0 +1,51 @@
+// Send only numeric system metrics to the configured Grafana Cloud account.
+logging {
+  level = "warn"
+}
+
+prometheus.exporter.unix "host" {
+  set_collectors = ["cpu", "loadavg", "meminfo", "vmstat", "pressure", "stat", "filesystem", "diskstats", "time", "textfile"]
+  textfile {
+    directory = "/var/lib/vds-monitoring/textfile"
+  }
+}
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+  rule {
+    target_label = "instance"
+    replacement = "vds-1"
+  }
+  rule {
+    target_label = "job"
+    replacement = "integrations/node_exporter"
+  }
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host.output
+  scrape_interval = "60s"
+  scrape_timeout = "10s"
+  forward_to = [prometheus.remote_write.cloud.receiver]
+}
+
+prometheus.remote_write "cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_METRICS_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_METRICS_USER")
+      password = sys.env("GRAFANA_CLOUD_METRICS_TOKEN")
+    }
+    queue_config {
+      capacity = 2000
+      min_shards = 1
+      max_shards = 1
+      max_samples_per_send = 1000
+    }
+  }
+  wal {
+    truncate_frequency = "15m"
+    min_keepalive_time = "5m"
+    max_keepalive_time = "1h"
+  }
+}
