@@ -15,8 +15,10 @@ titles={'my_training':'Моя тренировка · просмотр','my_clos
 categories=[('Участие в общем чате',['public','personal_before','personal_joined','personal_payment','personal_owner','personal_left','personal_guest','personal_time']),('Личное меню, создание и учёт',['groups','menu','mine','my_training','my_closed','my_cancelled','training_other','new_title','new_date','new_time','new_group','new_ready','training_own','preview','training_closed','mine_closed','history']),('Проверка профиля',[ 'choose_debts','debts','people','direction','transfer_amount','transfer_ready','transfer_date','transfer_note','transfer_duplicate','balances','settled','profile']),('Несохранённый ввод',[ 'transfers','transfer','edit_transfer_amount','edit_transfer_ready','edit_transfer_duplicate','transfer_review','transfer_cancelled','transfer_history','exit']),('Создатель / администратор: состав и ввод',['choose_manage','all','roster','player','paid','player_conflict','add_players','pick_players']),('Создатель / администратор: детали и состояния',['edit_title','edit_date','edit_time','edit_ready','training_review','preview_review','cancel','training_cancelled','training_failure','recover']),('Карточки и блокировка после завершения',['edit_denied','public_own','public_closed','alert_closed','public_cancelled','alert_cancelled']),('Настройки и снятие закрепа',['settings','training_settings','default_title','default_time','training_unpin_failure']),('Суперадминистратор: назначения',['choose_admins','administrators','candidates','role_member','role_admin','role_super','role_super_extra'])]
 titles.update({'add_player_list':'Добавление игрока','exclude_player_list':'Исключение игрока','manage_players':'Управление игроками','managed_participation':'Участие выбранного игрока','managed_participation_time':'Время выбранного игрока','managed_participation_payment':'Оплата выбранного игрока','pick_add_player':'Добавить через Telegram','status_open':'Статус открытой тренировки','status_closed':'Статус завершённой тренировки','status_cancelled':'Статус отменённой тренировки'})
 categories.insert(5,('Редактор: игроки и статусы',['add_player_list','exclude_player_list','manage_players','managed_participation','managed_participation_time','managed_participation_payment','pick_add_player','status_open','status_closed','status_cancelled']))
-titles.update({'choose_finance':'Группа для финансов','finance':'Мои финансы','finance_send':'Отправка платежа','finance_send_confirm':'Подтверждение отправки','finance_receive':'Принятие платежа','finance_history':'История платежей','finance_debtors':'Должники','finance_send_empty':'Нет доступных платежей для отправки','finance_receive_empty':'Нет платежей для принятия'})
-categories.insert(2,('Мои финансы: отправка и подтверждение',['choose_finance','finance','finance_send','finance_send_confirm','finance_receive','finance_history','finance_debtors','finance_send_empty','finance_receive_empty']))
+titles.update({'choose_finance':'Группа для финансов','finance':'Мои финансы','finance_send':'Отправка платежа','finance_send_confirm':'Подтверждение отправки','finance_receive':'Принятие платежа','finance_history':'История платежей','finance_balances':'Баланс группы','finance_send_empty':'Нет доступных платежей для отправки','finance_receive_empty':'Нет платежей для принятия'})
+categories.insert(2,('Мои финансы: отправка и подтверждение',['choose_finance','finance','finance_send','finance_send_confirm','finance_receive','finance_history','finance_balances','finance_send_empty','finance_receive_empty','finance_receive_confirm','finance_received','finance_history_detail']))
+titles.update({'finance_receive_confirm':'Деньги пришли?','finance_received':'Получение учтено','payment_previous':'Предыдущий похожий платёж','finance_history_detail':'Детали платежа из истории','payment_to':'Произвольный платёж · кому','payment_amount':'Произвольная сумма','payment_ready':'Перед отметкой отправки','payment_duplicate':'Возможный повтор за сутки','finance_payment':'Ожидает подтверждения','admin_payment_from':'Администратор · от кого','admin_payment_to':'Администратор · кому','admin_payment_amount':'Администратор · сумма','admin_payment_ready':'Записать с немедленным учётом','admin_payment_saved':'Запись администратора учтена'})
+categories.insert(3,('Произвольные платежи и запись администратором',['payment_to','payment_amount','payment_ready','finance_payment','payment_duplicate','payment_previous','admin_payment_from','admin_payment_to','admin_payment_amount','admin_payment_ready','admin_payment_saved']))
 # Same-screen arrows indicate updating values; data in each screen is an illustrative snapshot.
 def resolve(key,b):
  a=b.get('target');label=b['text']
@@ -28,9 +30,18 @@ def resolve(key,b):
  if k=='add_player':return ['add_player_list']
  if k=='remove_player':return ['exclude_player_list']
  if k.startswith('participation') and (key.startswith('managed_') or key=='manage_players'):return ['managed_'+('participation' if k=='participation_change' else k)]
- if k in ('finance','finance_send','finance_receive','finance_history','finance_debtors','finance_send_confirm'):return [k]
+ if k in ('finance','finance_send','finance_receive','finance_history','finance_balances','finance_send_confirm','finance_receive_confirm','finance_received'):return [k]
  if k=='finance_send_save':return ['finance_send_empty']
- if k=='finance_receive_save':return ['finance_receive_empty']
+ if k=='finance_receive_save':return ['finance_received']
+ if k=='payment_new':return ['admin_payment_from' if opt=='admin' else 'payment_to']
+ if k=='payment_pick':return [{'payment_to':'payment_amount','admin_payment_from':'admin_payment_to','admin_payment_to':'admin_payment_amount'}[key]]
+ if k=='payment_page':return [key]
+ if k=='payment_cancel':return ['finance']
+ if k=='payment_back':return [{'payment_to':'finance','payment_amount':'payment_to','payment_ready':'payment_amount','payment_duplicate':'payment_ready','admin_payment_from':'finance','admin_payment_to':'admin_payment_from','admin_payment_amount':'admin_payment_to','admin_payment_ready':'admin_payment_amount'}[key]]
+ if k=='payment_save':return ['admin_payment_saved'] if key.startswith('admin_') else ['finance_payment'] if key=='payment_duplicate' else ['finance_payment','payment_duplicate']
+ if k=='payment_previous':return ['payment_previous']
+ if k=='form' and key=='payment_previous':return ['payment_duplicate']
+ if k=='finance_payment':return ['finance_history_detail' if key=='finance_history' else 'admin_payment_saved' if id=='admin-payment' else 'finance_payment']
  if k=='menu':return ['menu']
  if k in ('settings','training_settings','default_time','default_title'):return [k]
  if k=='my_trainings':return ['mine']
@@ -98,7 +109,7 @@ def resolve(key,b):
  if k=='admin_person':return ['role_super' if a.get('user')==3 else 'role_admin' if a.get('user')==2 else 'role_member']
  if k=='set_admin':return ['role_admin' if a.get('value') else 'role_super' if key=='role_super_extra' else 'role_member']
  raise ValueError((key,label,k))
-input_next={'default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','transfer_amount':'transfer_ready','transfer_date':'transfer_ready','transfer_note':'transfer_ready','edit_transfer_amount':'edit_transfer_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
+input_next={'payment_amount':'payment_ready','admin_payment_amount':'admin_payment_ready','default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','transfer_amount':'transfer_ready','transfer_date':'transfer_ready','transfer_note':'transfer_ready','edit_transfer_amount':'edit_transfer_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
 class Plain(HTMLParser):
  def __init__(self):super().__init__();self.parts=[]
  def handle_data(self,s):self.parts.append(s)

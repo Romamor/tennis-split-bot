@@ -310,6 +310,11 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "form" -> {
                 val f = requireNotNull(form)
+                if(PaymentInput.isForm(f)) {
+                    val content=financeScreens.renderForm(this,requireNotNull(a),f,state.formSignature(f),::account,::personRow)
+                    richHtml=content.html
+                    content.text
+                } else {
                 fun formAction(kind: String) = next(kind, option = state.formSignature(f))
                 fun similarText() = if(f.similar.isEmpty()) "" else "\nРанее записано:\n"+f.similar.take(2).joinToString("\n") {
                     val t=service.transfer(requireNotNull(a),it)
@@ -381,6 +386,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                     else if(f.kind=="pick_players") row("Назад к выбору",next("add_players",id=f.training,page=f.page,option=state.formSignature(f)))
                     else row("Отмена",f.origin ?: next(if (f.training.isNotEmpty()) "training" else "debts", id = f.training))
                 }
+                }
             }
             "history", "transfer_history" -> {
                 val p = service.history(requireNotNull(a), action.id.takeIf { it.isNotEmpty() && action.kind=="history" }, action.page,action.id.takeIf { action.kind=="transfer_history" })
@@ -429,7 +435,8 @@ class Screens(private val service: SettlementService, private val state: Interac
         "RemovePlayer" -> "Исключил игрока"
         "CancelTraining" -> "Отменил тренировку и снял её расчёт"
         "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
-        "SendPayment" -> "Отметил отправку платежа"
+        "SendPayment", "SendOtherPayment" -> "Отметил отправку платежа"
+        "RecordAdminPayment" -> "Администратор записал платёж"
         "ReceivePayment" -> "Подтвердил получение платежа"
         "RecordTransfer" -> "Записал перевод"
         "ChangeTransfer" -> "Изменил состояние перевода"
@@ -457,7 +464,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         else -> "Изменение записи"
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + setOf("finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

@@ -52,6 +52,8 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
     @Serializable data class RestoreTraining(val id:String,val version:Long):SettlementCommand
     @Serializable data class SetAdministrator(val userId:Long,val enabled:Boolean):SettlementCommand
     @Serializable data class SendPayment(val id:String,val to:Long,val amount:Long):SettlementCommand
+    @Serializable data class SendOtherPayment(val id:String,val to:Long,val amount:Long,val allowSimilar:Boolean=false):SettlementCommand
+    @Serializable data class RecordAdminPayment(val id:String,val from:Long,val to:Long,val amount:Long):SettlementCommand
     @Serializable data class ReceivePayment(val id:String):SettlementCommand
     @Serializable data class RecordTransfer(val id:String,val from:Long,val to:Long,val amount:Long,val date:String,val note:String="",val onBehalfOf:Long?=null,val allowSimilar:Boolean=false):SettlementCommand
     @Serializable data class ChangeTransfer(val id:String,val version:Long,val change:TransferChange,val onBehalfOf:Long?=null):SettlementCommand

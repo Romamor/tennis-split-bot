@@ -20,7 +20,8 @@ import java.util.UUID
     val attendance: AttendanceDraft? = null, val selectedUsers: List<Long> = emptyList(), val page: Int = 0,
     val order: List<Long>? = null, val origin: ScreenAction? = null, val baseline: String? = null, val transfer: String = "",
     val similar: List<String> = emptyList(), val originalTime:String?=null,
-    val publishGroup:Long?=null,val defaultValue:String?=null)
+    val publishGroup:Long?=null,val defaultValue:String?=null,
+    val paymentFrom:Long=0,val adminPayment:Boolean=false)
 @Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
     val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,

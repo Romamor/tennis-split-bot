@@ -17,6 +17,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
     val screens = Screens(service, state, requireNotNull(identity.username))
+    private val paymentInput=PaymentInput(service,state)
     private var lastCleanup = Long.MIN_VALUE
     private val checkedMembership = mutableMapOf<Pair<Long,Long>, Access>()
     init {
@@ -96,11 +97,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 if(plan.command is SettlementCommand.CreateTraining) requirePublication(plan.screen.group,plan.user)
                 try {
                     service.execute(requireNotNull(a), "telegram:${update.id}", plan.command)
-                    if (plan.command is SettlementCommand.RecordTransfer || plan.command is SettlementCommand.EditTransferAmount) effective = plan.copy(form = null)
+                    if (plan.command is SettlementCommand.RecordTransfer || plan.command is SettlementCommand.EditTransferAmount || plan.command is SettlementCommand.SendOtherPayment || plan.command is SettlementCommand.RecordAdminPayment) effective = plan.copy(form = null)
                 }
                 catch (duplicate: DuplicateTransfer) {
                     effective = plan.copy(command = null, screen = ScreenAction("form", plan.screen.group),
-                        form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
+                        form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.SendOtherPayment) "payment_duplicate" else if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
                 }
             }
             if(effective.screen.kind=="edit_redirect") {
@@ -306,8 +307,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             return plan(ScreenAction("exit_confirm",inputGroup,option=signature,back=action,resume=resume),form=savedForm)
         }
         val result = when (action.kind) {
+            in PaymentInput.actions -> paymentInput.prepare(user.id,chat,requireNotNull(a),action,savedForm).copy(callback=callback?.id)
             "finance_send_save" -> plan(action.back ?: ScreenAction("finance_send",action.group),SettlementCommand.SendPayment(UUID.randomUUID().toString(),action.user,action.value))
-            "finance_receive_save" -> plan(action.back ?: ScreenAction("finance_receive",action.group),SettlementCommand.ReceivePayment(action.id))
+            "finance_receive_save" -> plan(ScreenAction("finance_received",action.group),SettlementCommand.ReceivePayment(action.id))
             "set_training_status" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 val target=TrainingPhase.valueOf(action.option)
@@ -326,6 +328,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             "pick_add_player" -> formPlan(InputForm("pick_add_player",action.group,action.id,request=(update.id%Int.MAX_VALUE).toInt(),origin=action.back))
             "profile_preview" -> plan(form=savedForm)
+            "form" -> plan(form=savedForm)
             "add_players", "toggle_player", "save_players", "pick_players" -> {
                 val auth=requireNotNull(a)
                 checkAccounting(canEdit(auth,action.id),ErrorCode.FORBIDDEN,"Добавлять может создатель тренировки или администратор этой группы")
@@ -535,6 +538,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> if(f.training.isEmpty()) "group" else "ready"; else -> error("Форма уже заполнена") })
     private fun textInput(update: TgUpdate, user: TgUser, chat: Long, f: InputForm, text: String): EventPlan {
         val auth=f.group.takeIf { it<0 }?.let { access(it,user.id) }
+        if(PaymentInput.isForm(f)) return paymentInput.text(user.id,chat,requireNotNull(auth),f,text)
         if(f.kind=="paid") service.requireOpen(service.training(requireNotNull(auth),f.training))
         fun form(updated: InputForm) = EventPlan(user.id, chat, ScreenAction("form", f.group, f.training), form = updated)
         fun parsedDate() = runCatching { LocalDate.parse(text, DateTimeFormatter.ofPattern("dd.MM.uuuu").withResolverStyle(java.time.format.ResolverStyle.STRICT)) }.getOrElse { LocalDate.parse(text) }.toString()

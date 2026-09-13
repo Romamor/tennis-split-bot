@@ -646,7 +646,7 @@ class SelfServiceBotTest {
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(a))
         assertEquals("Нет доступных платежей",latest(2).text)
         open(1);click(1,"Мои финансы");click(1,"Принять платеж")
-        val received=click(1,"User 2");bot.handle(received)
+        click(1,"User 2");val received=click(1,"Да, получил");bot.handle(received)
         assertTrue(bot.service.balances(a).values.all { it==0L })
         assertEquals(1,bot.service.history(a).items.count { it.kind=="ReceivePayment" })
     }
@@ -1018,7 +1018,7 @@ class SelfServiceBotTest {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои финансы");click(2,"Первая")
-        assertEquals(listOf(listOf("Отправить платеж","Принять платеж"),listOf("История платежей"),listOf("Должники"),listOf("Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("Баланс группы"),listOf("Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
         click(2,"Отправить платеж");assertEquals("Нет доступных платежей",latest(2).text)
         click(2,"Назад");click(2,"Принять платеж");assertEquals("Нет доступных платежей",latest(2).text)
     }
@@ -1186,8 +1186,8 @@ class SelfServiceBotTest {
         setup();open(2);click(2,"Мои финансы");click(2,"Первая")
         val sizes=mutableListOf<Int>()
         repeat(25) {
-            click(2,"Должники");click(2,"Назад")
-            val button=latest(2).keyboard!!.rows.flatten().first { it.text=="Должники" }
+            click(2,"Баланс группы");click(2,"Назад")
+            val button=latest(2).keyboard!!.rows.flatten().first { it.text=="Баланс группы" }
             val action=bot.state.button(button.callbackData!!.removePrefix("n:"))!!.action
             sizes+=bot.state.json.encodeToString(ScreenAction.serializer(),action).length
         }

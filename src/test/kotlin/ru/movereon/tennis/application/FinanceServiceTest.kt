@@ -115,4 +115,60 @@ class FinanceServiceTest {
         assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("p"),Access(-1,1,true)) }
         assertEquals(PaymentStatus.REVIEW,s.transfer(payer,"p").status)
     }
+    @Test fun `arbitrary transfers support advances with duplicate guard and recipient only posting`() {
+        setup();val before=s.balances(payer)
+        val command=SettlementCommand.SendOtherPayment("advance",3,125)
+        val receipt=s.execute(payer,"send-other",command)
+        assertEquals(receipt,s.execute(payer,"send-other",command));assertEquals(before,s.balances(payer))
+        assertFailsWith<DuplicateTransfer> { run(command.copy(id="duplicate"),payer) }
+        assertEquals(1,s.pendingPaymentCount(Access(-1,3)))
+        run(command.copy(id="second",allowSimilar=true),payer)
+        assertEquals(2,s.pendingPaymentCount(Access(-1,3)))
+        assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("advance"),Access(-1,1,true)) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.EditTransferAmount("advance",1,200),payer) }
+        run(SettlementCommand.ReceivePayment("advance"),Access(-1,3))
+        assertEquals(mapOf(1L to 150L,2L to -25L,3L to -125L),s.balances(payer))
+        assertEquals(1,s.pendingPaymentCount(Access(-1,3)))
+        assertFailsWith<IllegalArgumentException> { run(SettlementCommand.SendOtherPayment("self",2,1),payer) }
+        assertFailsWith<IllegalArgumentException> { run(SettlementCommand.SendOtherPayment("zero",3,0),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendOtherPayment("foreign",99,1),payer) }
+    }
+    @Test fun `administrative payments post immediately and cannot be disputed through legacy commands`() {
+        setup();val command=SettlementCommand.RecordAdminPayment("manual",2,3,75)
+        assertFailsWith<AccountingException> { run(command,recipient) }
+        val receipt=s.execute(Access(-1,1,true),"admin-record",command)
+        assertEquals(receipt,s.execute(Access(-1,1,true),"admin-record",command))
+        assertEquals(mapOf(1L to 150L,2L to -75L,3L to -75L),s.balances(payer))
+        assertEquals(0,s.pendingPaymentCount(Access(-1,3)));assertTrue(s.administrativePayment(payer,"manual"))
+        assertEquals(1,s.transfer(payer,"manual").createdBy)
+        assertFailsWith<AccountingException> { run(SettlementCommand.ChangeTransfer("manual",1,TransferChange.REVIEW),payer) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.EditTransferAmount("manual",1,100),Access(-1,1,true)) }
+        run(SettlementCommand.SetAdministrator(4,true),Access(-1,1,true))
+        run(command.copy(id="delegated"),Access(-1,4))
+        assertFailsWith<AccountingException> { run(command.copy(id="other-group"),Access(-2,4)) }
+        s.rememberMembership(-1,4,false)
+        assertFailsWith<AccountingException> { run(command.copy(id="left"),Access(-1,4)) }
+    }
+    @Test fun `group balances sort all signed amounts before zero rows across pages`() {
+        setup()
+        run(SettlementCommand.CreateTraining("open","Теннис","2026-09-14","18:30"))
+        run(SettlementCommand.AddPlayers("open",1,(3L..9L).toList()))
+        run(SettlementCommand.RecordAdminPayment("a",3,4,200),Access(-1,1,true))
+        run(SettlementCommand.RecordAdminPayment("b",5,6,50),Access(-1,1,true))
+        val all=s.financeBalances(recipient).items+s.financeBalances(recipient,1).items
+        assertEquals(listOf(200L,150L,50L,-50L,-150L,-200L,0L,0L,0L),all.map { it.balance })
+        assertEquals(9,s.financeBalances(recipient).total);assertEquals(5,s.financeBalances(recipient).items.size)
+        assertTrue(s.financeBalances(Access(-2,1)).items.isEmpty())
+    }
+
+    @Test fun `arbitrary pending overflow rolls back payment and history`() {
+        setup();run(SettlementCommand.SendOtherPayment("large",4,Long.MAX_VALUE),Access(-1,3))
+        val before=s.history(recipient).total
+        assertFailsWith<AccountingException> { run(SettlementCommand.SendOtherPayment("overflow",4,1),Access(-1,3)) }
+        assertEquals(before,s.history(recipient).total);assertEquals(1,s.pendingPaymentCount(Access(-1,4)))
+        assertFailsWith<AccountingException> { s.transfer(recipient,"overflow") }
+        assertFailsWith<AccountingException> { run(SettlementCommand.RecordAdminPayment("admin-overflow",3,4,1),Access(-1,1,true)) }
+        assertEquals(before,s.history(recipient).total)
+    }
+
 }

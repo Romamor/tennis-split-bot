@@ -22,16 +22,16 @@ await click('Другой платёж');await click('Борис');await amount(
 await role(2);await click('Принять платёж(1)');await click('Алексей · 150 ₽');await click('Да, получил');await click('К моим финансам');assert.equal(await button('Принять платёж(0)').count(),1);await click('Баланс группы');assert.match(await text(),/−150 ₽/);assert.match(await text(),/\+300 ₽/);await click('Назад');
 await click('Записать платёж за участников');await click('Глеб');await click('Вера');await amount(75);assert.match(await text(),/Подтверждение участников не требуется/);await click('Записать платёж');assert.match(await text(),/Записал администратор: Борис/);await click('К моим финансам');await click('Баланс группы');assert.match(await text(),/\+75 ₽/);assert.match(await text(),/−225 ₽/);assert.deepEqual((await balances()).map(r=>r[1]),['+300 ₽','+75 ₽','−150 ₽','−225 ₽','0 ₽']);await click('Назад');
 await role(3);await click('Принять платёж(0)');assert.match(await text(),/Нет платежей/);await click('Назад');await click('История платежей');await f.locator('[data-action="detail"]').click();assert.match(await text(),/Записал администратор: Борис/);assert.equal(await button('Да, получил').count(),0);
-await role(2);await click('Назад');await click('Вечерний теннис');assert.equal(await button('Записать платёж за участников').count(),0);await click('История платежей');assert.match(await text(),/Платежей пока нет/);
+await role(2);await click('Назад');await click('Мои финансы');await click('Вечерний теннис');assert.equal(await button('Записать платёж за участников').count(),0);await click('История платежей');assert.match(await text(),/Платежей пока нет/);
 await role(3);assert.equal(await button('Записать платёж за участников').count(),1);
-await click('Назад');await click('Теннис по субботам');
+await click('Назад');await click('Мои финансы');await click('Теннис по субботам');
 // Counts include all pages, stay within the selected group, and exclude other recipients.
 await page.reload();
 for(const n of [10,20,30,40]){await click('Другой платёж');await click('Борис');await amount(n);await click('Платёж отправлен');await click('К моим финансам')}
 assert.equal(await button('Принять платёж(0)').count(),1);
 await role(2);assert.equal(await button('Принять платёж(4)').count(),1);
-await click('Назад');await click('Вечерний теннис');assert.equal(await button('Принять платёж(0)').count(),1);
-await click('Назад');await click('Теннис по субботам');await click('Принять платёж(4)');
+await click('Назад');await click('Мои финансы');await click('Вечерний теннис');assert.equal(await button('Принять платёж(0)').count(),1);
+await click('Назад');await click('Мои финансы');await click('Теннис по субботам');await click('Принять платёж(4)');
 assert.equal(await f.locator('[data-action="receive"]').count(),3);await click('›');assert.equal(await f.locator('[data-action="receive"]').count(),1);
 await f.locator('[data-action="receive"]').click();await click('Да, получил');await click('К моим финансам');assert.equal(await button('Принять платёж(3)').count(),1);
 await role(3);assert.equal(await button('Принять платёж(0)').count(),1);
