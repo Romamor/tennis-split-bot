@@ -14,10 +14,10 @@ internal object TrainingCard {
         var slotIndex=0
         val rows=t.players.sortedBy { it.ordinal }.filter { it.playing || it.paid>0 }.flatMap { p ->
             val name=Screens.clean(account(p.userId).name,48)
-            val share=if(p.playing && p.minutes>0) allocation?.slotShares?.get(slotIndex++ ) ?: 0 else 0
+            val share=if(p.playing && t.rules.minutes(p)>0) allocation?.slotShares?.get(slotIndex++ ) ?: 0 else 0
             listOf(Row(p.userId,name,if(p.playing) p.minutes else 0,p.paid,if(known) p.paid-share else null))+
                 if(p.playing) (1..p.guestCount).map { number ->
-                    val guestShare=if(p.guestMinutes>0) allocation?.slotShares?.get(slotIndex++) ?: 0 else 0
+                    val guestShare=if(t.rules.guestMinutes(p)>0) allocation?.slotShares?.get(slotIndex++) ?: 0 else 0
                     Row(p.userId,"$name гость $number",p.guestMinutes,0,if(known) -guestShare else null,number)
                 } else emptyList()
         }

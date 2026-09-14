@@ -460,7 +460,7 @@
         <mxCell id="groups-note-1" value="polls_enabled — разрешить создание опросов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
           <mxGeometry as="geometry" x="2.0" y="278.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="groups-note-2" value="guests_enabled / track_time — для новых тренировок" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+        <mxCell id="groups-note-2" value="guests_enabled / track_time — текущие правила" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
           <mxGeometry as="geometry" x="2.0" y="304.0" width="566" height="26" />
         </mxCell>
         <mxCell id="group_users" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
@@ -896,7 +896,7 @@
         <mxCell id="trainings-note-1" value="OPEN / CLOSED / CANCELLED" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="2.0" y="452.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="trainings-note-2" value="guests_enabled / track_time — сохранённые правила" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-note-2" value="Правила открытых следуют группе; закрытых сохранены" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="2.0" y="478.0" width="566" height="26" />
         </mxCell>
         <mxCell id="trainings-note-3" value="Повторное открытие снимает прежний расчёт" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
@@ -1040,7 +1040,7 @@
         <mxCell id="training_players-note-2" value="paid — оплата стола, а не перевод человеку" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_players">
           <mxGeometry as="geometry" x="2.0" y="420.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="training_players-note-3" value="Гости принадлежат пригласившему; своих строк нет" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_players">
+        <mxCell id="training_players-note-3" value="Равный режим не перезаписывает введённые минуты" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_players">
           <mxGeometry as="geometry" x="2.0" y="446.0" width="566" height="26" />
         </mxCell>
         <mxCell id="edge-1" value="R1" edge="1" parent="1" source="trainings" target="group_users" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">

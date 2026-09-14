@@ -25,8 +25,8 @@ data class GroupRoleEntry(val account:Account,val role:GroupRole)
 @Serializable data class TrainingRecord(val groupId:Long,val id:String,val title:String,val date:String,val startTime:String,
     val phase:TrainingPhase,val version:Long,val appliedVersion:Long,val createdBy:Long,val players:List<Attendance>,val rules:TrainingRules=TrainingRules()) {
     fun calculation():Training = Training(players.sortedBy { it.ordinal }.filter { it.playing }.flatMap {
-        (if(it.minutes>0) listOf(PlayerSlot(ParticipantId(it.userId.toString()),it.minutes)) else emptyList()) +
-            if(it.guestMinutes>0) List(it.guestCount) { _ -> PlayerSlot(ParticipantId(it.userId.toString()),it.guestMinutes,true) } else emptyList()
+        (if(rules.minutes(it)>0) listOf(PlayerSlot(ParticipantId(it.userId.toString()),rules.minutes(it))) else emptyList()) +
+            if(rules.guestMinutes(it)>0) List(it.guestCount) { _ -> PlayerSlot(ParticipantId(it.userId.toString()),rules.guestMinutes(it),true) } else emptyList()
     },players.filter { it.paid>0 }.map { ExpensePayment(ParticipantId(it.userId.toString()),it.paid) })
 }
 @Serializable enum class PaymentStatus { ACTIVE,REVIEW,CANCELLED }

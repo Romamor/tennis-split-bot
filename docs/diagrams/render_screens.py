@@ -24,7 +24,7 @@ poll_steps=['poll_title','poll_date','poll_time','poll_poll_decline','poll_group
 titles.update(dict(zip(poll_steps,['Опрос · название','Опрос · дата','Опрос · начало','Опрос · четвёртый ответ','Опрос · группа','Опрос · публикация'])))
 titles.update({'menu_polls':'Меню с включёнными опросами','choose_polls':'Группа для просмотра опросов','poll_list':'Открытые опросы','poll_detail':'Опрос опубликован в группе','poll_close_confirm':'Завершить сбор: подтверждение','poll_training':'Тренировка из опроса: 0 ч / 0 ₽','choose_poll_settings':'Группа для настройки опросов','poll_settings':'Разрешение создавать опросы'})
 categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
-titles.update({'equal_public':'Без индивидуального времени · равные доли','equal_personal':'Без времени · гости разрешены','simple_public':'Без времени и гостей · карточка','simple_personal':'Без времени и гостей · участие','rules_settings':'Правила новых тренировок'})
+titles.update({'equal_public':'Без индивидуального времени · равные доли','equal_personal':'Без времени · гости разрешены','simple_public':'Без времени и гостей · карточка','simple_personal':'Без времени и гостей · участие','rules_settings':'Обратимые правила открытых тренировок'})
 categories.append(('Правила группы: гости и время',['rules_settings','equal_public','equal_personal','simple_public','simple_personal']))
 def resolve(key,b):
  a=b.get('target');label=b['text']

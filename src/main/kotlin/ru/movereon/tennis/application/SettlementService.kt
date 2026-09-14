@@ -89,10 +89,28 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount())
     }
     fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
-    fun setGroupTrainingRule(a:Access,field:String,value:Boolean)=database.write { c ->
+    fun setGroupTrainingRule(a:Access,field:String,value:Boolean,requestId:String=java.util.UUID.randomUUID().toString())=database.write { c ->
         allowed(present(c,a),"Доступ только участникам этой группы");requireAdmin(c,a)
         val column=when(field) { "guests"->"guests_enabled";"time"->"track_time";else->invalid("Неизвестная настройка") }
+        val request="group-rules:$requestId"
+        val payload="${field}:${value}"
+        val prior=sqlQuery(c,"SELECT actor_id,payload_json FROM actions WHERE group_id=? AND request_id=?",a.groupId,request) { it.getLong(1) to it.getString(2) }.singleOrNull()
+        if(prior!=null) {
+            checkAccounting(prior==(a.userId to json.encodeToString(payload)),ErrorCode.COMMAND_CONFLICT,"Этот запрос уже использован")
+            return@write
+        }
+        val before=json.encodeToString(readGroupTrainingRules(c,a.groupId))
         sqlUpdate(c,"UPDATE groups SET $column=? WHERE id=?",value,a.groupId)
+        applyRulesToOpenTrainings(c,a.groupId,a.userId,request,clock)
+        sqlUpdate(c,"""INSERT INTO actions(group_id,request_id,actor_id,kind,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
+            VALUES(?,?,?,'SetGroupTrainingRule',?,?,?,1,?,0)""",a.groupId,request,a.userId,json.encodeToString(payload),before,
+            json.encodeToString(readGroupTrainingRules(c,a.groupId)),clock.instant().toString())
+    }
+    /** Adopt group settings on upgrade/restart without inventing or overwriting attendance. */
+    fun synchronizeOpenTrainingRules()=database.write { c ->
+        val groups=sqlQuery(c,"""SELECT DISTINCT t.group_id FROM trainings t JOIN groups g ON g.id=t.group_id
+            WHERE t.status='OPEN' AND (t.guests_enabled<>g.guests_enabled OR t.track_time<>g.track_time)""") { it.getLong(1) }
+        groups.forEach { applyRulesToOpenTrainings(c,it,null,java.util.UUID.randomUUID().toString(),clock) }
     }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
     fun canFinish(a:Access,t:TrainingRecord):Boolean = canEdit(a,t)
@@ -300,7 +318,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                     VALUES(?,?,?,1,?,0,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                     playing=1,minutes=excluded.minutes,guest_minutes=0,guest_count=0""",a.groupId,trainingId,id,old.rules.initialMinutes,ordinal++)
                             }
-                            validateDraftTraining(readTraining(c,a.groupId,trainingId).calculation())
+                            validateTrainingDraft(readTraining(c,a.groupId,trainingId))
                         }
                         is SettlementCommand.RemovePlayer -> {
                             editable(old)
@@ -328,7 +346,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                 playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
                                 a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.guestCount, changed.paid, changed.ordinal)
-                            validateDraftTraining(readTraining(c, a.groupId, trainingId).calculation())
+                            validateTrainingDraft(readTraining(c, a.groupId, trainingId))
                         }
                         is SettlementCommand.SaveAttendance -> {
                             editable(old)
@@ -337,7 +355,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val current=old.players.firstOrNull { it.userId==command.userId }
                             checkAccounting(current==command.expected,ErrorCode.STALE_VERSION,"Эти данные уже изменили. Обнови форму перед сохранением")
                             val input=command.attendance
-                            old.rules.validate(input)
+                            old.rules.validate(input,current)
                             require(input.userId==command.userId && input.minutes>=0 && input.minutes%30==0L && input.guestMinutes>=0 && input.guestMinutes%30==0L && input.paid>=0)
                             require(input.guestCount in 0..99 && (input.playing || input.guestMinutes==0L && input.guestCount==0))
                             if(input==current) return@write ActionReceipt(0,old.version)
@@ -350,7 +368,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
                                 playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
                                 a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.guestCount,row.paid,row.ordinal)
-                            validateDraftTraining(readTraining(c,a.groupId,trainingId).calculation())
+                            validateTrainingDraft(readTraining(c,a.groupId,trainingId))
                         }
                         is SettlementCommand.FinishTraining -> {
                             stale(old.version, command.version); editable(old)
@@ -382,6 +400,11 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             sqlUpdate(c, "UPDATE trainings SET status='OPEN' WHERE group_id=? AND id=?", a.groupId, trainingId)
                         }
                         else -> error("Unhandled training command")
+                    }
+                    if(command is SettlementCommand.ReopenTraining || command is SettlementCommand.RestoreTraining) {
+                        val rules=readGroupTrainingRules(c,a.groupId)
+                        sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,a.groupId,trainingId)
+                        validateTrainingDraft(readTraining(c,a.groupId,trainingId))
                     }
                     sqlUpdate(c, "UPDATE trainings SET version=? WHERE group_id=? AND id=?", version, a.groupId, trainingId)
                 }

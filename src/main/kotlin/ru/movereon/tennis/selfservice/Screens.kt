@@ -87,7 +87,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 row(if(enabled) "📊 Сбор через опрос: включён" else "📊 Сбор через опрос: выключен",next("poll_setting_save",value=if(enabled) 0 else 1))
                 row("Назад",ScreenAction("groups",0,option="poll_settings"))
                 menu()
-                "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
+                "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени применяются к новым и открытым тренировкам. Запрет гостей не удаляет записанных. Без учёта времени стоимость делится поровну; введённые длительности сохраняются и вернутся при включении. Учтённые расчёты не меняются.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
             }
             "poll_list" -> {
                 val auth=requireNotNull(a)
@@ -159,6 +159,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 checkAccounting(target == a.userId || service.canEdit(a,t), ErrorCode.FORBIDDEN, "Можно менять только свои данные")
                 val stored = t.players.firstOrNull { it.userId == target }
                 val draft = state.attendanceDraft(a.userId,a.groupId)?.takeIf { it.training==t.id && it.user==target }
+                val compatible=draft==null || runCatching { t.rules.validate(draft.value,stored) }.isSuccess
                 val player = draft?.value ?: stored
                 if (t.phase == TrainingPhase.OPEN) {
                     fun change(label: String, type: AttendanceChange, value: Long = 0) = button(label, next("change", target = target, value = value, option = type.name))
@@ -166,7 +167,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                     else {
                         if(t.rules.trackTime) rows += listOf(change("−0,5 ч", AttendanceChange.ADJUST_MINUTES, -30), change("+0,5 ч", AttendanceChange.ADJUST_MINUTES, 30))
                         if(t.rules.guestsEnabled) rows += listOf(change("+1 гость",AttendanceChange.ADJUST_GUESTS,1))
-                        if(t.rules.guestsEnabled && player.guestCount>0) rows += listOf(change("−1 гость",AttendanceChange.ADJUST_GUESTS,-1))
+                        if(player.guestCount>0) rows += listOf(change("−1 гость",AttendanceChange.ADJUST_GUESTS,-1))
                     }
                     if (player!=null && (player.playing || player.paid>0)) {
                         if (player.paid == 0L) rows += listOf(change("Платил · 300 ₽", AttendanceChange.MARK_PAID))
@@ -175,7 +176,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                         if(player.playing) rows += listOf(change("Не участвую", AttendanceChange.LEAVE))
                     }
                     if (draft != null) {
-                        if (draft.expected==stored) row("Всё правильно",next("save_attendance",target=target,option=state.draftSignature(draft)))
+                        if (draft.expected==stored && compatible) row("Всё правильно",next("save_attendance",target=target,option=state.draftSignature(draft)))
                         else {
                             row("Загрузить сохранённые данные",next("reload_attendance",target=target))
                             row("Убрать несохранённый ввод",next("discard_attendance",target=target,option=state.draftSignature(draft)))
@@ -190,7 +191,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                     (if (player?.playing == true) if(t.rules.trackTime) "Играл ${hours(player.minutes)}" else "Играл" else "Не играл") +
                     (if ((player?.guestCount ?: 0) > 0) " · гостей: ${player!!.guestCount}"+(if(t.rules.trackTime) ", по ${hours(player.guestMinutes)}" else "") else "") +
                     "\nОплатил стол: ${player?.paid ?: 0} ₽" +
-                    (if (draft!=null && draft.expected!=stored) "\nСохранённые данные уже изменились. Обнови форму перед подтверждением." else if (draft!=null) "\nСохраним после «Всё правильно»." else "") +
+                    (if (draft!=null && (draft.expected!=stored || !compatible)) "\nСохранённые данные уже изменились. Обнови форму перед подтверждением." else if (draft!=null) "\nСохраним после «Всё правильно»." else "") +
                     if (t.phase == TrainingPhase.CLOSED) "\nТренировка учтена. Создатель или администратор может выбрать «Открыть заново»: прежний расчёт будет отменён." else ""
             }
             "leave_confirm" -> {
@@ -483,6 +484,16 @@ class Screens(private val service: SettlementService, private val state: Interac
             val before=state.json.decodeFromString<MoneyTransfer>(requireNotNull(a.before))
             val after=state.json.decodeFromString<MoneyTransfer>(a.after)
             "Исправил сумму перевода: ${before.amount} ₽ → ${after.amount} ₽"
+        }
+        "SetGroupTrainingRule" -> "Изменил настройки гостей или времени группы"
+        "UpdateTrainingRules", "SynchronizeTrainingRules" -> {
+            val before=historyTraining(requireNotNull(a.before)).rules
+            val after=historyTraining(a.after).rules
+            (if(a.kind=="SynchronizeTrainingRules") "Автоматически применены настройки группы: " else "Применены настройки группы: ")+
+                listOfNotNull(
+                    if(before.trackTime!=after.trackTime) if(after.trackTime) "учёт времени включён, сохранённые длительности восстановлены" else "учёт времени выключен, равные доли" else null,
+                    if(before.guestsEnabled!=after.guestsEnabled) if(after.guestsEnabled) "добавление гостей разрешено" else "добавление гостей запрещено, записанные сохранены" else null
+                ).joinToString("; ")
         }
         "CreateTrainingFromPoll" -> "Создал тренировку из опроса"
         "FinishTraining" -> "Учёл тренировку · ${historyTraining(a.after).players.sumOf { it.paid }} ₽"

@@ -14,7 +14,15 @@ class TrainingRulesTest {
     @TempDir lateinit var dir:Path
     private val api=FakeTelegramApi()
     private val errors=mutableListOf<String>()
+    private val panels=mutableMapOf<Long,TgMessage>()
+    private var panelId=9000L
     private val telegram=object:TelegramApi by api {
+        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
+            TgMessage(chat=TgChat(chatId,"supergroup"),from=api.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=panelId++).also { panels[userId]=it }
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) { panels[userId]=panels.getValue(userId).copy(text=text,keyboard=keyboard) }
+        override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
+        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { panels.remove(userId) }
         override fun answer(callbackId:String,text:String?,alert:Boolean) { if(alert && text!=null) errors+=text }
     }
     private lateinit var bot:SelfServiceBot
@@ -42,13 +50,16 @@ class TrainingRulesTest {
     private fun message(text:String,u:Long=1) { bot.handle(TgUpdate(seq++,message=TgMessage(seq,TgChat(u,"private"),TgUser(u,firstName="Игрок $u"),text))) }
     private fun latest(u:Long=1)=api.messages.values.last { it.chat.id==u }
     private fun click(label:String,u:Long=1) {
-        val m=latest(u);val b=m.keyboard!!.rows.flatten().single { it.text==label || it.text.endsWith(" $label") }
+        clickOn(latest(u),u,label)
+    }
+    private fun clickOn(m:TgMessage,u:Long,label:String) {
+        val b=m.keyboard!!.rows.flatten().single { it.text==label || it.text.endsWith(" $label") }
         bot.handle(TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),m,b.callbackData)))
     }
     @Test fun `defaults retain guests and individual time and settings are admin only and group scoped`() {
         setup();assertEquals(TrainingRules(),bot.service.groupTrainingRules(-1))
         message("/start");click("Настройки");click("Настройки групп");click("Группа 1")
-        assertTrue(latest().text!!.contains("новых тренировок"))
+        assertTrue(latest().text!!.contains("новым и открытым"))
         click("Гости: разрешены");click("Учёт времени: включён")
         assertEquals(TrainingRules(false,false),bot.service.groupTrainingRules(-1))
         assertEquals(TrainingRules(),bot.service.groupTrainingRules(-2))
@@ -100,10 +111,10 @@ class TrainingRulesTest {
         val history=bot.service.history(admin,"t");val before=t()
         bot.service.setGroupTrainingRule(admin,"time",true);bot.service.setGroupTrainingRule(admin,"guests",false)
         assertEquals(before,t());assertEquals(history,bot.service.history(admin,"t"))
-        run(SettlementCommand.ReopenTraining("t",t().version));assertFalse(t().rules.trackTime);assertTrue(t().rules.guestsEnabled)
+        run(SettlementCommand.ReopenTraining("t",t().version));assertTrue(t().rules.trackTime);assertFalse(t().rules.guestsEnabled)
         create("new");assertEquals(TrainingRules(false,true),t("new").rules)
     }
-    @Test fun `open existing training keeps its rules and new poll training uses current defaults`() {
+    @Test fun `open training preserves input adopts live rules and poll uses current defaults`() {
         setup();create("old");change(2,AttendanceChange.JOIN,id="old");change(2,AttendanceChange.SET_MINUTES,90,id="old");change(2,AttendanceChange.ADJUST_GUESTS,1,id="old")
         val before=t("old")
         bot.polls.setEnabled(admin,true)
@@ -112,7 +123,7 @@ class TrainingRulesTest {
         bot.polls.vote(1000,poll,2,1)
         bot.service.setGroupTrainingRule(admin,"time",false);bot.service.setGroupTrainingRule(admin,"guests",false)
         bot.polls.beginClose(member,"poll");bot.polls.stopped(bot.polls.get(-1,"poll"));bot.finishPollsAfterDrain()
-        assertEquals(before,t("old"))
+        assertEquals(before.players,t("old").players);assertEquals(TrainingRules(false,false),t("old").rules)
         assertEquals(TrainingRules(false,false),t("poll").rules)
         assertEquals(60,t("poll").players.single().minutes)
     }
@@ -146,4 +157,114 @@ class TrainingRulesTest {
             assertTrue(svc.database.verify().contains("Схема 8"))
         }
     }
+    private fun effect(id:String="t")=calculateTraining(t(id).calculation()).entries.associate { it.participant.value.toLong() to it.amount }
+    @Test fun `time toggle round trip preserves raw minutes guests and payments while recalculating equal shares`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(3,AttendanceChange.JOIN)
+        change(2,AttendanceChange.SET_MINUTES,30);change(2,AttendanceChange.ADJUST_GUESTS,1)
+        change(3,AttendanceChange.SET_MINUTES,90);change(3,AttendanceChange.SET_PAID,300)
+        val before=t().players;val initial=effect();val version=t().version
+        assertEquals(mapOf(2L to -120L,3L to 120L),initial)
+        bot.service.setGroupTrainingRule(admin,"time",false,"off")
+        assertEquals(before,t().players);assertTrue(t().version>version)
+        assertEquals(mapOf(2L to -200L,3L to 200L),effect())
+        assertFalse(render("public",1).richHtml!!.contains("<th>Время</th>"))
+        assertFailsWith<AccountingException> { run(SettlementCommand.FinishTraining("t",version)) }
+        change(3,AttendanceChange.SET_PAID,330)
+        assertEquals(listOf(30L,90L),t().players.map { it.minutes });assertEquals(30,t().players.first().guestMinutes)
+        val row=t().players.first()
+        run(SettlementCommand.SaveAttendance("t",2,row,row.copy(paid=10)))
+        assertFailsWith<AccountingException> { run(SettlementCommand.SaveAttendance("t",2,t().players.first(),t().players.first().copy(minutes=60))) }
+        bot.service.setGroupTrainingRule(admin,"time",true,"on")
+        assertEquals(listOf(30L,90L),t().players.map { it.minutes });assertEquals(listOf(10L,330L),t().players.map { it.paid })
+        assertTrue(render("public",1).richHtml!!.contains("<th>Время</th>"))
+        // A retry of the older Telegram event cannot undo the subsequent on-toggle.
+        bot.service.setGroupTrainingRule(admin,"time",false,"off")
+        assertTrue(t().rules.trackTime)
+        assertTrue(bot.service.balances(admin).values.all { it==0L })
+    }
+    @Test fun `guest ban preserves existing guests permits removal and permits adding again after enable`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(2,AttendanceChange.SET_MINUTES,90)
+        change(2,AttendanceChange.ADJUST_GUESTS,1);change(2,AttendanceChange.ADJUST_GUESTS,1)
+        val before=t().players
+        bot.service.setGroupTrainingRule(admin,"guests",false)
+        assertEquals(before,t().players)
+        assertFalse(labels(render()).any { it.contains("Добавить гостя") })
+        assertTrue(labels(render()).any { it.contains("Убрать гостя") })
+        assertFailsWith<AccountingException> { change(2,AttendanceChange.ADJUST_GUESTS,1) }
+        change(2,AttendanceChange.SET_PAID,300);assertEquals(2,t().players.single().guestCount)
+        change(2,AttendanceChange.ADJUST_GUESTS,-1)
+        val row=t().players.single()
+        run(SettlementCommand.SaveAttendance("t",2,row,row.copy(guestCount=0,guestMinutes=0)))
+        bot.service.setGroupTrainingRule(admin,"guests",true);change(2,AttendanceChange.ADJUST_GUESTS,1)
+        assertEquals(90,t().players.single().guestMinutes);assertEquals(300,t().players.single().paid)
+    }
+    @Test fun `zero entered durations and guests count in equal mode and return unchanged to timed mode`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(2,AttendanceChange.ADJUST_GUESTS,1)
+        change(3,AttendanceChange.JOIN);change(3,AttendanceChange.SET_MINUTES,90);change(3,AttendanceChange.SET_PAID,300)
+        bot.service.setGroupTrainingRule(admin,"time",false)
+        assertEquals(mapOf(2L to -200L,3L to 200L),effect())
+        val card=render("public",1)
+        assertTrue(card.text.contains("Игрок 2 | 0 ₽ | -100 ₽"))
+        assertTrue(card.text.contains("Игрок 2 гость 1 | 0 ₽ | -100 ₽"))
+        assertEquals(0,t().players.first().minutes)
+        bot.service.setGroupTrainingRule(admin,"time",true)
+        assertEquals(0,t().players.first().minutes);assertEquals(0,t().players.first().guestMinutes)
+        assertTrue(effect().values.all { it==0L })
+    }
+    @Test fun `live public and ephemeral screens refresh safely when time editor is disabled`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(2,AttendanceChange.SET_MINUTES,90);change(2,AttendanceChange.ADJUST_GUESTS,1)
+        bot.maintain();val msg=bot.state.delivery("training:-1:t")!!.message!!
+        clickOn(api.messages.getValue(-1L to msg),2,"Открыть")
+        clickOn(panels.getValue(2),2,"Время · 1,5 ч");val oldTimePanel=panels.getValue(2)
+        bot.service.setGroupTrainingRule(admin,"time",false);bot.service.setGroupTrainingRule(admin,"guests",false)
+        bot.maintain()
+        assertEquals(oldTimePanel.ephemeralId,panels.getValue(2).ephemeralId)
+        assertFalse(panels.getValue(2).text!!.contains("| Время |"))
+        assertFalse(panels.getValue(2).keyboard!!.rows.flatten().any { it.text.contains("Время") || it.text.contains("Добавить гостя") })
+        assertTrue(panels.getValue(2).keyboard!!.rows.flatten().any { it.text.contains("Убрать гостя") })
+        clickOn(oldTimePanel,2,"+0,5 ч");assertEquals(90,t().players.single().minutes)
+        bot.service.setGroupTrainingRule(admin,"time",true);bot.service.setGroupTrainingRule(admin,"guests",true);bot.maintain()
+        assertTrue(panels.getValue(2).keyboard!!.rows.flatten().any { it.text.contains("Время · 1,5 ч") })
+        assertEquals(msg,bot.state.delivery("training:-1:t")!!.message)
+    }
+    @Test fun `failed setting transaction rolls back flag versions and history and restart sync is idempotent`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(2,AttendanceChange.SET_MINUTES,90)
+        val before=t();val history=bot.service.history(admin).total
+        bot.service.database.write { c -> sqlUpdate(c,"CREATE TRIGGER fail_rule BEFORE INSERT ON actions WHEN NEW.kind='UpdateTrainingRules' BEGIN SELECT RAISE(ABORT,'test'); END") }
+        assertFailsWith<java.sql.SQLException> { bot.service.setGroupTrainingRule(admin,"time",false,"rollback") }
+        assertEquals(before,t());assertTrue(bot.service.groupTrainingRules(-1).trackTime);assertEquals(history,bot.service.history(admin).total)
+        bot.service.database.write { c -> sqlUpdate(c,"DROP TRIGGER fail_rule");sqlUpdate(c,"UPDATE groups SET track_time=0 WHERE id=-1") }
+        bot=SelfServiceBot(telegram,Database(bot.service.database.path),api.bot)
+        assertFalse(t().rules.trackTime);assertEquals(before.players,t().players)
+        val synced=t();val syncedHistory=bot.service.history(admin).total
+        bot=SelfServiceBot(telegram,Database(bot.service.database.path),api.bot)
+        assertEquals(synced,t());assertEquals(syncedHistory,bot.service.history(admin).total)
+    }
+    @Test fun `accounted and cancelled trainings keep ledger then adopt current rules when reopened`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(3,AttendanceChange.JOIN)
+        change(2,AttendanceChange.SET_MINUTES,30);change(3,AttendanceChange.SET_MINUTES,90);change(3,AttendanceChange.SET_PAID,400)
+        run(SettlementCommand.FinishTraining("t",t().version));val closed=t();val balances=bot.service.balances(admin)
+        bot.service.setGroupTrainingRule(admin,"time",false)
+        assertEquals(closed,t());assertEquals(balances,bot.service.balances(admin))
+        run(SettlementCommand.ReopenTraining("t",t().version));assertFalse(t().rules.trackTime)
+        assertEquals(closed.players.map { it.minutes },t().players.map { it.minutes })
+        run(SettlementCommand.FinishTraining("t",t().version))
+        assertEquals(mapOf(2L to -200L,3L to 200L),bot.service.balances(admin))
+        create("cancelled");change(2,AttendanceChange.JOIN,id="cancelled");run(SettlementCommand.CancelTraining("cancelled",t("cancelled").version))
+        val cancelled=t("cancelled");bot.service.setGroupTrainingRule(admin,"time",true)
+        assertEquals(cancelled,t("cancelled"));run(SettlementCommand.RestoreTraining("cancelled",t("cancelled").version))
+        assertTrue(t("cancelled").rules.trackTime)
+    }
+
+    @Test fun `equal mode cannot accept changes that make restoring timed mode invalid`() {
+        setup();create();change(2,AttendanceChange.JOIN);change(2,AttendanceChange.SET_MINUTES,Long.MAX_VALUE/30*30)
+        bot.service.setGroupTrainingRule(admin,"time",false)
+        val before=t()
+        assertFailsWith<AccountingException> { change(2,AttendanceChange.ADJUST_GUESTS,1) }
+        assertFailsWith<AccountingException> { run(SettlementCommand.AddPlayers("t",t().version,listOf(3))) }
+        assertEquals(before,t())
+        bot.service.setGroupTrainingRule(admin,"time",true)
+        assertEquals(before.players,t().players)
+    }
+
 }

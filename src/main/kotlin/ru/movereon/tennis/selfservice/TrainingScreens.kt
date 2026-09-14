@@ -103,9 +103,9 @@ internal class TrainingScreens(private val service:SettlementService,private val
                         if(p?.playing==true) {
                             row("Оплата · ${p.paid} ₽",next("participation_payment",page=0,target=target))
                             if(t.rules.trackTime) row("Время · ${hours(p.minutes)}",next("participation_time",page=0,target=target))
-                            if(t.rules.guestsEnabled) rows+=buildList<TgButton> {
+                            if(t.rules.guestsEnabled || p.guestCount>0) rows+=buildList<TgButton> {
                                 if(t.rules.guestsEnabled && p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
-                                if(t.rules.guestsEnabled && p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
+                                if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
                             }
                             rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
                         } else {

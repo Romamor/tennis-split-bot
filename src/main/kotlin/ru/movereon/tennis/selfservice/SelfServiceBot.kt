@@ -28,6 +28,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         service.remember(identity.account())
         state.interruptedSends()
         polls.interrupted()
+        service.synchronizeOpenTrainingRules()
         state.refreshLiveCards()
     }
     private fun TgUser.account() = Account(id, firstName, lastName, username, isBot)
@@ -156,7 +157,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 effective=effective.copy(screen=ScreenAction(if(effective.chat<0) "close_panel" else "menu",if(effective.chat<0) a.groupId else 0))
             }
             if(effective.screen.kind=="group_rule_save") {
-                service.setGroupTrainingRule(requireNotNull(a),effective.screen.option,effective.screen.value==1L)
+                service.setGroupTrainingRule(requireNotNull(a),effective.screen.option,effective.screen.value==1L,"telegram:${update.id}")
                 effective=effective.copy(screen=ScreenAction("poll_settings",a.groupId))
             }
             if(effective.screen.kind=="poll_setting_save") {
@@ -878,7 +879,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     val scope="personal:$user:$group"
                     val player=t.players.firstOrNull { it.userId==user }
                     val available=player?.playing==true || screen.kind=="participation_payment" && (player?.paid ?: 0)>0
-                    val shown=if(available) screen else screen.copy(kind="participation")
+                    val shown=if(available && (screen.kind!="participation_time" || t.rules.trackTime)) screen else screen.copy(kind="participation")
                     val out=screens.render(shown,auth,scope,user,inGroup=true)
                     state.panel(user,group,shown)
                     state.protect(out.tokens)

@@ -177,4 +177,28 @@ class PollFlowTest {
         bot.finishPollsAfterDrain();assertEquals(1,count("SELECT COUNT(*) FROM trainings"))
     }
 
+    @Test fun `all group switches round trip during polling keep the same poll and roster`() {
+        setup();val p=publish();vote(p,2,1);vote(p,3,2)
+        val a=Access(-1,1,true)
+        repeat(2) {
+            bot.polls.setEnabled(a,false)
+            bot.service.setGroupTrainingRule(a,"time",false)
+            bot.service.setGroupTrainingRule(a,"guests",false)
+            bot.maintain()
+            assertEquals(p,bot.polls.get(-1,p.id));assertEquals(2,bot.polls.count(p))
+            bot.polls.setEnabled(a,true)
+            bot.service.setGroupTrainingRule(a,"time",true)
+            bot.service.setGroupTrainingRule(a,"guests",true)
+        }
+        bot.polls.setEnabled(a,false);bot.service.setGroupTrainingRule(a,"time",false)
+        vote(p,3,3);vote(p,4,0)
+        bot.polls.beginClose(Access(-1,2),p.id);bot.maintain();bot.finishPollsAfterDrain()
+        val training=bot.service.training(Access(-1,2),p.id)
+        assertEquals(setOf(2L,4L),training.players.map { it.userId }.toSet())
+        assertTrue(training.players.all { it.minutes==60L && it.paid==0L });assertFalse(training.rules.trackTime)
+        bot.service.setGroupTrainingRule(a,"time",true)
+        assertEquals(training.players,bot.service.training(Access(-1,2),p.id).players)
+        assertEquals(1,fake.pollOptions.size)
+    }
+
 }
