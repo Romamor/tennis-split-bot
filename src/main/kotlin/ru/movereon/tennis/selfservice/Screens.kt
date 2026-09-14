@@ -186,7 +186,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 pages(p.index,p.pages)
                 if (action.kind=="administrators") {
                     row("Назначить администратора",next("admin_candidates"))
-                    row("⬅️ Назад",ScreenAction("settings",0))
+                    row("⬅️ Назад",ScreenAction("poll_settings",action.group))
                 } else back(next("administrators"))
                 if (action.kind=="administrators") "Администраторы группы · ${p.total}\nСуперадмины получают права из Telegram. Назначенные админы бота управляют тренировками, но не назначают других."
                 else "Кого назначить?\nВ этом списке только участники без административной роли."

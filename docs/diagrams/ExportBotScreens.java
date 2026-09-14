@@ -108,7 +108,7 @@ class ExportBotScreens {
   polls.vote(8000L,polls.get(-1,"poll-own"),4,1);
   polls.beginClose(auth,"poll-own");polls.stopped(polls.get(-1,"poll-own"));polls.finish(polls.get(-1,"poll-own"));
   capture("poll_training","public","poll-own","",null,true,null);
-  if(user==3){capture("choose_admins","groups","","\"option\":\"administrators\"",null,false,null);cap("administrators","administrators","");cap("candidates","admin_candidates","");capture("role_member","admin_person","","\"user\":8",null,false,null);capture("role_admin","admin_person","","\"user\":2",null,false,null);capture("role_super","admin_person","","\"user\":3",null,false,null);run(auth,new SettlementCommand.SetAdministrator(3,true));capture("role_super_extra","admin_person","","\"user\":3",null,false,null);}
+  if(user==3){cap("administrators","administrators","");cap("candidates","admin_candidates","");capture("role_member","admin_person","","\"user\":8",null,false,null);capture("role_admin","admin_person","","\"user\":2",null,false,null);capture("role_super","admin_person","","\"user\":3",null,false,null);run(auth,new SettlementCommand.SetAdministrator(3,true));capture("role_super_extra","admin_person","","\"user\":3",null,false,null);}
   svc.setGroupTrainingRule(superA,"time",false,"time-off");
   run(auth,new SettlementCommand.CreateTraining("equal","Теннис","2026-09-12","18:30"));
   run(auth,new SettlementCommand.AddPlayers("equal",1,List.of(user,4L)));

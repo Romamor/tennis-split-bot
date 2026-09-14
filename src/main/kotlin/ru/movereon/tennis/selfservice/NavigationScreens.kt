@@ -31,7 +31,6 @@ internal class NavigationScreens(private val service:SettlementService,private v
             "settings" -> {
                 row("Тренировка",ScreenAction("training_settings",0))
                 if(groupOptions.any { it.admin }) row("⚙️ Настройки групп",ScreenAction("groups",0,option="poll_settings"))
-                if(groupOptions.any { it.superAdmin }) row("Администраторы групп",ScreenAction("groups",0,option="administrators"))
                 menu()
                 "Настройки"
             }
@@ -42,6 +41,7 @@ internal class NavigationScreens(private val service:SettlementService,private v
                 row(if(rules.guestsEnabled) "👥 Гости: разрешены" else "👥 Гости: запрещены",next("group_rule_save",value=if(rules.guestsEnabled) 0 else 1,option="guests"))
                 row(if(rules.trackTime) "🕒 Учёт времени: включён" else "🕒 Учёт времени: выключен",next("group_rule_save",value=if(rules.trackTime) 0 else 1,option="time"))
                 row(if(enabled) "📊 Сбор через опрос: включён" else "📊 Сбор через опрос: выключен",next("poll_setting_save",value=if(enabled) 0 else 1))
+                if(a.telegramAdmin) row("🛡️ Администраторы группы",next("administrators"))
                 row("Назад",ScreenAction("groups",0,option="poll_settings"))
                 menu()
                 "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени применяются к новым и открытым тренировкам. Запрет гостей не удаляет записанных. Без учёта времени стоимость делится поровну; введённые длительности сохраняются и вернутся при включении. Учтённые расчёты не меняются.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
