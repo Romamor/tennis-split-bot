@@ -2,9 +2,47 @@ package ru.movereon.tennis.selfservice
 
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.telegram.*
+import ru.movereon.tennis.core.*
 
 /** Telegram delivery is separated from the transactional poll/sign-up model. */
 internal class PollWorkflow(private val polls:TrainingPolls,private val state:InteractionStore,private val api:TelegramApi) {
+    fun execute(plan:EventPlan,a:Access?,requirePublication:(Long,Long)->Unit):EventPlan {
+        var effective=plan
+            if(effective.screen.kind=="poll_publish") {
+                val f=requireNotNull(effective.form)
+                requirePublication(effective.screen.group,effective.user)
+                val p=polls.create(requireNotNull(a),f.pollId,f.title,f.date,f.time,f.declineLabel)
+                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
+                publish(p)
+                effective=effective.copy(screen=ScreenAction("poll_detail",p.group,p.id),form=null)
+            }
+            if(effective.screen.kind=="poll_close") {
+                polls.beginClose(requireNotNull(a),effective.screen.id)
+                stop(polls.get(a.groupId,effective.screen.id))
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
+            if(effective.screen.kind=="poll_retry") {
+                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
+                polls.requireManager(a,p);requirePublication(a.groupId,effective.user)
+                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
+                publish(p)
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
+            if(effective.screen.kind=="poll_discard") {
+                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
+                polls.requireManager(a,p)
+                checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING"),ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
+                if(p.message!=null) {
+                    api.stopPoll(p.group,p.message)
+                    api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
+                    api.unpin(p.group,p.message)
+                }
+                polls.discard(a,p.id)
+                state.forgetDelivery("poll:${p.group}:${p.id}")
+                effective=effective.copy(screen=ScreenAction(if(effective.chat<0) "close_panel" else "menu",if(effective.chat<0) a.groupId else 0))
+            }
+        return effective
+    }
     fun publish(p:TrainingPoll) {
         if(p.status !in setOf("PENDING","FAILED")) return
         val key="poll:${p.group}:${p.id}"

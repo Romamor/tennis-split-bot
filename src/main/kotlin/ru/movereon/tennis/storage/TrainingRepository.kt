@@ -17,3 +17,11 @@ internal fun readGroupTrainingRules(c:Connection,group:Long):TrainingRules =
     sqlQuery(c,"SELECT guests_enabled,track_time FROM groups WHERE id=?",group) {
         TrainingRules(it.getBoolean(1),it.getBoolean(2))
     }.single()
+
+/** The caller owns the transaction and authorization; both creation flows capture the same current rules. */
+internal fun insertTraining(c:Connection,group:Long,id:String,title:String,date:String,time:String,creator:Long,createdAt:String):TrainingRules {
+    val rules=readGroupTrainingRules(c,group)
+    sqlUpdate(c,"""INSERT INTO trainings(group_id,id,title,played_on,starts_at,status,version,created_by,created_at,guests_enabled,track_time)
+        VALUES(?,?,?,?,?,'OPEN',1,?,?,?,?)""",group,id,title,date,time,creator,createdAt,rules.guestsEnabled,rules.trackTime)
+    return rules
+}

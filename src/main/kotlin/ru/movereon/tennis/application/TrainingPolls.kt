@@ -5,7 +5,6 @@ import kotlinx.serialization.json.Json
 import ru.movereon.tennis.core.*
 import ru.movereon.tennis.storage.*
 import java.sql.Connection
-import java.sql.ResultSet
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -33,20 +32,25 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
         db.write { c -> member(c,a);sqlUpdate(c,"UPDATE groups SET polls_enabled=? WHERE id=?",value,a.groupId) }
     }
     private fun member(c:Connection,a:Access) = checkAccounting(sqlQuery(c,"SELECT present FROM group_users WHERE group_id=? AND user_id=?",a.groupId,a.userId) { it.getBoolean(1) }.singleOrNull()==true,ErrorCode.FORBIDDEN,"Доступ только участникам этой группы")
-    private fun read(r:ResultSet)=TrainingPoll(r.getLong("group_id"),r.getString("id"),r.getString("title"),r.getString("played_on"),r.getString("starts_at"),r.getString("decline_label"),r.getLong("created_by"),r.getString("telegram_id"),r.getString("message_id")?.toLong(),r.getString("status"),r.getBoolean("stopped"),r.getString("closed_by")?.toLong(),r.getString("training_id"))
-    private fun get(c:Connection,group:Long,id:String)=sqlQuery(c,"SELECT * FROM training_polls WHERE group_id=? AND id=?",group,id,map=::read).singleOrNull()
-        ?: throw AccountingException(ErrorCode.INVALID_INPUT,"Опрос не найден в этой группе")
+    private fun get(c:Connection,group:Long,id:String)=readPoll(c,group,id)
     fun get(group:Long,id:String)=db.read { get(it,group,id) }
-    fun byTelegram(id:String)=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE telegram_id=?",id,map=::read).singleOrNull() }
+    fun byTelegram(id:String)=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE telegram_id=?",id,map=::readPollRow).singleOrNull() }
     fun canManage(a:Access,p:TrainingPoll)=a.groupId==p.group && (a.userId==p.creator || service.isAdmin(a))
     fun requireManager(a:Access,p:TrainingPoll) {
         db.read { member(it,a) }
         checkAccounting(canManage(a,p),ErrorCode.FORBIDDEN,"Завершить сбор может создатель опроса или администратор этой группы")
     }
-    fun active(group:Long?=null)=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status<>'CLOSED' AND (? IS NULL OR group_id=?) ORDER BY created_at DESC,id",group,group,map=::read) }
+    fun active(group:Long?=null)=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status<>'CLOSED' AND (? IS NULL OR group_id=?) ORDER BY created_at DESC,id",group,group,map=::readPollRow) }
+    fun managedPage(a:Access,page:Int)=db.read { c -> member(c,a);readManagedPolls(c,a,isGroupAdmin(c,a),page) }
+    fun hasActive(group:Long,user:Long,admin:Boolean)=db.read { c ->
+        sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM training_polls WHERE group_id=? AND status<>'CLOSED' AND (? OR created_by=?))",group,admin,user) { it.getBoolean(1) }.single()
+    }
+    fun maintenancePolls()=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status IN ('OPEN','CLOSING') ORDER BY created_at DESC,id",map=::readPollRow) }
+    fun closingPolls()=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status='CLOSING' AND stopped=1 ORDER BY created_at DESC,id",map=::readPollRow) }
+    fun hasClosingPolls()=db.read { c -> sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM training_polls WHERE status='CLOSING' AND stopped=1)") { it.getBoolean(1) }.single() }
     fun create(a:Access,id:String,title:String,date:String,time:String,decline:String):TrainingPoll = db.write { c ->
         member(c,a)
-        val old=sqlQuery(c,"SELECT * FROM training_polls WHERE group_id=? AND id=?",a.groupId,id,map=::read).singleOrNull()
+        val old=sqlQuery(c,"SELECT * FROM training_polls WHERE group_id=? AND id=?",a.groupId,id,map=::readPollRow).singleOrNull()
         if(old!=null) {
             checkAccounting(old.creator==a.userId && old.title==title && old.date==date && old.time==time && old.decline==decline,ErrorCode.COMMAND_CONFLICT,"Опрос уже создан с другими данными")
             return@write old
@@ -96,9 +100,7 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
         if(current.status=="CLOSED") return@write
         checkAccounting(current.status=="CLOSING" && current.stopped,ErrorCode.INVALID_STATE,"Сначала останови голосование")
         val actor=requireNotNull(current.closer)
-        sqlUpdate(c,"INSERT INTO trainings(group_id,id,title,played_on,starts_at,status,version,created_by,created_at) VALUES(?,?,?,?,?,'OPEN',1,?,?)",p.group,p.id,p.title,p.date,p.time,p.creator,clock.instant().toString())
-        val rules=readGroupTrainingRules(c,p.group)
-        sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,p.group,p.id)
+        val rules=insertTraining(c,p.group,p.id,p.title,p.date,p.time,p.creator,clock.instant().toString())
         val players=sqlQuery(c,"SELECT user_id FROM poll_signups WHERE group_id=? AND poll_id=? ORDER BY user_id",p.group,p.id) { it.getLong(1) }
         players.forEachIndexed { index,user -> sqlUpdate(c,"INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,paid,ordinal) VALUES(?,?,?,1,?,0,?)",p.group,p.id,user,rules.initialMinutes,index) }
         refreshAttendance(c,p.group)

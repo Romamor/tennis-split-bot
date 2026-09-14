@@ -12,12 +12,15 @@ import java.time.format.DateTimeFormatter
 /** Navigation lists are paged; a training card shows its complete roster. */
 class Screens(private val service: SettlementService, private val state: InteractionStore, private val botName: String) {
     private val polls=TrainingPolls(service)
+    private val navigationScreens=NavigationScreens(service,polls)
+    private val pollScreens=PollScreens(service,polls)
     private val trainingScreens=TrainingScreens(service,state)
     private val financeScreens=FinanceScreens(service)
     data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
     }
+    private val historyDescriptions=HistoryDescriptions(state.json,::shortName)
     private fun shortName(id: Long) = clean(service.account(id).name, 36)
     fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null, inGroup: Boolean = false, telegramAdmins:Set<Long> = emptySet(), groupOptions:List<GroupOption> = emptyList()): Output = state.buttonBatch {
         renderInside(action,access,scope,user,form,notice,inGroup,telegramAdmins,groupOptions)
@@ -25,6 +28,9 @@ class Screens(private val service: SettlementService, private val state: Interac
     private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>, groupOptions:List<GroupOption>):Output {
         return with(ScreenLayout(action,state,botName,scope,user,inGroup)) {
         val a = access
+        if(action.kind in NavigationScreens.kinds || action.kind in PollScreens.kinds) a?.let(service::requireKnownGroupMember)
+        if(action.kind in NavigationScreens.kinds) return@with finishScreen(this,navigationScreens.render(this,a,groupOptions),null,notice,inGroup)
+        if(action.kind in PollScreens.kinds) return@with finishScreen(this,pollScreens.render(this,a),null,notice,inGroup)
         val accounts=if(a!=null) service.groupAccounts(a) else emptyList()
         val accountCache=accounts.associateBy { it.id }.toMutableMap()
         fun account(id:Long)=accountCache.getOrPut(id) { service.account(id) }
@@ -51,84 +57,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                 row("Продолжить ввод",next("exit_continue"))
                 row("Сбросить и выйти",next("exit_discard"))
                 "Есть несохранённые изменения. Сбросить их и выйти?"
-            }
-            "groups" -> {
-                val choices=groupOptions.filter { when(action.option) { "manage","poll_settings"->it.admin;"administrators"->it.superAdmin;else->true } }
-                val index=action.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
-                choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),ScreenAction("select_group",0,value=it.group.id,option=action.option)) }
-                pages(index,maxOf(1,(choices.size+7)/8),action.copy(group=0))
-                row("Назад",ScreenAction(if(action.option in setOf("administrators","poll_settings")) "settings" else "menu",0))
-                "Выбери группу."+if(choices.isEmpty()) "\nНет доступных групп." else ""
-            }
-            "menu" -> {
-                requireNotNull(user)
-                row("🏓 Мои тренировки",ScreenAction("my_trainings",0))
-                row("💰 Мои финансы",ScreenAction("groups",0,option="finance"))
-                row("➕ Создать тренировку",ScreenAction("new",0))
-                if(groupOptions.any { it.canPublish && polls.enabled(it.group.id) }) row("📊 Создать опрос",ScreenAction("new_poll",0))
-                if(groupOptions.any { g -> polls.active(g.group.id).any { it.creator==user || g.admin } }) row("📋 Мои опросы",ScreenAction("groups",0,option="polls"))
-                row("⚙️ Настройки",ScreenAction("settings",0))
-                if(groupOptions.any { it.admin }) row("📋 Управление тренировками",ScreenAction("groups",0,option="manage"))
-                "Что хочешь сделать?"
-            }
-            "settings" -> {
-                row("Тренировка",ScreenAction("training_settings",0))
-                if(groupOptions.any { it.admin }) row("⚙️ Настройки групп",ScreenAction("groups",0,option="poll_settings"))
-                if(groupOptions.any { it.superAdmin }) row("Администраторы групп",ScreenAction("groups",0,option="administrators"))
-                menu()
-                "Настройки"
-            }
-            "poll_settings" -> {
-                checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
-                val enabled=polls.enabled(a.groupId)
-                val rules=service.groupTrainingRules(a.groupId)
-                row(if(rules.guestsEnabled) "👥 Гости: разрешены" else "👥 Гости: запрещены",next("group_rule_save",value=if(rules.guestsEnabled) 0 else 1,option="guests"))
-                row(if(rules.trackTime) "🕒 Учёт времени: включён" else "🕒 Учёт времени: выключен",next("group_rule_save",value=if(rules.trackTime) 0 else 1,option="time"))
-                row(if(enabled) "📊 Сбор через опрос: включён" else "📊 Сбор через опрос: выключен",next("poll_setting_save",value=if(enabled) 0 else 1))
-                row("Назад",ScreenAction("groups",0,option="poll_settings"))
-                menu()
-                "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени применяются к новым и открытым тренировкам. Запрет гостей не удаляет записанных. Без учёта времени стоимость делится поровну; введённые длительности сохраняются и вернутся при включении. Учтённые расчёты не меняются.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
-            }
-            "poll_list" -> {
-                val auth=requireNotNull(a)
-                val all=polls.active(auth.groupId).filter { polls.canManage(auth,it) }
-                val index=action.page.coerceIn(0,maxOf(0,(all.size-1)/5))
-                all.drop(index*5).take(5).forEach { row("${date(it.date)} · ${clean(it.title,32)}",next("poll_detail",it.id).copy(back=action.copy(page=index))) }
-                pages(index,maxOf(1,(all.size+4)/5))
-                row("Назад",ScreenAction("groups",0,option="polls"))
-                "Опросы · ${all.size}"
-            }
-            "poll_detail", "poll_close_confirm", "poll_discard_confirm" -> {
-                val p=polls.get(action.group,action.id)
-                polls.requireManager(requireNotNull(a),p)
-                if(action.kind=="poll_discard_confirm") {
-                    row("Отменить опрос",next("poll_discard"))
-                    row("Назад",next("poll_detail"))
-                    "Отменить неудавшуюся публикацию? Тренировка создана не будет. Затем можно создать новый опрос. Если сообщение появилось в группе, но бот не получил его адрес, удали его вручную."
-                } else if(action.kind=="poll_close_confirm" && p.status=="OPEN") {
-                    row("🏁 Завершить сбор",next("poll_close"))
-                    row("Назад",next(if(inGroup) "close_panel" else "poll_detail"))
-                    "Завершить сбор и перейти к учёту игры?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nЗаписались: ${polls.count(p)}.\n${if(service.groupTrainingRules(p.group).trackTime) "Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." else "Они будут добавлены с 0 ₽. Стоимость делится поровну; ввод времени не нужен."}"
-                } else {
-                    if(p.status=="OPEN") row("🏁 Завершить сбор",next("poll_close_confirm"))
-                    if(p.status in setOf("FAILED","PENDING")) row("📤 Повторить публикацию",next("poll_retry"))
-                    if(p.status in setOf("UNKNOWN","FAILED","PENDING")) row("Отменить опрос",next("poll_discard_confirm"))
-                    if(p.status=="CLOSED") row("🏓 Открыть тренировку",ScreenAction("training",p.group,requireNotNull(p.training)))
-                    if(inGroup) row("Закрыть",next("close_panel")) else { row("Назад",next("poll_list"));menu() }
-                    "${clean(p.title,100)} · ${date(p.date)} · ${p.time}\n"+when(p.status) {
-                        "OPEN" -> "Сбор открыт. Записались: ${polls.count(p)}."
-                        "CLOSING" -> "Завершаем сбор. Тренировка появится в группе после обработки последних голосов. Если она не появляется, проверь права бота в группе."
-                        "CLOSED" -> "Сбор завершён. Тренировка создана."
-                        "UNKNOWN","SENDING" -> "Telegram не подтвердил публикацию. Часть голосов могла не дойти до бота, поэтому создавать тренировку из этого опроса нельзя. Отмени его и создай новый. Автоматического повтора нет, чтобы не создать второй опрос."
-                        else -> "Опрос не опубликован. Проверь права бота и повтори публикацию."
-                    }
-                }
-            }
-            "training_settings" -> {
-                row("Название",ScreenAction("default_title",0))
-                row("Время",ScreenAction("default_time",0))
-                rows+=listOf(button("Назад",ScreenAction("settings",0)),button("Меню",ScreenAction("menu",0)))
-                "Укажите параметры тренировки по умолчанию"
             }
             "my_trainings" -> {
                 val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
@@ -450,86 +378,19 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val historyZone=ZoneId.of(service.group(action.group).timeZone)
                 pages(p.index, p.pages)
                 back(next(if(action.kind=="transfer_history") "transfer" else if (action.id.isEmpty()) "menu" else "training"))
-                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(historyZone).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${describe(it).take(330)}" }
+                "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(historyZone).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${historyDescriptions.describe(it).take(330)}" }
             }
             else -> error("Unknown screen: ${action.kind}")
         }
+        finishScreen(this,text,richHtml,notice,inGroup)
+        }
+    }
+    private fun finishScreen(layout:ScreenLayout,text:String,richHtml:String?,notice:String?,inGroup:Boolean):Output=with(layout) {
         if (inGroup && action.kind !in setOf("public","player","exit_confirm","participation","participation_time","participation_payment")) row("Закрыть", next("close_panel"))
-        val header = ""
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
-        val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + header + text
+        val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + text
         check(result.length <= if(richHtml==null) 4096 else 32768) { "Экран превышает допустимую длину" }
         Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it })
-        }
-    }
-    private fun playerLine(p: Attendance) = "${name(p.userId)}\n  ${if (p.playing) hours(p.minutes) else "Не играл"}" +
-        (if (p.guestCount > 0) " · гостей: ${p.guestCount}, по ${hours(p.guestMinutes)}" else "") + " · оплатил ${p.paid} ₽"
-    // Historical JSON is immutable; normalize only the retired phase when reading old snapshots.
-    private fun historyTraining(text:String):TrainingRecord {
-        val value=state.json.parseToJsonElement(text).jsonObject
-        val compatible=if(value["phase"]?.jsonPrimitive?.content=="REVIEW") JsonObject(value+("phase" to JsonPrimitive("OPEN"))) else value
-        return state.json.decodeFromJsonElement(TrainingRecord.serializer(),compatible)
-    }
-    private fun describe(a: AuditAction): String = when (a.kind) {
-        "SetDefaultStartTime" -> "Изменил начало по умолчанию · ${state.json.decodeFromString<String>(a.after)}"
-        "CreateTraining" -> "Опубликовал тренировку"
-        "EditTraining" -> {
-            val after=historyTraining(a.after)
-            val before=historyTraining(requireNotNull(a.before))
-            listOfNotNull(if(before.title!=after.title) "Название: ${clean(before.title,100)} → ${clean(after.title,100)}" else null,
-                if(before.date!=after.date) "Дата: ${date(before.date)} → ${date(after.date)}" else null,
-                if(before.startTime!=after.startTime) "Начало: ${before.startTime} → ${after.startTime}" else null).joinToString("\n")
-        }
-        "EditTransferAmount" -> {
-            val before=state.json.decodeFromString<MoneyTransfer>(requireNotNull(a.before))
-            val after=state.json.decodeFromString<MoneyTransfer>(a.after)
-            "Исправил сумму перевода: ${before.amount} ₽ → ${after.amount} ₽"
-        }
-        "SetGroupTrainingRule" -> "Изменил настройки гостей или времени группы"
-        "UpdateTrainingRules", "SynchronizeTrainingRules" -> {
-            val before=historyTraining(requireNotNull(a.before)).rules
-            val after=historyTraining(a.after).rules
-            (if(a.kind=="SynchronizeTrainingRules") "Автоматически применены настройки группы: " else "Применены настройки группы: ")+
-                listOfNotNull(
-                    if(before.trackTime!=after.trackTime) if(after.trackTime) "учёт времени включён, сохранённые длительности восстановлены" else "учёт времени выключен, равные доли" else null,
-                    if(before.guestsEnabled!=after.guestsEnabled) if(after.guestsEnabled) "добавление гостей разрешено" else "добавление гостей запрещено, записанные сохранены" else null
-                ).joinToString("; ")
-        }
-        "CreateTrainingFromPoll" -> "Создал тренировку из опроса"
-        "FinishTraining" -> "Учёл тренировку · ${historyTraining(a.after).players.sumOf { it.paid }} ₽"
-        "ReopenTraining" -> if(state.json.parseToJsonElement(a.after).jsonObject["phase"]?.jsonPrimitive?.content=="REVIEW")
-            "Открыл исправление по прежним правилам; расчёт оставался учтённым" else "Открыл тренировку заново; прежний расчёт отменён"
-        "MigrateTrainingState" -> "При обновлении бота тренировку открыли заново; прежний расчёт отменён"
-        "RemovePlayer" -> "Исключил игрока"
-        "CancelTraining" -> "Отменил тренировку и снял её расчёт"
-        "RestoreTraining" -> "Восстановил тренировку; расчёт ещё не учтён"
-        "SendPayment", "SendOtherPayment" -> "Отметил отправку платежа"
-        "RecordAdminPayment" -> "Администратор записал платёж"
-        "ReceivePayment" -> "Подтвердил получение платежа"
-        "RecordTransfer" -> "Записал перевод"
-        "ChangeTransfer" -> "Изменил состояние перевода"
-        "SetAdministrator" -> if (a.after == "true") "Назначил администратора бота" else "Снял назначение администратора"
-        "AddPlayers" -> {
-            val after=historyTraining(a.after)
-            val before=a.before?.let { historyTraining(it) }
-            val added=after.players.filter { p -> p.playing && before?.players?.any { it.userId==p.userId && it.playing }!=true }
-            "Добавил игроков: ${added.size} · "+added.take(3).joinToString(", ") { shortName(it.userId) }+if(added.size>3) ", ещё ${added.size-3}" else ""
-        }
-        "ChangeAttendance", "SaveAttendance" -> {
-            val after = historyTraining(a.after)
-            val before = a.before?.let { historyTraining(it) }
-            val changed = after.players.filter { p -> before?.players?.find { it.userId == p.userId } != p }
-            changed.joinToString("\n") { p ->
-                val old=before?.players?.find { it.userId==p.userId }
-                "${shortName(p.userId)}:\n"+listOfNotNull(
-                    if(old?.playing!=p.playing) "Участие: ${if(old?.playing==true) "играл" else "не отмечено"} → ${if(p.playing) "играл" else "не играл"}" else null,
-                    if(after.rules.trackTime && (old==null || old.minutes!=p.minutes)) "Время: ${old?.let { hours(it.minutes) } ?: "—"} → ${hours(p.minutes)}" else null,
-                    if((old?.guestCount ?: 0)!=p.guestCount) "Гостей: ${old?.guestCount ?: 0} → ${p.guestCount}" else null,
-                    if(after.rules.trackTime && old?.guestMinutes!=p.guestMinutes && (p.guestCount>0 || (old?.guestCount ?: 0)>0)) "Время гостей: ${hours(old?.guestMinutes ?: 0)} → ${hours(p.guestMinutes)}" else null,
-                    if(old==null || old.paid!=p.paid) "Оплата: ${old?.paid ?: 0} ₽ → ${p.paid} ₽" else null).joinToString("\n")
-            }.ifEmpty { "Подтвердил прежние время и оплату" }
-        }
-        else -> "Изменение записи"
     }
     companion object {
         val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")

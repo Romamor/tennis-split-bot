@@ -36,6 +36,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     }
 
     fun account(id: Long): Account = database.read { account(it, id) }
+    internal fun requireKnownGroupMember(a:Access)=database.read { known(it,a.groupId,a.userId) }
     fun groupAccount(a:Access,user:Long):Account = database.read { c ->
         known(c,a.groupId,a.userId); known(c,a.groupId,user); account(c,user)
     }
@@ -89,34 +90,15 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount())
     }
     fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
-    fun setGroupTrainingRule(a:Access,field:String,value:Boolean,requestId:String=java.util.UUID.randomUUID().toString())=database.write { c ->
-        allowed(present(c,a),"Доступ только участникам этой группы");requireAdmin(c,a)
-        val column=when(field) { "guests"->"guests_enabled";"time"->"track_time";else->invalid("Неизвестная настройка") }
-        val request="group-rules:$requestId"
-        val payload="${field}:${value}"
-        val prior=sqlQuery(c,"SELECT actor_id,payload_json FROM actions WHERE group_id=? AND request_id=?",a.groupId,request) { it.getLong(1) to it.getString(2) }.singleOrNull()
-        if(prior!=null) {
-            checkAccounting(prior==(a.userId to json.encodeToString(payload)),ErrorCode.COMMAND_CONFLICT,"Этот запрос уже использован")
-            return@write
-        }
-        val before=json.encodeToString(readGroupTrainingRules(c,a.groupId))
-        sqlUpdate(c,"UPDATE groups SET $column=? WHERE id=?",value,a.groupId)
-        applyRulesToOpenTrainings(c,a.groupId,a.userId,request,clock)
-        sqlUpdate(c,"""INSERT INTO actions(group_id,request_id,actor_id,kind,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
-            VALUES(?,?,?,'SetGroupTrainingRule',?,?,?,1,?,0)""",a.groupId,request,a.userId,json.encodeToString(payload),before,
-            json.encodeToString(readGroupTrainingRules(c,a.groupId)),clock.instant().toString())
-    }
-    /** Adopt group settings on upgrade/restart without inventing or overwriting attendance. */
-    fun synchronizeOpenTrainingRules()=database.write { c ->
-        val groups=sqlQuery(c,"""SELECT DISTINCT t.group_id FROM trainings t JOIN groups g ON g.id=t.group_id
-            WHERE t.status='OPEN' AND (t.guests_enabled<>g.guests_enabled OR t.track_time<>g.track_time)""") { it.getLong(1) }
-        groups.forEach { applyRulesToOpenTrainings(c,it,null,java.util.UUID.randomUUID().toString(),clock) }
-    }
+    private val groupSettings=GroupSettings(database,clock)
+    fun setGroupTrainingRule(a:Access,field:String,value:Boolean,requestId:String=java.util.UUID.randomUUID().toString())=
+        groupSettings.setGroupTrainingRule(a,field,value,requestId)
+    fun synchronizeOpenTrainingRules()=groupSettings.synchronizeOpenTrainingRules()
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
     fun canFinish(a:Access,t:TrainingRecord):Boolean = canEdit(a,t)
     fun canEdit(a:Access,t:TrainingRecord):Boolean = database.read { canManageTraining(it,a,t) }
     fun requireOpen(t:TrainingRecord) = editable(t)
-    private fun present(c:Connection,a:Access)=count(c,"SELECT COUNT(*) FROM group_users WHERE group_id=? AND user_id=? AND present=1",a.groupId,a.userId)==1
+    private fun present(c:Connection,a:Access)=isPresentGroupMember(c,a)
     private fun canManageTraining(c:Connection,a:Access,t:TrainingRecord)=t.groupId==a.groupId && present(c,a) && (t.createdBy==a.userId || admin(c,a))
     fun administrators(a:Access,telegramAdmins:Set<Long>,candidates:Boolean=false,page:Int=0):Page<GroupRoleEntry> = database.read { c ->
         known(c,a.groupId,a.userId)
@@ -131,8 +113,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val index=pageIndex(page,rows.size)
         Page(rows.drop(index*8).take(8),rows.size,index)
     }
-    private fun admin(c: Connection, a: Access) = a.telegramAdmin || count(c,
-        "SELECT COUNT(*) FROM group_admins WHERE group_id=? AND user_id=?", a.groupId, a.userId) > 0
+    private fun admin(c: Connection, a: Access) = isGroupAdmin(c,a)
     private fun requireAdmin(c: Connection, a: Access) = allowed(admin(c, a), "Это действие доступно администратору этой группы")
     private fun known(c: Connection, group: Long, user: Long) = allowed(count(c,
         "SELECT COUNT(*) FROM group_users gu JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND gu.user_id=? AND u.is_bot=0", group, user) == 1,
@@ -280,10 +261,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     checkId(trainingId)
                     validateDetails(command.title, command.date, command.startTime)
                     require(count(c, "SELECT COUNT(*) FROM trainings WHERE group_id=? AND id=?", a.groupId, trainingId) == 0) { "Тренировка уже создана" }
-                    sqlUpdate(c, """INSERT INTO trainings(group_id,id,title,played_on,starts_at,status,version,created_by,created_at)
-                        VALUES(?,?,?,?,?,'OPEN',1,?,?)""", a.groupId, trainingId, command.title, command.date, command.startTime, a.userId, clock.instant().toString())
-                    val rules=readGroupTrainingRules(c,a.groupId)
-                    sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,a.groupId,trainingId)
+                    insertTraining(c,a.groupId,trainingId,command.title,command.date,command.startTime,a.userId,clock.instant().toString())
                 } else {
                     trainingId = when (command) {
                         is SettlementCommand.EditTraining -> command.id

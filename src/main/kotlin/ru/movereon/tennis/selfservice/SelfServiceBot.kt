@@ -123,39 +123,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.SendOtherPayment) "payment_duplicate" else if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
                 }
             }
-            if(effective.screen.kind=="poll_publish") {
-                val f=requireNotNull(effective.form)
-                requirePublication(effective.screen.group,effective.user)
-                val p=polls.create(requireNotNull(a),f.pollId,f.title,f.date,f.time,f.declineLabel)
-                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
-                pollWorkflow.publish(p)
-                effective=effective.copy(screen=ScreenAction("poll_detail",p.group,p.id),form=null)
-            }
-            if(effective.screen.kind=="poll_close") {
-                polls.beginClose(requireNotNull(a),effective.screen.id)
-                pollWorkflow.stop(polls.get(a.groupId,effective.screen.id))
-                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
-            }
-            if(effective.screen.kind=="poll_retry") {
-                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
-                polls.requireManager(a,p);requirePublication(a.groupId,effective.user)
-                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
-                pollWorkflow.publish(p)
-                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
-            }
-            if(effective.screen.kind=="poll_discard") {
-                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
-                polls.requireManager(a,p)
-                checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING"),ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
-                if(p.message!=null) {
-                    api.stopPoll(p.group,p.message)
-                    api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
-                    api.unpin(p.group,p.message)
-                }
-                polls.discard(a,p.id)
-                state.forgetDelivery("poll:${p.group}:${p.id}")
-                effective=effective.copy(screen=ScreenAction(if(effective.chat<0) "close_panel" else "menu",if(effective.chat<0) a.groupId else 0))
-            }
+            effective=pollWorkflow.execute(effective,a,::requirePublication)
             if(effective.screen.kind=="group_rule_save") {
                 service.setGroupTrainingRule(requireNotNull(a),effective.screen.option,effective.screen.value==1L,"telegram:${update.id}")
                 effective=effective.copy(screen=ScreenAction("poll_settings",a.groupId))
@@ -810,16 +778,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             throw failure
         }
     }
-    fun hasClosingPolls()=polls.active().any { it.status=="CLOSING" && it.stopped }
+    fun hasClosingPolls()=polls.hasClosingPolls()
     /** Run after an empty getUpdates response, so votes queued before stopPoll are included. */
     fun finishPollsAfterDrain() {
-        polls.active().filter { it.status=="CLOSING" && it.stopped }.forEach { polls.finish(it) }
+        polls.closingPolls().forEach { polls.finish(it) }
     }
     fun maintain() {
         checkedMembership.clear()
         val now = clock.instant().epochSecond
         if (lastCleanup == Long.MIN_VALUE || now - lastCleanup >= 30) { state.cleanup(); lastCleanup = now }
-        polls.active().forEach { p ->
+        polls.maintenancePolls().forEach { p ->
             if(p.status=="OPEN" && p.message!=null) pollWorkflow.recordDelivery(p)
             if(p.status=="CLOSING") try { pollWorkflow.stop(p) } catch(f:TelegramFailure) {
                 if(f.kind!=FailureKind.REJECTED || f.code in setOf(401,409)) throw f
