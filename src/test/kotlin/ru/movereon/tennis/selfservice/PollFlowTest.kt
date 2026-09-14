@@ -102,7 +102,7 @@ class PollFlowTest {
         val card=bot.state.delivery("training:-1:${p.id}")!!
         assertTrue(fake.pinned.contains(-1L to card.message!!))
         vote(p,3,1);assertEquals(0,count("SELECT COUNT(*) FROM poll_signups"))
-        assertTrue(bot.service.database.verify().contains("Схема 7"))
+        assertTrue(bot.service.database.verify().contains("Схема 8"))
     }
     @Test fun `different user and cross group admin cannot finish and disabled group still permits existing close`() {
         setup();val p=publish()

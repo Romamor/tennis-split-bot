@@ -13,9 +13,7 @@ CREATE TABLE groups (
     id INTEGER PRIMARY KEY CHECK(id<0),
     title TEXT NOT NULL,
     time_zone TEXT NOT NULL,
-    polls_enabled INTEGER NOT NULL DEFAULT 0 CHECK(polls_enabled IN (0,1)),
-    guests_enabled INTEGER NOT NULL DEFAULT 1 CHECK(guests_enabled IN (0,1)),
-    track_time INTEGER NOT NULL DEFAULT 1 CHECK(track_time IN (0,1))
+    polls_enabled INTEGER NOT NULL DEFAULT 0 CHECK(polls_enabled IN (0,1))
 ) STRICT;
 CREATE TABLE group_users (
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
@@ -38,8 +36,6 @@ CREATE TABLE group_admins (
     FOREIGN KEY(group_id,granted_by) REFERENCES group_users(group_id,user_id) ON UPDATE CASCADE
 ) STRICT;
 CREATE TABLE trainings (
-    guests_enabled INTEGER NOT NULL DEFAULT 1 CHECK(guests_enabled IN (0,1)),
-    track_time INTEGER NOT NULL DEFAULT 1 CHECK(track_time IN (0,1)),
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
     id TEXT NOT NULL,
     title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 100),

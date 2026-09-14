@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" type="device" compressed="false">
   <diagram id="screens-1" name="Участник">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="19596">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="20609">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -47,6 +47,9 @@
         </mxCell>
         <mxCell id="section10" value="Опросы перед тренировкой" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="17395" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section11" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="19496" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2441" width="430" height="344" />
@@ -285,7 +288,7 @@
         <mxCell id="screen-public_own-label" value="Карточка своей тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_own-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
+        <mxCell id="screen-public_own-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_own-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
@@ -300,7 +303,7 @@
         <mxCell id="screen-public_closed-label" value="Учтённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_closed-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
+        <mxCell id="screen-public_closed-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_closed-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
@@ -330,7 +333,7 @@
         <mxCell id="screen-public_cancelled-label" value="Отменённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_cancelled-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
+        <mxCell id="screen-public_cancelled-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_cancelled-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Отменена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
@@ -1986,7 +1989,7 @@
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-poll_training-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+        <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
@@ -1994,6 +1997,90 @@
         </mxCell>
         <mxCell id="screen-poll_training-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="19566" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="19566" width="430" height="663" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-0" value="Добавить гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-1" value="Убрать гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="217.5" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button2-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="505" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button3-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="553" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button4-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="19566" width="430" height="424" />
+        </mxCell>
+        <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="19566" width="430" height="568" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button1-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="410" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button2-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="458" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button3-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="506" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -4945,6 +5032,114 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge321-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="587" y="19996.5" />
+              <mxPoint x="587" y="19646" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge322-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="19996.5" />
+              <mxPoint x="1189" y="265" />
+              <mxPoint x="1805" y="265" />
+              <mxPoint x="1805" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge323-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1201" y="20044.5" />
+              <mxPoint x="1201" y="19611" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge324-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1105" y="20044.5" />
+              <mxPoint x="1105" y="19611" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge325-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1117" y="20092.5" />
+              <mxPoint x="1117" y="19611" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge326-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-edit_denied">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1129" y="20140.5" />
+              <mxPoint x="1129" y="14969" />
+              <mxPoint x="-13" y="14969" />
+              <mxPoint x="-13" y="15104" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge327-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1141" y="20188.5" />
+              <mxPoint x="1141" y="19506" />
+              <mxPoint x="-25" y="19506" />
+              <mxPoint x="-25" y="19646" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge328-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1743" y="19949.5" />
+              <mxPoint x="1743" y="19646" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge329-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2345" y="19949.5" />
+              <mxPoint x="2345" y="260" />
+              <mxPoint x="1805" y="260" />
+              <mxPoint x="1805" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge330-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2357" y="19997.5" />
+              <mxPoint x="2357" y="19611" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge331-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-edit_denied">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2369" y="20045.5" />
+              <mxPoint x="2369" y="14974" />
+              <mxPoint x="11" y="14974" />
+              <mxPoint x="11" y="15104" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge332-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2381" y="20093.5" />
+              <mxPoint x="2381" y="19511" />
+              <mxPoint x="1179" y="19511" />
+              <mxPoint x="1179" y="19646" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="guard-screen-new_title-button1-0" value="Есть несохранённый ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=block;strokeColor=#c29048;fontSize=12;" edge="1" parent="returns" source="screen-new_title-button1-0" target="screen-exit">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
@@ -4976,7 +5171,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-2" name="Администратор бота">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="22810">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="24787">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -5025,6 +5220,9 @@
         </mxCell>
         <mxCell id="section11" value="Опросы перед тренировкой" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="19981" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section12" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="22906" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -5266,7 +5464,7 @@
         <mxCell id="screen-public_own-label" value="Карточка своей тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_own-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
+        <mxCell id="screen-public_own-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_own-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
@@ -5281,7 +5479,7 @@
         <mxCell id="screen-public_closed-label" value="Учтённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_closed-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
+        <mxCell id="screen-public_closed-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_closed-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
@@ -5311,7 +5509,7 @@
         <mxCell id="screen-public_cancelled-label" value="Отменённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_cancelled-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
+        <mxCell id="screen-public_cancelled-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_cancelled-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Отменена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
@@ -7280,7 +7478,7 @@
           <mxGeometry as="geometry" x="0.0" y="234" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="22033" width="430" height="397" />
+          <mxGeometry as="geometry" x="650" y="22033" width="430" height="593" />
         </mxCell>
         <mxCell id="screen-poll_settings-label" value="Разрешение создавать опросы" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7288,17 +7486,23 @@
         <mxCell id="screen-poll_settings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-poll_settings-body" value="Теннис по субботам&lt;br&gt;Сбор через опрос&lt;br&gt;Разрешает всем участникам создавать опрос перед тренировкой. Обычное создание тренировки остаётся доступным. Уже опубликованные опросы можно завершить и после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="168" />
+        <mxCell id="screen-poll_settings-body" value="Теннис по субботам&lt;br&gt;Настройки группы&lt;br&gt;Гости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.&lt;br&gt;Сбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="268" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button0-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="239" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button0-0" value="👥 Гости: разрешены" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button1-0" value="🕒 Учёт времени: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button2-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="335" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button2-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="435" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-poll_settings-button3-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="483" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-poll_settings-button4-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="531" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1830" y="21436" width="430" height="377" />
@@ -7306,7 +7510,7 @@
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-poll_training-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+        <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
@@ -7314,6 +7518,117 @@
         </mxCell>
         <mxCell id="screen-poll_training-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="22976" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="22976" width="430" height="663" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-0" value="Добавить гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-1" value="Убрать гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="217.5" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button2-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="505" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button3-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="553" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button4-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="22976" width="430" height="424" />
+        </mxCell>
+        <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="23839" width="430" height="568" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button1-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="410" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button2-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="458" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button3-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="506" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="22976" width="430" height="593" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-label" value="Правила новых тренировок" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-body" value="Теннис по субботам&lt;br&gt;Настройки группы&lt;br&gt;Гости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.&lt;br&gt;Сбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="268" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button0-0" value="👥 Гости: запрещены" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button1-0" value="🕒 Учёт времени: выключен" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button2-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="435" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button3-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="483" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button4-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="531" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -10900,38 +11215,210 @@
         <mxCell id="edge387-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1105" y="22293.5" />
+              <mxPoint x="1105" y="22393.5" />
               <mxPoint x="1105" y="22078" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button1-0" target="screen-choose_poll_settings">
+        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1117" y="22341.5" />
-              <mxPoint x="1117" y="21968" />
-              <mxPoint x="-1" y="21968" />
-              <mxPoint x="-1" y="22113" />
+              <mxPoint x="1117" y="22441.5" />
+              <mxPoint x="1117" y="22078" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button2-0" target="screen-menu">
+        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1129" y="22389.5" />
-              <mxPoint x="1129" y="2467" />
-              <mxPoint x="577" y="2467" />
-              <mxPoint x="577" y="2617" />
+              <mxPoint x="1129" y="22489.5" />
+              <mxPoint x="1129" y="22078" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2321" y="21772.5" />
-              <mxPoint x="2321" y="285" />
-              <mxPoint x="565" y="285" />
-              <mxPoint x="565" y="410" />
+              <mxPoint x="1141" y="22537.5" />
+              <mxPoint x="1141" y="21988" />
+              <mxPoint x="-25" y="21988" />
+              <mxPoint x="-25" y="22113" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge391-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="22585.5" />
+              <mxPoint x="1153" y="2487" />
+              <mxPoint x="553" y="2487" />
+              <mxPoint x="553" y="2617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2345" y="21772.5" />
+              <mxPoint x="2345" y="275" />
+              <mxPoint x="625" y="275" />
+              <mxPoint x="625" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1177" y="23406.5" />
+              <mxPoint x="1177" y="23056" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="23406.5" />
+              <mxPoint x="1779" y="265" />
+              <mxPoint x="1781" y="265" />
+              <mxPoint x="1781" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="23454.5" />
+              <mxPoint x="1791" y="23021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="23454.5" />
+              <mxPoint x="1695" y="23021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1707" y="23502.5" />
+              <mxPoint x="1707" y="23021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1719" y="23550.5" />
+              <mxPoint x="1719" y="3296" />
+              <mxPoint x="1143" y="3296" />
+              <mxPoint x="1143" y="3431" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1731" y="23598.5" />
+              <mxPoint x="1731" y="22916" />
+              <mxPoint x="625" y="22916" />
+              <mxPoint x="625" y="23056" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2333" y="23359.5" />
+              <mxPoint x="2333" y="23664" />
+              <mxPoint x="23" y="23664" />
+              <mxPoint x="23" y="23919" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="575" y="24222.5" />
+              <mxPoint x="575" y="260" />
+              <mxPoint x="1781" y="260" />
+              <mxPoint x="1781" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="587" y="24270.5" />
+              <mxPoint x="587" y="23884" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="24318.5" />
+              <mxPoint x="599" y="3301" />
+              <mxPoint x="1167" y="3301" />
+              <mxPoint x="1167" y="3431" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="611" y="24366.5" />
+              <mxPoint x="611" y="22921" />
+              <mxPoint x="1745" y="22921" />
+              <mxPoint x="1745" y="23056" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="515" y="23336.5" />
+              <mxPoint x="515" y="23021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="23384.5" />
+              <mxPoint x="527" y="23021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="23432.5" />
+              <mxPoint x="539" y="21963" />
+              <mxPoint x="613" y="21963" />
+              <mxPoint x="613" y="22113" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="23480.5" />
+              <mxPoint x="551" y="21988" />
+              <mxPoint x="11" y="21988" />
+              <mxPoint x="11" y="22113" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="563" y="23528.5" />
+              <mxPoint x="563" y="2487" />
+              <mxPoint x="589" y="2487" />
+              <mxPoint x="589" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -10966,7 +11453,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-3" name="Суперадминистратор группы">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="24341">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="26318">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -11018,6 +11505,9 @@
         </mxCell>
         <mxCell id="section12" value="Опросы перед тренировкой" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="21512" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section13" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="24437" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -11265,7 +11755,7 @@
         <mxCell id="screen-public_own-label" value="Карточка своей тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_own-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
+        <mxCell id="screen-public_own-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_own-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_own">
@@ -11280,7 +11770,7 @@
         <mxCell id="screen-public_closed-label" value="Учтённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_closed-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
+        <mxCell id="screen-public_closed-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_closed-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_closed">
@@ -11310,7 +11800,7 @@
         <mxCell id="screen-public_cancelled-label" value="Отменённая карточка: Открыть недоступно" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-public_cancelled-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
+        <mxCell id="screen-public_cancelled-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-public_cancelled-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Отменена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;350 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+162 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Денис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;400 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+212 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Елена&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Ирина&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-187 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-public_cancelled">
@@ -13288,7 +13778,7 @@
           <mxGeometry as="geometry" x="0.0" y="282" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="23564" width="430" height="397" />
+          <mxGeometry as="geometry" x="650" y="23564" width="430" height="593" />
         </mxCell>
         <mxCell id="screen-poll_settings-label" value="Разрешение создавать опросы" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -13296,17 +13786,23 @@
         <mxCell id="screen-poll_settings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-poll_settings-body" value="Теннис по субботам&lt;br&gt;Сбор через опрос&lt;br&gt;Разрешает всем участникам создавать опрос перед тренировкой. Обычное создание тренировки остаётся доступным. Уже опубликованные опросы можно завершить и после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="168" />
+        <mxCell id="screen-poll_settings-body" value="Теннис по субботам&lt;br&gt;Настройки группы&lt;br&gt;Гости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.&lt;br&gt;Сбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="268" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button0-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="239" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button0-0" value="👥 Гости: разрешены" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button1-0" value="🕒 Учёт времени: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_settings-button2-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
-          <mxGeometry as="geometry" x="0.0" y="335" width="430.0" height="43" />
+        <mxCell id="screen-poll_settings-button2-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="435" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-poll_settings-button3-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="483" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-poll_settings-button4-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
+          <mxGeometry as="geometry" x="0.0" y="531" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1830" y="22967" width="430" height="377" />
@@ -13314,7 +13810,7 @@
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
         </mxCell>
-        <mxCell id="screen-poll_training-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+        <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
         <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
@@ -13475,6 +13971,117 @@
         </mxCell>
         <mxCell id="screen-role_super_extra-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-role_super_extra">
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="24507" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="24507" width="430" height="663" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера гость 1&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;-100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+200 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-0" value="Добавить гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button1-1" value="Убрать гостя" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="217.5" y="457" width="212.5" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button2-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="505" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button3-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="553" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-equal_personal-button4-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
+          <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="24507" width="430" height="424" />
+        </mxCell>
+        <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_public-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_public-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_public-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="25370" width="430" height="568" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-context" value="В группе · личная панель" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="291" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button0-0" value="💵 Оплата · 0 ₽" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button1-0" value="🚪 Не участвую" style="rounded=1;arcSize=10;fillColor=#bd454c;strokeColor=#bd454c;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="410" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button2-0" value="✏️ Редактировать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="458" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-simple_personal-button3-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
+          <mxGeometry as="geometry" x="0.0" y="506" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="24507" width="430" height="593" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-label" value="Правила новых тренировок" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-body" value="Теннис по субботам&lt;br&gt;Настройки группы&lt;br&gt;Гости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.&lt;br&gt;Сбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="268" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button0-0" value="👥 Гости: запрещены" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button1-0" value="🕒 Учёт времени: выключен" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button2-0" value="📊 Сбор через опрос: включён" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="435" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button3-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="483" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-rules_settings-button4-0" value="🏠 Меню" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
+          <mxGeometry as="geometry" x="0.0" y="531" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -17105,246 +17712,418 @@
         <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1165" y="23824.5" />
+              <mxPoint x="1165" y="23924.5" />
               <mxPoint x="1165" y="23609" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button1-0" target="screen-choose_poll_settings">
+        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1177" y="23872.5" />
-              <mxPoint x="1177" y="23504" />
-              <mxPoint x="23" y="23504" />
-              <mxPoint x="23" y="23644" />
+              <mxPoint x="1177" y="23972.5" />
+              <mxPoint x="1177" y="23609" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button2-0" target="screen-menu">
+        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1189" y="23920.5" />
-              <mxPoint x="1189" y="2472" />
-              <mxPoint x="601" y="2472" />
-              <mxPoint x="601" y="2617" />
+              <mxPoint x="1189" y="24020.5" />
+              <mxPoint x="1189" y="23609" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2381" y="23303.5" />
-              <mxPoint x="2381" y="260" />
-              <mxPoint x="589" y="260" />
-              <mxPoint x="589" y="410" />
+              <mxPoint x="1201" y="24068.5" />
+              <mxPoint x="1201" y="23494" />
+              <mxPoint x="-1" y="23494" />
+              <mxPoint x="-1" y="23644" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button0-0" target="screen-administrators">
+        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="515" y="20258.5" />
-              <mxPoint x="515" y="20131" />
+              <mxPoint x="1105" y="24116.5" />
+              <mxPoint x="1105" y="2492" />
+              <mxPoint x="577" y="2492" />
+              <mxPoint x="577" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button1-0" target="screen-administrators">
+        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="527" y="20306.5" />
-              <mxPoint x="527" y="20131" />
+              <mxPoint x="2297" y="23303.5" />
+              <mxPoint x="2297" y="280" />
+              <mxPoint x="565" y="280" />
+              <mxPoint x="565" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_admins-button2-0" target="screen-settings">
+        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button0-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="539" y="20354.5" />
-              <mxPoint x="539" y="18087" />
-              <mxPoint x="-37" y="18087" />
-              <mxPoint x="-37" y="18222" />
+              <mxPoint x="539" y="20258.5" />
+              <mxPoint x="539" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button0-0" target="screen-role_super">
+        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1141" y="20271.5" />
-              <mxPoint x="1141" y="20713" />
-              <mxPoint x="625" y="20713" />
-              <mxPoint x="625" y="20963" />
+              <mxPoint x="551" y="20306.5" />
+              <mxPoint x="551" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button1-0" target="screen-role_admin">
+        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_admins-button2-0" target="screen-settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1153" y="20319.5" />
-              <mxPoint x="1153" y="20708" />
-              <mxPoint x="23" y="20708" />
-              <mxPoint x="23" y="20963" />
+              <mxPoint x="563" y="20354.5" />
+              <mxPoint x="563" y="18077" />
+              <mxPoint x="23" y="18077" />
+              <mxPoint x="23" y="18222" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button2-0" target="screen-candidates">
+        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button0-0" target="screen-role_super">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1165" y="20367.5" />
-              <mxPoint x="1165" y="20131" />
+              <mxPoint x="1165" y="20271.5" />
+              <mxPoint x="1165" y="20703" />
+              <mxPoint x="601" y="20703" />
+              <mxPoint x="601" y="20963" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-administrators-button3-0" target="screen-settings">
+        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button1-0" target="screen-role_admin">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1177" y="20415.5" />
-              <mxPoint x="1177" y="18097" />
-              <mxPoint x="-1" y="18097" />
-              <mxPoint x="-1" y="18222" />
+              <mxPoint x="1177" y="20319.5" />
+              <mxPoint x="1177" y="20728" />
+              <mxPoint x="-1" y="20728" />
+              <mxPoint x="-1" y="20963" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button0-0" target="screen-role_member">
+        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button2-0" target="screen-candidates">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1779" y="20258.5" />
-              <mxPoint x="1779" y="20131" />
+              <mxPoint x="1189" y="20367.5" />
+              <mxPoint x="1189" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button1-0" target="screen-role_member">
+        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-administrators-button3-0" target="screen-settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1791" y="20306.5" />
-              <mxPoint x="1791" y="20131" />
+              <mxPoint x="1201" y="20415.5" />
+              <mxPoint x="1201" y="18087" />
+              <mxPoint x="-25" y="18087" />
+              <mxPoint x="-25" y="18222" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button2-0" target="screen-role_member">
+        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button0-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1695" y="20354.5" />
+              <mxPoint x="1695" y="20258.5" />
               <mxPoint x="1695" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button3-0" target="screen-role_member">
+        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button1-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1707" y="20402.5" />
+              <mxPoint x="1707" y="20306.5" />
               <mxPoint x="1707" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button4-0" target="screen-role_member">
+        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button2-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1719" y="20450.5" />
+              <mxPoint x="1719" y="20354.5" />
               <mxPoint x="1719" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button5-0" target="screen-role_member">
+        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button3-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="20498.5" />
+              <mxPoint x="1731" y="20402.5" />
               <mxPoint x="1731" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button6-0" target="screen-role_member">
+        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button4-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="20546.5" />
+              <mxPoint x="1743" y="20450.5" />
               <mxPoint x="1743" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge410-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button7-0" target="screen-role_member">
+        <mxCell id="edge410-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button5-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1755" y="20594.5" />
+              <mxPoint x="1755" y="20498.5" />
               <mxPoint x="1755" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge411-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-candidates-button8-0" target="screen-administrators">
+        <mxCell id="edge411-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button6-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1767" y="20642.5" />
-              <mxPoint x="1767" y="19991" />
-              <mxPoint x="565" y="19991" />
-              <mxPoint x="565" y="20131" />
+              <mxPoint x="1767" y="20546.5" />
+              <mxPoint x="1767" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge412-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_member-button0-0" target="screen-role_admin">
+        <mxCell id="edge412-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button7-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2369" y="20258.5" />
-              <mxPoint x="2369" y="20708" />
-              <mxPoint x="-37" y="20708" />
-              <mxPoint x="-37" y="20963" />
+              <mxPoint x="1779" y="20594.5" />
+              <mxPoint x="1779" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge413-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_member-button1-0" target="screen-administrators">
+        <mxCell id="edge413-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-candidates-button8-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2381" y="20306.5" />
-              <mxPoint x="2381" y="19981" />
+              <mxPoint x="1791" y="20642.5" />
+              <mxPoint x="1791" y="19981" />
               <mxPoint x="625" y="19981" />
               <mxPoint x="625" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge414-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_admin-button0-0" target="screen-role_member">
+        <mxCell id="edge414-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_member-button0-0" target="screen-role_admin">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="515" y="21090.5" />
-              <mxPoint x="515" y="20006" />
-              <mxPoint x="1793" y="20006" />
-              <mxPoint x="1793" y="20131" />
+              <mxPoint x="2285" y="20258.5" />
+              <mxPoint x="2285" y="20728" />
+              <mxPoint x="23" y="20728" />
+              <mxPoint x="23" y="20963" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge415-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_admin-button1-0" target="screen-administrators">
+        <mxCell id="edge415-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_member-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="527" y="21138.5" />
-              <mxPoint x="527" y="20001" />
+              <mxPoint x="2297" y="20306.5" />
+              <mxPoint x="2297" y="20001" />
               <mxPoint x="601" y="20001" />
               <mxPoint x="601" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge416-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super-button0-0" target="screen-administrators">
+        <mxCell id="edge416-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_admin-button0-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1129" y="21103.5" />
-              <mxPoint x="1129" y="19996" />
-              <mxPoint x="589" y="19996" />
-              <mxPoint x="589" y="20131" />
+              <mxPoint x="539" y="21090.5" />
+              <mxPoint x="539" y="19996" />
+              <mxPoint x="1769" y="19996" />
+              <mxPoint x="1769" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge417-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_super_extra-button0-0" target="screen-role_super">
+        <mxCell id="edge417-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_admin-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="21143.5" />
-              <mxPoint x="1731" y="20823" />
-              <mxPoint x="577" y="20823" />
-              <mxPoint x="577" y="20963" />
+              <mxPoint x="551" y="21138.5" />
+              <mxPoint x="551" y="19991" />
+              <mxPoint x="577" y="19991" />
+              <mxPoint x="577" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge418-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super_extra-button1-0" target="screen-administrators">
+        <mxCell id="edge418-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super-button0-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="21191.5" />
-              <mxPoint x="1743" y="19986" />
+              <mxPoint x="1153" y="21103.5" />
+              <mxPoint x="1153" y="19986" />
               <mxPoint x="565" y="19986" />
               <mxPoint x="565" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge419-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_super_extra-button0-0" target="screen-role_super">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1755" y="21143.5" />
+              <mxPoint x="1755" y="20813" />
+              <mxPoint x="553" y="20813" />
+              <mxPoint x="553" y="20963" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge420-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super_extra-button1-0" target="screen-administrators">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1767" y="21191.5" />
+              <mxPoint x="1767" y="20006" />
+              <mxPoint x="625" y="20006" />
+              <mxPoint x="625" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge421-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="24937.5" />
+              <mxPoint x="1189" y="24587" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge422-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="24937.5" />
+              <mxPoint x="1791" y="275" />
+              <mxPoint x="1781" y="275" />
+              <mxPoint x="1781" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge423-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="24985.5" />
+              <mxPoint x="1695" y="24552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge424-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1707" y="24985.5" />
+              <mxPoint x="1707" y="24552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge425-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1719" y="25033.5" />
+              <mxPoint x="1719" y="24552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge426-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1731" y="25081.5" />
+              <mxPoint x="1731" y="3306" />
+              <mxPoint x="1143" y="3306" />
+              <mxPoint x="1143" y="3431" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge427-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1743" y="25129.5" />
+              <mxPoint x="1743" y="24457" />
+              <mxPoint x="625" y="24457" />
+              <mxPoint x="625" y="24587" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge428-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2345" y="24890.5" />
+              <mxPoint x="2345" y="25205" />
+              <mxPoint x="23" y="25205" />
+              <mxPoint x="23" y="25450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge429-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="587" y="25753.5" />
+              <mxPoint x="587" y="270" />
+              <mxPoint x="1781" y="270" />
+              <mxPoint x="1781" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge430-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="25801.5" />
+              <mxPoint x="599" y="25415" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge431-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="611" y="25849.5" />
+              <mxPoint x="611" y="3281" />
+              <mxPoint x="1167" y="3281" />
+              <mxPoint x="1167" y="3431" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge432-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="515" y="25897.5" />
+              <mxPoint x="515" y="24462" />
+              <mxPoint x="1745" y="24462" />
+              <mxPoint x="1745" y="24587" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge433-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="24867.5" />
+              <mxPoint x="527" y="24552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge434-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="24915.5" />
+              <mxPoint x="539" y="24552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge435-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="24963.5" />
+              <mxPoint x="551" y="23504" />
+              <mxPoint x="613" y="23504" />
+              <mxPoint x="613" y="23644" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge436-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="563" y="25011.5" />
+              <mxPoint x="563" y="23499" />
+              <mxPoint x="11" y="23499" />
+              <mxPoint x="11" y="23644" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge437-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="575" y="25059.5" />
+              <mxPoint x="575" y="2467" />
+              <mxPoint x="589" y="2467" />
+              <mxPoint x="589" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>

@@ -32,8 +32,8 @@ internal object TrainingCard {
             append(t.title).append('\n').append(whenText).append('\n').append("Статус: ${Screens.phase(t.phase)}").append("\n\n")
             if(rows.isEmpty()) append("Пока никто не зарегался")
             else {
-                append("Участник | Время | Оплата | Баланс\n")
-                rows.forEach { append("${it.name} | ${Screens.hours(it.minutes)} | ${it.paid} ₽ | ${it.balance?.let(Screens::signed) ?: "—"} ₽\n") }
+                append(if(t.rules.trackTime) "Участник | Время | Оплата | Баланс\n" else "Участник | Оплата | Баланс\n")
+                rows.forEach { append("${it.name} | "+(if(t.rules.trackTime) "${Screens.hours(it.minutes)} | " else "")+"${it.paid} ₽ | ${it.balance?.let(Screens::signed) ?: "—"} ₽\n") }
                 if(note!=null) append("\n$note")
             }
         }
@@ -41,10 +41,11 @@ internal object TrainingCard {
             append("<h3>${escape(t.title)}</h3><p>${escape(whenText)}<br>Статус: ${escape(Screens.phase(t.phase))}</p>")
             if(rows.isEmpty()) append("<p>Пока никто не зарегался</p>")
             else {
-                append(RichTable.OPEN+"<tr><th>Участник</th><th>Время</th><th>Оплата</th><th>Баланс</th></tr>")
+                append(RichTable.OPEN+"<tr><th>Участник</th>"+(if(t.rules.trackTime) "<th>Время</th>" else "")+"<th>Оплата</th><th>Баланс</th></tr>")
                 rows.forEach {
                     append("<tr><td><a href=\"tg://user?id=${it.user}\">${escape(it.name)}</a></td>")
-                    append("<td align=\"right\">${Screens.hours(it.minutes)}</td><td align=\"right\">${it.paid} ₽</td>")
+                    if(t.rules.trackTime) append("<td align=\"right\">${Screens.hours(it.minutes)}</td>")
+                    append("<td align=\"right\">${it.paid} ₽</td>")
                     append("<td align=\"right\">${it.balance?.let(Screens::signed) ?: "—"} ₽</td></tr>")
                 }
                 append("</table>")

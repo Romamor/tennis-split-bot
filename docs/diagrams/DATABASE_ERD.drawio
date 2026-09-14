@@ -5,7 +5,7 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" value="База бота · 15 таблиц · схема 7" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=30;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="title" value="База бота · 15 таблиц · схема 8" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=30;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="25" width="1860" height="50" />
         </mxCell>
         <mxCell id="intro" value="Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–06." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=17;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
@@ -374,7 +374,7 @@
           <mxGeometry as="geometry" x="2.0" y="333.0" width="566" height="26" />
         </mxCell>
         <mxCell id="groups" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="680" y="180" width="570" height="284" />
+          <mxGeometry as="geometry" x="680" y="180" width="570" height="342" />
         </mxCell>
         <mxCell id="groups-header" value="groups" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#155e75;strokeColor=#155e75;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="groups">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -430,14 +430,38 @@
         <mxCell id="groups-flags-polls_enabled" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="groups">
           <mxGeometry as="geometry" x="465.0" y="165.0" width="100" height="29" />
         </mxCell>
+        <mxCell id="groups-field-guests_enabled" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="1.0" y="194.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="groups-name-guests_enabled" value="guests_enabled" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="4.0" y="194.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="groups-type-guests_enabled" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="360.0" y="194.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="groups-flags-guests_enabled" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="465.0" y="194.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="groups-field-track_time" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="1.0" y="223.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="groups-name-track_time" value="track_time" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="4.0" y="223.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="groups-type-track_time" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="360.0" y="223.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="groups-flags-track_time" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="465.0" y="223.0" width="100" height="29" />
+        </mxCell>
         <mxCell id="groups-note-0" value="PK (id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
-          <mxGeometry as="geometry" x="2.0" y="194.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="252.0" width="566" height="26" />
         </mxCell>
         <mxCell id="groups-note-1" value="polls_enabled — разрешить создание опросов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
-          <mxGeometry as="geometry" x="2.0" y="220.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="278.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="groups-note-2" value="Название / время по умолчанию — в users" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
-          <mxGeometry as="geometry" x="2.0" y="246.0" width="566" height="26" />
+        <mxCell id="groups-note-2" value="guests_enabled / track_time — для новых тренировок" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="groups">
+          <mxGeometry as="geometry" x="2.0" y="304.0" width="566" height="26" />
         </mxCell>
         <mxCell id="group_users" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1300" y="180" width="570" height="371" />
@@ -667,7 +691,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="page-2" name="03 · Тренировки">
-    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2040" pageHeight="1477" background="#f7fafc">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2040" pageHeight="1535" background="#f7fafc">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -714,7 +738,7 @@
           <mxGeometry as="geometry" x="0.0" y="75.0" width="460" height="28" />
         </mxCell>
         <mxCell id="trainings" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="430" width="570" height="458" />
+          <mxGeometry as="geometry" x="60" y="430" width="570" height="542" />
         </mxCell>
         <mxCell id="trainings-header" value="trainings" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#047857;strokeColor=#047857;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -722,134 +746,161 @@
         <mxCell id="trainings-desc" value="Тренировка: детали, статус, версия" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="0.0" y="40.0" width="570" height="34" />
         </mxCell>
-        <mxCell id="trainings-field-group_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-guests_enabled" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="78.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-group_id" value="group_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-guests_enabled" value="guests_enabled" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="78.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-group_id" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-guests_enabled" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="78.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-group_id" value="PK FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-guests_enabled" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="78.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-track_time" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="107.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-id" value="id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-track_time" value="track_time" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="107.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-track_time" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="107.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-id" value="PK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-track_time" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="107.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-title" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-group_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="136.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-title" value="title" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-group_id" value="group_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="136.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-title" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-group_id" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="136.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-title" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-group_id" value="PK FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="136.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-played_on" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="165.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-played_on" value="played_on" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-id" value="id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="165.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-played_on" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="165.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-played_on" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-id" value="PK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="165.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-starts_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-title" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="194.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-starts_at" value="starts_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-title" value="title" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="194.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-starts_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-title" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="194.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-starts_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-title" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="194.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-played_on" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="223.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-status" value="status" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-played_on" value="played_on" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="223.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-status" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-played_on" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="223.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-played_on" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="223.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-starts_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="252.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-version" value="version" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-starts_at" value="starts_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="252.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-version" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-starts_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="252.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-starts_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="252.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-applied_version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="281.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-applied_version" value="applied_version" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-status" value="status" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="281.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-applied_version" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-status" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="281.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-applied_version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="281.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-created_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="310.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-created_by" value="created_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-version" value="version" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="310.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-created_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-version" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="310.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-created_by" value="FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="310.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="trainings-field-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-field-applied_version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="1.0" y="339.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="trainings-name-created_at" value="created_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-name-applied_version" value="applied_version" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="4.0" y="339.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="trainings-type-created_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+        <mxCell id="trainings-type-applied_version" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="360.0" y="339.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="trainings-flags-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+        <mxCell id="trainings-flags-applied_version" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
           <mxGeometry as="geometry" x="465.0" y="339.0" width="100" height="29" />
         </mxCell>
+        <mxCell id="trainings-field-created_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="1.0" y="368.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="trainings-name-created_by" value="created_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="4.0" y="368.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="trainings-type-created_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="360.0" y="368.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="trainings-flags-created_by" value="FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="465.0" y="368.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="trainings-field-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="1.0" y="397.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="trainings-name-created_at" value="created_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="4.0" y="397.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="trainings-type-created_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="360.0" y="397.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="trainings-flags-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="465.0" y="397.0" width="100" height="29" />
+        </mxCell>
         <mxCell id="trainings-note-0" value="PK (group_id, id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
-          <mxGeometry as="geometry" x="2.0" y="368.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="426.0" width="566" height="26" />
         </mxCell>
         <mxCell id="trainings-note-1" value="OPEN / CLOSED / CANCELLED" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
-          <mxGeometry as="geometry" x="2.0" y="394.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="452.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="trainings-note-2" value="Повторное открытие снимает прежний расчёт" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
-          <mxGeometry as="geometry" x="2.0" y="420.0" width="566" height="26" />
+        <mxCell id="trainings-note-2" value="guests_enabled / track_time — сохранённые правила" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="2.0" y="478.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="trainings-note-3" value="Повторное открытие снимает прежний расчёт" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="trainings">
+          <mxGeometry as="geometry" x="2.0" y="504.0" width="566" height="26" />
         </mxCell>
         <mxCell id="training_players" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="680" y="430" width="570" height="484" />
@@ -1027,34 +1078,34 @@
         <mxCell id="edge-5" value="R5" edge="1" parent="1" source="training_players" target="trainings" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=1;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="965.0" y="959" />
-              <mxPoint x="345.0" y="959" />
+              <mxPoint x="965.0" y="1017" />
+              <mxPoint x="345.0" y="1017" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="fk-title" value="Точные связи · строка слева ссылается на строку справа" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=20;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1042" width="1950" height="35" />
+          <mxGeometry as="geometry" x="48" y="1100" width="1950" height="35" />
         </mxCell>
         <mxCell id="fk-hint" value="Одна линия может объединять несколько FK. В скобках: сколько дочерних записей → сколько родительских записей." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=15;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1086" width="1950" height="34" />
+          <mxGeometry as="geometry" x="48" y="1144" width="1950" height="34" />
         </mxCell>
         <mxCell id="fk-row-0" value="R1 · trainings (group_id, created_by)&#10;→ group_users (group_id, user_id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1126" width="935" height="61" />
+          <mxGeometry as="geometry" x="60" y="1184" width="935" height="61" />
         </mxCell>
         <mxCell id="fk-row-1" value="R2 · trainings (created_by)&#10;→ users (id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1080" y="1126" width="935" height="61" />
+          <mxGeometry as="geometry" x="1080" y="1184" width="935" height="61" />
         </mxCell>
         <mxCell id="fk-row-2" value="R3 · trainings (group_id)&#10;→ groups (id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1193" width="935" height="61" />
+          <mxGeometry as="geometry" x="60" y="1251" width="935" height="61" />
         </mxCell>
         <mxCell id="fk-row-3" value="R4 · training_players (group_id, user_id)&#10;→ group_users (group_id, user_id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1080" y="1193" width="935" height="61" />
+          <mxGeometry as="geometry" x="1080" y="1251" width="935" height="61" />
         </mxCell>
         <mxCell id="fk-row-4" value="R5 · training_players (group_id, training_id)&#10;→ trainings (group_id, id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1260" width="935" height="61" />
+          <mxGeometry as="geometry" x="60" y="1318" width="935" height="61" />
         </mxCell>
         <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1367" width="1950" height="70" />
+          <mxGeometry as="geometry" x="48" y="1425" width="1950" height="70" />
         </mxCell>
       </root>
     </mxGraphModel>

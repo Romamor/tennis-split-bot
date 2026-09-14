@@ -24,10 +24,16 @@ poll_steps=['poll_title','poll_date','poll_time','poll_poll_decline','poll_group
 titles.update(dict(zip(poll_steps,['Опрос · название','Опрос · дата','Опрос · начало','Опрос · четвёртый ответ','Опрос · группа','Опрос · публикация'])))
 titles.update({'menu_polls':'Меню с включёнными опросами','choose_polls':'Группа для просмотра опросов','poll_list':'Открытые опросы','poll_detail':'Опрос опубликован в группе','poll_close_confirm':'Завершить сбор: подтверждение','poll_training':'Тренировка из опроса: 0 ч / 0 ₽','choose_poll_settings':'Группа для настройки опросов','poll_settings':'Разрешение создавать опросы'})
 categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
+titles.update({'equal_public':'Без индивидуального времени · равные доли','equal_personal':'Без времени · гости разрешены','simple_public':'Без времени и гостей · карточка','simple_personal':'Без времени и гостей · участие','rules_settings':'Правила новых тренировок'})
+categories.append(('Правила группы: гости и время',['rules_settings','equal_public','equal_personal','simple_public','simple_personal']))
 def resolve(key,b):
  a=b.get('target');label=b['text']
  if not a:return []
  k=a['kind'];opt=a.get('option','');id=a.get('id','')
+ if k=='group_rule_save':return [key]
+ if k=='participation' and key in ('equal_public','simple_public'):return [key.replace('_public','_personal')]
+ if k=='close_panel' and key in ('equal_personal','simple_personal'):return [key.replace('_personal','_public')]
+ if k=='participation_change' and key in ('equal_personal','simple_personal'):return [key]
  if k=='new_poll':return ['poll_title']
  if k=='groups' and opt in ('polls','poll_settings'):return ['choose_polls' if opt=='polls' else 'choose_poll_settings']
  if k=='select_group' and opt in ('polls','poll_settings'):return ['poll_list' if opt=='polls' else 'poll_settings']
@@ -185,9 +191,9 @@ for role,name in roles.items():
   x,sy,w,h,bh=positions[key];gid='screen-'+key
   vertex(gid,'',x,sy,w,h,style='group;fillColor=none;strokeColor=none;')
   vertex(gid+'-label',titles.get(key,key),0,0,w,36,parent=gid,style='fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;',html_mode=False)
-  vertex(gid+'-context','В группе · видно всем' if key=='public' else 'В группе · личная панель' if s['group'] else 'Личный чат с ботом',0,38,w,24,parent=gid,style='fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;',html_mode=False)
+  vertex(gid+'-context','В группе · видно всем' if key.startswith('public') or key in ('equal_public','simple_public','poll_training') else 'В группе · личная панель' if s['group'] else 'Личный чат с ботом',0,38,w,24,parent=gid,style='fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;',html_mode=False)
   bhvalue=body_html(s);vertex(gid+'-body',bhvalue,0,66,w,bh,parent=gid,style='rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;')
-  preview.append(f'<div class="screen" style="left:{x}px;top:{sy}px;width:{w}px;height:{h}px"><h3>{html.escape(titles.get(key,key))}</h3><div class="context">'+('Общий чат' if key=='public' else 'Персональная панель' if s['group'] else 'Личный чат')+f'</div><div class="bubble" data-key="{key}" style="height:{bh}px">{bhvalue}</div>')
+  preview.append(f'<div class="screen" style="left:{x}px;top:{sy}px;width:{w}px;height:{h}px"><h3>{html.escape(titles.get(key,key))}</h3><div class="context">'+('Общий чат' if key.startswith('public') or key in ('equal_public','simple_public','poll_training') else 'Персональная панель' if s['group'] else 'Личный чат')+f'</div><div class="bubble" data-key="{key}" style="height:{bh}px">{bhvalue}</div>')
   ry=66+bh+5
   for ri,row in enumerate(s['rows']):
    rh=48+(20 if max((len(b['text']) for b in row),default=0)>37 else 0);bw=(w-5*(len(row)-1))/len(row)

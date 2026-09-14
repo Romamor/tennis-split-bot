@@ -97,8 +97,10 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
         checkAccounting(current.status=="CLOSING" && current.stopped,ErrorCode.INVALID_STATE,"Сначала останови голосование")
         val actor=requireNotNull(current.closer)
         sqlUpdate(c,"INSERT INTO trainings(group_id,id,title,played_on,starts_at,status,version,created_by,created_at) VALUES(?,?,?,?,?,'OPEN',1,?,?)",p.group,p.id,p.title,p.date,p.time,p.creator,clock.instant().toString())
+        val rules=readGroupTrainingRules(c,p.group)
+        sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,p.group,p.id)
         val players=sqlQuery(c,"SELECT user_id FROM poll_signups WHERE group_id=? AND poll_id=? ORDER BY user_id",p.group,p.id) { it.getLong(1) }
-        players.forEachIndexed { index,user -> sqlUpdate(c,"INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,paid,ordinal) VALUES(?,?,?,1,0,0,?)",p.group,p.id,user,index) }
+        players.forEachIndexed { index,user -> sqlUpdate(c,"INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,paid,ordinal) VALUES(?,?,?,1,?,0,?)",p.group,p.id,user,rules.initialMinutes,index) }
         refreshAttendance(c,p.group)
         val after=Json.encodeToString(readTraining(c,p.group,p.id))
         sqlUpdate(c,"INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,payload_json,after_json,result_version,occurred_at,needs_delivery) VALUES(?,?,?,'CreateTrainingFromPoll',?,'{}',?,1,?,1)",p.group,"poll:"+p.id,actor,p.id,after,clock.instant().toString())

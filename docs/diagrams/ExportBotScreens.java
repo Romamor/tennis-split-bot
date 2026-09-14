@@ -109,6 +109,20 @@ class ExportBotScreens {
   polls.beginClose(auth,"poll-own");polls.stopped(polls.get(-1,"poll-own"));polls.finish(polls.get(-1,"poll-own"));
   capture("poll_training","public","poll-own","",null,true,null);
   if(user==3){capture("choose_admins","groups","","\"option\":\"administrators\"",null,false,null);cap("administrators","administrators","");cap("candidates","admin_candidates","");capture("role_member","admin_person","","\"user\":8",null,false,null);capture("role_admin","admin_person","","\"user\":2",null,false,null);capture("role_super","admin_person","","\"user\":3",null,false,null);run(auth,new SettlementCommand.SetAdministrator(3,true));capture("role_super_extra","admin_person","","\"user\":3",null,false,null);}
+  svc.setGroupTrainingRule(superA,"time",false);
+  run(auth,new SettlementCommand.CreateTraining("equal","Теннис","2026-09-12","18:30"));
+  run(auth,new SettlementCommand.AddPlayers("equal",1,List.of(user,4L)));
+  run(auth,new SettlementCommand.ChangeAttendance("equal",user,AttendanceChange.ADJUST_GUESTS,1));
+  run(auth,new SettlementCommand.ChangeAttendance("equal",4L,AttendanceChange.SET_PAID,300));
+  capture("equal_public","public","equal","",null,true,null);
+  capture("equal_personal","participation","equal","",null,true,null);
+  svc.setGroupTrainingRule(superA,"guests",false);
+  run(auth,new SettlementCommand.CreateTraining("simple","Теннис","2026-09-12","18:30"));
+  run(auth,new SettlementCommand.AddPlayers("simple",1,List.of(user,4L)));
+  capture("simple_public","public","simple","",null,true,null);
+  capture("simple_personal","participation","simple","",null,true,null);
+  if(user>=2)cap("rules_settings","poll_settings","");
+
  }
  Files.writeString(Path.of(args[0]+".json"),out.append(']').toString());System.out.println("Screens exported: "+args[0]+".json");
  }

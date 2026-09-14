@@ -155,6 +155,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 state.forgetDelivery("poll:${p.group}:${p.id}")
                 effective=effective.copy(screen=ScreenAction(if(effective.chat<0) "close_panel" else "menu",if(effective.chat<0) a.groupId else 0))
             }
+            if(effective.screen.kind=="group_rule_save") {
+                service.setGroupTrainingRule(requireNotNull(a),effective.screen.option,effective.screen.value==1L)
+                effective=effective.copy(screen=ScreenAction("poll_settings",a.groupId))
+            }
             if(effective.screen.kind=="poll_setting_save") {
                 polls.setEnabled(requireNotNull(a),effective.screen.value==1L)
                 effective=effective.copy(screen=ScreenAction("poll_settings",a.groupId))
@@ -325,7 +329,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         val a = if (action.group < 0) access(action.group, user.id) else null
-        if(action.kind in setOf("poll_settings","poll_setting_save"))
+        if(action.kind in setOf("poll_settings","poll_setting_save","group_rule_save"))
             checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
         if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard")) {
             val p=polls.get(requireNotNull(a).groupId,action.id)
@@ -524,6 +528,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val auth=requireNotNull(a)
                 val t=service.training(auth,action.id)
                 service.requireOpen(t)
+                if(action.kind=="participation_time") t.rules.requireChange(AttendanceChange.SET_MINUTES)
                 val target=action.user.takeIf { it>0 } ?: user.id
                 checkAccounting(target==user.id || service.canEdit(auth,t),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
                 if(action.kind=="participation_change") {
@@ -543,7 +548,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         .copy(returnPage=action.page.takeIf { action.option=="roster" },origin=action.back)
                 val same=draft.training==action.id && draft.user==target
                 if (action.kind=="change" && same)
-                    draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.valueOf(action.option),action.value))
+                    draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.valueOf(action.option),action.value,service.training(auth,action.id).rules))
                 plan(ScreenAction("player",action.group,draft.training,user=draft.user)).copy(draft=draft,
                     notice=if (same) null else "Сначала заверши уже открытый ввод кнопкой «Всё правильно».")
             }
@@ -635,7 +640,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 checkAccounting(draft.training==f.training && draft.user==f.user,ErrorCode.INVALID_STATE,"Сначала заверши уже открытый ввод")
                 checkAccounting(f.user==user.id || canEdit(auth,f.training),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
                 EventPlan(user.id, chat, ScreenAction("player", f.group, f.training, user = f.user),
-                    draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.SET_PAID,amount)))
+                    draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.SET_PAID,amount,service.training(auth,f.training).rules)))
             }
             "transfer_amount" -> form(f.copy(kind = "transfer_ready", amount = parseAmount(text)))
             "transfer_date" -> form(f.copy(kind = "transfer_ready", date = parsedDate()))

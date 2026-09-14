@@ -27,7 +27,7 @@ class PersonalDefaultsMigrationTest {
             stmt.execute("INSERT INTO bot_buttons(token,group_id,owner_id,scope,permanent,payload_hash,action_json,active,expires_at) VALUES('old',-1,1,'old',0,'hash','{\"kind\":\"training\",\"group\":-1}',1,0)")
         } }
         val db=Database(file);val service=SettlementService(db)
-        assertTrue(db.verify().contains("Схема 7"))
+        assertTrue(db.verify().contains("Схема 8"))
         assertEquals(TrainingDefaults(),service.trainingDefaults(1))
         assertEquals(mapOf(1L to 150L,2L to -150L),service.balances(Access(-1,1)))
         db.read { c ->

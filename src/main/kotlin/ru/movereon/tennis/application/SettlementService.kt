@@ -88,6 +88,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT 3 OFFSET ?",user,user,index*3) { it.getLong(1) to it.getString(2) }
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount())
     }
+    fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
+    fun setGroupTrainingRule(a:Access,field:String,value:Boolean)=database.write { c ->
+        allowed(present(c,a),"Доступ только участникам этой группы");requireAdmin(c,a)
+        val column=when(field) { "guests"->"guests_enabled";"time"->"track_time";else->invalid("Неизвестная настройка") }
+        sqlUpdate(c,"UPDATE groups SET $column=? WHERE id=?",value,a.groupId)
+    }
     fun isAdmin(access: Access): Boolean = database.read { admin(it, access) }
     fun canFinish(a:Access,t:TrainingRecord):Boolean = canEdit(a,t)
     fun canEdit(a:Access,t:TrainingRecord):Boolean = database.read { canManageTraining(it,a,t) }
@@ -258,6 +264,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     require(count(c, "SELECT COUNT(*) FROM trainings WHERE group_id=? AND id=?", a.groupId, trainingId) == 0) { "Тренировка уже создана" }
                     sqlUpdate(c, """INSERT INTO trainings(group_id,id,title,played_on,starts_at,status,version,created_by,created_at)
                         VALUES(?,?,?,?,?,'OPEN',1,?,?)""", a.groupId, trainingId, command.title, command.date, command.startTime, a.userId, clock.instant().toString())
+                    val rules=readGroupTrainingRules(c,a.groupId)
+                    sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,a.groupId,trainingId)
                 } else {
                     trainingId = when (command) {
                         is SettlementCommand.EditTraining -> command.id
@@ -289,8 +297,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             var ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1
                             additions.forEach { id ->
                                 sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
-                                    VALUES(?,?,?,1,0,0,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                    playing=1,minutes=0,guest_minutes=0,guest_count=0""",a.groupId,trainingId,id,ordinal++)
+                                    VALUES(?,?,?,1,?,0,0,0,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+                                    playing=1,minutes=excluded.minutes,guest_minutes=0,guest_count=0""",a.groupId,trainingId,id,old.rules.initialMinutes,ordinal++)
                             }
                             validateDraftTraining(readTraining(c,a.groupId,trainingId).calculation())
                         }
@@ -312,7 +320,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             known(c, a.groupId, command.userId)
                             val row = old.players.firstOrNull { it.userId == command.userId }
                                 ?: Attendance(command.userId, false, ordinal = (old.players.maxOfOrNull { it.ordinal } ?: -1) + 1)
-                            val changed = changeAttendance(row, command)
+                            val changed = old.rules.change(row, command)
                             if (changed==row) return@write ActionReceipt(0,old.version)
                             if(!changed.playing && changed.paid==0L)
                                 sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,changed.userId)
@@ -329,6 +337,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val current=old.players.firstOrNull { it.userId==command.userId }
                             checkAccounting(current==command.expected,ErrorCode.STALE_VERSION,"Эти данные уже изменили. Обнови форму перед сохранением")
                             val input=command.attendance
+                            old.rules.validate(input)
                             require(input.userId==command.userId && input.minutes>=0 && input.minutes%30==0L && input.guestMinutes>=0 && input.guestMinutes%30==0L && input.paid>=0)
                             require(input.guestCount in 0..99 && (input.playing || input.guestMinutes==0L && input.guestCount==0))
                             if(input==current) return@write ActionReceipt(0,old.version)
@@ -393,8 +402,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         ActionReceipt(actionId, version)
     }
 
-    fun previewAttendance(row: Attendance, change: AttendanceChange, value: Long=0): Attendance =
-        changeAttendance(row,SettlementCommand.ChangeAttendance("input",row.userId,change,value))
+    fun previewAttendance(row: Attendance, change: AttendanceChange, value: Long=0,rules:TrainingRules=TrainingRules()): Attendance =
+        rules.change(row,SettlementCommand.ChangeAttendance("input",row.userId,change,value))
     private fun transferParty(c: Connection, a: Access, parties: Set<Long>, onBehalfOf: Long?, absent: AbsentAccount?): Long {
         if (onBehalfOf == null) { allowed(a.userId in parties, "Записать или уточнить перевод может одна из его сторон"); return a.userId }
         requireAdmin(c, a)

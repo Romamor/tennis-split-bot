@@ -12,7 +12,7 @@ class PollMigrationTest {
     @Test fun `schema seven preserves accounting defaults and enables no polls automatically`() {
         val file=dir.resolve("v6.sqlite")
         DriverManager.getConnection("jdbc:sqlite:$file").use { c -> c.createStatement().use { stmt ->
-            val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
+            val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema-v7.sql")).bufferedReader().use { it.readText() }
                 .substringBefore("CREATE TABLE training_polls")
                 .replace(",\n    polls_enabled INTEGER NOT NULL DEFAULT 0 CHECK(polls_enabled IN (0,1))","")
             ddl.split(';').filter { it.isNotBlank() }.forEach(stmt::execute)
@@ -25,7 +25,7 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file);val service=SettlementService(db)
-            assertTrue(db.verify().contains("Схема 7"))
+            assertTrue(db.verify().contains("Схема 8"))
             assertFalse(TrainingPolls(service).enabled(-1))
             assertEquals("19:30",service.trainingDefaults(1).time)
             assertEquals(mapOf(1L to 150L,2L to -150L),service.balances(Access(-1,1)))

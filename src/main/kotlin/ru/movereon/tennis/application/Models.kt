@@ -23,7 +23,7 @@ data class GroupRoleEntry(val account:Account,val role:GroupRole)
 @Serializable data class Attendance(val userId:Long,val playing:Boolean,val minutes:Long=0,val guestMinutes:Long=0,val paid:Long=0,val ordinal:Int=0,val appliedPlaying:Boolean=false,
     val guestCount:Int=if(guestMinutes>0) 1 else 0)
 @Serializable data class TrainingRecord(val groupId:Long,val id:String,val title:String,val date:String,val startTime:String,
-    val phase:TrainingPhase,val version:Long,val appliedVersion:Long,val createdBy:Long,val players:List<Attendance>) {
+    val phase:TrainingPhase,val version:Long,val appliedVersion:Long,val createdBy:Long,val players:List<Attendance>,val rules:TrainingRules=TrainingRules()) {
     fun calculation():Training = Training(players.sortedBy { it.ordinal }.filter { it.playing }.flatMap {
         (if(it.minutes>0) listOf(PlayerSlot(ParticipantId(it.userId.toString()),it.minutes)) else emptyList()) +
             if(it.guestMinutes>0) List(it.guestCount) { _ -> PlayerSlot(ParticipantId(it.userId.toString()),it.guestMinutes,true) } else emptyList()

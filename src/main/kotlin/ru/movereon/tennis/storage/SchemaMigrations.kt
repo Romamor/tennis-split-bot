@@ -66,3 +66,13 @@ internal fun migratePolls(c:Connection) {
         s.execute("PRAGMA user_version=7")
     }
 }
+
+internal fun migrateTrainingRules(c:Connection) {
+    c.createStatement().use { s ->
+        for(table in listOf("groups","trainings")) {
+            s.execute("ALTER TABLE $table ADD COLUMN guests_enabled INTEGER NOT NULL DEFAULT 1 CHECK(guests_enabled IN (0,1))")
+            s.execute("ALTER TABLE $table ADD COLUMN track_time INTEGER NOT NULL DEFAULT 1 CHECK(track_time IN (0,1))")
+        }
+        s.execute("PRAGMA user_version=8")
+    }
+}

@@ -421,6 +421,10 @@ class SettlementServiceTest {
         val s=setup();s.sample()
         val before=s.training(admin,"t");val balances=s.balances(admin)
         s.database.write { c ->
+            for(table in listOf("groups","trainings")) {
+                sqlUpdate(c,"ALTER TABLE $table DROP COLUMN guests_enabled")
+                sqlUpdate(c,"ALTER TABLE $table DROP COLUMN track_time")
+            }
             sqlUpdate(c,"DROP TABLE poll_signups")
             sqlUpdate(c,"DROP TABLE training_polls")
             sqlUpdate(c,"ALTER TABLE groups DROP COLUMN polls_enabled")

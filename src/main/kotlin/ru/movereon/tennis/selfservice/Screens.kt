@@ -81,10 +81,13 @@ class Screens(private val service: SettlementService, private val state: Interac
             "poll_settings" -> {
                 checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
                 val enabled=polls.enabled(a.groupId)
+                val rules=service.groupTrainingRules(a.groupId)
+                row(if(rules.guestsEnabled) "👥 Гости: разрешены" else "👥 Гости: запрещены",next("group_rule_save",value=if(rules.guestsEnabled) 0 else 1,option="guests"))
+                row(if(rules.trackTime) "🕒 Учёт времени: включён" else "🕒 Учёт времени: выключен",next("group_rule_save",value=if(rules.trackTime) 0 else 1,option="time"))
                 row(if(enabled) "📊 Сбор через опрос: включён" else "📊 Сбор через опрос: выключен",next("poll_setting_save",value=if(enabled) 0 else 1))
                 row("Назад",ScreenAction("groups",0,option="poll_settings"))
                 menu()
-                "${clean(service.group(a.groupId).title,60)}\nСбор через опрос\nРазрешает всем участникам создавать опрос перед тренировкой. Обычное создание тренировки остаётся доступным. Уже опубликованные опросы можно завершить и после выключения."
+                "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени — правила новых тренировок. Уже созданные сохраняют свои правила. Без учёта времени стоимость делится поровну между игроками и гостями.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
             }
             "poll_list" -> {
                 val auth=requireNotNull(a)
@@ -105,7 +108,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 } else if(action.kind=="poll_close_confirm" && p.status=="OPEN") {
                     row("🏁 Завершить сбор",next("poll_close"))
                     row("Назад",next(if(inGroup) "close_panel" else "poll_detail"))
-                    "Завершить сбор и перейти к учёту игры?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nЗаписались: ${polls.count(p)}.\nОни будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке."
+                    "Завершить сбор и перейти к учёту игры?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nЗаписались: ${polls.count(p)}.\n${if(service.groupTrainingRules(p.group).trackTime) "Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." else "Они будут добавлены с 0 ₽. Стоимость делится поровну; ввод времени не нужен."}"
                 } else {
                     if(p.status=="OPEN") row("🏁 Завершить сбор",next("poll_close_confirm"))
                     if(p.status in setOf("FAILED","PENDING")) row("📤 Повторить публикацию",next("poll_retry"))
@@ -159,11 +162,11 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val player = draft?.value ?: stored
                 if (t.phase == TrainingPhase.OPEN) {
                     fun change(label: String, type: AttendanceChange, value: Long = 0) = button(label, next("change", target = target, value = value, option = type.name))
-                    if (player?.playing != true) rows += listOf(change("Присоединиться · 0 ч", AttendanceChange.JOIN))
+                    if (player?.playing != true) rows += listOf(change(if(t.rules.trackTime) "Присоединиться · 0 ч" else "Присоединиться", AttendanceChange.JOIN))
                     else {
-                        rows += listOf(change("−0,5 ч", AttendanceChange.ADJUST_MINUTES, -30), change("+0,5 ч", AttendanceChange.ADJUST_MINUTES, 30))
-                        rows += listOf(change("+1 гость",AttendanceChange.ADJUST_GUESTS,1))
-                        if(player.guestCount>0) rows += listOf(change("−1 гость",AttendanceChange.ADJUST_GUESTS,-1))
+                        if(t.rules.trackTime) rows += listOf(change("−0,5 ч", AttendanceChange.ADJUST_MINUTES, -30), change("+0,5 ч", AttendanceChange.ADJUST_MINUTES, 30))
+                        if(t.rules.guestsEnabled) rows += listOf(change("+1 гость",AttendanceChange.ADJUST_GUESTS,1))
+                        if(t.rules.guestsEnabled && player.guestCount>0) rows += listOf(change("−1 гость",AttendanceChange.ADJUST_GUESTS,-1))
                     }
                     if (player!=null && (player.playing || player.paid>0)) {
                         if (player.paid == 0L) rows += listOf(change("Платил · 300 ₽", AttendanceChange.MARK_PAID))
@@ -184,8 +187,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                 if(draft?.returnPage!=null) row("К составу",draft.origin ?: next("roster",page=draft.returnPage,target=0,option="players"))
                 else row("Карточка тренировки", draft?.origin ?: action.back ?: next("training", target = 0, option = ""))
                 "${clean(t.title, 60)} · ${date(t.date)}\n${name(target)}\n" +
-                    (if (player?.playing == true) "Играл ${hours(player.minutes)}" else "Не играл") +
-                    (if ((player?.guestCount ?: 0) > 0) " · гостей: ${player!!.guestCount}, по ${hours(player.guestMinutes)}" else "") +
+                    (if (player?.playing == true) if(t.rules.trackTime) "Играл ${hours(player.minutes)}" else "Играл" else "Не играл") +
+                    (if ((player?.guestCount ?: 0) > 0) " · гостей: ${player!!.guestCount}"+(if(t.rules.trackTime) ", по ${hours(player.guestMinutes)}" else "") else "") +
                     "\nОплатил стол: ${player?.paid ?: 0} ₽" +
                     (if (draft!=null && draft.expected!=stored) "\nСохранённые данные уже изменились. Обнови форму перед подтверждением." else if (draft!=null) "\nСохраним после «Всё правильно»." else "") +
                     if (t.phase == TrainingPhase.CLOSED) "\nТренировка учтена. Создатель или администратор может выбрать «Открыть заново»: прежний расчёт будет отменён." else ""
@@ -210,7 +213,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val players=t.players.filter { it.playing || it.paid>0 }.sortedBy { it.ordinal }
                 val index=action.page.coerceIn(0,maxOf(0,(players.size-1)/8))
                 players.drop(index*8).take(8).forEach { p ->
-                    personRow(p.userId,"${label(p.userId)} · ${if(p.playing) hours(p.minutes) else "Не играл"}${if(p.guestCount>0) " · гостей: ${p.guestCount}" else ""} · ${p.paid} ₽",
+                    personRow(p.userId,"${label(p.userId)} · ${if(p.playing) (if(t.rules.trackTime) hours(p.minutes) else "Играл") else "Не играл"}${if(p.guestCount>0) " · гостей: ${p.guestCount}" else ""} · ${p.paid} ₽",
                         next("player",page=index,target=p.userId,option="roster").copy(back=action.copy(page=index)))
                 }
                 pages(index,maxOf(1,(players.size+7)/8))
@@ -509,16 +512,16 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val old=before?.players?.find { it.userId==p.userId }
                 "${shortName(p.userId)}:\n"+listOfNotNull(
                     if(old?.playing!=p.playing) "Участие: ${if(old?.playing==true) "играл" else "не отмечено"} → ${if(p.playing) "играл" else "не играл"}" else null,
-                    if(old==null || old.minutes!=p.minutes) "Время: ${old?.let { hours(it.minutes) } ?: "—"} → ${hours(p.minutes)}" else null,
+                    if(after.rules.trackTime && (old==null || old.minutes!=p.minutes)) "Время: ${old?.let { hours(it.minutes) } ?: "—"} → ${hours(p.minutes)}" else null,
                     if((old?.guestCount ?: 0)!=p.guestCount) "Гостей: ${old?.guestCount ?: 0} → ${p.guestCount}" else null,
-                    if(old?.guestMinutes!=p.guestMinutes && (p.guestCount>0 || (old?.guestCount ?: 0)>0)) "Время гостей: ${hours(old?.guestMinutes ?: 0)} → ${hours(p.guestMinutes)}" else null,
+                    if(after.rules.trackTime && old?.guestMinutes!=p.guestMinutes && (p.guestCount>0 || (old?.guestCount ?: 0)>0)) "Время гостей: ${hours(old?.guestMinutes ?: 0)} → ${hours(p.guestMinutes)}" else null,
                     if(old==null || old.paid!=p.paid) "Оплата: ${old?.paid ?: 0} ₽ → ${p.paid} ₽" else null).joinToString("\n")
             }.ifEmpty { "Подтвердил прежние время и оплату" }
         }
         else -> "Изменение записи"
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

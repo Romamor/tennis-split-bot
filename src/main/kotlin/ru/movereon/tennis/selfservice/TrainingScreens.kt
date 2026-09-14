@@ -89,6 +89,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
                 fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=target,value=value,option=type.name).copy(resume=action.copy(page=0)))
                 if(open) when(action.kind) {
                     "participation_time" -> {
+                        t.rules.requireChange(AttendanceChange.SET_MINUTES)
                         checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
                         rows+=listOf(change("+0,5 ч",AttendanceChange.ADJUST_MINUTES,30),change("+1 ч",AttendanceChange.ADJUST_MINUTES,60))
                         rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
@@ -101,10 +102,10 @@ internal class TrainingScreens(private val service:SettlementService,private val
                     else -> {
                         if(p?.playing==true) {
                             row("Оплата · ${p.paid} ₽",next("participation_payment",page=0,target=target))
-                            row("Время · ${hours(p.minutes)}",next("participation_time",page=0,target=target))
-                            rows+=buildList<TgButton> {
-                                if(p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
-                                if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
+                            if(t.rules.trackTime) row("Время · ${hours(p.minutes)}",next("participation_time",page=0,target=target))
+                            if(t.rules.guestsEnabled) rows+=buildList<TgButton> {
+                                if(t.rules.guestsEnabled && p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
+                                if(t.rules.guestsEnabled && p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
                             }
                             rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
                         } else {
