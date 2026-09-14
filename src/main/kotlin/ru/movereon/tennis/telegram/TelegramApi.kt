@@ -17,8 +17,11 @@ import java.time.Duration
 @Serializable data class TgChat(val id: Long, val type: String, val title: String? = null)
 @Serializable data class TgButton(val text: String, @SerialName("callback_data") val callbackData: String? = null, val url: String? = null, val style:String?=null)
 @Serializable data class TgKeyboard(@SerialName("inline_keyboard") val rows: List<List<TgButton>>)
+@Serializable data class TgPoll(val id:String, @SerialName("is_closed") val isClosed:Boolean=false)
+@Serializable data class TgPollAnswer(@SerialName("poll_id") val pollId:String, val user:TgUser?=null,
+    @SerialName("option_ids") val optionIds:List<Int> = emptyList())
 @Serializable data class TgMessage(@SerialName("message_id") val id: Long = 0, val chat: TgChat, val from: TgUser? = null,
-    val text: String? = null, @SerialName("reply_to_message") val replyTo: TgMessage? = null,
+    val text: String? = null, val poll:TgPoll?=null, @SerialName("reply_to_message") val replyTo: TgMessage? = null,
     @SerialName("reply_markup") val keyboard: TgKeyboard? = null, @SerialName("migrate_to_chat_id") val migrateTo: Long? = null,
     @SerialName("receiver_user") val receiver: TgUser? = null,
     @SerialName("ephemeral_message_id") val ephemeralId: Long? = null,
@@ -29,7 +32,8 @@ import java.time.Duration
 @Serializable data class TgUpdate(@SerialName("update_id") val id: Long, val message: TgMessage? = null,
     @SerialName("callback_query") val callback: TgCallback? = null,
     @SerialName("chat_member") val memberUpdate: TgMemberUpdate? = null,
-    @SerialName("my_chat_member") val botMemberUpdate: TgMemberUpdate? = null)
+    @SerialName("my_chat_member") val botMemberUpdate: TgMemberUpdate? = null,
+    @SerialName("poll_answer") val pollAnswer:TgPollAnswer?=null)
 @Serializable data class TgSharedUser(@SerialName("user_id") val id: Long,
     @SerialName("first_name") val firstName: String = "", @SerialName("last_name") val lastName: String = "", val username: String? = null)
 @Serializable data class TgUsersShared(@SerialName("request_id") val requestId: Int, val users: List<TgSharedUser>)
@@ -45,6 +49,9 @@ class TelegramFailure(val kind: FailureKind, val code: Int? = null, val retryAft
     IOException("Telegram request failed: $kind${code?.let { " ($it)" } ?: ""}")
 
 interface TelegramApi {
+    fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage = throw TelegramFailure(FailureKind.REJECTED)
+    fun stopPoll(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
+    fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) { throw TelegramFailure(FailureKind.REJECTED) }
     fun me(): TgUser
     fun updates(offset: Long?, timeout: Int): List<TgUpdate>
     fun member(chatId: Long, userId: Long): TgMember
@@ -77,10 +84,27 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         require(token.matches(Regex("[0-9]+:[A-Za-z0-9_-]{20,}"))) { "Некорректный формат токена бота" }
         require(endpoint.scheme == "https" || endpoint.scheme == "http" && endpoint.host in setOf("127.0.0.1", "localhost", "::1"))
     }
+    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage =
+        json.decodeFromJsonElement(call("sendPoll",buildJsonObject {
+            put("chat_id",chatId);put("question",question);put("is_anonymous",false)
+            put("allows_multiple_answers",false);put("allows_revoting",true)
+            put("options",buildJsonArray { options.forEach { label -> add(buildJsonObject { put("text",label) }) } })
+            put("reply_markup",json.encodeToJsonElement(keyboard))
+        }))
+    override fun stopPoll(chatId:Long,messageId:Long) {
+        try { call("stopPoll",buildJsonObject {
+            put("chat_id",chatId);put("message_id",messageId);put("reply_markup",json.encodeToJsonElement(TgKeyboard(emptyList())))
+        }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
+    }
+    override fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) {
+        try { call("editMessageReplyMarkup",buildJsonObject {
+            put("chat_id",chatId);put("message_id",messageId);put("reply_markup",json.encodeToJsonElement(keyboard))
+        }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
+    }
     override fun me(): TgUser = json.decodeFromJsonElement(call("getMe", buildJsonObject {}))
     override fun updates(offset: Long?, timeout: Int): List<TgUpdate> = json.decodeFromJsonElement(call("getUpdates", buildJsonObject {
         offset?.let { put("offset", it) }; put("timeout", timeout)
-        put("allowed_updates", buildJsonArray { add("message"); add("callback_query"); add("chat_member"); add("my_chat_member") })
+        put("allowed_updates", buildJsonArray { add("message"); add("callback_query"); add("chat_member"); add("my_chat_member"); add("poll_answer") })
     }, timeout + 20))
     override fun member(chatId: Long, userId: Long): TgMember = json.decodeFromJsonElement(call("getChatMember", buildJsonObject {
         put("chat_id", chatId); put("user_id", userId)
@@ -201,7 +225,7 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         val kind = when {
             code == 429 -> FailureKind.RETRY_LATER
             code >= 500 -> FailureKind.UNCERTAIN
-            "message is not modified" in description || method=="unpinChatMessage" && "message is not pinned" in description -> FailureKind.NOT_MODIFIED
+            "message is not modified" in description || method=="stopPoll" && "poll has already been closed" in description || method=="unpinChatMessage" && "message is not pinned" in description -> FailureKind.NOT_MODIFIED
             "message to edit not found" in description || "message to unpin not found" in description || "message to delete not found" in description -> FailureKind.MESSAGE_MISSING
             else -> FailureKind.REJECTED
         }

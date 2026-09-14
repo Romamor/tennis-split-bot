@@ -21,7 +21,8 @@ import java.util.UUID
     val order: List<Long>? = null, val origin: ScreenAction? = null, val baseline: String? = null, val transfer: String = "",
     val similar: List<String> = emptyList(), val originalTime:String?=null,
     val publishGroup:Long?=null,val defaultValue:String?=null,
-    val paymentFrom:Long=0,val adminPayment:Boolean=false)
+    val paymentFrom:Long=0,val adminPayment:Boolean=false,
+    val pollId:String="",val declineLabel:String="Не приду")
 @Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
     val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,
@@ -108,7 +109,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }
     }
     fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND ((delivery_key='group-menu:' || group_id AND chat_id=group_id) OR EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN')) LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND ((delivery_key='group-menu:' || group_id AND chat_id=group_id) OR EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN') OR EXISTS(SELECT 1 FROM training_polls p WHERE delivery_key='poll:' || p.group_id || ':' || p.id AND p.status='OPEN')) LIMIT 20") {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
         }

@@ -30,6 +30,7 @@ for t in tables:
     if pk and pk not in unique[t]: unique[t].insert(0,pk)
 
 DESC = {
+ 'training_polls':'Опрос до создания тренировки', 'poll_signups':'Только записавшиеся: без времени и отказов',
  'users':'Telegram-аккаунты и личные настройки', 'groups':'Чаты и часовой пояс',
  'group_users':'Аккаунт в конкретной группе', 'group_admins':'Назначения администраторов бота',
  'trainings':'Тренировка: детали, статус, версия', 'training_players':'Участие, время, гости и оплата стола',
@@ -38,8 +39,10 @@ DESC = {
  'bot_sessions':'Текущее меню и ввод пользователя', 'bot_buttons':'Токены кнопок и постоянных ссылок',
  'bot_deliveries':'Доставка, закрепление и удаление сообщений'}
 NOTES = {
+ 'training_polls':['Тренировка создаётся только после закрытия опроса', 'Ссылка на итоговую тренировку — защита от повторов'],
+ 'poll_signups':['Три поля: группа, опрос, аккаунт', 'После создания тренировки строки удаляются'],
  'users':['UNIQUE is_bot=1 — только одна запись бота', 'Название / время по умолчанию принадлежат аккаунту'],
- 'groups':['Настройки новой тренировки здесь не хранятся'],
+ 'groups':['polls_enabled — разрешить создание опросов', 'Название / время по умолчанию — в users'],
  'group_users':['★ is_attending и nickname — задел, интерфейса ещё нет', 'present — известное членство; не участие в тренировке'],
  'group_admins':['Администраторы Telegram проверяются через API', 'В этой таблице — только назначения внутри бота'],
  'trainings':['OPEN / CLOSED / CANCELLED', 'Повторное открытие снимает прежний расчёт'],
@@ -55,7 +58,8 @@ COLORS = {t:('#155e75' if t in tables[:4] else '#047857' if t in tables[4:6] els
 PAGES = [('01 · Обзор',tables,[]),('02 · Аккаунты и группы',tables[:4],[]),
  ('03 · Тренировки',tables[4:6],['users','groups','group_users']),
  ('04 · Финансы',tables[6:9],['users','groups','group_users','trainings']),
- ('05 · Состояние бота',tables[9:],['users','groups'])]
+ ('05 · Состояние бота',tables[9:13],['users','groups']),
+ ('06 · Опросы',tables[13:],['users','groups','group_users','trainings'])]
 mx=E.Element('mxfile',host='app.diagrams.net',type='device',compressed='false')
 args.preview_dir.mkdir(parents=True,exist_ok=True)
 report=[]
@@ -129,10 +133,10 @@ class Page:
 
 for idx,(title,owned,refs) in enumerate(PAGES,1):
  if idx==1:
-  page=Page(title,1960,1600)
-  page.text('title',48,25,1860,50,'База бота · 13 таблиц · схема 6',30,'#172b3a',True)
-  page.text('intro',48,85,1860,42,'Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–05.',17)
-  lanes=[('Аккаунты и группы',tables[:4],170),('Тренировки',tables[4:6],460),('Финансы и история',tables[6:9],750),('Состояние общения с Telegram',tables[9:],1110)]
+  page=Page(title,1960,1850)
+  page.text('title',48,25,1860,50,'База бота · 15 таблиц · схема 7',30,'#172b3a',True)
+  page.text('intro',48,85,1860,42,'Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–06.',17)
+  lanes=[('Аккаунты и группы',tables[:4],170),('Тренировки',tables[4:6],460),('Финансы и история',tables[6:9],750),('Состояние общения с Telegram',tables[9:13],1110),('Опросы до создания тренировки',tables[13:],1370)]
   for label,names,yy in lanes:
    page.text('lane-'+str(yy),48,yy-40,1800,30,label,20,'#172b3a',True)
    for j,t in enumerate(names):page.card(t,60+j*470,yy,420,compact=True)
@@ -141,7 +145,7 @@ for idx,(title,owned,refs) in enumerate(PAGES,1):
   page.edge('training_players','trainings','строки участия → тренировка',610)
   page.edge('actions','transfers','действие → платёж (если применимо)',920)
   page.edge('balance_entries','actions','проводка → действие',955)
-  page.box('financial-note',60,1300,1840,150,'Баланс = сумма balance_entries по группе и аккаунту. Отдельной таблицы балансов нет.\nДоступные платежи вычисляются: фактический баланс + резерв ожидающих transfers (REVIEW).\nSendPayment создаёт transfers + actions. ReceivePayment обновляет transfers и добавляет actions + balance_entries.\nУчастие и оплата стола хранятся в training_players; перевод между людьми — в transfers.',size=18,round=True)
+  page.box('financial-note',60,1580,1840,150,'Баланс = сумма balance_entries по группе и аккаунту. Отдельной таблицы балансов нет.\nДоступные платежи вычисляются: фактический баланс + резерв ожидающих transfers (REVIEW).\nSendPayment создаёт transfers + actions. ReceivePayment обновляет transfers и добавляет actions + balance_entries.\nУчастие и оплата стола хранятся в training_players; перевод между людьми — в transfers.',size=18,round=True)
  else:
   width=max(2040,len(owned)*620+80,len(refs)*500+80)
   page=Page(title,width,2200)

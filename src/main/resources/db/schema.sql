@@ -12,7 +12,8 @@ CREATE INDEX user_username ON users(username COLLATE NOCASE);
 CREATE TABLE groups (
     id INTEGER PRIMARY KEY CHECK(id<0),
     title TEXT NOT NULL,
-    time_zone TEXT NOT NULL
+    time_zone TEXT NOT NULL,
+    polls_enabled INTEGER NOT NULL DEFAULT 0 CHECK(polls_enabled IN (0,1))
 ) STRICT;
 CREATE TABLE group_users (
     group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
@@ -171,4 +172,34 @@ CREATE TABLE bot_deliveries (
     status TEXT NOT NULL CHECK(status IN ('SENDING','SENT','UNKNOWN','FAILED','BLOCKED','RETRY')),
     display_page INTEGER NOT NULL DEFAULT 0 CHECK(display_page>=0),
     pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN','UNPIN_PENDING','UNPIN_SENDING','UNPIN_FAILED','UNPINNED'))
+) STRICT;
+
+CREATE TABLE training_polls (
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON UPDATE CASCADE,
+    id TEXT NOT NULL,
+    title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 100),
+    played_on TEXT NOT NULL,
+    starts_at TEXT NOT NULL,
+    decline_label TEXT NOT NULL CHECK(length(trim(decline_label)) BETWEEN 1 AND 100),
+    created_by INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    telegram_id TEXT UNIQUE,
+    message_id INTEGER,
+    status TEXT NOT NULL CHECK(status IN ('PENDING','SENDING','UNKNOWN','FAILED','OPEN','CLOSING','CLOSED')),
+    stopped INTEGER NOT NULL DEFAULT 0 CHECK(stopped IN (0,1)),
+    closed_by INTEGER REFERENCES users(id),
+    training_id TEXT,
+    PRIMARY KEY(group_id,id),
+    FOREIGN KEY(group_id,created_by) REFERENCES group_users(group_id,user_id) ON UPDATE CASCADE,
+    FOREIGN KEY(group_id,training_id) REFERENCES trainings(group_id,id) ON UPDATE CASCADE,
+    CHECK((telegram_id IS NULL)=(message_id IS NULL))
+) STRICT;
+CREATE INDEX active_training_polls ON training_polls(status,group_id);
+CREATE TABLE poll_signups (
+    group_id INTEGER NOT NULL,
+    poll_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    PRIMARY KEY(group_id,poll_id,user_id),
+    FOREIGN KEY(group_id,poll_id) REFERENCES training_polls(group_id,id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY(group_id,user_id) REFERENCES group_users(group_id,user_id) ON UPDATE CASCADE
 ) STRICT;

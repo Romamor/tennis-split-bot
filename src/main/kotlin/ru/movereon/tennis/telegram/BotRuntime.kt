@@ -47,7 +47,9 @@ fun runBot() {
             while(!Thread.currentThread().isInterrupted) {
                 try {
                     bot.maintain()
-                    api.updates(bot.state.offset(),config.pollTimeout).sortedBy { it.id }.forEach(bot::handle)
+                    val updates=api.updates(bot.state.offset(),if(bot.hasClosingPolls()) 0 else config.pollTimeout)
+                    updates.sortedBy { it.id }.forEach(bot::handle)
+                    if(updates.isEmpty()) bot.finishPollsAfterDrain()
                 } catch (failure: TelegramFailure) {
                     if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
                     System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")

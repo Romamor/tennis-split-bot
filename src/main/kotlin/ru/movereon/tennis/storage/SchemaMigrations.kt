@@ -57,3 +57,12 @@ internal fun migrateParticipation(c:Connection) {
         s.execute("PRAGMA user_version=3")
     }
 }
+
+internal fun migratePolls(c:Connection) {
+    val ddl=requireNotNull(Database::class.java.getResourceAsStream("/db/schema.sql")).bufferedReader().use { "CREATE TABLE training_polls"+it.readText().substringAfter("CREATE TABLE training_polls") }
+    c.createStatement().use { s ->
+        s.execute("ALTER TABLE groups ADD COLUMN polls_enabled INTEGER NOT NULL DEFAULT 0 CHECK(polls_enabled IN (0,1))")
+        ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) }
+        s.execute("PRAGMA user_version=7")
+    }
+}

@@ -12,7 +12,7 @@ class ExportBotScreens {
  static Database db;static SettlementService svc;static InteractionStore store;static Screens screens;static Access auth;static long user;static String file;static StringBuilder out=new StringBuilder("[");static int serial=0;
  static String q(String s){if(s==null)return "null";return "\""+s.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n").replace("\r","\\r").replace("\t","\\t")+"\"";}
  static ScreenAction action(String kind,String id,String more){return Json.Default.decodeFromString(ScreenAction.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":-1,\"id\":"+q(id)+(more.isEmpty()?"":","+more)+"}");}
- static InputForm form(String kind,String id,String more){boolean global=kind.startsWith("default_")||id.isEmpty()&&Set.of("title","date","time","group","ready").contains(kind);return Json.Default.decodeFromString(InputForm.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":"+(global?0:-1)+",\"training\":"+q(id)+",\"title\":\"Теннис\",\"date\":\"2026-09-12\",\"time\":\"18:30\""+(more.isEmpty()?"":","+more)+"}");}
+ static InputForm form(String kind,String id,String more){boolean global=kind.startsWith("default_")||id.isEmpty()&&Set.of("title","date","time","poll_decline","group","ready").contains(kind);return Json.Default.decodeFromString(InputForm.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":"+(global?0:-1)+",\"training\":"+q(id)+",\"title\":\"Теннис\",\"date\":\"2026-09-12\",\"time\":\"18:30\""+(more.isEmpty()?"":","+more)+"}");}
  static void sql(String query,Object...args)throws Exception{try(Connection c=DriverManager.getConnection("jdbc:sqlite:"+file);PreparedStatement p=c.prepareStatement(query)){for(int i=0;i<args.length;i++)p.setObject(i+1,args[i]);p.executeUpdate();}}
  static void run(Access a,SettlementCommand c){svc.execute(a,"fixture"+(serial++),c,null);}
  static void capture(String key,String kind,String id,String more,InputForm f,boolean group,String note){
@@ -95,6 +95,19 @@ class ExportBotScreens {
   if(user>=2){
    store.sending("training:-1:own",-1,-1,null);store.deliveryResult("training:-1:own","FAILED",null,null);store.pinStatus("training:-1:own","FAILED");cap("training_failure","training","own");cap("recover","recover_confirm","own");phase("own","CLOSED");store.pinStatus("training:-1:own","UNPIN_FAILED");cap("training_unpin_failure","training","own");phase("own","OPEN");
   }
+  TrainingPolls polls=new TrainingPolls(svc,clock);
+  polls.setEnabled(superA,true);
+  var poll=polls.create(auth,"poll-own","Теннис","2026-09-12","18:30","Не приду");
+  polls.attach(poll,"demo-poll-"+user,800L);
+  cap("menu_polls","menu","");
+  for(String kind:List.of("title","date","time","poll_decline","group","ready"))capture("poll_"+kind,"form","","",form(kind,"","\"pollId\":\"poll-own\",\"publishGroup\":-1,\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
+  capture("choose_polls","groups","","\"option\":\"polls\"",null,false,null);
+  cap("poll_list","poll_list","");cap("poll_detail","poll_detail","poll-own");
+  capture("poll_close_confirm","poll_close_confirm","poll-own","",null,true,null);
+  if(user>=2){capture("choose_poll_settings","groups","","\"option\":\"poll_settings\"",null,false,null);cap("poll_settings","poll_settings","");}
+  polls.vote(8000L,polls.get(-1,"poll-own"),4,1);
+  polls.beginClose(auth,"poll-own");polls.stopped(polls.get(-1,"poll-own"));polls.finish(polls.get(-1,"poll-own"));
+  capture("poll_training","public","poll-own","",null,true,null);
   if(user==3){capture("choose_admins","groups","","\"option\":\"administrators\"",null,false,null);cap("administrators","administrators","");cap("candidates","admin_candidates","");capture("role_member","admin_person","","\"user\":8",null,false,null);capture("role_admin","admin_person","","\"user\":2",null,false,null);capture("role_super","admin_person","","\"user\":3",null,false,null);run(auth,new SettlementCommand.SetAdministrator(3,true));capture("role_super_extra","admin_person","","\"user\":3",null,false,null);}
  }
  Files.writeString(Path.of(args[0]+".json"),out.append(']').toString());System.out.println("Screens exported: "+args[0]+".json");

@@ -16,6 +16,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val clock: Clock = Clock.systemUTC(), private val zone: String = "Europe/Moscow") {
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
+    val polls=TrainingPolls(service,clock)
+    private val pollWorkflow=PollWorkflow(polls,state,api)
     val screens = Screens(service, state, requireNotNull(identity.username))
     private val paymentInput=PaymentInput(service,state)
     private var lastCleanup = Long.MIN_VALUE
@@ -25,6 +27,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         require(bound == null || bound == identity.id) { "Эта база принадлежит другому боту" }
         service.remember(identity.account())
         state.interruptedSends()
+        polls.interrupted()
         state.refreshLiveCards()
     }
     private fun TgUser.account() = Account(id, firstName, lastName, username, isBot)
@@ -44,7 +47,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if(!member.present) null else {
                 val auth=Access(group.id,user,member.admin)
                 checkedMembership[group.id to user]=auth
-                val canPublish=forPublication && api.member(group.id,identity.id).let { it.present && it.admin }
+                val canPublish=(forPublication || polls.enabled(group.id)) && api.member(group.id,identity.id).let { it.present && it.admin }
                 GroupOption(group,service.isAdmin(auth),member.admin,canPublish)
             }
         } catch(f:TelegramFailure) {
@@ -63,6 +66,21 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val message = update.message ?: callback?.message
         val user = callback?.from ?: update.message?.from
         try {
+            if(update.pollAnswer!=null) {
+                val vote=update.pollAnswer
+                val p=polls.byTelegram(vote.pollId)
+                val voter=vote.user
+                if(p==null || voter==null || voter.isBot || p.status !in setOf("OPEN","CLOSING")) { state.complete(update.id);return }
+                val option=vote.optionIds.singleOrNull()
+                if(option in 0..2) {
+                    remember(voter)
+                    try { access(p.group,voter.id) } catch(f:AccountingException) {
+                        if(f.code!=ErrorCode.FORBIDDEN) throw f
+                        polls.vote(update.id,p,voter.id,null);return
+                    }
+                }
+                polls.vote(update.id,p,voter.id,option);return
+            }
             val memberUpdate = update.memberUpdate ?: update.botMemberUpdate
             if (memberUpdate != null) {
                 if (memberUpdate.chat.id < 0) {
@@ -103,6 +121,43 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     effective = plan.copy(command = null, screen = ScreenAction("form", plan.screen.group),
                         form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.SendOtherPayment) "payment_duplicate" else if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
                 }
+            }
+            if(effective.screen.kind=="poll_publish") {
+                val f=requireNotNull(effective.form)
+                requirePublication(effective.screen.group,effective.user)
+                val p=polls.create(requireNotNull(a),f.pollId,f.title,f.date,f.time,f.declineLabel)
+                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
+                pollWorkflow.publish(p)
+                effective=effective.copy(screen=ScreenAction("poll_detail",p.group,p.id),form=null)
+            }
+            if(effective.screen.kind=="poll_close") {
+                polls.beginClose(requireNotNull(a),effective.screen.id)
+                pollWorkflow.stop(polls.get(a.groupId,effective.screen.id))
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
+            if(effective.screen.kind=="poll_retry") {
+                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
+                polls.requireManager(a,p);requirePublication(a.groupId,effective.user)
+                if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
+                pollWorkflow.publish(p)
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
+            if(effective.screen.kind=="poll_discard") {
+                val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
+                polls.requireManager(a,p)
+                checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING"),ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
+                if(p.message!=null) {
+                    api.stopPoll(p.group,p.message)
+                    api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
+                    api.unpin(p.group,p.message)
+                }
+                polls.discard(a,p.id)
+                state.forgetDelivery("poll:${p.group}:${p.id}")
+                effective=effective.copy(screen=ScreenAction(if(effective.chat<0) "close_panel" else "menu",if(effective.chat<0) a.groupId else 0))
+            }
+            if(effective.screen.kind=="poll_setting_save") {
+                polls.setEnabled(requireNotNull(a),effective.screen.value==1L)
+                effective=effective.copy(screen=ScreenAction("poll_settings",a.groupId))
             }
             if(effective.screen.kind=="edit_redirect") {
                 // Recheck on replay too: a saved event never preserves administrative rights.
@@ -252,12 +307,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             else action = ScreenAction("groups", 0)
         }
         if(action.kind=="trainings" && action.option=="mine") action=ScreenAction("my_trainings",0)
-        if(action.kind in setOf("menu","settings","training_settings","default_title","default_time","new","my_trainings"))
+        if(action.kind in setOf("menu","settings","training_settings","default_title","default_time","new","new_poll","my_trainings"))
             action=action.copy(group=0,id="")
         if(action.kind=="select_group") {
             val choice=groupOptions(user.id).firstOrNull { it.group.id==action.value }
                 ?: throw AccountingException(ErrorCode.FORBIDDEN,"Группа больше недоступна")
             action=when(action.option) {
+                "poll_settings" -> { checkAccounting(choice.admin,ErrorCode.FORBIDDEN,"Доступно администратору этой группы");ScreenAction("poll_settings",choice.group.id) }
+                "polls" -> ScreenAction("poll_list",choice.group.id)
                 "manage" -> { checkAccounting(choice.admin,ErrorCode.FORBIDDEN,"Доступно администратору этой группы");ScreenAction("trainings",choice.group.id,option="all") }
                 "administrators" -> { checkAccounting(choice.superAdmin,ErrorCode.FORBIDDEN,"Назначать могут администраторы Telegram-группы");ScreenAction("administrators",choice.group.id) }
                 else -> ScreenAction("finance",choice.group.id)
@@ -268,6 +325,17 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         val a = if (action.group < 0) access(action.group, user.id) else null
+        if(action.kind in setOf("poll_settings","poll_setting_save"))
+            checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
+        if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard")) {
+            val p=polls.get(requireNotNull(a).groupId,action.id)
+            polls.requireManager(a,p)
+            if(chat<0 && p.telegramId==null && message.from?.id==identity.id && message.poll!=null && action.kind=="poll_close_confirm") {
+                polls.attach(p,message.poll.id,message.id)
+                pollWorkflow.recordDelivery(polls.get(a.groupId,p.id))
+            } else if(chat<0) checkAccounting(message.poll?.id==p.telegramId && message.id==p.message || message.ephemeralId!=null,
+                ErrorCode.FORBIDDEN,"Эта кнопка относится к другому сообщению опроса")
+        }
         if(action.kind=="edit_training") {
             val auth=requireNotNull(a)
             checkAccounting(service.canEdit(auth,service.training(auth,action.id)),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
@@ -288,7 +356,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=FinanceScreens.kinds+setOf("my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
+        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
         val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
         val exiting=action.kind in exits
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
@@ -371,11 +439,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 checkAccounting(f.training.isEmpty() && f.group==0L && action.option==state.formSignature(f),ErrorCode.STALE_VERSION,"Форма изменилась. Используй текущие кнопки.")
                 when(action.kind) {
                     "form_cancel" -> plan(ScreenAction("menu",0))
-                    "form_back" -> formPlan(f.copy(kind=when(f.kind) { "date"->"title";"time"->"date";"group"->"time";"ready"->"group";else->error("No previous step") }))
+                    "form_back" -> formPlan(f.copy(kind=when(f.kind) { "date"->"title";"time"->"date";"poll_decline"->"time";"group"->if(f.pollId.isNotEmpty()) "poll_decline" else "time";"ready"->"group";else->error("No previous step") }))
                     "form_group_page" -> { require(f.kind=="group");formPlan(f.copy(page=action.page)) }
                     else -> {
                         require(f.kind=="group")
                         requirePublication(action.value,user.id)
+                        if(f.pollId.isNotEmpty()) checkAccounting(polls.enabled(action.value),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
                         formPlan(f.copy(kind="ready",publishGroup=action.value))
                     }
                 }
@@ -401,9 +470,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
             }
-            "new" -> {
+            "new", "new_poll" -> {
                 val defaults=service.trainingDefaults(user.id)
-                val f=InputForm("title",0,title=defaults.title,date=today(),time=defaults.time,origin=ScreenAction("menu",0))
+                val f=InputForm("title",0,title=defaults.title,date=today(),time=defaults.time,origin=ScreenAction("menu",0),pollId=if(action.kind=="new_poll") UUID.randomUUID().toString() else "")
                 formPlan(f.copy(baseline=formValues(f)))
             }
             "edit_details" -> {
@@ -412,7 +481,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val f=InputForm("title", action.group, t.id, version = t.version, title = t.title, date = t.date, time = t.startTime,origin=action.back)
                 formPlan(f.copy(baseline=formValues(f)))
             }
-            "form_next", "form_restart", "save_training", "save_transfer", "save_transfer_amount", "transfer_date", "transfer_note" -> {
+            "form_next", "form_restart", "save_training", "save_poll", "save_transfer", "save_transfer_amount", "transfer_date", "transfer_note" -> {
                 val f = requireNotNull(savedForm) { "Открой форму заново" }
                 checkAccounting(f.group == action.group, ErrorCode.FORBIDDEN, "Эта форма относится к другой группе")
                 checkAccounting(action.option == state.formSignature(f), ErrorCode.STALE_VERSION, "Форма изменилась. Используй кнопки текущего сообщения")
@@ -424,7 +493,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         require(f.kind in setOf("edit_transfer_ready","edit_transfer_duplicate"))
                         plan(f.origin ?: ScreenAction("transfer",f.group,f.transfer),SettlementCommand.EditTransferAmount(f.transfer,f.version,f.amount,f.kind=="edit_transfer_duplicate"),f)
                     }
+                    "save_poll" -> {
+                        require(f.kind=="ready" && f.pollId.isNotEmpty())
+                        val group=requireNotNull(f.publishGroup)
+                        requirePublication(group,user.id)
+                        plan(ScreenAction("poll_publish",group,f.pollId),form=f)
+                    }
                     "save_training" -> {
+                        require(f.pollId.isEmpty())
                         require(f.kind == "ready") { "Сначала заполни тренировку" }
                         val id = f.training.ifEmpty { UUID.randomUUID().toString() }
                         val command = if (f.training.isEmpty()) SettlementCommand.CreateTraining(id, f.title, f.date, f.time)
@@ -534,8 +610,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         f.baseline!=null -> f.baseline!=formValues(f)
         else -> f.amount>0 || f.note.isNotBlank()
     }
-    private fun formValues(f:InputForm)=listOf(f.title,f.date,f.time,f.amount.toString(),f.note).joinToString("\u0000")
-    private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> if(f.training.isEmpty()) "group" else "ready"; else -> error("Форма уже заполнена") })
+    private fun formValues(f:InputForm)=listOf(f.title,f.date,f.time,f.amount.toString(),f.note,f.declineLabel).joinToString("\u0000")
+    private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> if(f.pollId.isNotEmpty()) "poll_decline" else if(f.training.isEmpty()) "group" else "ready"; "poll_decline" -> "group"; else -> error("Форма уже заполнена") })
     private fun textInput(update: TgUpdate, user: TgUser, chat: Long, f: InputForm, text: String): EventPlan {
         val auth=f.group.takeIf { it<0 }?.let { access(it,user.id) }
         if(PaymentInput.isForm(f)) return paymentInput.text(user.id,chat,requireNotNull(auth),f,text)
@@ -549,6 +625,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "title" -> { require(text.length in 1..100) { "Название: от 1 до 100 символов" }; form(advance(f.copy(title = text))) }
             "date" -> form(advance(f.copy(date = parsedDate())))
             "time" -> form(advance(f.copy(time = LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm")))))
+            "poll_decline" -> { require(text.length in 1..100) { "Последний ответ: от 1 до 100 символов" };form(advance(f.copy(declineLabel=text))) }
             "default_title" -> { require(text.length in 1..100) { "Название: от 1 до 100 символов" };form(f.copy(title=text)) }
             "default_time" -> form(f.copy(time=LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm"))))
             "paid" -> {
@@ -631,7 +708,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
                 if (failure.kind != FailureKind.UNCERTAIN) state.replace(scope, oldTokens)
                 val notice = (if (plan.command != null) "Изменение сохранено. " else "") +
-                    "Панель не открылась. Открой личный чат с ботом и выбери «Мои тренировки»."
+                    if(plan.screen.kind.startsWith("poll_")) "Панель не открылась. Открой личный чат с ботом и выбери «Мои опросы»." else "Панель не открылась. Открой личный чат с ботом и выбери «Мои тренировки»."
                 plan.callback?.let { runCatching { api.answer(it, notice, true) } }
                 if (failure.kind == FailureKind.RETRY_LATER) throw failure
                 return
@@ -727,10 +804,21 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             throw failure
         }
     }
+    fun hasClosingPolls()=polls.active().any { it.status=="CLOSING" && it.stopped }
+    /** Run after an empty getUpdates response, so votes queued before stopPoll are included. */
+    fun finishPollsAfterDrain() {
+        polls.active().filter { it.status=="CLOSING" && it.stopped }.forEach { polls.finish(it) }
+    }
     fun maintain() {
         checkedMembership.clear()
         val now = clock.instant().epochSecond
         if (lastCleanup == Long.MIN_VALUE || now - lastCleanup >= 30) { state.cleanup(); lastCleanup = now }
+        polls.active().forEach { p ->
+            if(p.status=="OPEN" && p.message!=null) pollWorkflow.recordDelivery(p)
+            if(p.status=="CLOSING") try { pollWorkflow.stop(p) } catch(f:TelegramFailure) {
+                if(f.kind!=FailureKind.REJECTED || f.code in setOf(401,409)) throw f
+            }
+        }
         state.reconcilePins()
         unpinCards()
         retirePrivateMenus()

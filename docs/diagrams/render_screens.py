@@ -20,10 +20,27 @@ categories.insert(2,('Мои финансы: отправка и подтвер�
 titles.update({'finance_receive_confirm':'Деньги пришли?','finance_received':'Получение учтено','payment_previous':'Предыдущий похожий платёж','finance_history_detail':'Детали платежа из истории','payment_to':'Произвольный платёж · кому','payment_amount':'Произвольная сумма','payment_ready':'Перед отметкой отправки','payment_duplicate':'Возможный повтор за сутки','finance_payment':'Ожидает подтверждения','admin_payment_from':'Администратор · от кого','admin_payment_to':'Администратор · кому','admin_payment_amount':'Администратор · сумма','admin_payment_ready':'Записать с немедленным учётом','admin_payment_saved':'Запись администратора учтена'})
 categories.insert(3,('Произвольные платежи и запись администратором',['payment_to','payment_amount','payment_ready','finance_payment','payment_duplicate','payment_previous','admin_payment_from','admin_payment_to','admin_payment_amount','admin_payment_ready','admin_payment_saved']))
 # Same-screen arrows indicate updating values; data in each screen is an illustrative snapshot.
+poll_steps=['poll_title','poll_date','poll_time','poll_poll_decline','poll_group','poll_ready']
+titles.update(dict(zip(poll_steps,['Опрос · название','Опрос · дата','Опрос · начало','Опрос · четвёртый ответ','Опрос · группа','Опрос · публикация'])))
+titles.update({'menu_polls':'Меню с включёнными опросами','choose_polls':'Группа для просмотра опросов','poll_list':'Открытые опросы','poll_detail':'Опрос опубликован в группе','poll_close_confirm':'Завершить сбор: подтверждение','poll_training':'Тренировка из опроса: 0 ч / 0 ₽','choose_poll_settings':'Группа для настройки опросов','poll_settings':'Разрешение создавать опросы'})
+categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
 def resolve(key,b):
  a=b.get('target');label=b['text']
  if not a:return []
  k=a['kind'];opt=a.get('option','');id=a.get('id','')
+ if k=='new_poll':return ['poll_title']
+ if k=='groups' and opt in ('polls','poll_settings'):return ['choose_polls' if opt=='polls' else 'choose_poll_settings']
+ if k=='select_group' and opt in ('polls','poll_settings'):return ['poll_list' if opt=='polls' else 'poll_settings']
+ if k in ('poll_detail','poll_list','poll_close_confirm'):return [k]
+ if k=='poll_close':return ['poll_training']
+ if k=='poll_setting_save':return ['poll_settings']
+ if key in poll_steps:
+  if k=='form_next':return [poll_steps[poll_steps.index(key)+1]]
+  if k=='form_back':return [poll_steps[poll_steps.index(key)-1]]
+  if k=='form_group_select':return ['poll_ready']
+  if k=='form_group_page':return ['poll_group']
+  if k=='save_poll':return ['poll_detail']
+ if k=='close_panel' and key.startswith('poll_'):return ['poll_detail']
  if k=='training_status':return ['status_closed' if key=='training_closed' else 'status_cancelled' if key=='training_cancelled' else 'status_open']
  if k=='set_training_status':return ['training_cancelled' if opt=='CANCELLED' else 'training_closed' if opt=='CLOSED' else 'training_review']
  if k in ('add_player_list','exclude_player_list','manage_players','pick_add_player'):return [k]
@@ -110,6 +127,7 @@ def resolve(key,b):
  if k=='set_admin':return ['role_admin' if a.get('value') else 'role_super' if key=='role_super_extra' else 'role_member']
  raise ValueError((key,label,k))
 input_next={'payment_amount':'payment_ready','admin_payment_amount':'admin_payment_ready','default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','transfer_amount':'transfer_ready','transfer_date':'transfer_ready','transfer_note':'transfer_ready','edit_transfer_amount':'edit_transfer_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
+input_next.update(dict(zip(poll_steps[:4],poll_steps[1:5])))
 class Plain(HTMLParser):
  def __init__(self):super().__init__();self.parts=[]
  def handle_data(self,s):self.parts.append(s)

@@ -31,6 +31,23 @@ class FakeTelegramApi : TelegramApi {
     var failChat: Long? = null
     var acceptThenFail: ((Long,String)->Boolean)? = null
     private var nextMessage = 1L
+    val pollOptions=mutableMapOf<String,List<String>>()
+    var pollFailure:TelegramFailure?=null
+    var stopFailure:TelegramFailure?=null
+    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage {
+        val m=send(chatId,question,keyboard).let { it.copy(poll=TgPoll("poll-${it.id}")) }
+        messages[chatId to m.id]=m;pollOptions[m.poll!!.id]=options
+        pollFailure?.let { throw it }
+        return m
+    }
+    override fun stopPoll(chatId:Long,messageId:Long) {
+        stopFailure?.let { throw it }
+        val m=messages.getValue(chatId to messageId)
+        messages[chatId to messageId]=m.copy(poll=m.poll!!.copy(isClosed=true))
+    }
+    override fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) {
+        val m=messages.getValue(chatId to messageId);messages[chatId to messageId]=m.copy(keyboard=keyboard)
+    }
     override fun me() = bot
     override fun administrators(chatId:Long) = members.filter { it.key.first==chatId && it.value.admin }
         .map { (key,member) -> member.copy(user=member.user ?: TgUser(key.second,firstName="User ${key.second}")) }

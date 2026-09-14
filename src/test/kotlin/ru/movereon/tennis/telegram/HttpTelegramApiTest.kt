@@ -123,7 +123,7 @@ class HttpTelegramApiTest {
         assertEquals(42L,result.single().id)
         val body=bodies.single().second
         assertEquals(41L,body.getValue("offset").jsonPrimitive.long)
-        assertEquals(listOf("message","callback_query","chat_member","my_chat_member"),body.getValue("allowed_updates").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("message","callback_query","chat_member","my_chat_member","poll_answer"),body.getValue("allowed_updates").jsonArray.map { it.jsonPrimitive.content })
     }
 
     @Test fun `force reply is sent only as a private input mechanism`() {
@@ -199,4 +199,22 @@ class HttpTelegramApiTest {
         assertEquals(45, request.getValue("request_id").jsonPrimitive.int)
         assertEquals("Фамилия", api.updates(null,1).single().memberUpdate!!.member.user!!.lastName)
     }
+    @Test fun `native poll sends four options and bot buttons and decodes votes without logging them`() {
+        response={ 200 to """{"ok":true,"result":{"message_id":8,"chat":{"id":-1,"type":"supergroup"},"poll":{"id":"p","is_closed":false}}}""" }
+        val m=api.sendPoll(-1,"Теннис",listOf("18:00","18:30","19:00","Не приду"),TgKeyboard(listOf(listOf(TgButton("Завершить сбор",callbackData="n:finish",style="primary")))))
+        assertEquals("p",m.poll!!.id)
+        val body=bodies.last().second
+        assertFalse(body.getValue("is_anonymous").jsonPrimitive.boolean)
+        assertFalse(body.getValue("allows_multiple_answers").jsonPrimitive.boolean)
+        assertTrue(body.getValue("allows_revoting").jsonPrimitive.boolean)
+        assertEquals(4,body.getValue("options").jsonArray.size)
+        response={ 200 to """{"ok":true,"result":[{"update_id":3,"poll_answer":{"poll_id":"p","user":{"id":2,"first_name":"Игрок"},"option_ids":[3]}},{"update_id":4,"poll_answer":{"poll_id":"p","user":{"id":2,"first_name":"Игрок"},"option_ids":[]}}]}""" }
+        val updates=api.updates(3,0)
+        assertEquals(listOf(3),updates.first().pollAnswer!!.optionIds)
+        assertEquals(emptyList(),updates.last().pollAnswer!!.optionIds)
+        response={ 400 to """{"ok":false,"error_code":400,"description":"Bad Request: poll has already been closed"}""" }
+        api.stopPoll(-1,8)
+        assertEquals("stopPoll",bodies.last().first)
+    }
+
 }
