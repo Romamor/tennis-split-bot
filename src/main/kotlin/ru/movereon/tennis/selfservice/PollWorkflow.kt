@@ -50,7 +50,7 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
         val keyboard=TgKeyboard(listOf(listOf(TgButton("🏁 Завершить сбор",callbackData="n:$token",style="primary"))))
         polls.status(p,"SENDING")
         try {
-            val sent=api.sendPoll(p.group,"🏓 ${p.title}\n${Screens.date(p.date)} · начало ${p.time}\nКогда придёшь?",p.options(),keyboard)
+            val sent=api.sendPoll(p.group,"🏓 ${p.title}\n${Screens.date(p.date)} · начало ${p.time}",p.options(),keyboard)
             polls.attach(p,requireNotNull(sent.poll).id,sent.id)
             recordDelivery(polls.get(p.group,p.id))
         } catch(f:TelegramFailure) {
