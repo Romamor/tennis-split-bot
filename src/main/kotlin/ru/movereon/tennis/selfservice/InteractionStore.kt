@@ -31,6 +31,7 @@ import java.util.UUID
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
     val newGroupPanel: Boolean = false, val previousGroupPanel: Long? = null,
     val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null)
+@Serializable data class PrivatePollView(val message:Long,val screen:ScreenAction,val revision:String)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
 
@@ -94,6 +95,28 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND p.status='CLOSED' AND d.status='SENT' AND d.message_id IS NOT NULL""") {
             Triple(it.getLong(1),it.getLong(2),it.getLong(3))
         }
+    }
+    fun privatePollView(user:Long,chat:Long,view:PrivatePollView?) = database.write { c ->
+        require(chat>0)
+        sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",view?.let { json.encodeToString(it) },user,chat)
+    }
+    fun privatePollViews():List<Triple<Long,Long,PrivatePollView>> = database.read { c ->
+        sqlQuery(c,"SELECT user_id,chat_id,panel_json FROM bot_sessions WHERE chat_id>0 AND json_extract(panel_json,'$.screen.kind') IN ('poll_detail','poll_close_confirm')") {
+            Triple(it.getLong(1),it.getLong(2),json.decodeFromString<PrivatePollView>(it.getString(3)))
+        }
+    }
+    /** Recover the currently visible old poll card from its active buttons, not retired menus. */
+    fun recoverPrivatePollViews() = database.write { c ->
+        val cards=sqlQuery(c,"""SELECT s.user_id,s.chat_id,d.message_id,b.action_json FROM bot_sessions s
+            JOIN bot_deliveries d ON d.delivery_key='personal:' || s.user_id || ':' || s.chat_id
+            JOIN bot_buttons b ON b.scope=d.delivery_key AND b.owner_id=s.user_id AND b.active=1
+            WHERE s.chat_id>0 AND s.panel_json IS NULL AND d.message_id IS NOT NULL
+            AND d.status IN ('SENT','RETRY','UNKNOWN')
+            AND json_extract(b.action_json,'$.kind') IN ('poll_close_confirm','poll_close')""") {
+            val action=json.decodeFromString<ScreenAction>(it.getString(4))
+            Triple(it.getLong(1),it.getLong(2),PrivatePollView(it.getLong(3),action.copy(kind=if(action.kind=="poll_close") "poll_close_confirm" else "poll_detail"),""))
+        }
+        cards.forEach { (user,chat,view) -> sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=? AND panel_json IS NULL",json.encodeToString(view),user,chat) }
     }
     fun displayPage(key:String):Int=database.read { c -> sqlQuery(c,"SELECT display_page FROM bot_deliveries WHERE delivery_key=?",key) { it.getInt(1) }.singleOrNull() ?: 0 }
     fun displayPage(key:String,page:Int)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET display_page=? WHERE delivery_key=?",page.coerceAtLeast(0),key) }

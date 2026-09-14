@@ -30,6 +30,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         polls.interrupted()
         service.synchronizeOpenTrainingRules()
         state.refreshLiveCards()
+        state.recoverPrivatePollViews()
     }
     private fun TgUser.account() = Account(id, firstName, lastName, username, isBot)
     private fun remember(user: TgUser) { if (!user.isBot) service.remember(user.account()) }
@@ -700,7 +701,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 state.retirePrivateMenu(plan.user,plan.chat,old.message)
                 state.forgetDelivery(key)
             }
-            if(sendOrdinary(key, plan.screen.group, plan.chat, plan.user, out, scope)) retirePrivateMenus(plan.user)
+            if(sendOrdinary(key, plan.screen.group, plan.chat, plan.user, out, scope)) {
+                val view=if(plan.screen.kind in setOf("poll_detail","poll_close_confirm"))
+                    state.delivery(key)?.message?.let { PrivatePollView(it,plan.screen,privatePollRevision(plan.screen)) } else null
+                state.privatePollView(plan.user,plan.chat,view?.takeUnless { it.revision.startsWith("CLOSED:") })
+                retirePrivateMenus(plan.user)
+            }
             if (plan.form?.kind in setOf("pick_account","pick_players","pick_add_player")) {
                 requireNotNull(plan.form)
                 val pickerKey = "picker:$event"
@@ -815,8 +821,35 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
             }
         }
+        refreshPrivatePollViews()
         state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
         pinCards()
+    }
+    private fun privatePollRevision(screen:ScreenAction):String {
+        val p=polls.get(screen.group,screen.id)
+        return "${p.status}:${polls.count(p)}:${service.groupTrainingRules(p.group).trackTime}"
+    }
+    private fun refreshPrivatePollViews() {
+        state.privatePollViews().forEach { (user,chat,view) ->
+            val key="personal:$user:$chat"
+            if(state.delivery(key)?.message!=view.message) {
+                state.privatePollView(user,chat,null);return@forEach
+            }
+            try {
+                val revision=privatePollRevision(view.screen)
+                if(revision==view.revision) return@forEach
+                val auth=access(view.screen.group,user)
+                val out=screens.render(view.screen,auth,key,user)
+                if(sendOrdinary(key,view.screen.group,chat,user,out,key,recreateMissing=false))
+                    state.privatePollView(user,chat,if(state.delivery(key)?.message==view.message && !revision.startsWith("CLOSED:")) view.copy(revision=revision) else null)
+            } catch(f:AccountingException) {
+                if(f.code!=ErrorCode.FORBIDDEN && f.code!=ErrorCode.INVALID_INPUT) throw f
+                state.privatePollView(user,chat,null)
+            } catch(f:TelegramFailure) {
+                if(f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) state.privatePollView(user,chat,null)
+                else throw f
+            }
+        }
     }
     private fun unpinCards() {
         state.pendingUnpins().forEach { (key,delivery) ->

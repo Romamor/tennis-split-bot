@@ -16,7 +16,16 @@ class PollFlowTest {
     private val panels=mutableMapOf<Long,TgMessage>()
     private var panelId=10000L
     private var failDeleteFor:Long?=null
+    private var privateEdits=0
+    private var failPrivateEdit=false
     private val api=object:TelegramApi by fake {
+        override fun edit(chatId:Long,messageId:Long,text:String,keyboard:TgKeyboard?) {
+            if(chatId>0) {
+                privateEdits++
+                if(failPrivateEdit) { failPrivateEdit=false;throw TelegramFailure(FailureKind.RETRY_LATER,429) }
+            }
+            fake.edit(chatId,messageId,text,keyboard)
+        }
         override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
             TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=panelId++).also { panels[userId]=it }
         override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
@@ -211,6 +220,47 @@ class PollFlowTest {
         bot.maintain()
         assertFalse(panels.containsKey(1));assertNull(bot.state.currentEphemeral(1,-1))
         assertEquals(untouched,panels.getValue(3));assertEquals("CLOSED",bot.polls.get(-1,p.id).status)
+    }
+
+    @Test fun `private poll card follows votes retractions and completion without new messages or unchanged edits`() {
+        setup();val p=publish();val id=latest().id
+        vote(p,3,1);bot.maintain()
+        assertEquals(id,latest().id);assertTrue(latest().text!!.contains("Записались: 1"))
+        val edits=privateEdits;bot.maintain();assertEquals(edits,privateEdits)
+        vote(p,3,2);bot.maintain();assertEquals(edits,privateEdits)
+        vote(p,4,0);bot.maintain();assertTrue(latest().text!!.contains("Записались: 2"))
+        vote(p,3,null);bot.maintain();assertTrue(latest().text!!.contains("Записались: 1"))
+        vote(p,4,3);bot.maintain();assertTrue(latest().text!!.contains("Записались: 0"))
+        vote(p,3,1)
+        val public=fake.messages.getValue(-1L to p.message!!)
+        click("Завершить сбор",1,public);click("Завершить сбор",1,panels.getValue(1))
+        bot.finishPollsAfterDrain()
+        bot.state.privatePollView(2,2,null) // Existing stale OPEN card from before the update.
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertEquals(id,latest().id);assertTrue(latest().text!!.contains("Сбор завершён"))
+        val labels=latest().keyboard!!.rows.flatten().map { it.text }
+        assertFalse(labels.any { it.contains("Завершить сбор") });assertTrue(labels.any { it.contains("Открыть тренировку") })
+        assertFalse(latest().text!!.contains("Записались: 0"))
+    }
+    @Test fun `private card recovery and transient failures preserve current message but never overwrite other menus`() {
+        setup();val p=publish();val id=latest().id
+        // Simulate the old release: a delivered card with active buttons but no stored view.
+        bot.state.privatePollView(2,2,null);vote(p,3,1)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        failPrivateEdit=true;assertFailsWith<TelegramFailure> { bot.maintain() }
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertEquals(id,latest().id);assertTrue(latest().text!!.contains("Записались: 1"))
+        click("Меню");val menu=latest()
+        vote(p,4,1);bot.maintain();assertEquals(menu,latest())
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain();assertEquals(menu,latest())
+    }
+    @Test fun `deleted private poll card is not recreated and revoked group access stops updates`() {
+        setup();val p=publish();val id=latest().id
+        fake.messages.remove(2L to id);vote(p,3,1);bot.maintain()
+        assertFalse(fake.messages.containsKey(2L to id));assertTrue(bot.state.privatePollViews().isEmpty())
+        message("/start");click("Мои опросы");click("Группа 1");click("14.09.2026 · Теннис")
+        val card=latest();fake.members[-1L to 2L]=TgMember("left")
+        vote(p,4,1);bot.maintain();assertEquals(card,latest());assertTrue(bot.state.privatePollViews().isEmpty())
     }
 
     @Test fun `all group switches round trip during polling keep the same poll and roster`() {
