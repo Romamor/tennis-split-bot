@@ -15,11 +15,17 @@ class PollFlowTest {
     private val alerts=mutableListOf<String>()
     private val panels=mutableMapOf<Long,TgMessage>()
     private var panelId=10000L
+    private var failDeleteFor:Long?=null
     private val api=object:TelegramApi by fake {
         override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
             TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=panelId++).also { panels[userId]=it }
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) { panels[userId]=panels.getValue(userId).copy(text=text,keyboard=keyboard) }
-        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { if(panels[userId]?.ephemeralId==ephemeralId) panels.remove(userId) }
+        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) {
+            if(failDeleteFor==userId) { failDeleteFor=null;throw TelegramFailure(FailureKind.RETRY_LATER,429) }
+            if(panels[userId]?.ephemeralId==ephemeralId) panels.remove(userId)
+        }
         override fun answer(callbackId:String,text:String?,alert:Boolean) { if(alert && text!=null) alerts+=text }
     }
     private val clock=Clock.fixed(Instant.parse("2026-09-14T12:00:00Z"),ZoneOffset.UTC)
@@ -87,7 +93,10 @@ class PollFlowTest {
     }
     @Test fun `creator closes after draining last votes transfers only signups with zero time and payment exactly once`() {
         setup();val p=publish();vote(p,2,1);vote(p,3,0);vote(p,4,3)
-        click("Завершить сбор");assertTrue(latest().text!!.contains("0 ч"));click("Завершить сбор")
+        click("Завершить сбор");assertTrue(latest().text!!.contains("0 ч"))
+        assertEquals("primary",latest().keyboard!!.rows.first().single().style)
+        click("Назад");assertTrue(latest().text!!.contains("Сбор открыт"))
+        click("Завершить сбор");click("Завершить сбор")
         assertTrue(fake.messages[-1L to p.message!!]!!.poll!!.isClosed)
         assertEquals(0,count("SELECT COUNT(*) FROM trainings"))
         vote(p,3,3) // Answer queued immediately before Telegram stopped the poll.
@@ -163,6 +172,12 @@ class PollFlowTest {
     @Test fun `public button opens one personal confirmation and atomic conversion survives transaction failure`() {
         setup();val p=publish();vote(p,3,1)
         val public=fake.messages.getValue(-1L to p.message!!)
+        click("Завершить сбор",2,public)
+        assertEquals(listOf("🏁 Завершить сбор","✖️ Закрыть"),panels.getValue(2).keyboard!!.rows.flatten().map { it.text })
+        assertEquals(listOf("primary",null),panels.getValue(2).keyboard!!.rows.flatten().map { it.style })
+        click("Закрыть",2,panels.getValue(2))
+        assertFalse(panels.containsKey(2));assertEquals("OPEN",bot.polls.get(-1,p.id).status)
+        assertEquals(0,count("SELECT COUNT(*) FROM trainings"))
         click("Завершить сбор",2,public);val panel=panels.getValue(2)
         click("Завершить сбор",2,public)
         assertNotEquals(panel.ephemeralId,panels.getValue(2).ephemeralId)
@@ -175,6 +190,27 @@ class PollFlowTest {
         assertEquals("CLOSING",bot.polls.get(-1,p.id).status)
         bot.service.database.write { c -> sqlUpdate(c,"DROP TRIGGER fail_poll_action") }
         bot.finishPollsAfterDrain();assertEquals(1,count("SELECT COUNT(*) FROM trainings"))
+    }
+
+    @Test fun `delivered training removes poll panels after restart and retries failed deletion without closing other groups`() {
+        setup();val p=publish();vote(p,2,1)
+        val public=fake.messages.getValue(-1L to p.message!!)
+        click("Завершить сбор",1,public);click("Завершить сбор",2,public)
+        click("Завершить сбор",2,panels.getValue(2))
+        assertEquals(listOf("✖️ Закрыть"),panels.getValue(2).keyboard!!.rows.flatten().map { it.text })
+        bot.finishPollsAfterDrain()
+        assertTrue(panels.containsKey(1));assertTrue(panels.containsKey(2))
+        // A panel with the same entity id in another group must survive cleanup.
+        bot.service.execute(Access(-2,1,true),"other",SettlementCommand.CreateTraining(p.id,"Другая","2026-09-14","18:30"))
+        failDeleteFor=1L
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertNotNull(bot.state.delivery("training:-1:${p.id}")?.message)
+        assertTrue(panels.containsKey(1));assertFalse(panels.containsKey(2))
+        val other=fake.messages.getValue(-2L to bot.state.delivery("training:-2:${p.id}")!!.message!!)
+        click("Открыть",3,other);val untouched=panels.getValue(3)
+        bot.maintain()
+        assertFalse(panels.containsKey(1));assertNull(bot.state.currentEphemeral(1,-1))
+        assertEquals(untouched,panels.getValue(3));assertEquals("CLOSED",bot.polls.get(-1,p.id).status)
     }
 
     @Test fun `all group switches round trip during polling keep the same poll and roster`() {

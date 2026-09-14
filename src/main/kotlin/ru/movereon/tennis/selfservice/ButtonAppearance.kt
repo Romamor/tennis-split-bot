@@ -12,6 +12,7 @@ internal object ButtonAppearance {
                 text=if(row.size==1 && !hasIcon(label)) "${icon(action,label)} $label" else label,
                 style=button.style ?: when {
                     label=="Открыть" || label.startsWith("Открыть меню") || label.startsWith("Присоединиться") -> "primary"
+                    action?.kind in setOf("poll_close_confirm","poll_close") -> "primary"
                     label=="Не участвую" -> "danger"
                     else -> null
                 })

@@ -27,14 +27,14 @@ internal class PollScreens(private val service:SettlementService,private val pol
                     "Отменить неудавшуюся публикацию? Тренировка создана не будет. Затем можно создать новый опрос. Если сообщение появилось в группе, но бот не получил его адрес, удали его вручную."
                 } else if(action.kind=="poll_close_confirm" && p.status=="OPEN") {
                     row("🏁 Завершить сбор",next("poll_close"))
-                    row("Назад",next(if(inGroup) "close_panel" else "poll_detail"))
+                    if(!inGroup) row("Назад",next("poll_detail"))
                     "Завершить сбор и перейти к учёту игры?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nЗаписались: ${polls.count(p)}.\n${if(service.groupTrainingRules(p.group).trackTime) "Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." else "Они будут добавлены с 0 ₽. Стоимость делится поровну; ввод времени не нужен."}"
                 } else {
                     if(p.status=="OPEN") row("🏁 Завершить сбор",next("poll_close_confirm"))
                     if(p.status in setOf("FAILED","PENDING")) row("📤 Повторить публикацию",next("poll_retry"))
                     if(p.status in setOf("UNKNOWN","FAILED","PENDING")) row("Отменить опрос",next("poll_discard_confirm"))
                     if(p.status=="CLOSED") row("🏓 Открыть тренировку",ScreenAction("training",p.group,requireNotNull(p.training)))
-                    if(inGroup) row("Закрыть",next("close_panel")) else { row("Назад",next("poll_list"));menu() }
+                    if(!inGroup) { row("Назад",next("poll_list"));menu() }
                     "${clean(p.title,100)} · ${date(p.date)} · ${p.time}\n"+when(p.status) {
                         "OPEN" -> "Сбор открыт. Записались: ${polls.count(p)}."
                         "CLOSING" -> "Завершаем сбор. Тренировка появится в группе после обработки последних голосов. Если она не появляется, проверь права бота в группе."

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" type="device" compressed="false">
   <diagram id="screens-1" name="Участник">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="20609">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="20589">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -49,7 +49,7 @@
           <mxGeometry as="geometry" x="40" y="17395" width="2340" height="48" />
         </mxCell>
         <mxCell id="section11" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="40" y="19496" width="2340" height="48" />
+          <mxGeometry as="geometry" x="40" y="19476" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2441" width="430" height="344" />
@@ -1953,7 +1953,7 @@
         <mxCell id="screen-poll_detail-body" value="Теннис · 12.09.2026 · 18:30&lt;br&gt;Сбор открыт. Записались: 0." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
-        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
+        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0.0" y="186" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_detail-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
@@ -1963,7 +1963,7 @@
           <mxGeometry as="geometry" x="0.0" y="282" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="18819" width="430" height="397" />
+          <mxGeometry as="geometry" x="1240" y="18819" width="430" height="349" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm-label" value="Завершить сбор: подтверждение" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -1974,14 +1974,11 @@
         <mxCell id="screen-poll_close_confirm-body" value="Завершить сбор и перейти к учёту игры?&lt;br&gt;Теннис · 12.09.2026 · 18:30&lt;br&gt;Записались: 0.&lt;br&gt;Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="168" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="239" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button1-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
-        </mxCell>
-        <mxCell id="screen-poll_close_confirm-button2-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
-          <mxGeometry as="geometry" x="0.0" y="335" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1830" y="18819" width="430" height="377" />
@@ -1999,7 +1996,7 @@
           <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="19566" width="430" height="471" />
+          <mxGeometry as="geometry" x="60" y="19546" width="430" height="471" />
         </mxCell>
         <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2014,7 +2011,7 @@
           <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="19566" width="430" height="663" />
+          <mxGeometry as="geometry" x="650" y="19546" width="430" height="663" />
         </mxCell>
         <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2044,7 +2041,7 @@
           <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="19566" width="430" height="424" />
+          <mxGeometry as="geometry" x="1240" y="19546" width="430" height="424" />
         </mxCell>
         <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2059,7 +2056,7 @@
           <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="19566" width="430" height="568" />
+          <mxGeometry as="geometry" x="1830" y="19546" width="430" height="568" />
         </mxCell>
         <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -5012,131 +5009,121 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge319-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_close_confirm-button2-0" target="screen-poll_detail">
+        <mxCell id="edge319-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="19175.5" />
-              <mxPoint x="1743" y="18769" />
-              <mxPoint x="577" y="18769" />
-              <mxPoint x="577" y="18899" />
+              <mxPoint x="2333" y="19155.5" />
+              <mxPoint x="2333" y="280" />
+              <mxPoint x="577" y="280" />
+              <mxPoint x="577" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge320-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+        <mxCell id="edge320-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="19155.5" />
-              <mxPoint x="2345" y="275" />
-              <mxPoint x="565" y="275" />
-              <mxPoint x="565" y="410" />
+              <mxPoint x="575" y="19976.5" />
+              <mxPoint x="575" y="19626" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge321-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+        <mxCell id="edge321-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="587" y="19996.5" />
-              <mxPoint x="587" y="19646" />
+              <mxPoint x="1177" y="19976.5" />
+              <mxPoint x="1177" y="270" />
+              <mxPoint x="1733" y="270" />
+              <mxPoint x="1733" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge322-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge322-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1189" y="19996.5" />
-              <mxPoint x="1189" y="265" />
-              <mxPoint x="1805" y="265" />
-              <mxPoint x="1805" y="410" />
+              <mxPoint x="1189" y="20024.5" />
+              <mxPoint x="1189" y="19591" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge323-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+        <mxCell id="edge323-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1201" y="20044.5" />
-              <mxPoint x="1201" y="19611" />
+              <mxPoint x="1201" y="20024.5" />
+              <mxPoint x="1201" y="19591" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge324-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+        <mxCell id="edge324-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1105" y="20044.5" />
-              <mxPoint x="1105" y="19611" />
+              <mxPoint x="1105" y="20072.5" />
+              <mxPoint x="1105" y="19591" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge325-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+        <mxCell id="edge325-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-edit_denied">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1117" y="20092.5" />
-              <mxPoint x="1117" y="19611" />
+              <mxPoint x="1117" y="20120.5" />
+              <mxPoint x="1117" y="14974" />
+              <mxPoint x="-1" y="14974" />
+              <mxPoint x="-1" y="15104" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge326-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-edit_denied">
+        <mxCell id="edge326-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1129" y="20140.5" />
-              <mxPoint x="1129" y="14969" />
-              <mxPoint x="-13" y="14969" />
-              <mxPoint x="-13" y="15104" />
+              <mxPoint x="1129" y="20168.5" />
+              <mxPoint x="1129" y="19491" />
+              <mxPoint x="-13" y="19491" />
+              <mxPoint x="-13" y="19626" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge327-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+        <mxCell id="edge327-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1141" y="20188.5" />
-              <mxPoint x="1141" y="19506" />
-              <mxPoint x="-25" y="19506" />
-              <mxPoint x="-25" y="19646" />
+              <mxPoint x="1731" y="19929.5" />
+              <mxPoint x="1731" y="19626" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge328-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+        <mxCell id="edge328-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="19949.5" />
-              <mxPoint x="1743" y="19646" />
+              <mxPoint x="2333" y="19929.5" />
+              <mxPoint x="2333" y="265" />
+              <mxPoint x="1733" y="265" />
+              <mxPoint x="1733" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge329-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge329-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="19949.5" />
-              <mxPoint x="2345" y="260" />
-              <mxPoint x="1805" y="260" />
-              <mxPoint x="1805" y="410" />
+              <mxPoint x="2345" y="19977.5" />
+              <mxPoint x="2345" y="19591" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge330-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+        <mxCell id="edge330-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-edit_denied">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2357" y="19997.5" />
-              <mxPoint x="2357" y="19611" />
+              <mxPoint x="2357" y="20025.5" />
+              <mxPoint x="2357" y="14979" />
+              <mxPoint x="23" y="14979" />
+              <mxPoint x="23" y="15104" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge331-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-edit_denied">
+        <mxCell id="edge331-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2369" y="20045.5" />
-              <mxPoint x="2369" y="14974" />
-              <mxPoint x="11" y="14974" />
-              <mxPoint x="11" y="15104" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge332-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="2381" y="20093.5" />
-              <mxPoint x="2381" y="19511" />
-              <mxPoint x="1179" y="19511" />
-              <mxPoint x="1179" y="19646" />
+              <mxPoint x="2369" y="20073.5" />
+              <mxPoint x="2369" y="19496" />
+              <mxPoint x="1191" y="19496" />
+              <mxPoint x="1191" y="19626" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -5171,7 +5158,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-2" name="Администратор бота">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="24827">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="24807">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -5222,7 +5209,7 @@
           <mxGeometry as="geometry" x="40" y="19981" width="2340" height="48" />
         </mxCell>
         <mxCell id="section12" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="40" y="22946" width="2340" height="48" />
+          <mxGeometry as="geometry" x="40" y="22926" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -7429,7 +7416,7 @@
         <mxCell id="screen-poll_detail-body" value="Теннис · 12.09.2026 · 18:30&lt;br&gt;Сбор открыт. Записались: 0." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
-        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
+        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0.0" y="186" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_detail-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
@@ -7439,7 +7426,7 @@
           <mxGeometry as="geometry" x="0.0" y="282" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="21436" width="430" height="397" />
+          <mxGeometry as="geometry" x="1240" y="21436" width="430" height="349" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm-label" value="Завершить сбор: подтверждение" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7450,17 +7437,14 @@
         <mxCell id="screen-poll_close_confirm-body" value="Завершить сбор и перейти к учёту игры?&lt;br&gt;Теннис · 12.09.2026 · 18:30&lt;br&gt;Записались: 0.&lt;br&gt;Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="168" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="239" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button1-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button2-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
-          <mxGeometry as="geometry" x="0.0" y="335" width="430.0" height="43" />
-        </mxCell>
         <mxCell id="screen-choose_poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="22033" width="430" height="296" />
+          <mxGeometry as="geometry" x="60" y="22013" width="430" height="296" />
         </mxCell>
         <mxCell id="screen-choose_poll_settings-label" value="Группа для настройки опросов" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-choose_poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7478,7 +7462,7 @@
           <mxGeometry as="geometry" x="0.0" y="234" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="22033" width="430" height="633" />
+          <mxGeometry as="geometry" x="650" y="22013" width="430" height="633" />
         </mxCell>
         <mxCell id="screen-poll_settings-label" value="Разрешение создавать опросы" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7520,7 +7504,7 @@
           <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="23016" width="430" height="471" />
+          <mxGeometry as="geometry" x="650" y="22996" width="430" height="471" />
         </mxCell>
         <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7535,7 +7519,7 @@
           <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="23016" width="430" height="663" />
+          <mxGeometry as="geometry" x="1240" y="22996" width="430" height="663" />
         </mxCell>
         <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7565,7 +7549,7 @@
           <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="23016" width="430" height="424" />
+          <mxGeometry as="geometry" x="1830" y="22996" width="430" height="424" />
         </mxCell>
         <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7580,7 +7564,7 @@
           <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="23879" width="430" height="568" />
+          <mxGeometry as="geometry" x="60" y="23859" width="430" height="568" />
         </mxCell>
         <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7604,7 +7588,7 @@
           <mxGeometry as="geometry" x="0.0" y="506" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-rules_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="23016" width="430" height="633" />
+          <mxGeometry as="geometry" x="60" y="22996" width="430" height="633" />
         </mxCell>
         <mxCell id="screen-rules_settings-label" value="Обратимые правила открытых тренировок" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -9490,7 +9474,7 @@
               <mxPoint x="527" y="18397.5" />
               <mxPoint x="527" y="18687" />
               <mxPoint x="-1" y="18687" />
-              <mxPoint x="-1" y="22113" />
+              <mxPoint x="-1" y="22093" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11184,241 +11168,231 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge384-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_close_confirm-button2-0" target="screen-poll_detail">
+        <mxCell id="edge384-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1767" y="21792.5" />
-              <mxPoint x="1767" y="21391" />
-              <mxPoint x="553" y="21391" />
-              <mxPoint x="553" y="21516" />
+              <mxPoint x="587" y="22220.5" />
+              <mxPoint x="587" y="22093" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge385-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button0-0" target="screen-poll_settings">
+        <mxCell id="edge385-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_poll_settings-button1-0" target="screen-settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="599" y="22240.5" />
-              <mxPoint x="599" y="22113" />
+              <mxPoint x="599" y="22268.5" />
+              <mxPoint x="599" y="18092" />
+              <mxPoint x="35" y="18092" />
+              <mxPoint x="35" y="18222" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge386-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_poll_settings-button1-0" target="screen-settings">
+        <mxCell id="edge386-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="611" y="22288.5" />
-              <mxPoint x="611" y="18087" />
-              <mxPoint x="23" y="18087" />
-              <mxPoint x="23" y="18222" />
+              <mxPoint x="1201" y="22413.5" />
+              <mxPoint x="1201" y="22058" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge387-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
+        <mxCell id="edge387-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1105" y="22433.5" />
-              <mxPoint x="1105" y="22078" />
+              <mxPoint x="1105" y="22461.5" />
+              <mxPoint x="1105" y="22058" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
+        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1117" y="22481.5" />
-              <mxPoint x="1117" y="22078" />
+              <mxPoint x="1117" y="22509.5" />
+              <mxPoint x="1117" y="22058" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
+        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1129" y="22529.5" />
-              <mxPoint x="1129" y="22078" />
+              <mxPoint x="1129" y="22557.5" />
+              <mxPoint x="1129" y="21943" />
+              <mxPoint x="-13" y="21943" />
+              <mxPoint x="-13" y="22093" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
+        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1141" y="22577.5" />
-              <mxPoint x="1141" y="21988" />
-              <mxPoint x="-25" y="21988" />
-              <mxPoint x="-25" y="22113" />
+              <mxPoint x="1141" y="22605.5" />
+              <mxPoint x="1141" y="2492" />
+              <mxPoint x="565" y="2492" />
+              <mxPoint x="565" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge391-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
+        <mxCell id="edge391-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1153" y="22625.5" />
-              <mxPoint x="1153" y="2487" />
-              <mxPoint x="553" y="2487" />
-              <mxPoint x="553" y="2617" />
+              <mxPoint x="2333" y="21772.5" />
+              <mxPoint x="2333" y="280" />
+              <mxPoint x="553" y="280" />
+              <mxPoint x="553" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+        <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="21772.5" />
-              <mxPoint x="2345" y="275" />
-              <mxPoint x="625" y="275" />
-              <mxPoint x="625" y="410" />
+              <mxPoint x="1165" y="23426.5" />
+              <mxPoint x="1165" y="23076" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1177" y="23446.5" />
-              <mxPoint x="1177" y="23096" />
+              <mxPoint x="1767" y="23426.5" />
+              <mxPoint x="1767" y="270" />
+              <mxPoint x="1793" y="270" />
+              <mxPoint x="1793" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1779" y="23446.5" />
-              <mxPoint x="1779" y="265" />
-              <mxPoint x="1781" y="265" />
-              <mxPoint x="1781" y="410" />
+              <mxPoint x="1779" y="23474.5" />
+              <mxPoint x="1779" y="23041" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1791" y="23494.5" />
-              <mxPoint x="1791" y="23061" />
+              <mxPoint x="1791" y="23474.5" />
+              <mxPoint x="1791" y="23041" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1695" y="23494.5" />
-              <mxPoint x="1695" y="23061" />
+              <mxPoint x="1695" y="23522.5" />
+              <mxPoint x="1695" y="23041" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1707" y="23542.5" />
-              <mxPoint x="1707" y="23061" />
+              <mxPoint x="1707" y="23570.5" />
+              <mxPoint x="1707" y="3301" />
+              <mxPoint x="1155" y="3301" />
+              <mxPoint x="1155" y="3431" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
+        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1719" y="23590.5" />
-              <mxPoint x="1719" y="3296" />
-              <mxPoint x="1143" y="3296" />
-              <mxPoint x="1143" y="3431" />
+              <mxPoint x="1719" y="23618.5" />
+              <mxPoint x="1719" y="22941" />
+              <mxPoint x="553" y="22941" />
+              <mxPoint x="553" y="23076" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="23638.5" />
-              <mxPoint x="1731" y="22956" />
-              <mxPoint x="625" y="22956" />
-              <mxPoint x="625" y="23096" />
+              <mxPoint x="2321" y="23379.5" />
+              <mxPoint x="2321" y="23689" />
+              <mxPoint x="35" y="23689" />
+              <mxPoint x="35" y="23939" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2333" y="23399.5" />
-              <mxPoint x="2333" y="23704" />
-              <mxPoint x="23" y="23704" />
-              <mxPoint x="23" y="23959" />
+              <mxPoint x="563" y="24242.5" />
+              <mxPoint x="563" y="265" />
+              <mxPoint x="1793" y="265" />
+              <mxPoint x="1793" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="575" y="24262.5" />
-              <mxPoint x="575" y="260" />
-              <mxPoint x="1781" y="260" />
-              <mxPoint x="1781" y="410" />
+              <mxPoint x="575" y="24290.5" />
+              <mxPoint x="575" y="23904" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="587" y="24310.5" />
-              <mxPoint x="587" y="23924" />
+              <mxPoint x="587" y="24338.5" />
+              <mxPoint x="587" y="3306" />
+              <mxPoint x="1179" y="3306" />
+              <mxPoint x="1179" y="3431" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
+        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="599" y="24358.5" />
-              <mxPoint x="599" y="3301" />
-              <mxPoint x="1167" y="3301" />
-              <mxPoint x="1167" y="3431" />
+              <mxPoint x="599" y="24386.5" />
+              <mxPoint x="599" y="22946" />
+              <mxPoint x="1757" y="22946" />
+              <mxPoint x="1757" y="23076" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
+        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="611" y="24406.5" />
-              <mxPoint x="611" y="22961" />
-              <mxPoint x="1745" y="22961" />
-              <mxPoint x="1745" y="23096" />
+              <mxPoint x="611" y="23396.5" />
+              <mxPoint x="611" y="23041" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
+        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="515" y="23416.5" />
-              <mxPoint x="515" y="23061" />
+              <mxPoint x="515" y="23444.5" />
+              <mxPoint x="515" y="23041" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
+        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="527" y="23464.5" />
-              <mxPoint x="527" y="23061" />
+              <mxPoint x="527" y="23492.5" />
+              <mxPoint x="527" y="21948" />
+              <mxPoint x="625" y="21948" />
+              <mxPoint x="625" y="22093" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
+        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="539" y="23512.5" />
-              <mxPoint x="539" y="21963" />
-              <mxPoint x="613" y="21963" />
-              <mxPoint x="613" y="22113" />
+              <mxPoint x="539" y="23540.5" />
+              <mxPoint x="539" y="21943" />
+              <mxPoint x="23" y="21943" />
+              <mxPoint x="23" y="22093" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
+        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="551" y="23560.5" />
-              <mxPoint x="551" y="21988" />
-              <mxPoint x="11" y="21988" />
-              <mxPoint x="11" y="22113" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="563" y="23608.5" />
-              <mxPoint x="563" y="2487" />
-              <mxPoint x="589" y="2487" />
-              <mxPoint x="589" y="2617" />
+              <mxPoint x="551" y="23588.5" />
+              <mxPoint x="551" y="2492" />
+              <mxPoint x="601" y="2492" />
+              <mxPoint x="601" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11453,7 +11427,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-3" name="Суперадминистратор группы">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="26358">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="26338">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -11507,7 +11481,7 @@
           <mxGeometry as="geometry" x="40" y="21512" width="2340" height="48" />
         </mxCell>
         <mxCell id="section13" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="40" y="24477" width="2340" height="48" />
+          <mxGeometry as="geometry" x="40" y="24457" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -13726,7 +13700,7 @@
         <mxCell id="screen-poll_detail-body" value="Теннис · 12.09.2026 · 18:30&lt;br&gt;Сбор открыт. Записались: 0." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
-        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
+        <mxCell id="screen-poll_detail-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
           <mxGeometry as="geometry" x="0.0" y="186" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_detail-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_detail">
@@ -13736,7 +13710,7 @@
           <mxGeometry as="geometry" x="0.0" y="282" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="22967" width="430" height="397" />
+          <mxGeometry as="geometry" x="1240" y="22967" width="430" height="349" />
         </mxCell>
         <mxCell id="screen-poll_close_confirm-label" value="Завершить сбор: подтверждение" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -13747,17 +13721,14 @@
         <mxCell id="screen-poll_close_confirm-body" value="Завершить сбор и перейти к учёту игры?&lt;br&gt;Теннис · 12.09.2026 · 18:30&lt;br&gt;Записались: 0.&lt;br&gt;Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="168" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button0-0" value="🏁 Завершить сбор" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="239" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button1-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
+        <mxCell id="screen-poll_close_confirm-button1-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
         </mxCell>
-        <mxCell id="screen-poll_close_confirm-button2-0" value="✖️ Закрыть" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_close_confirm">
-          <mxGeometry as="geometry" x="0.0" y="335" width="430.0" height="43" />
-        </mxCell>
         <mxCell id="screen-choose_poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="23564" width="430" height="344" />
+          <mxGeometry as="geometry" x="60" y="23544" width="430" height="344" />
         </mxCell>
         <mxCell id="screen-choose_poll_settings-label" value="Группа для настройки опросов" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-choose_poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -13778,7 +13749,7 @@
           <mxGeometry as="geometry" x="0.0" y="282" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="23564" width="430" height="633" />
+          <mxGeometry as="geometry" x="650" y="23544" width="430" height="633" />
         </mxCell>
         <mxCell id="screen-poll_settings-label" value="Разрешение создавать опросы" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -13973,7 +13944,7 @@
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="24547" width="430" height="471" />
+          <mxGeometry as="geometry" x="650" y="24527" width="430" height="471" />
         </mxCell>
         <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -13988,7 +13959,7 @@
           <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="24547" width="430" height="663" />
+          <mxGeometry as="geometry" x="1240" y="24527" width="430" height="663" />
         </mxCell>
         <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -14018,7 +13989,7 @@
           <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="24547" width="430" height="424" />
+          <mxGeometry as="geometry" x="1830" y="24527" width="430" height="424" />
         </mxCell>
         <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -14033,7 +14004,7 @@
           <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="25410" width="430" height="568" />
+          <mxGeometry as="geometry" x="60" y="25390" width="430" height="568" />
         </mxCell>
         <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -14057,7 +14028,7 @@
           <mxGeometry as="geometry" x="0.0" y="506" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-rules_settings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="24547" width="430" height="633" />
+          <mxGeometry as="geometry" x="60" y="24527" width="430" height="633" />
         </mxCell>
         <mxCell id="screen-rules_settings-label" value="Обратимые правила открытых тренировок" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-rules_settings">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -15961,7 +15932,7 @@
               <mxPoint x="551" y="18397.5" />
               <mxPoint x="551" y="18677" />
               <mxPoint x="-25" y="18677" />
-              <mxPoint x="-25" y="23644" />
+              <mxPoint x="-25" y="23624" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -17673,457 +17644,447 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_close_confirm-button2-0" target="screen-poll_detail">
+        <mxCell id="edge388-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1707" y="23323.5" />
-              <mxPoint x="1707" y="22902" />
-              <mxPoint x="589" y="22902" />
-              <mxPoint x="589" y="23047" />
+              <mxPoint x="527" y="23751.5" />
+              <mxPoint x="527" y="23624" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button0-0" target="screen-poll_settings">
+        <mxCell id="edge389-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button1-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="539" y="23771.5" />
-              <mxPoint x="539" y="23644" />
+              <mxPoint x="539" y="23799.5" />
+              <mxPoint x="539" y="23624" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_poll_settings-button1-0" target="screen-poll_settings">
+        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_poll_settings-button2-0" target="screen-settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="551" y="23819.5" />
-              <mxPoint x="551" y="23644" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge391-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_poll_settings-button2-0" target="screen-settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="563" y="23867.5" />
-              <mxPoint x="563" y="18092" />
-              <mxPoint x="-37" y="18092" />
-              <mxPoint x="-37" y="18222" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1165" y="23964.5" />
-              <mxPoint x="1165" y="23609" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1177" y="24012.5" />
-              <mxPoint x="1177" y="23609" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1189" y="24060.5" />
-              <mxPoint x="1189" y="23609" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1201" y="24108.5" />
-              <mxPoint x="1201" y="23494" />
-              <mxPoint x="-1" y="23494" />
-              <mxPoint x="-1" y="23644" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1105" y="24156.5" />
-              <mxPoint x="1105" y="2492" />
-              <mxPoint x="577" y="2492" />
-              <mxPoint x="577" y="2617" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="2297" y="23303.5" />
-              <mxPoint x="2297" y="280" />
-              <mxPoint x="565" y="280" />
-              <mxPoint x="565" y="410" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button0-0" target="screen-administrators">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="539" y="20258.5" />
-              <mxPoint x="539" y="20131" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button1-0" target="screen-administrators">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="551" y="20306.5" />
-              <mxPoint x="551" y="20131" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_admins-button2-0" target="screen-settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="563" y="20354.5" />
-              <mxPoint x="563" y="18077" />
-              <mxPoint x="23" y="18077" />
-              <mxPoint x="23" y="18222" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button0-0" target="screen-role_super">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1165" y="20271.5" />
-              <mxPoint x="1165" y="20703" />
-              <mxPoint x="601" y="20703" />
-              <mxPoint x="601" y="20963" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button1-0" target="screen-role_admin">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1177" y="20319.5" />
-              <mxPoint x="1177" y="20728" />
-              <mxPoint x="-1" y="20728" />
-              <mxPoint x="-1" y="20963" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button2-0" target="screen-candidates">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1189" y="20367.5" />
-              <mxPoint x="1189" y="20131" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-administrators-button3-0" target="screen-settings">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="1201" y="20415.5" />
-              <mxPoint x="1201" y="18087" />
-              <mxPoint x="-25" y="18087" />
+              <mxPoint x="551" y="23847.5" />
+              <mxPoint x="551" y="18097" />
+              <mxPoint x="-25" y="18097" />
               <mxPoint x="-25" y="18222" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button0-0" target="screen-role_member">
+        <mxCell id="edge391-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button0-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1695" y="20258.5" />
+              <mxPoint x="1153" y="23944.5" />
+              <mxPoint x="1153" y="23589" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge392-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button1-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="23992.5" />
+              <mxPoint x="1165" y="23589" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-poll_settings-button2-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1177" y="24040.5" />
+              <mxPoint x="1177" y="23589" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge394-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="24088.5" />
+              <mxPoint x="1189" y="23479" />
+              <mxPoint x="11" y="23479" />
+              <mxPoint x="11" y="23624" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge395-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1201" y="24136.5" />
+              <mxPoint x="1201" y="2467" />
+              <mxPoint x="589" y="2467" />
+              <mxPoint x="589" y="2617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2285" y="23303.5" />
+              <mxPoint x="2285" y="285" />
+              <mxPoint x="577" y="285" />
+              <mxPoint x="577" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge397-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button0-0" target="screen-administrators">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="20258.5" />
+              <mxPoint x="527" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge398-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-choose_admins-button1-0" target="screen-administrators">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="20306.5" />
+              <mxPoint x="539" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-choose_admins-button2-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="20354.5" />
+              <mxPoint x="551" y="18082" />
+              <mxPoint x="35" y="18082" />
+              <mxPoint x="35" y="18222" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button0-0" target="screen-role_super">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="20271.5" />
+              <mxPoint x="1153" y="20708" />
+              <mxPoint x="613" y="20708" />
+              <mxPoint x="613" y="20963" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge401-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button1-0" target="screen-role_admin">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="20319.5" />
+              <mxPoint x="1165" y="20703" />
+              <mxPoint x="11" y="20703" />
+              <mxPoint x="11" y="20963" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge402-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-administrators-button2-0" target="screen-candidates">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1177" y="20367.5" />
+              <mxPoint x="1177" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge403-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-administrators-button3-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="20415.5" />
+              <mxPoint x="1189" y="18092" />
+              <mxPoint x="-13" y="18092" />
+              <mxPoint x="-13" y="18222" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge404-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button0-0" target="screen-role_member">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="20258.5" />
+              <mxPoint x="1791" y="20131" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button1-0" target="screen-role_member">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="20306.5" />
               <mxPoint x="1695" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button1-0" target="screen-role_member">
+        <mxCell id="edge406-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button2-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1707" y="20306.5" />
+              <mxPoint x="1707" y="20354.5" />
               <mxPoint x="1707" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button2-0" target="screen-role_member">
+        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button3-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1719" y="20354.5" />
+              <mxPoint x="1719" y="20402.5" />
               <mxPoint x="1719" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button3-0" target="screen-role_member">
+        <mxCell id="edge408-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button4-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="20402.5" />
+              <mxPoint x="1731" y="20450.5" />
               <mxPoint x="1731" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button4-0" target="screen-role_member">
+        <mxCell id="edge409-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button5-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="20450.5" />
+              <mxPoint x="1743" y="20498.5" />
               <mxPoint x="1743" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge410-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button5-0" target="screen-role_member">
+        <mxCell id="edge410-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button6-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1755" y="20498.5" />
+              <mxPoint x="1755" y="20546.5" />
               <mxPoint x="1755" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge411-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button6-0" target="screen-role_member">
+        <mxCell id="edge411-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button7-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1767" y="20546.5" />
+              <mxPoint x="1767" y="20594.5" />
               <mxPoint x="1767" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge412-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-candidates-button7-0" target="screen-role_member">
+        <mxCell id="edge412-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-candidates-button8-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1779" y="20594.5" />
-              <mxPoint x="1779" y="20131" />
+              <mxPoint x="1779" y="20642.5" />
+              <mxPoint x="1779" y="19986" />
+              <mxPoint x="553" y="19986" />
+              <mxPoint x="553" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge413-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-candidates-button8-0" target="screen-administrators">
+        <mxCell id="edge413-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_member-button0-0" target="screen-role_admin">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1791" y="20642.5" />
-              <mxPoint x="1791" y="19981" />
-              <mxPoint x="625" y="19981" />
-              <mxPoint x="625" y="20131" />
+              <mxPoint x="2381" y="20258.5" />
+              <mxPoint x="2381" y="20703" />
+              <mxPoint x="35" y="20703" />
+              <mxPoint x="35" y="20963" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge414-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_member-button0-0" target="screen-role_admin">
+        <mxCell id="edge414-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_member-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2285" y="20258.5" />
-              <mxPoint x="2285" y="20728" />
-              <mxPoint x="23" y="20728" />
-              <mxPoint x="23" y="20963" />
+              <mxPoint x="2285" y="20306.5" />
+              <mxPoint x="2285" y="20006" />
+              <mxPoint x="613" y="20006" />
+              <mxPoint x="613" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge415-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_member-button1-0" target="screen-administrators">
+        <mxCell id="edge415-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_admin-button0-0" target="screen-role_member">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2297" y="20306.5" />
-              <mxPoint x="2297" y="20001" />
-              <mxPoint x="601" y="20001" />
-              <mxPoint x="601" y="20131" />
+              <mxPoint x="527" y="21090.5" />
+              <mxPoint x="527" y="20001" />
+              <mxPoint x="1781" y="20001" />
+              <mxPoint x="1781" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge416-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_admin-button0-0" target="screen-role_member">
+        <mxCell id="edge416-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_admin-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="539" y="21090.5" />
+              <mxPoint x="539" y="21138.5" />
               <mxPoint x="539" y="19996" />
-              <mxPoint x="1769" y="19996" />
-              <mxPoint x="1769" y="20131" />
+              <mxPoint x="589" y="19996" />
+              <mxPoint x="589" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge417-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_admin-button1-0" target="screen-administrators">
+        <mxCell id="edge417-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super-button0-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="551" y="21138.5" />
-              <mxPoint x="551" y="19991" />
+              <mxPoint x="1141" y="21103.5" />
+              <mxPoint x="1141" y="19991" />
               <mxPoint x="577" y="19991" />
               <mxPoint x="577" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge418-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super-button0-0" target="screen-administrators">
+        <mxCell id="edge418-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_super_extra-button0-0" target="screen-role_super">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1153" y="21103.5" />
-              <mxPoint x="1153" y="19986" />
-              <mxPoint x="565" y="19986" />
-              <mxPoint x="565" y="20131" />
+              <mxPoint x="1743" y="21143.5" />
+              <mxPoint x="1743" y="20818" />
+              <mxPoint x="565" y="20818" />
+              <mxPoint x="565" y="20963" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge419-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-role_super_extra-button0-0" target="screen-role_super">
+        <mxCell id="edge419-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super_extra-button1-0" target="screen-administrators">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1755" y="21143.5" />
-              <mxPoint x="1755" y="20813" />
-              <mxPoint x="553" y="20813" />
-              <mxPoint x="553" y="20963" />
+              <mxPoint x="1755" y="21191.5" />
+              <mxPoint x="1755" y="19981" />
+              <mxPoint x="553" y="19981" />
+              <mxPoint x="553" y="20131" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge420-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-role_super_extra-button1-0" target="screen-administrators">
+        <mxCell id="edge420-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1767" y="21191.5" />
-              <mxPoint x="1767" y="20006" />
-              <mxPoint x="625" y="20006" />
-              <mxPoint x="625" y="20131" />
+              <mxPoint x="1177" y="24957.5" />
+              <mxPoint x="1177" y="24607" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge421-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
+        <mxCell id="edge421-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1189" y="24977.5" />
-              <mxPoint x="1189" y="24627" />
+              <mxPoint x="1779" y="24957.5" />
+              <mxPoint x="1779" y="280" />
+              <mxPoint x="1793" y="280" />
+              <mxPoint x="1793" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge422-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge422-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1791" y="24977.5" />
-              <mxPoint x="1791" y="275" />
-              <mxPoint x="1781" y="275" />
-              <mxPoint x="1781" y="410" />
+              <mxPoint x="1791" y="25005.5" />
+              <mxPoint x="1791" y="24572" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge423-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
+        <mxCell id="edge423-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1695" y="25025.5" />
-              <mxPoint x="1695" y="24592" />
+              <mxPoint x="1695" y="25005.5" />
+              <mxPoint x="1695" y="24572" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge424-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
+        <mxCell id="edge424-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1707" y="25025.5" />
-              <mxPoint x="1707" y="24592" />
+              <mxPoint x="1707" y="25053.5" />
+              <mxPoint x="1707" y="24572" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge425-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
+        <mxCell id="edge425-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1719" y="25073.5" />
-              <mxPoint x="1719" y="24592" />
+              <mxPoint x="1719" y="25101.5" />
+              <mxPoint x="1719" y="3281" />
+              <mxPoint x="1155" y="3281" />
+              <mxPoint x="1155" y="3431" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge426-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-training_other">
+        <mxCell id="edge426-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="25121.5" />
-              <mxPoint x="1731" y="3306" />
-              <mxPoint x="1143" y="3306" />
-              <mxPoint x="1143" y="3431" />
+              <mxPoint x="1731" y="25149.5" />
+              <mxPoint x="1731" y="24482" />
+              <mxPoint x="553" y="24482" />
+              <mxPoint x="553" y="24607" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge427-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
+        <mxCell id="edge427-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1743" y="25169.5" />
-              <mxPoint x="1743" y="24497" />
-              <mxPoint x="625" y="24497" />
-              <mxPoint x="625" y="24627" />
+              <mxPoint x="2333" y="24910.5" />
+              <mxPoint x="2333" y="25230" />
+              <mxPoint x="35" y="25230" />
+              <mxPoint x="35" y="25470" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge428-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
+        <mxCell id="edge428-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="24930.5" />
-              <mxPoint x="2345" y="25245" />
-              <mxPoint x="23" y="25245" />
-              <mxPoint x="23" y="25490" />
+              <mxPoint x="575" y="25773.5" />
+              <mxPoint x="575" y="275" />
+              <mxPoint x="1793" y="275" />
+              <mxPoint x="1793" y="410" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge429-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
+        <mxCell id="edge429-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="587" y="25793.5" />
-              <mxPoint x="587" y="270" />
-              <mxPoint x="1781" y="270" />
-              <mxPoint x="1781" y="410" />
+              <mxPoint x="587" y="25821.5" />
+              <mxPoint x="587" y="25435" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge430-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
+        <mxCell id="edge430-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="599" y="25841.5" />
-              <mxPoint x="599" y="25455" />
+              <mxPoint x="599" y="25869.5" />
+              <mxPoint x="599" y="3286" />
+              <mxPoint x="1179" y="3286" />
+              <mxPoint x="1179" y="3431" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge431-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-training_other">
+        <mxCell id="edge431-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="611" y="25889.5" />
-              <mxPoint x="611" y="3281" />
-              <mxPoint x="1167" y="3281" />
-              <mxPoint x="1167" y="3431" />
+              <mxPoint x="611" y="25917.5" />
+              <mxPoint x="611" y="24457" />
+              <mxPoint x="1757" y="24457" />
+              <mxPoint x="1757" y="24607" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge432-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
+        <mxCell id="edge432-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="515" y="25937.5" />
-              <mxPoint x="515" y="24502" />
-              <mxPoint x="1745" y="24502" />
-              <mxPoint x="1745" y="24627" />
+              <mxPoint x="515" y="24927.5" />
+              <mxPoint x="515" y="24572" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge433-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button0-0" target="screen-rules_settings">
+        <mxCell id="edge433-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="527" y="24947.5" />
-              <mxPoint x="527" y="24592" />
+              <mxPoint x="527" y="24975.5" />
+              <mxPoint x="527" y="24572" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge434-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-rules_settings-button1-0" target="screen-rules_settings">
+        <mxCell id="edge434-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="539" y="24995.5" />
-              <mxPoint x="539" y="24592" />
+              <mxPoint x="539" y="25023.5" />
+              <mxPoint x="539" y="23489" />
+              <mxPoint x="625" y="23489" />
+              <mxPoint x="625" y="23624" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge435-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-rules_settings-button2-0" target="screen-poll_settings">
+        <mxCell id="edge435-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="551" y="25043.5" />
-              <mxPoint x="551" y="23504" />
-              <mxPoint x="613" y="23504" />
-              <mxPoint x="613" y="23644" />
+              <mxPoint x="551" y="25071.5" />
+              <mxPoint x="551" y="23484" />
+              <mxPoint x="23" y="23484" />
+              <mxPoint x="23" y="23624" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge436-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
+        <mxCell id="edge436-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="563" y="25091.5" />
-              <mxPoint x="563" y="23499" />
-              <mxPoint x="11" y="23499" />
-              <mxPoint x="11" y="23644" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge437-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-menu">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="575" y="25139.5" />
-              <mxPoint x="575" y="2467" />
-              <mxPoint x="589" y="2467" />
-              <mxPoint x="589" y="2617" />
+              <mxPoint x="563" y="25119.5" />
+              <mxPoint x="563" y="2472" />
+              <mxPoint x="601" y="2472" />
+              <mxPoint x="601" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>

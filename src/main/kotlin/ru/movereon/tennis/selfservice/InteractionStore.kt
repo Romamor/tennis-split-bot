@@ -81,8 +81,18 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",screen?.let { json.encodeToString(it) },user,group)
     }
     fun panels(group:Long,training:String):List<Pair<Long,ScreenAction>> = database.read { c ->
-        sqlQuery(c,"SELECT user_id,panel_json FROM bot_sessions WHERE chat_id=? AND ephemeral_id IS NOT NULL AND json_extract(panel_json,'$.id')=?",group,training) {
+        sqlQuery(c,"SELECT user_id,panel_json FROM bot_sessions WHERE chat_id=? AND ephemeral_id IS NOT NULL AND json_extract(panel_json,'$.id')=? AND json_extract(panel_json,'$.kind') LIKE 'participation%'",group,training) {
             it.getLong("user_id") to json.decodeFromString<ScreenAction>(it.getString("panel_json"))
+        }
+    }
+    /** Only remove poll panels once the resulting training card has been delivered. */
+    fun completedPollPanels():List<Triple<Long,Long,Long>> = database.read { c ->
+        sqlQuery(c,"""SELECT s.user_id,s.chat_id,s.ephemeral_id FROM bot_sessions s
+            JOIN training_polls p ON p.group_id=s.chat_id AND p.id=json_extract(s.panel_json,'$.id')
+            JOIN bot_deliveries d ON d.delivery_key='training:' || p.group_id || ':' || p.training_id
+            WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') IN ('poll_detail','poll_close_confirm')
+            AND p.status='CLOSED' AND d.status='SENT' AND d.message_id IS NOT NULL""") {
+            Triple(it.getLong(1),it.getLong(2),it.getLong(3))
         }
     }
     fun displayPage(key:String):Int=database.read { c -> sqlQuery(c,"SELECT display_page FROM bot_deliveries WHERE delivery_key=?",key) { it.getInt(1) }.singleOrNull() ?: 0 }

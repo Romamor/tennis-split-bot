@@ -682,7 +682,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     .filter { it != current && it != state.currentEphemeral(plan.user, plan.chat) }
                     .forEach { deletePanel(plan.user, plan.chat, it) }
                 state.replace(scope, out.tokens)
-                state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") })
+                state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") || it.kind in setOf("poll_detail","poll_close_confirm") })
             } catch (failure: TelegramFailure) {
                 if (failure.code in setOf(401, 409)) throw failure
                 System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
@@ -734,17 +734,19 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    private fun deletePanel(user: Long, chat: Long, id: Long) {
-        try { api.deleteEphemeral(chat, user, id) }
+    private fun deletePanel(user: Long, chat: Long, id: Long): Boolean {
+        try { api.deleteEphemeral(chat, user, id); return true }
         catch (failure: TelegramFailure) {
+            if (failure.kind == FailureKind.MESSAGE_MISSING) return true
             if (failure.code in setOf(401,409)) throw failure
             System.err.println("Telegram: закрытие персональной панели; ${failure.kind}, код=${failure.code ?: "нет"}")
+            return false
         }
     }
     private fun closePanel(user: Long, chat: Long, id: Long? = null) {
         val current = state.currentEphemeral(user, chat)
         val target = id ?: current ?: return
-        deletePanel(user, chat, target)
+        if (!deletePanel(user, chat, target)) return
         if (current == null || current == target) {
             state.rememberEphemeral(user, chat, null)
             state.replace("personal:$user:$chat", emptySet())
@@ -813,6 +815,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
             }
         }
+        state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
         pinCards()
     }
     private fun unpinCards() {
