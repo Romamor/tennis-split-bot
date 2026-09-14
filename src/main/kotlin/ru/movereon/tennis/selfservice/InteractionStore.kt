@@ -29,6 +29,7 @@ import java.util.UUID
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
+    val newGroupPanel: Boolean = false, val previousGroupPanel: Long? = null,
     val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)

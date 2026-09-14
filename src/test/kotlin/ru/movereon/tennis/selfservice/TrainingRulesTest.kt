@@ -22,7 +22,7 @@ class TrainingRulesTest {
         override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) { panels[userId]=panels.getValue(userId).copy(text=text,keyboard=keyboard) }
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
-        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { panels.remove(userId) }
+        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { if(panels[userId]?.ephemeralId==ephemeralId) panels.remove(userId) }
         override fun answer(callbackId:String,text:String?,alert:Boolean) { if(alert && text!=null) errors+=text }
     }
     private lateinit var bot:SelfServiceBot

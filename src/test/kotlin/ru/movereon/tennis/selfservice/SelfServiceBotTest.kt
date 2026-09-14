@@ -828,7 +828,7 @@ class SelfServiceBotTest {
         setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
         val old=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
         click(2,"Открыть",publicCard())
-        assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertNotEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
         panelClick(2,"Закрыть")
         assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
         assertEquals(other,ephemeralMessages[-1L to 3L]);assertEquals(1,fake.sent.count { it.chat.id==-1L })
@@ -877,7 +877,7 @@ class SelfServiceBotTest {
         bot.service.execute(Access(-1,1,true),"second-training",SettlementCommand.CreateTraining("second","Вторая","2026-09-10","20:00"));bot.maintain()
         val second=fake.messages.values.single { it.chat.id==-1L && it.text!!.startsWith("Вторая") }
         click(2,"Открыть",second)
-        assertEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertNotEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
         assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.startsWith("Вторая"))
         assertEquals(saved,bot.service.training(Access(-1,2),saved.id));assertTrue(bot.service.training(Access(-1,2),"second").players.isEmpty())
     }

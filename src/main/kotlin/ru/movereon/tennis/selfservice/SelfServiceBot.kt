@@ -107,6 +107,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             val plan = saved ?: prepare(update, message, user)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
+                ?.let { if (callback != null && message.chat.id < 0 && message.ephemeralId == null)
+                    it.copy(newGroupPanel = true, previousGroupPanel = state.currentEphemeral(user.id, message.chat.id)) else it }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
             val a = if (plan.screen.group < 0) access(plan.screen.group, plan.user) else null
@@ -657,7 +659,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             try {
                 val current = state.currentEphemeral(plan.user, plan.chat) ?: plan.ephemeral
                 var updated = false
-                if (current != null) {
+                // An accepted edit does not make a dismissed panel visible again. A public
+                // click needs a fresh send; a saved event reuses the panel it already delivered.
+                val reopen = plan.newGroupPanel && current == plan.previousGroupPanel
+                if (current != null && !reopen) {
                     try {
                         if(out.richHtml!=null) api.editEphemeralRich(plan.chat,plan.user,current,out.text,out.richHtml,out.keyboard)
                         else api.editEphemeral(plan.chat, plan.user, current, out.text, out.keyboard)
@@ -673,8 +678,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
-                if (plan.ephemeral != null && plan.ephemeral != state.currentEphemeral(plan.user, plan.chat))
-                    deletePanel(plan.user, plan.chat, plan.ephemeral)
+                listOfNotNull(plan.previousGroupPanel, plan.ephemeral).distinct()
+                    .filter { it != current && it != state.currentEphemeral(plan.user, plan.chat) }
+                    .forEach { deletePanel(plan.user, plan.chat, it) }
                 state.replace(scope, out.tokens)
                 state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") })
             } catch (failure: TelegramFailure) {
