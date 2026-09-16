@@ -1,0 +1,9 @@
+{
+  "mode": "quadratic",
+  "wall_seconds": 0.635051541030407,
+  "cpu_seconds": 1.249454,
+  "peak_rss_bytes": 98615296,
+  "os": "Darwin",
+  "arch": "arm64",
+  "heap_limit_mib": 96
+}

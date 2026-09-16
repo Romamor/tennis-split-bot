@@ -34,3 +34,35 @@ tasks.register<Test>("storageSimulation") {
     systemProperty("storage.players", providers.gradleProperty("storagePlayers").getOrElse("8,16,27"))
     outputs.upToDateWhen { false }
 }
+
+// Experimental algorithms are absent from the bot's runtime and distribution.
+val settlementBenchmark by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+configurations[settlementBenchmark.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[settlementBenchmark.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+val solverPlatform = when {
+    System.getProperty("os.name").startsWith("Mac") -> "darwin"
+    System.getProperty("os.name").startsWith("Windows") -> "win32"
+    else -> "linux"
+} + "-" + if (System.getProperty("os.arch") in setOf("aarch64", "arm64")) "aarch64" else "x86-64"
+dependencies {
+    add(settlementBenchmark.implementationConfigurationName, "com.google.ortools:ortools-java:9.15.6755") {
+        for (platform in listOf("linux-x86-64", "linux-aarch64", "darwin-x86-64", "darwin-aarch64", "win32-x86-64"))
+            exclude(group = "com.google.ortools", module = "ortools-$platform")
+    }
+    add(settlementBenchmark.runtimeOnlyConfigurationName, "com.google.ortools:ortools-$solverPlatform:9.15.6755")
+}
+tasks.register<JavaExec>("settlementBenchmark") {
+    dependsOn(settlementBenchmark.classesTaskName)
+    classpath = settlementBenchmark.runtimeClasspath
+    mainClass.set("ru.movereon.tennis.experiment.SettlementBenchmark")
+    maxHeapSize = "96m"
+    doFirst {
+        val target = layout.buildDirectory.file("settlement-benchmark/classpath.txt").get().asFile
+        target.parentFile.mkdirs()
+        target.writeText(classpath.asPath)
+    }
+    args(providers.gradleProperty("benchmarkMode").getOrElse("all"), providers.gradleProperty("benchmarkDir").getOrElse("build/settlement-benchmark"))
+}

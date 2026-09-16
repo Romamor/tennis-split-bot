@@ -1,0 +1,9 @@
+{
+  "mode": "solver",
+  "wall_seconds": 17.379640624974854,
+  "cpu_seconds": 2.611921,
+  "peak_rss_bytes": 187842560,
+  "os": "Darwin",
+  "arch": "arm64",
+  "heap_limit_mib": 96
+}
