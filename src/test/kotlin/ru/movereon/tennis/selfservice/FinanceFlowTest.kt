@@ -88,7 +88,7 @@ class FinanceFlowTest {
         click(1,"⬅️ Назад");click(1,"Отправить платеж");assertEquals("Нет доступных платежей",latest(1).text)
         open(1);receive(1);assertTrue(rows(1).flatten().any { it.contains("150 ₽") })
     }
-    @Test fun `available sends use three rows and history and group balances five rows per page`() {
+    @Test fun `available sends use three rows history five and group balances ten rows per page`() {
         setup()
         for(u in 3L..11L) run(SettlementCommand.RecordTransfer("seed$u",u,2,30,"2026-09-13"),Access(-1,u))
         open(2);click(2,"Отправить платеж")
@@ -100,11 +100,12 @@ class FinanceFlowTest {
         assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
         assertEquals(5,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
         for(u in 3L..11L) run(SettlementCommand.RecordTransfer("reverse$u",2,u,60,"2026-09-13"),Access(-1,2))
+        run(SettlementCommand.RecordTransfer("extra",12,2,30,"2026-09-13"),Access(-1,12))
         open(2);click(2,"Баланс группы")
         assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
-        assertEquals(6,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
+        assertEquals(11,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
         assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
-        assertEquals(6,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
+        assertEquals(2,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
     }
     @Test fun `pending receipts use three rows and clicking a receipt removes only that row`() {
         setup()

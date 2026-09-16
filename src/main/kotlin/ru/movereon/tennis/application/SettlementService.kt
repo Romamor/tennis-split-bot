@@ -456,8 +456,9 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             AccountBalance(readAccount(it),balances[it.getLong("id")] ?: 0,it.getInt("attendance_count"),it.getBoolean("present"),it.getBoolean("has_played"))
         }.filter { it.balance!=0L || it.hasPlayed }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
             .thenByDescending { it.balance }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
-        val index=page.coerceIn(0,maxOf(0,(all.size-1)/5))
-        Page(all.drop(index*5).take(5),all.size,index,5)
+        val size=10
+        val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))
+        Page(all.drop(index*size).take(size),all.size,index,size)
     }
     fun rosterIds(a:Access,presentOnly:Boolean=false):List<Long> = database.read { c ->
         known(c,a.groupId,a.userId)

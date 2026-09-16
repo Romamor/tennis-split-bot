@@ -152,12 +152,14 @@ class FinanceServiceTest {
     @Test fun `group balances sort all signed amounts before zero rows across pages`() {
         setup()
         run(SettlementCommand.CreateTraining("open","Теннис","2026-09-14","18:30"))
-        run(SettlementCommand.AddPlayers("open",1,(3L..9L).toList()))
+        run(SettlementCommand.AddPlayers("open",1,(3L..12L).toList()))
         run(SettlementCommand.RecordAdminPayment("a",3,4,200),Access(-1,1,true))
         run(SettlementCommand.RecordAdminPayment("b",5,6,50),Access(-1,1,true))
         val all=s.financeBalances(recipient).items+s.financeBalances(recipient,1).items
-        assertEquals(listOf(200L,150L,50L,-50L,-150L,-200L,0L,0L,0L),all.map { it.balance })
-        assertEquals(9,s.financeBalances(recipient).total);assertEquals(5,s.financeBalances(recipient).items.size)
+        assertEquals(listOf(200L,150L,50L,-50L,-150L,-200L,0L,0L,0L,0L,0L,0L),all.map { it.balance })
+        assertEquals(12,s.financeBalances(recipient).total);assertEquals(10,s.financeBalances(recipient).items.size)
+        assertEquals(2,s.financeBalances(recipient,1).items.size)
+        assertEquals(s.financeBalances(recipient,1),s.financeBalances(recipient,999))
         assertTrue(s.financeBalances(Access(-2,1)).items.isEmpty())
     }
 
