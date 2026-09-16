@@ -33,7 +33,39 @@ const key=(label,action,value='',disabled=false)=>`<button type="button" data-ac
 const nav=()=>row(key('Назад','back'),key('Отмена','cancel'));
 function go(view){state.view=view;state.page=0;state.error='';render()}
 function totals(pending=false){const b={...g().balances};for(const p of g().payments)if(p.status==='COMPLETED'||pending){b[p.from]=(b[p.from]||0)+p.amount;b[p.to]=(b[p.to]||0)-p.amount}return b}
-function suggestions(){const b=totals(true),send=Object.entries(b).filter(([,v])=>v<0).map(([id,v])=>({id:+id,n:-v})),get=Object.entries(b).filter(([,v])=>v>0).map(([id,v])=>({id:+id,n:v})),out=[];while(send.length&&get.length){send.sort((a,b)=>b.n-a.n||a.id-b.id);get.sort((a,b)=>b.n-a.n||a.id-b.id);let n=Math.min(send[0].n,get[0].n);out.push({from:send[0].id,to:get[0].id,amount:n});send[0].n-=n;get[0].n-=n;if(!send[0].n)send.shift();if(!get[0].n)get.shift()}return out}
+// Direct settlement portfolio, mirrored from core/DirectSettlement.kt for these demo screens.
+function directSettlements(b) {
+ const ids=Object.keys(b).filter(id=>b[id]!==0).sort(),values=ids.map(id=>b[id]);
+ if(!ids.length)return [];
+ const senders=values.map((v,i)=>v<0?i:-1).filter(i=>i>=0);
+ const fit=(x,y,need)=>x>=need&&y>=need?x<y:x>=need?true:y>=need?false:x>y;
+ function build(mode,offset,matchFirst){
+  const rest=[...values],out=[],counts=Array(ids.length).fill(0);
+  const pay=(from,to)=>{const amount=Math.min(-rest[from],rest[to]);out.push({from:Number(ids[from]),to:Number(ids[to]),amount});rest[from]+=amount;rest[to]-=amount;counts[from]++};
+  if(matchFirst)for(let i=0;i<rest.length;i++)if(rest[i]<0)for(let j=0;j<rest.length;j++)if(rest[j]===-rest[i]){pay(i,j);break}
+  while(true){
+   let from=-1,to=-1;
+   if(mode>=5){
+    for(let j=0;j<rest.length;j++)if(rest[j]>0&&(to<0||(mode===5?rest[j]>rest[to]:rest[j]<rest[to])))to=j;
+    if(to>=0)for(let i=0;i<rest.length;i++)if(rest[i]<0&&(from<0||fit(-rest[i],-rest[from],rest[to])))from=i;
+   }
+   if(from<0)for(let step=0;step<rest.length;step++){
+    const i=(step+offset)%rest.length;if(rest[i]>=0)continue;
+    if(from<0||(mode===2?rest[i]>rest[from]:mode===3?false:rest[i]<rest[from]))from=i;
+   }
+   if(from<0)break;
+   if(to<0)for(let j=0;j<rest.length;j++)if(rest[j]>0&&(to<0||(mode===4?fit(rest[j],rest[to],-rest[from]):rest[j]>rest[to])))to=j;
+   pay(from,to);
+  }
+  return {out,max:Math.max(...counts)};
+ }
+ const choices=[build(0,0,false)];
+ for(let mode=1;mode<=6;mode++)for(let step=0;step<(mode===3?4:1);step++)choices.push(build(mode,senders[Math.floor(step*senders.length/4)],true));
+ const fewest=Math.min(...choices.map(x=>x.out.length));
+ return choices.filter(x=>x.out.length<=fewest+1).sort((a,c)=>a.max-c.max||a.out.length-c.out.length)[0].out;
+}
+// End direct settlement portfolio.
+function suggestions(){return directSettlements(totals(true))}
 function available(){return suggestions().filter(x=>x.from===state.actor)}
 function pageOf(list,size=6){state.page=Math.max(0,Math.min(state.page,Math.ceil(list.length/size)-1));return list.slice(state.page*size,(state.page+1)*size)}
 function pages(list,size=6){return list.length>size?row(key('‹','page',-1,state.page===0),key(`${state.page+1} / ${Math.ceil(list.length/size)}`,'noop'),key('›','page',1,(state.page+1)*size>=list.length)):''}

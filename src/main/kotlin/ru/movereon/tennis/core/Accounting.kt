@@ -120,22 +120,8 @@ internal fun List<BalanceEntry>.reversedAmounts(): List<BalanceEntry> = map { it
 
 data class SuggestedTransfer(val from: ParticipantId, val to: ParticipantId, val amount: Long)
 
-/** Greedy matching is deterministic, but does not promise the fewest possible transfers. */
+/** Deterministic direct transfers: a fixed quadratic portfolio, not a global optimum. */
 fun suggestTransfers(balances: Map<ParticipantId, Long>): List<SuggestedTransfer> {
     validateBalances(balances)
-    val debts = balances.filterValues { it < 0 }.mapValues { -it.value }.toMutableMap()
-    val credits = balances.filterValues { it > 0 }.toMutableMap()
-    val result = mutableListOf<SuggestedTransfer>()
-    val order = compareByDescending<Map.Entry<ParticipantId, Long>> { it.value }.thenBy { it.key.value }
-    while (debts.isNotEmpty() && credits.isNotEmpty()) {
-        val debt = debts.entries.minWith(order)
-        val credit = credits.entries.minWith(order)
-        val amount = minOf(debt.value, credit.value)
-        result += SuggestedTransfer(debt.key, credit.key, amount)
-        debts[debt.key] = debt.value - amount
-        credits[credit.key] = credit.value - amount
-        if (debts[debt.key] == 0L) debts.remove(debt.key)
-        if (credits[credit.key] == 0L) credits.remove(credit.key)
-    }
-    return result.toList()
+    return DirectSettlement.suggest(balances)
 }

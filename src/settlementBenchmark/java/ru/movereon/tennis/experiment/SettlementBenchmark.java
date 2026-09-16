@@ -37,9 +37,9 @@ public final class SettlementBenchmark {
         return list;
     }
     static List<Edge> actual(Map<ParticipantId,Long> input) {
-        // The benchmark measures the production function directly; conversion is outside timing.
+        // The historical baseline is frozen; conversion is outside timing.
         try {
-            var rows=AccountingKt.suggestTransfers(input);var result=new ArrayList<Edge>();
+            var rows=BenchmarkAdapter.previous(input);var result=new ArrayList<Edge>();
             for(var row:rows) {
                 String from=(String)Arrays.stream(row.getClass().getMethods()).filter(m->m.getName().startsWith("getFrom-")).findFirst().orElseThrow().invoke(row);
                 String to=(String)Arrays.stream(row.getClass().getMethods()).filter(m->m.getName().startsWith("getTo-")).findFirst().orElseThrow().invoke(row);
@@ -49,7 +49,7 @@ public final class SettlementBenchmark {
     }
     static long baseline(Map<ParticipantId,Long> input,int repetitions) {
         long sum=0,start=System.nanoTime();
-        for(int i=0;i<repetitions;i++){var rows=AccountingKt.suggestTransfers(input);sum+=rows.size();for(var t:rows)sum+=t.getAmount();}
+        for(int i=0;i<repetitions;i++){var rows=BenchmarkAdapter.previous(input);sum+=rows.size();for(var t:rows)sum+=t.getAmount();}
         long ns=System.nanoTime()-start;sink=sum;return ns;
     }
     static long fastTime(Map<ParticipantId,Long> input,int repetitions) {
@@ -102,6 +102,11 @@ public final class SettlementBenchmark {
         // Pending transfer reservation is balanced before either algorithm sees the input.
         long[] pending={1300,700,400,-900,-650,-550,-300};pending[0]-=900;pending[3]+=900;
         var adjusted=solve(pending,2,true);verify(pending,adjusted.edges());if(adjusted.edges().stream().anyMatch(e->e.from()==3))throw new AssertionError("Reserved payment suggested again");
+        for(var c:cases()) {
+            var data=input(c.balances());
+            if(!AccountingKt.suggestTransfers(data).equals(BenchmarkAdapter.custom(data)))throw new AssertionError("Production port differs from approved prototype");
+        }
+        System.out.println("PORT CHECK OK: all twelve 20-person fixtures match the approved prototype");
         System.out.println("CHECKS OK: "+checked+" independent exhaustive oracle cases; explicit extra-payment fixture; forced degree, zeros, input limits, greedy counterexample, reservation");
     }
     public static void main(String[] args)throws Exception {

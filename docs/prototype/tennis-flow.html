@@ -63,7 +63,39 @@ function allocation(training=t()){
 }
 function table(training=t()){let calc=allocation(training);let note=training.phase==='OPEN'?'':training.phase==='CANCELLED'?'':!calc.known?'Для расчёта укажи наигранное время.':'';return `<h2>${esc(training.title)}</h2><p>${date(training.date)} ${training.time}<br>Статус: ${phase(training.phase)}</p>`+(calc.rows.length?`<table class="tg-table"><thead><tr><th>Участник</th><th>Время</th><th>Оплата</th><th>Баланс</th></tr></thead><tbody>${calc.rows.map(p=>`<tr><td><button class="tg-profile" data-do="profile" data-value="${p.id}">${esc(p.name)}</button></td><td>${hours(p.time)}</td><td>${rub(p.paid)}</td><td>${p.balance===null?'—':signed(p.balance)}</td></tr>`).join('')}</tbody></table>${note?`<p class="tg-note">${note}</p>`:''}`:'<p>Пока никто не зарегался</p>')}
 function balances(){const values={...g().base};g().trainings.forEach(t=>Object.entries(t.applied).forEach(([id,n])=>values[id]=(values[id]||0)+n));g().transfers.filter(t=>t.status==='COMPLETED').forEach(t=>{values[t.from]=(values[t.from]||0)+t.amount;values[t.to]=(values[t.to]||0)-t.amount});return values}
-function suggested(){const b=balances();g().transfers.filter(x=>x.status==='PENDING').forEach(x=>{b[x.from]=(b[x.from]||0)+x.amount;b[x.to]=(b[x.to]||0)-x.amount});const give=Object.entries(b).filter(([,v])=>v<0).map(([id,v])=>({id:+id,n:-v})),get=Object.entries(b).filter(([,v])=>v>0).map(([id,v])=>({id:+id,n:v})),rows=[],sort=(a,b)=>b.n-a.n||String(a.id).localeCompare(String(b.id));while(give.length&&get.length){give.sort(sort);get.sort(sort);let amount=Math.min(give[0].n,get[0].n);rows.push({from:give[0].id,to:get[0].id,amount});give[0].n-=amount;get[0].n-=amount;if(!give[0].n)give.shift();if(!get[0].n)get.shift()}return rows.filter(x=>x.from===state.actor||x.to===state.actor)}
+// Direct settlement portfolio, mirrored from core/DirectSettlement.kt for these demo screens.
+function directSettlements(b) {
+ const ids=Object.keys(b).filter(id=>b[id]!==0).sort(),values=ids.map(id=>b[id]);
+ if(!ids.length)return [];
+ const senders=values.map((v,i)=>v<0?i:-1).filter(i=>i>=0);
+ const fit=(x,y,need)=>x>=need&&y>=need?x<y:x>=need?true:y>=need?false:x>y;
+ function build(mode,offset,matchFirst){
+  const rest=[...values],out=[],counts=Array(ids.length).fill(0);
+  const pay=(from,to)=>{const amount=Math.min(-rest[from],rest[to]);out.push({from:Number(ids[from]),to:Number(ids[to]),amount});rest[from]+=amount;rest[to]-=amount;counts[from]++};
+  if(matchFirst)for(let i=0;i<rest.length;i++)if(rest[i]<0)for(let j=0;j<rest.length;j++)if(rest[j]===-rest[i]){pay(i,j);break}
+  while(true){
+   let from=-1,to=-1;
+   if(mode>=5){
+    for(let j=0;j<rest.length;j++)if(rest[j]>0&&(to<0||(mode===5?rest[j]>rest[to]:rest[j]<rest[to])))to=j;
+    if(to>=0)for(let i=0;i<rest.length;i++)if(rest[i]<0&&(from<0||fit(-rest[i],-rest[from],rest[to])))from=i;
+   }
+   if(from<0)for(let step=0;step<rest.length;step++){
+    const i=(step+offset)%rest.length;if(rest[i]>=0)continue;
+    if(from<0||(mode===2?rest[i]>rest[from]:mode===3?false:rest[i]<rest[from]))from=i;
+   }
+   if(from<0)break;
+   if(to<0)for(let j=0;j<rest.length;j++)if(rest[j]>0&&(to<0||(mode===4?fit(rest[j],rest[to],-rest[from]):rest[j]>rest[to])))to=j;
+   pay(from,to);
+  }
+  return {out,max:Math.max(...counts)};
+ }
+ const choices=[build(0,0,false)];
+ for(let mode=1;mode<=6;mode++)for(let step=0;step<(mode===3?4:1);step++)choices.push(build(mode,senders[Math.floor(step*senders.length/4)],true));
+ const fewest=Math.min(...choices.map(x=>x.out.length));
+ return choices.filter(x=>x.out.length<=fewest+1).sort((a,c)=>a.max-c.max||a.out.length-c.out.length)[0].out;
+}
+// End direct settlement portfolio.
+function suggested(){const b=balances();g().transfers.filter(x=>x.status==='PENDING').forEach(x=>{b[x.from]=(b[x.from]||0)+x.amount;b[x.to]=(b[x.to]||0)-x.amount});return directSettlements(b).filter(x=>x.from===state.actor||x.to===state.actor)}
 function financeTable(headers,rows){return rows.length?'<table class="tg-table tg-finance-table"><thead><tr>'+headers.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>Список пуст.</p>'}
 function incomingPayments(){return g().transfers.filter(x=>x.to===state.actor&&x.status==='PENDING')}
 function financePayments(){return g().transfers.filter(x=>[x.from,x.to].includes(state.actor)).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.recorded-a.recorded)}
