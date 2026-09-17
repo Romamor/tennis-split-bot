@@ -121,7 +121,7 @@ class PersonalFlowTest {
             if(i==3) bot.service.execute(a,"cancel$i",SettlementCommand.CancelTraining(id,bot.service.training(a,id).version))
         }
         message("/start");click("🏓 Мои тренировки")
-        assertEquals("Тренировок: 5\nВремя: 7,5 ч\nПотрачено денег: 750 ₽",latest().text)
+        assertEquals("Тренировок: 2\nВремя: 3 ч\nПотрачено денег: 300 ₽",latest().text)
         val first=rows().take(3).flatten();assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
         click(first[2]);assertEquals(listOf(listOf("⬅️ Назад")),rows())
         assertFalse(latest().text!!.contains("не влияет на баланс"));click("Назад")
@@ -132,5 +132,20 @@ class PersonalFlowTest {
         val second=rows().take(2).flatten();assertTrue(second[0].contains("Тренировка 2"));assertTrue(second[1].contains("Тренировка 1"))
         click(second[1]);assertEquals(listOf(listOf("🏓 Открыть"),listOf("⬅️ Назад")),rows())
         click("Назад");assertEquals(second,rows().take(2).flatten())
+
+        val admin=Access(-2,2,true)
+        bot.service.execute(admin,"reopen-stats",SettlementCommand.ReopenTraining("t2",bot.service.training(admin,"t2").version))
+        val reopened=bot.service.myTrainings(1)
+        assertEquals(5,reopened.page.total);assertEquals(1,reopened.completedCount)
+        assertEquals(120,reopened.minutes);assertEquals(200,reopened.paid)
+        bot.service.execute(admin,"cancel-stats",SettlementCommand.CancelTraining("t2",bot.service.training(admin,"t2").version))
+        assertEquals(1,bot.service.myTrainings(1).completedCount)
+        val other=Access(-1,2,true)
+        bot.service.execute(other,"restore-stats",SettlementCommand.RestoreTraining("t3",bot.service.training(other,"t3").version))
+        assertEquals(1,bot.service.myTrainings(1).completedCount)
+        bot.service.execute(other,"finish-stats",SettlementCommand.FinishTraining("t3",bot.service.training(other,"t3").version))
+        val finished=bot.service.myTrainings(1)
+        assertEquals(5,finished.page.total);assertEquals(2,finished.completedCount)
+        assertEquals(210,finished.minutes);assertEquals(350,finished.paid)
     }
 }

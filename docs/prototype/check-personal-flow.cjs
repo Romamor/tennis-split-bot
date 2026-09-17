@@ -32,7 +32,7 @@ const path=require('node:path');
     assert.deepEqual(await f.locator('.tg-keyboard button').allTextContents(),['🏓 Открыть','✏️ Редактировать','⬅️ Назад']);
     await click('Назад');await click('Назад');
   }
-  await click('🏓 Мои тренировки');assert.match(await text(),/Тренировок: 5/);assert.match(await text(),/Время: 1 ч/);assert.match(await text(),/Потрачено денег: 50 ₽/);
+  await click('🏓 Мои тренировки');assert.match(await text(),/Тренировок: 0/);assert.match(await text(),/Время: 0 ч/);assert.match(await text(),/Потрачено денег: 0 ₽/);
   const names=await f.locator('.tg-keyboard button').allTextContents();assert.match(names[0],/Личная 4/);assert.match(names[2],/Личная 2/);
   await click('Дальше ›');const second=await f.locator('.tg-keyboard button').allTextContents();assert.match(second[0],/Личная 1/);
   await page.screenshot({path:path.join(require('node:os').tmpdir(),'tennis-personal-list.png')});

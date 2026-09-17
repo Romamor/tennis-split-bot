@@ -63,7 +63,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 p.items.forEach { row("${date(it.date)} · ${clean(it.title,34)} · ${phase(it.phase)}",ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index))) }
                 pages(p.index,p.pages,ScreenAction("my_trainings",0,page=p.index))
                 row("Назад",ScreenAction("menu",0))
-                "Тренировок: ${p.total}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽"
+                "Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽"
             }
             "trainings" -> {
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")

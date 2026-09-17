@@ -80,14 +80,18 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val condition="""FROM trainings t LEFT JOIN training_players p ON p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=?
             WHERE (t.created_by=? AND t.status='OPEN') OR p.playing=1 OR p.applied_playing=1 OR p.paid>0"""
         var total=0
+        var completedCount=0
         var minutes=java.math.BigInteger.ZERO
         var paid=java.math.BigInteger.ZERO
-        sqlEach(c,"SELECT CASE WHEN p.playing=1 THEN p.minutes ELSE 0 END,COALESCE(p.paid,0) $condition",user,user) {
-            total++;minutes+=it.getLong(1).toBigInteger();paid+=it.getLong(2).toBigInteger()
+        sqlEach(c,"SELECT t.status,CASE WHEN p.playing=1 THEN p.minutes ELSE 0 END,COALESCE(p.paid,0) $condition",user,user) {
+            total++
+            if(it.getString(1)=="CLOSED") {
+                completedCount++;minutes+=it.getLong(2).toBigInteger();paid+=it.getLong(3).toBigInteger()
+            }
         }
         val index=page.coerceIn(0,maxOf(0,(total-1)/3))
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT 3 OFFSET ?",user,user,index*3) { it.getLong(1) to it.getString(2) }
-        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount())
+        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount(),completedCount)
     }
     fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
     private val groupSettings=GroupSettings(database,clock)
