@@ -124,11 +124,22 @@ class FinanceServiceTest {
         assertEquals(1,s.pendingPaymentCount(Access(-1,3)))
         run(command.copy(id="second",allowSimilar=true),payer)
         assertEquals(2,s.pendingPaymentCount(Access(-1,3)))
+        val outgoing=s.financeSummary(payer)
+        assertEquals(-150L,outgoing.balance);assertEquals(2,outgoing.pendingSentCount)
+        assertEquals(250.toBigInteger(),outgoing.pendingSentAmount)
+        assertEquals(0,outgoing.pendingReceiveCount)
+        val incoming=s.financeSummary(Access(-1,3))
+        assertEquals(0L,incoming.balance);assertEquals(2,incoming.pendingReceiveCount)
+        assertEquals(250.toBigInteger(),incoming.pendingReceiveAmount)
+        assertEquals(0,s.financeSummary(Access(-2,3)).pendingReceiveCount)
         assertFailsWith<AccountingException> { run(SettlementCommand.ReceivePayment("advance"),Access(-1,1,true)) }
         assertFailsWith<AccountingException> { run(SettlementCommand.EditTransferAmount("advance",1,200),payer) }
         run(SettlementCommand.ReceivePayment("advance"),Access(-1,3))
         assertEquals(mapOf(1L to 150L,2L to -25L,3L to -125L),s.balances(payer))
         assertEquals(1,s.pendingPaymentCount(Access(-1,3)))
+        assertEquals(1,s.financeSummary(Access(-1,3)).pendingReceiveCount)
+        assertEquals(125.toBigInteger(),s.financeSummary(Access(-1,3)).pendingReceiveAmount)
+        assertEquals(-25L,s.financeSummary(payer).balance)
         assertFailsWith<IllegalArgumentException> { run(SettlementCommand.SendOtherPayment("self",2,1),payer) }
         assertFailsWith<IllegalArgumentException> { run(SettlementCommand.SendOtherPayment("zero",3,0),payer) }
         assertFailsWith<AccountingException> { run(SettlementCommand.SendOtherPayment("foreign",99,1),payer) }

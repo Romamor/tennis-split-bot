@@ -1,6 +1,7 @@
 package ru.movereon.tennis.application
 
 import kotlinx.serialization.Serializable
+import java.math.BigInteger
 import ru.movereon.tennis.core.*
 
 /** Supplied by the Telegram boundary after a live membership check, never by callback payload. */
@@ -16,6 +17,8 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 @Serializable data class DefaultTrainingUpdate(val field:String,val expected:String,val value:String)
 data class GroupOption(val group:SettlementGroup,val admin:Boolean,val superAdmin:Boolean,val canPublish:Boolean)
 data class MyTrainingPage(val page:Page<TrainingRecord>,val minutes:Long,val paid:Long,val completedCount:Int)
+data class FinanceSummary(val balance:Long,val pendingSentCount:Int,val pendingSentAmount:BigInteger,
+    val pendingReceiveCount:Int,val pendingReceiveAmount:BigInteger)
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)

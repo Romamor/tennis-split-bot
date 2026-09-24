@@ -48,7 +48,7 @@ class FinanceFlowTest {
     }
     @Test fun `send and receive screens follow the diagram and return to the right menus`() {
         setup();seedBalance();open(2)
-        assertEquals("Мои финансы:",latest(2).text)
+        assertEquals("Мои финансы:\nБаланс: −150 ₽ — тебе осталось внести",latest(2).text)
         assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("💰 Баланс группы"),listOf("⬅️ Назад")),rows(2))
         click(2,"Отправить платеж");click(2,"Игрок 1 · 150 ₽")
         assertEquals(listOf(listOf("💸 Платеж отправлен · 150 ₽"),listOf("⬅️ Назад","Меню")),rows(2))
@@ -56,7 +56,9 @@ class FinanceFlowTest {
         click(2,"⬅️ Назад");click(2,"Игрок 1 · 150 ₽");val saved=click(2,"Платеж отправлен · 150 ₽");bot.handle(saved)
         assertEquals("Нет доступных платежей",latest(2).text)
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
-        click(2,"⬅️ Назад");click(2,"История платежей")
+        open(2);assertTrue(latest(2).text!!.contains("Отправлено, ждёт подтверждения: 1 · 150 ₽"))
+        open(1);assertTrue(latest(1).text!!.contains("Тебе подтвердить получение: 1 · 150 ₽"))
+        click(2,"История платежей")
         assertTrue(latest(2).text!!.contains("В процессе"));assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
         open(1);receive(1);accept(1,"Игрок 2 · 150 ₽ · 13.09.2026")
         assertEquals("Нет доступных платежей",latest(1).text)

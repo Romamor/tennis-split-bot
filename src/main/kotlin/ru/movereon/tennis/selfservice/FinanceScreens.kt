@@ -13,12 +13,24 @@ internal class FinanceScreens(private val service:SettlementService) {
         fun footer() { rows+=listOf(button("⬅️ Назад",ScreenAction("finance",a.groupId)),button("Меню",ScreenAction("menu",0))) }
         when(action.kind) {
             "finance" -> {
-                rows+=listOf(button("Отправить платеж",next("finance_send")),button("Принять платеж(${service.pendingPaymentCount(a)})",next("finance_receive")))
+                val summary=service.financeSummary(a)
+                rows+=listOf(button("Отправить платеж",next("finance_send")),button("Принять платеж(${summary.pendingReceiveCount})",next("finance_receive")))
                 rows+=listOf(button("Другой платёж",next("payment_new")),button("История платежей",next("finance_history")))
                 row("Баланс группы",next("finance_balances"))
                 if(service.isAdmin(a)) row("Записать платёж за участников",next("payment_new",option="admin"))
                 row("Назад",ScreenAction("menu",0))
-                ScreenContent("Мои финансы:")
+                val balance=when {
+                    summary.balance>0 -> "+${summary.balance} ₽ — тебе осталось получить"
+                    summary.balance<0 -> "−${summary.balance.toBigInteger().negate()} ₽ — тебе осталось внести"
+                    else -> "0 ₽"
+                }
+                ScreenContent(buildString {
+                    append("Мои финансы:\nБаланс: $balance")
+                    if(summary.pendingSentCount>0) append("\nОтправлено, ждёт подтверждения: ${summary.pendingSentCount} · ${summary.pendingSentAmount} ₽")
+                    if(summary.pendingReceiveCount>0) append("\nТебе подтвердить получение: ${summary.pendingReceiveCount} · ${summary.pendingReceiveAmount} ₽")
+                    if(summary.pendingSentCount>0 || summary.pendingReceiveCount>0)
+                        append("\nОжидающие платежи пока не меняют баланс.")
+                })
             }
             "finance_send" -> {
                 val p=service.paymentSuggestions(a,page=action.page)

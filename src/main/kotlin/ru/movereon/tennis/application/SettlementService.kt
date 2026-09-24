@@ -444,6 +444,21 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         allowed(a.userId==from || admin(c,a),"Можно записывать только свою отправку")
         recentSimilar(c,a.groupId,from,to,amount)
     }
+    /** One read snapshot for the selected group's posted balance and unconfirmed transfers. */
+    fun financeSummary(a:Access):FinanceSummary = database.read { c ->
+        known(c,a.groupId,a.userId)
+        val balance=database.balances(c,a.groupId)[a.userId] ?: 0L
+        var sentCount=0
+        var receivedCount=0
+        var sentAmount=java.math.BigInteger.ZERO
+        var receivedAmount=java.math.BigInteger.ZERO
+        sqlEach(c,"""SELECT from_user,amount FROM transfers WHERE group_id=? AND status='REVIEW'
+            AND (from_user=? OR to_user=?)""",a.groupId,a.userId,a.userId) { row ->
+            if(row.getLong(1)==a.userId) { sentCount++;sentAmount+=row.getLong(2).toBigInteger() }
+            else { receivedCount++;receivedAmount+=row.getLong(2).toBigInteger() }
+        }
+        FinanceSummary(balance,sentCount,sentAmount,receivedCount,receivedAmount)
+    }
     fun pendingPaymentCount(a:Access):Int = database.read { c ->
         known(c,a.groupId,a.userId)
         count(c,"SELECT COUNT(*) FROM transfers WHERE group_id=? AND to_user=? AND status='REVIEW'",a.groupId,a.userId)

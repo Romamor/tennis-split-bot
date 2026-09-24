@@ -735,7 +735,7 @@
         <mxCell id="screen-finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance-body" value="Мои финансы:" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-body" value="Мои финансы:&lt;br&gt;Баланс: +100 ₽ — тебе осталось получить" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
         <mxCell id="screen-finance-button0-0" value="Отправить платеж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
@@ -5913,7 +5913,7 @@
         <mxCell id="screen-finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance-body" value="Мои финансы:" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-body" value="Мои финансы:&lt;br&gt;Баланс: +100 ₽ — тебе осталось получить" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
         <mxCell id="screen-finance-button0-0" value="Отправить платеж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
@@ -12191,7 +12191,7 @@
         <mxCell id="screen-finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance-body" value="Мои финансы:" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-body" value="Мои финансы:&lt;br&gt;Баланс: +100 ₽ — тебе осталось получить" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="115" />
         </mxCell>
         <mxCell id="screen-finance-button0-0" value="Отправить платеж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
