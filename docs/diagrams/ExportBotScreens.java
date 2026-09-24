@@ -12,7 +12,7 @@ class ExportBotScreens {
  static Database db;static SettlementService svc;static InteractionStore store;static Screens screens;static Access auth;static long user;static String file;static StringBuilder out=new StringBuilder("[");static int serial=0;
  static String q(String s){if(s==null)return "null";return "\""+s.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n").replace("\r","\\r").replace("\t","\\t")+"\"";}
  static ScreenAction action(String kind,String id,String more){return Json.Default.decodeFromString(ScreenAction.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":-1,\"id\":"+q(id)+(more.isEmpty()?"":","+more)+"}");}
- static InputForm form(String kind,String id,String more){boolean global=kind.startsWith("default_")||id.isEmpty()&&Set.of("title","date","time","poll_decline","group","ready").contains(kind);return Json.Default.decodeFromString(InputForm.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":"+(global?0:-1)+",\"training\":"+q(id)+",\"title\":\"Теннис\",\"date\":\"2026-09-12\",\"time\":\"18:30\""+(more.isEmpty()?"":","+more)+"}");}
+ static InputForm form(String kind,String id,String more){boolean global=kind.startsWith("default_")||id.isEmpty()&&Set.of("title","date","time","poll_decline","poll_photo","group","ready").contains(kind);return Json.Default.decodeFromString(InputForm.Companion.serializer(),"{\"kind\":"+q(kind)+",\"group\":"+(global?0:-1)+",\"training\":"+q(id)+",\"title\":\"Теннис\",\"date\":\"2026-09-12\",\"time\":\"18:30\""+(more.isEmpty()?"":","+more)+"}");}
  static void sql(String query,Object...args)throws Exception{try(Connection c=DriverManager.getConnection("jdbc:sqlite:"+file);PreparedStatement p=c.prepareStatement(query)){for(int i=0;i<args.length;i++)p.setObject(i+1,args[i]);p.executeUpdate();}}
  static void run(Access a,SettlementCommand c){svc.execute(a,"fixture"+(serial++),c,null);}
  static void capture(String key,String kind,String id,String more,InputForm f,boolean group,String note){
@@ -97,10 +97,12 @@ class ExportBotScreens {
   }
   TrainingPolls polls=new TrainingPolls(svc,clock);
   polls.setEnabled(superA,true);
-  var poll=polls.create(auth,"poll-own","Теннис","2026-09-12","18:30","Не приду");
+  var poll=polls.create(auth,"poll-own","Теннис","2026-09-12","18:30","Не приду",null);
   polls.attach(poll,"demo-poll-"+user,800L);
   cap("menu_polls","menu","");
   for(String kind:List.of("title","date","time","poll_decline","group","ready"))capture("poll_"+kind,"form","","",form(kind,"","\"pollId\":\"poll-own\",\"publishGroup\":-1,\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
+  capture("poll_photo","form","","",form("poll_photo","","\"pollId\":\"poll-own\",\"publishGroup\":-1,\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
+  capture("poll_ready_photo","form","","",form("ready","","\"pollId\":\"poll-own\",\"publishGroup\":-1,\"pollPhotoId\":\"example-photo-id\",\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
   capture("choose_polls","groups","","\"option\":\"polls\"",null,false,null);
   cap("poll_list","poll_list","");cap("poll_detail","poll_detail","poll-own");
   capture("poll_close_confirm","poll_close_confirm","poll-own","",null,true,null);

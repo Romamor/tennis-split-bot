@@ -16,7 +16,7 @@ class MeasurePollList {
   for(int i=1;i<=40;i++){s.remember(new Account(i,"Игрок "+i,"",null,false));s.rememberMembership(-1,i,true);}
   s.execute(new Access(-1,1,true),"admin",new SettlementCommand.SetAdministrator(1,true),null);
   TrainingPolls polls=new TrainingPolls(s,clock);polls.setEnabled(new Access(-1,1,true),true);
-  for(int i=0;i<100;i++)polls.create(new Access(-1,2,false),"poll-"+i,"Теннис "+i,"2026-09-14","18:30","Не приду");
+  for(int i=0;i<100;i++)polls.create(new Access(-1,2,false),"poll-"+i,"Теннис "+i,"2026-09-14","18:30","Не приду",null);
   InteractionStore state=new InteractionStore(db,clock);Screens screens=new Screens(s,state,"demo_tennis_bot");
   ScreenAction action=kotlinx.serialization.json.Json.Default.decodeFromString(ScreenAction.Companion.serializer(),"{\"kind\":\"poll_list\",\"group\":-1}");
   queries.set(0);db.getReadTransactions().set(0);db.getWriteTransactions().set(0);

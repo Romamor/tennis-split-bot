@@ -277,6 +277,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                         form=savedForm.copy(kind="add_players",selectedUsers=selected,order=(savedForm.order.orEmpty()+shared.id).distinct()))
                 }
                 action = ScreenAction("player", a.groupId, savedForm.training, user = shared.id)
+            } else if(savedForm?.kind=="poll_photo" && message.photo.isNotEmpty()) {
+                val photo=message.photo.maxBy { it.width.toLong()*it.height }
+                require(photo.fileId.isNotBlank()) { "Некорректная фотография опроса" }
+                return EventPlan(user.id,chat,ScreenAction("form",0),form=savedForm.copy(kind="ready",pollPhotoId=photo.fileId))
             } else if(FinanceScreens.retiredForm(savedForm)) {
                 return EventPlan(user.id,chat,ScreenAction("finance",requireNotNull(savedForm).group),notice="Меню платежей обновилось. Используй «Отправить платеж» или «Принять платеж».")
             } else if (savedForm != null) return textInput(update, user, chat, savedForm, text)
@@ -415,7 +419,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 checkAccounting(f.training.isEmpty() && f.group==0L && action.option==state.formSignature(f),ErrorCode.STALE_VERSION,"Форма изменилась. Используй текущие кнопки.")
                 when(action.kind) {
                     "form_cancel" -> plan(ScreenAction("menu",0))
-                    "form_back" -> formPlan(f.copy(kind=when(f.kind) { "date"->"title";"time"->"date";"poll_decline"->"time";"group"->if(f.pollId.isNotEmpty()) "poll_decline" else "time";"ready"->"group";else->error("No previous step") }))
+                    "form_back" -> formPlan(f.copy(kind=when(f.kind) { "date"->"title";"time"->"date";"poll_decline"->"time";"poll_photo"->"ready";"group"->if(f.pollId.isNotEmpty()) "poll_decline" else "time";"ready"->"group";else->error("No previous step") }))
                     "form_group_page" -> { require(f.kind=="group");formPlan(f.copy(page=action.page)) }
                     else -> {
                         require(f.kind=="group")
@@ -457,13 +461,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val f=InputForm("title", action.group, t.id, version = t.version, title = t.title, date = t.date, time = t.startTime,origin=action.back)
                 formPlan(f.copy(baseline=formValues(f)))
             }
-            "form_next", "form_restart", "save_training", "save_poll", "save_transfer", "save_transfer_amount", "transfer_date", "transfer_note" -> {
+            "form_next", "form_restart", "form_photo", "form_photo_remove", "save_training", "save_poll", "save_transfer", "save_transfer_amount", "transfer_date", "transfer_note" -> {
                 val f = requireNotNull(savedForm) { "Открой форму заново" }
                 checkAccounting(f.group == action.group, ErrorCode.FORBIDDEN, "Эта форма относится к другой группе")
                 checkAccounting(action.option == state.formSignature(f), ErrorCode.STALE_VERSION, "Форма изменилась. Используй кнопки текущего сообщения")
                 when (action.kind) {
                     "form_next" -> formPlan(advance(f))
                     "form_restart" -> formPlan(f.copy(kind = "title"))
+                    "form_photo" -> { require(f.kind=="ready" && f.pollId.isNotEmpty());formPlan(f.copy(kind="poll_photo")) }
+                    "form_photo_remove" -> { require(f.kind=="ready" && f.pollId.isNotEmpty());formPlan(f.copy(pollPhotoId=null)) }
                     "transfer_date", "transfer_note" -> formPlan(f.copy(kind = action.kind))
                     "save_transfer_amount" -> {
                         require(f.kind in setOf("edit_transfer_ready","edit_transfer_duplicate"))
@@ -587,7 +593,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         f.baseline!=null -> f.baseline!=formValues(f)
         else -> f.amount>0 || f.note.isNotBlank()
     }
-    private fun formValues(f:InputForm)=listOf(f.title,f.date,f.time,f.amount.toString(),f.note,f.declineLabel).joinToString("\u0000")
+    private fun formValues(f:InputForm)=listOf(f.title,f.date,f.time,f.amount.toString(),f.note,f.declineLabel,f.pollPhotoId.orEmpty()).joinToString("\u0000")
     private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> if(f.pollId.isNotEmpty()) "poll_decline" else if(f.training.isEmpty()) "group" else "ready"; "poll_decline" -> "group"; else -> error("Форма уже заполнена") })
     private fun textInput(update: TgUpdate, user: TgUser, chat: Long, f: InputForm, text: String): EventPlan {
         val auth=f.group.takeIf { it<0 }?.let { access(it,user.id) }
@@ -603,6 +609,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "date" -> form(advance(f.copy(date = parsedDate())))
             "time" -> form(advance(f.copy(time = LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm")))))
             "poll_decline" -> { require(text.length in 1..100) { "Последний ответ: от 1 до 100 символов" };form(advance(f.copy(declineLabel=text))) }
+            "poll_photo" -> form(f).copy(notice="Пришли фото обычным сообщением или нажми «Назад».")
             "default_title" -> { require(text.length in 1..100) { "Название: от 1 до 100 символов" };form(f.copy(title=text)) }
             "default_time" -> form(f.copy(time=LocalTime.parse(text).format(DateTimeFormatter.ofPattern("HH:mm"))))
             "paid" -> {

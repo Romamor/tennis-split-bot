@@ -2324,7 +2324,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="page-5" name="06 · Опросы">
-    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2080" pageHeight="1593" background="#f7fafc">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2080" pageHeight="1648" background="#f7fafc">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -2383,7 +2383,7 @@
           <mxGeometry as="geometry" x="0.0" y="75.0" width="460" height="28" />
         </mxCell>
         <mxCell id="training_polls" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="430" width="570" height="600" />
+          <mxGeometry as="geometry" x="60" y="430" width="570" height="655" />
         </mxCell>
         <mxCell id="training_polls-header" value="training_polls" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -2463,113 +2463,128 @@
         <mxCell id="training_polls-flags-decline_label" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="223.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-created_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-photo_file_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="252.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-created_by" value="created_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-photo_file_id" value="photo_file_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="252.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-created_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-photo_file_id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="252.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-created_by" value="FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-photo_file_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="252.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-created_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="281.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-created_at" value="created_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-created_by" value="created_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="281.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-created_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-created_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="281.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-created_by" value="FK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="281.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-telegram_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="310.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-telegram_id" value="telegram_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-created_at" value="created_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="310.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-telegram_id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-created_at" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="310.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-telegram_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-created_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="310.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-message_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-telegram_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="339.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-message_id" value="message_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-telegram_id" value="telegram_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="339.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-message_id" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-telegram_id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="339.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-message_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-telegram_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="339.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-message_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="368.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-status" value="status" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-message_id" value="message_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="368.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-status" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-message_id" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="368.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-message_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="368.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-stopped" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="397.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-stopped" value="stopped" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-status" value="status" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="397.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-stopped" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-status" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="397.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-stopped" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-status" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="397.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-closed_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-stopped" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="426.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-closed_by" value="closed_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-stopped" value="stopped" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="426.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-closed_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-stopped" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="426.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-closed_by" value="FK ?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-stopped" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="426.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="training_polls-field-training_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-field-closed_by" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="1.0" y="455.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="training_polls-name-training_id" value="training_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-name-closed_by" value="closed_by" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="4.0" y="455.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="training_polls-type-training_id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-type-closed_by" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="360.0" y="455.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="training_polls-flags-training_id" value="FK ?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+        <mxCell id="training_polls-flags-closed_by" value="FK ?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
           <mxGeometry as="geometry" x="465.0" y="455.0" width="100" height="29" />
         </mxCell>
+        <mxCell id="training_polls-field-training_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="1.0" y="484.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="training_polls-name-training_id" value="training_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="4.0" y="484.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="training_polls-type-training_id" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="360.0" y="484.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="training_polls-flags-training_id" value="FK ?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="465.0" y="484.0" width="100" height="29" />
+        </mxCell>
         <mxCell id="training_polls-note-0" value="PK (group_id, id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
-          <mxGeometry as="geometry" x="2.0" y="484.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="513.0" width="566" height="26" />
         </mxCell>
         <mxCell id="training_polls-note-1" value="UQ (telegram_id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
-          <mxGeometry as="geometry" x="2.0" y="510.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="539.0" width="566" height="26" />
         </mxCell>
         <mxCell id="training_polls-note-2" value="Тренировка создаётся только после закрытия опроса" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
-          <mxGeometry as="geometry" x="2.0" y="536.0" width="566" height="26" />
+          <mxGeometry as="geometry" x="2.0" y="565.0" width="566" height="26" />
         </mxCell>
-        <mxCell id="training_polls-note-3" value="Ссылка на итоговую тренировку — защита от повторов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
-          <mxGeometry as="geometry" x="2.0" y="562.0" width="566" height="26" />
+        <mxCell id="training_polls-note-3" value="photo_file_id — необязательный идентификатор фото в Telegram" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="2.0" y="591.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="training_polls-note-4" value="Ссылка на итоговую тренировку — защита от повторов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="training_polls">
+          <mxGeometry as="geometry" x="2.0" y="617.0" width="566" height="26" />
         </mxCell>
         <mxCell id="poll_signups" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="680" y="430" width="570" height="255" />
@@ -2668,37 +2683,37 @@
         <mxCell id="edge-6" value="R6" edge="1" parent="1" source="poll_signups" target="training_polls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=1;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="965.0" y="1075" />
-              <mxPoint x="345.0" y="1075" />
+              <mxPoint x="965.0" y="1130" />
+              <mxPoint x="345.0" y="1130" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="fk-title" value="Точные связи · строка слева ссылается на строку справа" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=20;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1158" width="1990" height="35" />
+          <mxGeometry as="geometry" x="48" y="1213" width="1990" height="35" />
         </mxCell>
         <mxCell id="fk-hint" value="Одна линия может объединять несколько FK. В скобках: сколько дочерних записей → сколько родительских записей." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=15;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1202" width="1990" height="34" />
+          <mxGeometry as="geometry" x="48" y="1257" width="1990" height="34" />
         </mxCell>
         <mxCell id="fk-row-0" value="R1 · training_polls (group_id, training_id)&#10;→ trainings (group_id, id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1242" width="955" height="61" />
+          <mxGeometry as="geometry" x="60" y="1297" width="955" height="61" />
         </mxCell>
         <mxCell id="fk-row-1" value="R2 · training_polls (group_id, created_by)&#10;→ group_users (group_id, user_id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1100" y="1242" width="955" height="61" />
+          <mxGeometry as="geometry" x="1100" y="1297" width="955" height="61" />
         </mxCell>
         <mxCell id="fk-row-2" value="R3 · training_polls (closed_by)&#10;→ users (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1309" width="955" height="61" />
+          <mxGeometry as="geometry" x="60" y="1364" width="955" height="61" />
         </mxCell>
         <mxCell id="fk-row-3" value="R4 · training_polls (group_id)&#10;→ groups (id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1100" y="1309" width="955" height="61" />
+          <mxGeometry as="geometry" x="1100" y="1364" width="955" height="61" />
         </mxCell>
         <mxCell id="fk-row-4" value="R5 · poll_signups (group_id, user_id)&#10;→ group_users (group_id, user_id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1376" width="955" height="61" />
+          <mxGeometry as="geometry" x="60" y="1431" width="955" height="61" />
         </mxCell>
         <mxCell id="fk-row-5" value="R6 · poll_signups (group_id, poll_id)&#10;→ training_polls (group_id, id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1100" y="1376" width="955" height="61" />
+          <mxGeometry as="geometry" x="1100" y="1431" width="955" height="61" />
         </mxCell>
         <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1483" width="1990" height="70" />
+          <mxGeometry as="geometry" x="48" y="1538" width="1990" height="70" />
         </mxCell>
       </root>
     </mxGraphModel>

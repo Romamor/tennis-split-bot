@@ -20,8 +20,10 @@ import java.time.Duration
 @Serializable data class TgPoll(val id:String, @SerialName("is_closed") val isClosed:Boolean=false)
 @Serializable data class TgPollAnswer(@SerialName("poll_id") val pollId:String, val user:TgUser?=null,
     @SerialName("option_ids") val optionIds:List<Int> = emptyList())
+@Serializable data class TgPhotoSize(@SerialName("file_id") val fileId:String, val width:Int, val height:Int)
 @Serializable data class TgMessage(@SerialName("message_id") val id: Long = 0, val chat: TgChat, val from: TgUser? = null,
     val text: String? = null, val poll:TgPoll?=null, @SerialName("reply_to_message") val replyTo: TgMessage? = null,
+    val photo:List<TgPhotoSize> = emptyList(),
     @SerialName("reply_markup") val keyboard: TgKeyboard? = null, @SerialName("migrate_to_chat_id") val migrateTo: Long? = null,
     @SerialName("receiver_user") val receiver: TgUser? = null,
     @SerialName("ephemeral_message_id") val ephemeralId: Long? = null,
@@ -49,7 +51,7 @@ class TelegramFailure(val kind: FailureKind, val code: Int? = null, val retryAft
     IOException("Telegram request failed: $kind${code?.let { " ($it)" } ?: ""}")
 
 interface TelegramApi {
-    fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage = throw TelegramFailure(FailureKind.REJECTED)
+    fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard,photoId:String?=null):TgMessage = throw TelegramFailure(FailureKind.REJECTED)
     fun stopPoll(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) { throw TelegramFailure(FailureKind.REJECTED) }
     fun me(): TgUser
@@ -84,11 +86,12 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         require(token.matches(Regex("[0-9]+:[A-Za-z0-9_-]{20,}"))) { "Некорректный формат токена бота" }
         require(endpoint.scheme == "https" || endpoint.scheme == "http" && endpoint.host in setOf("127.0.0.1", "localhost", "::1"))
     }
-    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage =
+    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard,photoId:String?):TgMessage =
         json.decodeFromJsonElement(call("sendPoll",buildJsonObject {
             put("chat_id",chatId);put("question",question);put("is_anonymous",false)
             put("allows_multiple_answers",false);put("allows_revoting",true)
             put("options",buildJsonArray { options.forEach { label -> add(buildJsonObject { put("text",label) }) } })
+            if(photoId!=null) put("media",buildJsonObject { put("type","photo");put("media",photoId) })
             put("reply_markup",json.encodeToJsonElement(keyboard))
         }))
     override fun stopPoll(chatId:Long,messageId:Long) {

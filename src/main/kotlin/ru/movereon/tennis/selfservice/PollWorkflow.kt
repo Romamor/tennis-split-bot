@@ -11,7 +11,7 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
             if(effective.screen.kind=="poll_publish") {
                 val f=requireNotNull(effective.form)
                 requirePublication(effective.screen.group,effective.user)
-                val p=polls.create(requireNotNull(a),f.pollId,f.title,f.date,f.time,f.declineLabel)
+                val p=polls.create(requireNotNull(a),f.pollId,f.title,f.date,f.time,f.declineLabel,f.pollPhotoId)
                 if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
                 publish(p)
                 effective=effective.copy(screen=ScreenAction("poll_detail",p.group,p.id),form=null)
@@ -50,7 +50,7 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
         val keyboard=TgKeyboard(listOf(listOf(TgButton("🏁 Завершить сбор",callbackData="n:$token",style="primary"))))
         polls.status(p,"SENDING")
         try {
-            val sent=api.sendPoll(p.group,"🏓 ${p.title}\n${Screens.date(p.date)} · начало ${p.time}",p.options(),keyboard)
+            val sent=api.sendPoll(p.group,"🏓 ${p.title}\n${Screens.date(p.date)} · начало ${p.time}",p.options(),keyboard,p.photoId)
             polls.attach(p,requireNotNull(sent.poll).id,sent.id)
             recordDelivery(polls.get(p.group,p.id))
         } catch(f:TelegramFailure) {

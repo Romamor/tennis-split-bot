@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.core.*
 
-internal fun readPollRow(r:ResultSet)=TrainingPoll(r.getLong("group_id"),r.getString("id"),r.getString("title"),r.getString("played_on"),r.getString("starts_at"),r.getString("decline_label"),r.getLong("created_by"),r.getString("telegram_id"),r.getString("message_id")?.toLong(),r.getString("status"),r.getBoolean("stopped"),r.getString("closed_by")?.toLong(),r.getString("training_id"))
+internal fun readPollRow(r:ResultSet)=TrainingPoll(r.getLong("group_id"),r.getString("id"),r.getString("title"),r.getString("played_on"),r.getString("starts_at"),r.getString("decline_label"),r.getLong("created_by"),r.getString("telegram_id"),r.getString("message_id")?.toLong(),r.getString("status"),r.getBoolean("stopped"),r.getString("closed_by")?.toLong(),r.getString("training_id"),r.getString("photo_file_id"))
 internal fun readPoll(c:Connection,group:Long,id:String)=
     sqlQuery(c,"SELECT * FROM training_polls WHERE group_id=? AND id=?",group,id,map=::readPollRow).singleOrNull()
         ?: throw AccountingException(ErrorCode.INVALID_INPUT,"Опрос не найден в этой группе")

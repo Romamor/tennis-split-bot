@@ -334,11 +334,17 @@ class Screens(private val service: SettlementService, private val state: Interac
                         row("Оставить «${clean(f.declineLabel,35)}»",formAction("form_next"))
                         "Напиши четвёртый вариант опроса или оставь «Не приду». Можно свой несмешной вариант.\nЭтот ответ всегда означает отказ от участия; бот его не сохраняет."
                     }
+                    "poll_photo" -> "Пришли одно фото в этот чат. Оно появится в самом опросе над вариантами ответа."
                     "ready" -> {
                         row(if (f.training.isEmpty()) "Опубликовать" else "Сохранить изменения", formAction(if(f.pollId.isNotEmpty()) "save_poll" else "save_training"))
+                        if(f.pollId.isNotEmpty()) {
+                            row(if(f.pollPhotoId==null) "🖼 Добавить фото" else "🖼 Заменить фото",formAction("form_photo"))
+                            if(f.pollPhotoId!=null) row("Убрать фото",formAction("form_photo_remove"))
+                        }
                         if(f.training.isNotEmpty()) row("Изменить название / время", formAction("form_restart"))
                         "${clean(f.title, 100)}\n${date(f.date)} · ${f.time}\n" + if(f.pollId.isNotEmpty()) "Группа: ${clean(service.group(requireNotNull(f.publishGroup)).title,60)}\n\n"+
                             TrainingPoll(requireNotNull(f.publishGroup),f.pollId,f.title,f.date,f.time,f.declineLabel,requireNotNull(user),null,null,"PENDING",false,null,null).options().joinToString("\n")+
+                            (if(f.pollPhotoId!=null) "\n\nФото: добавлено." else "")+
                             "\n\nБудет опубликован и закреплён неанонимный опрос. Тренировка появится после завершения сбора." else if (f.training.isEmpty()) "Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." else "Данные изменятся в существующей тренировке."
                     }
                     "paid" -> "${name(f.user)}\nНапиши общую сумму оплаты стола в рублях. Можно 0."
@@ -362,7 +368,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 }.also {
                     if(f.kind in setOf("default_title","default_time")) {
                         rows+=listOf(button("Назад",ScreenAction("training_settings",0)),button("Меню",ScreenAction("menu",0)))
-                    } else if(f.training.isEmpty() && f.kind in setOf("title","date","time","poll_decline","group","ready")) {
+                    } else if(f.training.isEmpty() && f.kind in setOf("title","date","time","poll_decline","poll_photo","group","ready")) {
                         rows.add(buildList<TgButton> {
                             if(f.kind!="title") add(button("Назад",formAction("form_back")))
                             add(button("Отмена",formAction("form_cancel")))

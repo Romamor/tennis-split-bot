@@ -22,8 +22,9 @@ categories.insert(3,('Произвольные платежи и запись а
 # Same-screen arrows indicate updating values; data in each screen is an illustrative snapshot.
 poll_steps=['poll_title','poll_date','poll_time','poll_poll_decline','poll_group','poll_ready']
 titles.update(dict(zip(poll_steps,['Опрос · название','Опрос · дата','Опрос · начало','Опрос · четвёртый ответ','Опрос · группа','Опрос · публикация'])))
+titles.update({'poll_photo':'Опрос · пришли фото','poll_ready_photo':'Опрос · фото добавлено'})
 titles.update({'menu_polls':'Меню с включёнными опросами','choose_polls':'Группа для просмотра опросов','poll_list':'Открытые опросы','poll_detail':'Опрос опубликован в группе','poll_close_confirm':'Завершить сбор: подтверждение','poll_training':'Тренировка из опроса: 0 ч / 0 ₽','choose_poll_settings':'Группа для настройки','poll_settings':'Настройки выбранной группы'})
-categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
+categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['poll_photo','poll_ready_photo','choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
 titles.update({'equal_public':'Без индивидуального времени · равные доли','equal_personal':'Без времени · гости разрешены','simple_public':'Без времени и гостей · карточка','simple_personal':'Без времени и гостей · участие','rules_settings':'Обратимые правила открытых тренировок'})
 categories.append(('Правила группы: гости и время',['rules_settings','equal_public','equal_personal','simple_public','simple_personal']))
 def resolve(key,b):
@@ -41,11 +42,19 @@ def resolve(key,b):
  if k=='poll_close':return ['poll_training']
  if k in ('poll_setting_save','poll_settings'):return ['poll_settings']
  if key in poll_steps:
+  if k=='form_photo':return ['poll_photo']
+  if k=='form_photo_remove':return ['poll_ready']
   if k=='form_next':return [poll_steps[poll_steps.index(key)+1]]
   if k=='form_back':return [poll_steps[poll_steps.index(key)-1]]
   if k=='form_group_select':return ['poll_ready']
   if k=='form_group_page':return ['poll_group']
   if k=='save_poll':return ['poll_detail']
+ if key=='poll_photo' and k=='form_back':return ['poll_ready']
+ if key=='poll_ready_photo':
+  if k=='form_photo':return ['poll_photo']
+  if k=='form_photo_remove':return ['poll_ready']
+  if k=='save_poll':return ['poll_detail']
+  if k=='form_back':return ['poll_group']
  if k=='close_panel' and key.startswith('poll_'):return ['poll_detail']
  if k=='training_status':return ['status_closed' if key=='training_closed' else 'status_cancelled' if key=='training_cancelled' else 'status_open']
  if k=='set_training_status':return ['training_cancelled' if opt=='CANCELLED' else 'training_closed' if opt=='CLOSED' else 'training_review']
@@ -134,6 +143,7 @@ def resolve(key,b):
  raise ValueError((key,label,k))
 input_next={'payment_amount':'payment_ready','admin_payment_amount':'admin_payment_ready','default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','transfer_amount':'transfer_ready','transfer_date':'transfer_ready','transfer_note':'transfer_ready','edit_transfer_amount':'edit_transfer_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
 input_next.update(dict(zip(poll_steps[:4],poll_steps[1:5])))
+input_next['poll_photo']='poll_ready_photo'
 class Plain(HTMLParser):
  def __init__(self):super().__init__();self.parts=[]
  def handle_data(self,s):self.parts.append(s)
@@ -205,7 +215,7 @@ for role,name in roles.items():
     preview.append(f'<div class="button" style="left:{bx}px;top:{ry}px;width:{bw}px;height:{rh-5}px;background:{color}">{html.escape(b["text"])}</div>')
    ry+=rh
   if key in input_next:
-   bid=gid+'-input';label='Выбрать аккаунт Telegram →' if key=='pick_players' else 'Написать ответ · Отправить →'
+   bid=gid+'-input';label='Выбрать аккаунт Telegram →' if key=='pick_players' else 'Прикрепить фото →' if key=='poll_photo' else 'Написать ответ · Отправить →'
    vertex(bid,label,0,ry+7,w,48,parent=gid,style='rounded=1;fillColor=#f2f5f8;strokeColor=#9aafc2;fontColor=#436178;fontSize=14;align=left;spacing=10;',html_mode=False)
    buttons_geo[bid]=(x,sy+ry+7,w,48,key,{'text':label,'target':{'kind':'input'}});preview.append(f'<div class="input" style="top:{ry+7}px">{label}</div>')
   preview.append('</div>');allrects.append((x,sy,w,h))

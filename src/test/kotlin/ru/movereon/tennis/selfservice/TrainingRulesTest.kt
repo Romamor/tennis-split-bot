@@ -154,7 +154,7 @@ class TrainingRulesTest {
             assertEquals(TrainingRules(),t.rules);assertEquals(TrainingRules(),svc.groupTrainingRules(-1))
             assertTrue(TrainingPolls(svc).enabled(-1))
             assertEquals(90,t.players.single().minutes);assertEquals(2,t.players.single().guestCount);assertEquals(350,t.players.single().paid)
-            assertTrue(svc.database.verify().contains("Схема 8"))
+            assertTrue(svc.database.verify().contains("Схема 9"))
         }
     }
     private fun effect(id:String="t")=calculateTraining(t(id).calculation()).entries.associate { it.participant.value.toLong() to it.amount }

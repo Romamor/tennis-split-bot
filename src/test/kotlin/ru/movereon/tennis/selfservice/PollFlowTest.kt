@@ -54,6 +54,7 @@ class PollFlowTest {
     }
     private fun latest(u:Long=2)=fake.messages.values.last { it.chat.id==u }
     private fun message(text:String,u:Long=2) { bot.handle(TgUpdate(n++,message=TgMessage(n,TgChat(u,"private"),TgUser(u,firstName="Игрок $u"),text))) }
+    private fun photo(u:Long=2,vararg sizes:TgPhotoSize) { bot.handle(TgUpdate(n++,message=TgMessage(n,TgChat(u,"private"),TgUser(u,firstName="Игрок $u"),photo=sizes.toList()))) }
     private fun click(text:String,u:Long=2,m:TgMessage=latest(u)):TgUpdate {
         val b=m.keyboard!!.rows.flatten().single { it.text==text || it.text.endsWith(" $text") }
         return TgUpdate(n++,callback=TgCallback("cb$n",TgUser(u,firstName="Игрок $u"),m,b.callbackData)).also(bot::handle)
@@ -70,6 +71,29 @@ class PollFlowTest {
     }
     private fun vote(p:TrainingPoll,u:Long,option:Int?):TgUpdate = TgUpdate(n++,pollAnswer=TgPollAnswer(p.telegramId!!,TgUser(u,firstName="Игрок $u"),option?.let { listOf(it) } ?: emptyList())).also(bot::handle)
     private fun count(sql:String)=bot.service.database.read { c -> sqlQuery(c,sql) { it.getInt(1) }.single() }
+
+    @Test fun `optional photo returns to publication without adding a required step and survives restart`() {
+        setup();bot.polls.setEnabled(Access(-1,1,true),true)
+        message("/start");click("Создать опрос");click("Оставить «Теннис»")
+        click("Продолжить · 14.09.2026");click("Продолжить · 18:30")
+        click("Оставить «Не приду»");click("Группа 1")
+        assertTrue(latest().keyboard!!.rows.flatten().any { it.text.endsWith(" Опубликовать") })
+        click("Добавить фото");assertTrue(latest().text!!.contains("Пришли одно фото"))
+        message("не фотография");assertTrue(latest().text!!.contains("Пришли одно фото"))
+        click("Назад");assertTrue(latest().keyboard!!.rows.flatten().any { it.text.endsWith(" Опубликовать") })
+        click("Добавить фото")
+        photo(2,TgPhotoSize("small",100,100),TgPhotoSize("large",800,600))
+        assertTrue(latest().text!!.contains("Фото: добавлено"))
+        assertTrue(latest().keyboard!!.rows.flatten().any { it.text.endsWith(" Убрать фото") })
+        click("Убрать фото");assertFalse(latest().text!!.contains("Фото: добавлено"))
+        click("Добавить фото");photo(2,TgPhotoSize("large",800,600))
+        click("Заменить фото");photo(2,TgPhotoSize("new-photo",900,700))
+        bot=SelfServiceBot(api,Database(bot.service.database.path),fake.bot,clock)
+        click("Опубликовать");bot.maintain()
+        val poll=bot.polls.active(-1).single()
+        assertEquals("new-photo",poll.photoId)
+        assertEquals("new-photo",fake.pollPhotos[poll.telegramId])
+    }
 
     @Test fun `feature is per group default off with admin setting and unchanged direct creation`() {
         setup();message("/start")
@@ -120,7 +144,7 @@ class PollFlowTest {
         val card=bot.state.delivery("training:-1:${p.id}")!!
         assertTrue(fake.pinned.contains(-1L to card.message!!))
         vote(p,3,1);assertEquals(0,count("SELECT COUNT(*) FROM poll_signups"))
-        assertTrue(bot.service.database.verify().contains("Схема 8"))
+        assertTrue(bot.service.database.verify().contains("Схема 9"))
     }
     @Test fun `different user and cross group admin cannot finish and disabled group still permits existing close`() {
         setup();val p=publish()

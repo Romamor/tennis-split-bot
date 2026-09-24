@@ -76,3 +76,10 @@ internal fun migrateTrainingRules(c:Connection) {
         s.execute("PRAGMA user_version=8")
     }
 }
+
+internal fun migratePollPhoto(c:Connection) {
+    c.createStatement().use { s ->
+        s.execute("ALTER TABLE training_polls ADD COLUMN photo_file_id TEXT CHECK(photo_file_id IS NULL OR length(photo_file_id)>0)")
+        s.execute("PRAGMA user_version=9")
+    }
+}

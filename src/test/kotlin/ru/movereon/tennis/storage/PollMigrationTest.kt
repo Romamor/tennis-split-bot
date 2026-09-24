@@ -25,12 +25,33 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file);val service=SettlementService(db)
-            assertTrue(db.verify().contains("Схема 8"))
+            assertTrue(db.verify().contains("Схема 9"))
             assertFalse(TrainingPolls(service).enabled(-1))
             assertEquals("19:30",service.trainingDefaults(1).time)
             assertEquals(mapOf(1L to 150L,2L to -150L),service.balances(Access(-1,1)))
             assertEquals(1,service.history(Access(-1,1)).total)
             assertEquals(0,db.read { c -> sqlQuery(c,"SELECT COUNT(*) FROM training_polls") { it.getInt(1) }.single() })
+        }
+    }
+    @Test fun `schema eight preserves existing polls while adding optional photo`() {
+        val file=dir.resolve("v8.sqlite")
+        DriverManager.getConnection("jdbc:sqlite:$file").use { c -> c.createStatement().use { stmt ->
+            val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
+                .replace("    photo_file_id TEXT CHECK(photo_file_id IS NULL OR length(photo_file_id)>0),\n","")
+            ddl.split(';').filter { it.isNotBlank() }.forEach(stmt::execute)
+            stmt.execute("PRAGMA application_id=${Database.APPLICATION_ID}");stmt.execute("PRAGMA user_version=8")
+            stmt.execute("INSERT INTO users(id,first_name) VALUES(1,'Игрок')")
+            stmt.execute("INSERT INTO groups(id,title,time_zone,polls_enabled) VALUES(-1,'Группа','Europe/Moscow',1)")
+            stmt.execute("INSERT INTO group_users(group_id,user_id,present) VALUES(-1,1,1)")
+            stmt.execute("INSERT INTO training_polls(group_id,id,title,played_on,starts_at,decline_label,created_by,created_at,status) VALUES(-1,'old','Теннис','2026-09-14','18:30','Не приду',1,'2026-09-14T12:00:00Z','OPEN')")
+        } }
+        repeat(2) {
+            val db=Database(file)
+            assertTrue(db.verify().contains("Схема 9"))
+            val polls=TrainingPolls(SettlementService(db))
+            assertNull(polls.get(-1,"old").photoId)
+            assertEquals("OPEN",polls.get(-1,"old").status)
+            assertEquals(1,db.read { c -> sqlQuery(c,"SELECT COUNT(*) FROM training_polls") { it.getInt(1) }.single() })
         }
     }
 }

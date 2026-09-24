@@ -12,7 +12,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 data class TrainingPoll(val group:Long,val id:String,val title:String,val date:String,val time:String,val decline:String,
-    val creator:Long,val telegramId:String?,val message:Long?,val status:String,val stopped:Boolean,val closer:Long?,val training:String?) {
+    val creator:Long,val telegramId:String?,val message:Long?,val status:String,val stopped:Boolean,val closer:Long?,val training:String?,val photoId:String?=null) {
     fun options():List<String> {
         val start=LocalDateTime.of(LocalDate.parse(date),LocalTime.parse(time))
         return listOf(-30L,0L,30L).map { offset ->
@@ -48,19 +48,20 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
     fun maintenancePolls()=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status IN ('OPEN','CLOSING') ORDER BY created_at DESC,id",map=::readPollRow) }
     fun closingPolls()=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE status='CLOSING' AND stopped=1 ORDER BY created_at DESC,id",map=::readPollRow) }
     fun hasClosingPolls()=db.read { c -> sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM training_polls WHERE status='CLOSING' AND stopped=1)") { it.getBoolean(1) }.single() }
-    fun create(a:Access,id:String,title:String,date:String,time:String,decline:String):TrainingPoll = db.write { c ->
+    fun create(a:Access,id:String,title:String,date:String,time:String,decline:String,photoId:String?=null):TrainingPoll = db.write { c ->
         member(c,a)
         val old=sqlQuery(c,"SELECT * FROM training_polls WHERE group_id=? AND id=?",a.groupId,id,map=::readPollRow).singleOrNull()
         if(old!=null) {
-            checkAccounting(old.creator==a.userId && old.title==title && old.date==date && old.time==time && old.decline==decline,ErrorCode.COMMAND_CONFLICT,"Опрос уже создан с другими данными")
+            checkAccounting(old.creator==a.userId && old.title==title && old.date==date && old.time==time && old.decline==decline && old.photoId==photoId,ErrorCode.COMMAND_CONFLICT,"Опрос уже создан с другими данными")
             return@write old
         }
         checkAccounting(sqlQuery(c,"SELECT polls_enabled FROM groups WHERE id=?",a.groupId) { it.getBoolean(1) }.single(),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
         require(title==title.trim() && title.length in 1..100 && decline==decline.trim() && decline.length in 1..100) { "Название и последний ответ: от 1 до 100 символов" }
+        require(photoId==null || photoId.isNotBlank()) { "Некорректная фотография опроса" }
         LocalDate.parse(date);LocalTime.parse(time)
-        val p=TrainingPoll(a.groupId,id,title,date,time,decline,a.userId,null,null,"PENDING",false,null,null)
+        val p=TrainingPoll(a.groupId,id,title,date,time,decline,a.userId,null,null,"PENDING",false,null,null,photoId)
         require(p.options().distinct().size==4) { "Последний ответ не должен совпадать со временем прихода" }
-        sqlUpdate(c,"INSERT INTO training_polls(group_id,id,title,played_on,starts_at,decline_label,created_by,created_at,status) VALUES(?,?,?,?,?,?,?,?,'PENDING')",a.groupId,id,title,date,time,decline,a.userId,clock.instant().toString())
+        sqlUpdate(c,"INSERT INTO training_polls(group_id,id,title,played_on,starts_at,decline_label,created_by,created_at,status,photo_file_id) VALUES(?,?,?,?,?,?,?,?,'PENDING',?)",a.groupId,id,title,date,time,decline,a.userId,clock.instant().toString(),photoId)
         p
     }
     fun status(p:TrainingPoll,status:String)=db.write { c -> sqlUpdate(c,"UPDATE training_polls SET status=? WHERE group_id=? AND id=?",status,p.group,p.id) }

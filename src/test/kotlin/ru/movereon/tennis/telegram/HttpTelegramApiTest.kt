@@ -208,6 +208,10 @@ class HttpTelegramApiTest {
         assertFalse(body.getValue("allows_multiple_answers").jsonPrimitive.boolean)
         assertTrue(body.getValue("allows_revoting").jsonPrimitive.boolean)
         assertEquals(4,body.getValue("options").jsonArray.size)
+        assertFalse(body.containsKey("media"))
+        api.sendPoll(-1,"Теннис",listOf("18:00","18:30","19:00","Не приду"),TgKeyboard(emptyList()),"telegram-photo-id")
+        assertEquals("photo",bodies.last().second.getValue("media").jsonObject.getValue("type").jsonPrimitive.content)
+        assertEquals("telegram-photo-id",bodies.last().second.getValue("media").jsonObject.getValue("media").jsonPrimitive.content)
         response={ 200 to """{"ok":true,"result":[{"update_id":3,"poll_answer":{"poll_id":"p","user":{"id":2,"first_name":"Игрок"},"option_ids":[3]}},{"update_id":4,"poll_answer":{"poll_id":"p","user":{"id":2,"first_name":"Игрок"},"option_ids":[]}}]}""" }
         val updates=api.updates(3,0)
         assertEquals(listOf(3),updates.first().pollAnswer!!.optionIds)

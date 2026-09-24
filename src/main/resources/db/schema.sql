@@ -185,6 +185,7 @@ CREATE TABLE training_polls (
     played_on TEXT NOT NULL,
     starts_at TEXT NOT NULL,
     decline_label TEXT NOT NULL CHECK(length(trim(decline_label)) BETWEEN 1 AND 100),
+    photo_file_id TEXT CHECK(photo_file_id IS NULL OR length(photo_file_id)>0),
     created_by INTEGER NOT NULL,
     created_at TEXT NOT NULL,
     telegram_id TEXT UNIQUE,

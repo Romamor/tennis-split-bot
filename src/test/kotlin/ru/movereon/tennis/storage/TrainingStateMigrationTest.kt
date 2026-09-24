@@ -54,7 +54,7 @@ class TrainingStateMigrationTest {
         val oldEntries=old.read { sqlQuery(it,"SELECT action_id,entry_index,amount FROM balance_entries ORDER BY action_id,entry_index") { r->Triple(r.getLong(1),r.getInt(2),r.getLong(3)) } }
         val oldSecond=s.balances(Access(-2,1,true))
         val migrated=Database(file);val current=SettlementService(migrated);val a=Access(-1,1,true)
-        assertTrue(migrated.verify().contains("Схема 8"))
+        assertTrue(migrated.verify().contains("Схема 9"))
         assertEquals(TrainingPhase.OPEN,current.training(a,"t").phase)
         assertEquals(0,current.training(a,"t").appliedVersion)
         assertTrue(current.training(a,"t").players.none { it.appliedPlaying })

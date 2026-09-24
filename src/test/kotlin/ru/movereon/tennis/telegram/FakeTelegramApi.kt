@@ -32,11 +32,12 @@ class FakeTelegramApi : TelegramApi {
     var acceptThenFail: ((Long,String)->Boolean)? = null
     private var nextMessage = 1L
     val pollOptions=mutableMapOf<String,List<String>>()
+    val pollPhotos=mutableMapOf<String,String?>()
     var pollFailure:TelegramFailure?=null
     var stopFailure:TelegramFailure?=null
-    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard):TgMessage {
+    override fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard,photoId:String?):TgMessage {
         val m=send(chatId,question,keyboard).let { it.copy(poll=TgPoll("poll-${it.id}")) }
-        messages[chatId to m.id]=m;pollOptions[m.poll!!.id]=options
+        messages[chatId to m.id]=m;pollOptions[m.poll!!.id]=options;pollPhotos[m.poll.id]=photoId
         pollFailure?.let { throw it }
         return m
     }

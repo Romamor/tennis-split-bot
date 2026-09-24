@@ -22,7 +22,7 @@ import java.util.UUID
     val similar: List<String> = emptyList(), val originalTime:String?=null,
     val publishGroup:Long?=null,val defaultValue:String?=null,
     val paymentFrom:Long=0,val adminPayment:Boolean=false,
-    val pollId:String="",val declineLabel:String="Не приду")
+    val pollId:String="",val declineLabel:String="Не приду",val pollPhotoId:String?=null)
 @Serializable data class AttendanceDraft(val training: String, val user: Long, val expected: Attendance?, val value: Attendance,
     val returnPage: Int? = null, val origin: ScreenAction? = null)
 @Serializable data class EventPlan(val user: Long, val chat: Long, val screen: ScreenAction,

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Опрос: необязательное фото</title>
+<style>
+  :root { color-scheme: light dark; font: 16px/1.4 system-ui, sans-serif; }
+  body { margin: 0; background: light-dark(#dce5db,#182421); color: light-dark(#16231b,#e9f0ec); }
+  main { max-width: 460px; margin: 24px auto; padding: 0 12px; }
+  .note { font-size: 13px; opacity: .75; margin-bottom: 16px; }
+  .message { background: light-dark(#fff,#25332d); border-radius: 15px 15px 15px 4px; padding: 16px; box-shadow: 0 1px 3px #0002; white-space: pre-line; }
+  .buttons { display: grid; gap: 5px; margin-top: 6px; }
+  .buttons button, .upload button { border: 0; border-radius: 6px; min-height: 44px; padding: 9px; font: inherit; font-weight: 600; background: light-dark(#d9e4df,#3c4e45); color: inherit; cursor: pointer; }
+  .buttons .primary { background: light-dark(#277ec8,#316da2); color: white; }
+  .buttons .pair { display: flex; gap: 5px; }
+  .buttons .pair button { flex: 1; }
+  .upload { margin-top: 12px; }
+  .upload label { display: block; margin-bottom: 8px; }
+  .upload input { max-width: 100%; }
+  .upload button { display: block; width: 100%; margin-top: 12px; }
+  .poll-photo { display: block; width: 100%; max-height: 300px; object-fit: contain; margin: 10px 0; border-radius: 8px; }
+  .option { border-top: 1px solid light-dark(#d8e0db,#405149); padding: 9px 0; }
+</style>
+<main>
+  <div class="note">Локальный макет. Кнопка фото находится только на последнем шаге; без неё сразу нажимаешь «Опубликовать».</div>
+  <div id="message" class="message"></div>
+  <div id="buttons" class="buttons"></div>
+</main>
+<script>
+  const message=document.getElementById('message'),buttons=document.getElementById('buttons');
+  let step='ready',photo=null,photoUrl=null;
+  function button(label,click,primary=false){const b=document.createElement('button');b.textContent=label;b.className=primary?'primary':'';b.onclick=click;return b}
+  function reset(){message.replaceChildren();buttons.replaceChildren()}
+  function render(){
+    reset();
+    if(step==='ready'){
+      message.textContent='Теннис\n25.09.2026 · 18:30\nГруппа: Теннис по субботам\n\nВ 18:00\nК началу — в 18:30\nВ 19:00\nНе приду'+(photo?'\n\nФото: добавлено.':'')+'\n\nБудет опубликован и закреплён неанонимный опрос. Тренировка появится после завершения сбора.';
+      buttons.append(button('✅ Опубликовать',()=>{step='published';render()}));
+      buttons.append(button(photo?'🖼 Заменить фото':'🖼 Добавить фото',()=>{step='photo';render()}));
+      if(photo)buttons.append(button('🗑️ Убрать фото',()=>{photo=null;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=null;render()}));
+      const pair=document.createElement('div');pair.className='pair';pair.append(button('Назад',()=>{step='group';render()}),button('Отмена',()=>{step='cancelled';render()}));buttons.append(pair);
+    }else if(step==='photo'){
+      message.textContent='Пришли одно фото в этот чат. Оно появится в самом опросе над вариантами ответа.';
+      const area=document.createElement('div');area.className='upload';
+      const label=document.createElement('label');label.textContent='Фото для макета';label.htmlFor='poll-photo-file';
+      const input=document.createElement('input');input.type='file';input.id='poll-photo-file';input.accept='image/*';
+      const send=button('Отправить фото',()=>{if(!input.files.length)return;if(photoUrl)URL.revokeObjectURL(photoUrl);photo=input.files[0];photoUrl=URL.createObjectURL(photo);step='ready';render()},true);
+      area.append(label,input,send);message.append(area);
+      const pair=document.createElement('div');pair.className='pair';pair.append(button('Назад',()=>{step='ready';render()}),button('Отмена',()=>{step='cancelled';render()}));buttons.append(pair);
+    }else if(step==='published'){
+      message.textContent='🏓 Теннис\n25.09.2026 · начало 18:30';
+      if(photoUrl){const img=document.createElement('img');img.src=photoUrl;img.alt='Фото, прикреплённое к опросу';img.className='poll-photo';message.append(img)}
+      for(const value of ['В 18:00','К началу — в 18:30','В 19:00','Не приду']){const option=document.createElement('div');option.className='option';option.textContent=value;message.append(option)}
+      buttons.append(button('Создать заново',()=>{step='ready';render()}));
+    }else{
+      message.textContent=step==='group'?'Выбери группу для опроса.':'Создание опроса отменено.';
+      buttons.append(button(step==='group'?'Теннис по субботам':'Создать опрос',()=>{step='ready';render()}));
+    }
+  }
+  render();
+</script>
+</html>
