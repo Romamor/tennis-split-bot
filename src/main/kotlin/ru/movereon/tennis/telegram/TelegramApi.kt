@@ -61,8 +61,8 @@ interface TelegramApi {
     fun edit(chatId: Long, messageId: Long, text: String, keyboard: TgKeyboard? = null)
     fun answer(callbackId: String, text: String? = null, alert: Boolean = false)
     fun openPrivate(callbackId:String,url:String) { throw TelegramFailure(FailureKind.REJECTED) }
-    fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard)
-    fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) = edit(chatId,messageId,text,keyboard)
+    fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null):TgMessage = send(chatId,text,keyboard)
+    fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null) = edit(chatId,messageId,text,keyboard)
     fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
     fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
     fun pin(chatId:Long,messageId:Long,silent:Boolean=false) { throw TelegramFailure(FailureKind.REJECTED) }
@@ -137,15 +137,22 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         })
     }
 
-    override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage =
+    private fun richMessage(html:String,photoId:String?):JsonObject = buildJsonObject {
+        put("html",html);put("skip_entity_detection",true)
+        if(photoId!=null) put("media",buildJsonArray { add(buildJsonObject {
+            put("id","training-photo")
+            put("media",buildJsonObject { put("type","photo");put("media",photoId) })
+        }) })
+    }
+    override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?):TgMessage =
         json.decodeFromJsonElement(call("sendRichMessage",buildJsonObject {
-            put("chat_id",chatId);put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("chat_id",chatId);put("rich_message",richMessage(html,photoId))
             put("disable_notification",chatId<0);put("reply_markup",json.encodeToJsonElement(keyboard))
         }))
-    override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) {
+    override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?) {
         try { call("editMessageText",buildJsonObject {
             put("chat_id",chatId);put("message_id",messageId)
-            put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+            put("rich_message",richMessage(html,photoId))
             put("reply_markup",json.encodeToJsonElement(keyboard))
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }

@@ -775,7 +775,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         try {
             if (old?.message != null) {
                 try {
-                    if(out.richHtml!=null) api.editRich(chat,old.message,out.text,out.richHtml,out.keyboard)
+                    if(out.richHtml!=null) api.editRich(chat,old.message,out.text,out.richHtml,out.keyboard,out.photoId)
                     else api.edit(chat, old.message, out.text, out.keyboard)
                 }
                 catch (failure: TelegramFailure) {
@@ -786,7 +786,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
                 state.deliveryResult(key, "SENT", old.message)
             } else {
-                val msg = if(out.richHtml!=null) api.sendRich(chat,out.text,out.richHtml,out.keyboard)
+                val msg = if(out.richHtml!=null) api.sendRich(chat,out.text,out.richHtml,out.keyboard,out.photoId)
                     else api.send(chat, out.text, out.keyboard)
                 state.deliveryResult(key, "SENT", msg.id)
             }

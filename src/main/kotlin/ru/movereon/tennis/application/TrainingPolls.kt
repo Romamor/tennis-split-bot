@@ -35,6 +35,10 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
     private fun get(c:Connection,group:Long,id:String)=readPoll(c,group,id)
     fun get(group:Long,id:String)=db.read { get(it,group,id) }
     fun byTelegram(id:String)=db.read { c -> sqlQuery(c,"SELECT * FROM training_polls WHERE telegram_id=?",id,map=::readPollRow).singleOrNull() }
+    /** The completed poll owns the photo used by its resulting training card. */
+    fun photoForTraining(group:Long,training:String):String? = db.read { c ->
+        sqlQuery(c,"SELECT photo_file_id FROM training_polls WHERE group_id=? AND training_id=?",group,training) { it.getString(1) }.singleOrNull()
+    }
     fun canManage(a:Access,p:TrainingPoll)=a.groupId==p.group && (a.userId==p.creator || service.isAdmin(a))
     fun requireManager(a:Access,p:TrainingPoll) {
         db.read { member(it,a) }

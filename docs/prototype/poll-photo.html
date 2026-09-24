@@ -51,6 +51,12 @@
       message.textContent='🏓 Теннис\n25.09.2026 · начало 18:30';
       if(photoUrl){const img=document.createElement('img');img.src=photoUrl;img.alt='Фото, прикреплённое к опросу';img.className='poll-photo';message.append(img)}
       for(const value of ['В 18:00','К началу — в 18:30','В 19:00','Не приду']){const option=document.createElement('div');option.className='option';option.textContent=value;message.append(option)}
+      buttons.append(button('🏁 Завершить сбор',()=>{step='training';render()},true));
+    }else if(step==='training'){
+      message.textContent='📌 Закреплённая тренировка\nТеннис\n25.09.2026 · 18:30\nСтатус: Открыта';
+      if(photoUrl){const img=document.createElement('img');img.src=photoUrl;img.alt='Фото, сохранённое в карточке тренировки';img.className='poll-photo';message.append(img)}
+      const roster=document.createElement('div');roster.className='option';roster.textContent='Участник  |  Время  |  Оплата  |  Баланс';message.append(roster);
+      buttons.append(button('🏓 Открыть',()=>{},true));
       buttons.append(button('Создать заново',()=>{step='ready';render()}));
     }else{
       message.textContent=step==='group'?'Выбери группу для опроса.':'Создание опроса отменено.';

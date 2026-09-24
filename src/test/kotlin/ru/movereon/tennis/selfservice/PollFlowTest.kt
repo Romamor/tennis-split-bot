@@ -93,6 +93,17 @@ class PollFlowTest {
         val poll=bot.polls.active(-1).single()
         assertEquals("new-photo",poll.photoId)
         assertEquals("new-photo",fake.pollPhotos[poll.telegramId])
+        click("Завершить сбор");click("Завершить сбор")
+        bot.finishPollsAfterDrain();bot.maintain()
+        val card=bot.state.delivery("training:-1:${poll.id}")!!
+        assertTrue(fake.pinned.contains(-1L to card.message!!))
+        assertEquals("new-photo",fake.richPhotos[-1L to card.message])
+        assertTrue(fake.richMessages.getValue(-1L to card.message).startsWith("<img src=\"tg://photo?id=training-photo\"/>"))
+        assertEquals("new-photo",bot.polls.photoForTraining(-1,poll.id))
+        bot.service.execute(Access(-1,2),"edit-photo-training",SettlementCommand.ChangeAttendance(poll.id,2,AttendanceChange.JOIN))
+        bot.maintain()
+        assertEquals("new-photo",fake.richPhotos[-1L to card.message])
+        assertEquals(card.message,bot.state.delivery("training:-1:${poll.id}")!!.message)
     }
 
     @Test fun `feature is per group default off with admin setting and unchanged direct creation`() {

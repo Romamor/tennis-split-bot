@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" type="device" compressed="false">
   <diagram id="screens-1" name="Участник">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="21422">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="21497">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -49,7 +49,7 @@
           <mxGeometry as="geometry" x="40" y="17395" width="2340" height="48" />
         </mxCell>
         <mxCell id="section11" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="40" y="20309" width="2340" height="48" />
+          <mxGeometry as="geometry" x="40" y="20384" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2441" width="430" height="344" />
@@ -2032,7 +2032,7 @@
           <mxGeometry as="geometry" x="0.0" y="287" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="19652" width="430" height="377" />
+          <mxGeometry as="geometry" x="650" y="19652" width="430" height="452" />
         </mxCell>
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2040,14 +2040,14 @@
         <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;padding:18px;border:1px solid #637d93;border-radius:8px;text-align:center;margin-bottom:10px&quot;&gt;🖼 Фото из опроса&lt;/div&gt;&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="319" />
         </mxCell>
         <mxCell id="screen-poll_training-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="390" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="20379" width="430" height="471" />
+          <mxGeometry as="geometry" x="60" y="20454" width="430" height="471" />
         </mxCell>
         <mxCell id="screen-equal_public-label" value="Без индивидуального времени · равные доли" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2062,7 +2062,7 @@
           <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="20379" width="430" height="663" />
+          <mxGeometry as="geometry" x="650" y="20454" width="430" height="663" />
         </mxCell>
         <mxCell id="screen-equal_personal-label" value="Без времени · гости разрешены" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-equal_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2092,7 +2092,7 @@
           <mxGeometry as="geometry" x="0.0" y="601" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1240" y="20379" width="430" height="424" />
+          <mxGeometry as="geometry" x="1240" y="20454" width="430" height="424" />
         </mxCell>
         <mxCell id="screen-simple_public-label" value="Без времени и гостей · карточка" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_public">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -2107,7 +2107,7 @@
           <mxGeometry as="geometry" x="0.0" y="362" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-simple_personal" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="20379" width="430" height="568" />
+          <mxGeometry as="geometry" x="1830" y="20454" width="430" height="568" />
         </mxCell>
         <mxCell id="screen-simple_personal-label" value="Без времени и гостей · участие" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-simple_personal">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -5149,7 +5149,7 @@
         <mxCell id="edge328-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1153" y="19988.5" />
+              <mxPoint x="1153" y="20063.5" />
               <mxPoint x="1153" y="265" />
               <mxPoint x="553" y="265" />
               <mxPoint x="553" y="410" />
@@ -5159,15 +5159,15 @@
         <mxCell id="edge329-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-equal_public-button0-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="575" y="20809.5" />
-              <mxPoint x="575" y="20459" />
+              <mxPoint x="575" y="20884.5" />
+              <mxPoint x="575" y="20534" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge330-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1177" y="20809.5" />
+              <mxPoint x="1177" y="20884.5" />
               <mxPoint x="1177" y="285" />
               <mxPoint x="1793" y="285" />
               <mxPoint x="1793" y="410" />
@@ -5177,31 +5177,31 @@
         <mxCell id="edge331-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1189" y="20857.5" />
-              <mxPoint x="1189" y="20424" />
+              <mxPoint x="1189" y="20932.5" />
+              <mxPoint x="1189" y="20499" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge332-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button1-1" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1201" y="20857.5" />
-              <mxPoint x="1201" y="20424" />
+              <mxPoint x="1201" y="20932.5" />
+              <mxPoint x="1201" y="20499" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge333-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-equal_personal-button2-0" target="screen-equal_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1105" y="20905.5" />
-              <mxPoint x="1105" y="20424" />
+              <mxPoint x="1105" y="20980.5" />
+              <mxPoint x="1105" y="20499" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge334-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-equal_personal-button3-0" target="screen-edit_denied">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1117" y="20953.5" />
+              <mxPoint x="1117" y="21028.5" />
               <mxPoint x="1117" y="14959" />
               <mxPoint x="-25" y="14959" />
               <mxPoint x="-25" y="15104" />
@@ -5211,25 +5211,25 @@
         <mxCell id="edge335-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-equal_personal-button4-0" target="screen-equal_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1129" y="21001.5" />
-              <mxPoint x="1129" y="20309" />
-              <mxPoint x="-37" y="20309" />
-              <mxPoint x="-37" y="20459" />
+              <mxPoint x="1129" y="21076.5" />
+              <mxPoint x="1129" y="20384" />
+              <mxPoint x="-37" y="20384" />
+              <mxPoint x="-37" y="20534" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge336-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-simple_public-button0-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1731" y="20762.5" />
-              <mxPoint x="1731" y="20459" />
+              <mxPoint x="1731" y="20837.5" />
+              <mxPoint x="1731" y="20534" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge337-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button0-0" target="screen-personal_payment">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2333" y="20762.5" />
+              <mxPoint x="2333" y="20837.5" />
               <mxPoint x="2333" y="280" />
               <mxPoint x="1793" y="280" />
               <mxPoint x="1793" y="410" />
@@ -5239,15 +5239,15 @@
         <mxCell id="edge338-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=1;entryY=0.05;" edge="1" parent="loops" source="screen-simple_personal-button1-0" target="screen-simple_personal">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="20810.5" />
-              <mxPoint x="2345" y="20424" />
+              <mxPoint x="2345" y="20885.5" />
+              <mxPoint x="2345" y="20499" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge339-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-simple_personal-button2-0" target="screen-edit_denied">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2357" y="20858.5" />
+              <mxPoint x="2357" y="20933.5" />
               <mxPoint x="2357" y="14964" />
               <mxPoint x="-1" y="14964" />
               <mxPoint x="-1" y="15104" />
@@ -5257,10 +5257,10 @@
         <mxCell id="edge340-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-simple_personal-button3-0" target="screen-simple_public">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2369" y="20906.5" />
-              <mxPoint x="2369" y="20314" />
-              <mxPoint x="1167" y="20314" />
-              <mxPoint x="1167" y="20459" />
+              <mxPoint x="2369" y="20981.5" />
+              <mxPoint x="2369" y="20389" />
+              <mxPoint x="1167" y="20389" />
+              <mxPoint x="1167" y="20534" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -7677,7 +7677,7 @@
           <mxGeometry as="geometry" x="0.0" y="571" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="22269" width="430" height="377" />
+          <mxGeometry as="geometry" x="650" y="22269" width="430" height="452" />
         </mxCell>
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -7685,11 +7685,11 @@
         <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;padding:18px;border:1px solid #637d93;border-radius:8px;text-align:center;margin-bottom:10px&quot;&gt;🖼 Фото из опроса&lt;/div&gt;&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="319" />
         </mxCell>
         <mxCell id="screen-poll_training-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="390" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-equal_public" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="650" y="23252" width="430" height="471" />
@@ -11507,7 +11507,7 @@
         <mxCell id="edge400-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1153" y="22605.5" />
+              <mxPoint x="1153" y="22680.5" />
               <mxPoint x="1153" y="265" />
               <mxPoint x="613" y="265" />
               <mxPoint x="613" y="410" />
@@ -14101,7 +14101,7 @@
           <mxGeometry as="geometry" x="0.0" y="619" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-poll_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="650" y="23800" width="430" height="377" />
+          <mxGeometry as="geometry" x="650" y="23800" width="430" height="452" />
         </mxCell>
         <mxCell id="screen-poll_training-label" value="Тренировка из опроса: 0 ч / 0 ₽" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -14109,11 +14109,11 @@
         <mxCell id="screen-poll_training-context" value="В группе · видно всем" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        <mxCell id="screen-poll_training-body" value="&lt;div style=&quot;padding:18px;border:1px solid #637d93;border-radius:8px;text-align:center;margin-bottom:10px&quot;&gt;🖼 Фото из опроса&lt;/div&gt;&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Открыта&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Время&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ч&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;0 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="319" />
         </mxCell>
         <mxCell id="screen-poll_training-button0-0" value="🏓 Открыть" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-poll_training">
-          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="390" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-administrators" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="20051" width="430" height="405" />
@@ -18110,7 +18110,7 @@
         <mxCell id="edge405-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-poll_training-button0-0" target="screen-personal_before">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1105" y="24136.5" />
+              <mxPoint x="1105" y="24211.5" />
               <mxPoint x="1105" y="270" />
               <mxPoint x="553" y="270" />
               <mxPoint x="553" y="410" />

@@ -45,8 +45,16 @@ class HttpTelegramApiTest {
         assertEquals("sendRichMessage",bodies.last().first)
         assertTrue(bodies.last().second.getValue("disable_notification").jsonPrimitive.boolean)
         assertFalse(bodies.last().second.containsKey("text"))
+        assertFalse(bodies.last().second.getValue("rich_message").jsonObject.containsKey("media"))
+        val withPhoto="<img src=\"tg://photo?id=training-photo\"/>"+html
+        api.sendRich(-123,"Игрок",withPhoto,keyboard,"photo-file")
+        val attachment=bodies.last().second.getValue("rich_message").jsonObject.getValue("media").jsonArray.single().jsonObject
+        assertEquals("training-photo",attachment.getValue("id").jsonPrimitive.content)
+        assertEquals("photo-file",attachment.getValue("media").jsonObject.getValue("media").jsonPrimitive.content)
         api.editRich(-123,77,"Игрок",html,keyboard)
         assertEquals(html,bodies.last().second.getValue("rich_message").jsonObject.getValue("html").jsonPrimitive.content)
+        api.editRich(-123,77,"Игрок",withPhoto,keyboard,"photo-file")
+        assertEquals("photo-file",bodies.last().second.getValue("rich_message").jsonObject.getValue("media").jsonArray.single().jsonObject.getValue("media").jsonObject.getValue("media").jsonPrimitive.content)
         api.ephemeralRich(-123,22,"callback","Игрок",html,keyboard)
         assertFalse(bodies.last().second.getValue("ephemeral_message_parameters").jsonObject.getValue("replace_callback_query_message").jsonPrimitive.boolean)
         api.editEphemeralRich(-123,22,73,"Игрок",html,keyboard)

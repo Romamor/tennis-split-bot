@@ -12,6 +12,7 @@ class FakeTelegramApi : TelegramApi {
     val pinned=mutableListOf<Pair<Long,Long>>()
     val silentPins=mutableListOf<Pair<Long,Long>>()
     val richMessages=mutableMapOf<Pair<Long,Long>,String>()
+    val richPhotos=mutableMapOf<Pair<Long,Long>,String?>()
     var pinFailure:TelegramFailure?=null
     var pinAttempts=0
     val unpinned=mutableListOf<Pair<Long,Long>>()
@@ -20,8 +21,8 @@ class FakeTelegramApi : TelegramApi {
     override fun unpin(chatId:Long,messageId:Long) { unpinAttempts+=chatId to messageId;unpinFailure?.let { throw it };unpinned+=chatId to messageId }
 
     override fun pin(chatId:Long,messageId:Long,silent:Boolean) { pinAttempts++;pinFailure?.let { throw it };pinned+=chatId to messageId;if(silent) silentPins+=chatId to messageId }
-    override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = send(chatId,text,keyboard).also { richMessages[chatId to it.id]=html }
-    override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard) { edit(chatId,messageId,text,keyboard);richMessages[chatId to messageId]=html }
+    override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?):TgMessage = send(chatId,text,keyboard).also { richMessages[chatId to it.id]=html;richPhotos[chatId to it.id]=photoId }
+    override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?) { edit(chatId,messageId,text,keyboard);richMessages[chatId to messageId]=html;richPhotos[chatId to messageId]=photoId }
 
     val privateRedirects=mutableListOf<Pair<String,String>>()
     override fun openPrivate(callbackId:String,url:String) { privateRedirects+=callbackId to url }

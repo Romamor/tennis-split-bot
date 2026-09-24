@@ -97,7 +97,7 @@ class ExportBotScreens {
   }
   TrainingPolls polls=new TrainingPolls(svc,clock);
   polls.setEnabled(superA,true);
-  var poll=polls.create(auth,"poll-own","Теннис","2026-09-12","18:30","Не приду",null);
+  var poll=polls.create(auth,"poll-own","Теннис","2026-09-12","18:30","Не приду","example-photo-id");
   polls.attach(poll,"demo-poll-"+user,800L);
   cap("menu_polls","menu","");
   for(String kind:List.of("title","date","time","poll_decline","group","ready"))capture("poll_"+kind,"form","","",form(kind,"","\"pollId\":\"poll-own\",\"publishGroup\":-1,\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);

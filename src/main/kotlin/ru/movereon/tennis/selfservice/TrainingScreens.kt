@@ -6,17 +6,23 @@ import ru.movereon.tennis.telegram.*
 import ru.movereon.tennis.selfservice.Screens.Companion.phase
 import ru.movereon.tennis.selfservice.Screens.Companion.hours
 
-internal data class ScreenContent(val text:String,val html:String?=null)
+internal data class ScreenContent(val text:String,val html:String?=null,val photoId:String?=null)
 
 /** Cards, editor and shared live attendance controls. No Telegram calls or financial writes. */
 internal class TrainingScreens(private val service:SettlementService,private val state:InteractionStore) {
+    private val polls=TrainingPolls(service)
     fun render(layout:ScreenLayout,a:Access?,personRow:(Long,String,ScreenAction)->Unit,label:(Long)->String,account:(Long)->Account):ScreenContent = with(layout) {
         var richHtml:String?=null
+        var photoId:String?=null
         val text=when(action.kind) {
             "training", "public", "my_training" -> {
                 val t = service.training(requireNotNull(a), action.id)
                 val content=TrainingCard.render(t,account)
                 richHtml=content.html
+                if(action.kind=="public") {
+                    photoId=polls.photoForTraining(t.groupId,t.id)
+                    if(photoId!=null) richHtml="<img src=\"tg://photo?id=training-photo\"/>"+content.html
+                }
                 val index=0
                 var body=content.text
                 if(action.kind=="training" && service.isAdmin(a)) {
@@ -125,7 +131,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
             }
             else -> error("Not a training screen: ${action.kind}")
         }
-        ScreenContent(text,richHtml)
+        ScreenContent(text,richHtml,photoId)
     }
     companion object {
         val kinds=setOf("training","public","my_training","training_status","add_player_list","exclude_player_list","manage_players","participation","participation_time","participation_payment")

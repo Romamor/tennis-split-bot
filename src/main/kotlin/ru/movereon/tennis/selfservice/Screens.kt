@@ -16,7 +16,7 @@ class Screens(private val service: SettlementService, private val state: Interac
     private val pollScreens=PollScreens(service,polls)
     private val trainingScreens=TrainingScreens(service,state)
     private val financeScreens=FinanceScreens(service)
-    data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null)
+    data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null,val photoId:String?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
     }
@@ -46,6 +46,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             row(text+(if(id in ambiguous) " · #${accounts.filter { labels[it.id]==labels[id] }.sortedBy { it.id }.indexOfFirst { it.id==id }+1}" else ""),destination)
         }
         var richHtml:String?=null
+        var photoId:String?=null
         val text = when (action.kind) {
             "profile_preview" -> {
                 rows+=listOf(TgButton("Открыть профиль Telegram",url="tg://user?id=${action.user}"))
@@ -78,7 +79,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             in TrainingScreens.kinds -> {
                 val content=trainingScreens.render(this,a,::personRow,::label,::account)
-                richHtml=content.html
+                richHtml=content.html;photoId=content.photoId
                 content.text
             }
             "player" -> {
@@ -388,15 +389,15 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
-        finishScreen(this,text,richHtml,notice,inGroup)
+        finishScreen(this,text,richHtml,notice,inGroup,photoId)
         }
     }
-    private fun finishScreen(layout:ScreenLayout,text:String,richHtml:String?,notice:String?,inGroup:Boolean):Output=with(layout) {
+    private fun finishScreen(layout:ScreenLayout,text:String,richHtml:String?,notice:String?,inGroup:Boolean,photoId:String?=null):Output=with(layout) {
         if (inGroup && action.kind !in setOf("public","player","exit_confirm","participation","participation_time","participation_payment")) row("Закрыть", next("close_panel"))
         // No arbitrary user content can grow a Telegram message beyond the documented limit.
         val result = (notice?.let { "${clean(it, 220)}\n\n" } ?: "") + text
         check(result.length <= if(richHtml==null) 4096 else 32768) { "Экран превышает допустимую длину" }
-        Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it })
+        Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it },photoId)
     }
     companion object {
         val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
