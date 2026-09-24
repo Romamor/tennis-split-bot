@@ -171,13 +171,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                 row("Отмена",f.origin ?: next("roster",option="players"))
                 "${clean(t.title,60)} · ${date(t.date)}\nУчастники группы · выбрано: ${selected.size}\nОтметь нескольких людей на любых страницах. Добавим по 1 ч и 0 ₽ после подтверждения."
             }
-            "transfer_people" -> {
-                val p=service.roster(requireNotNull(a),action.page,exclude=setOf(a.userId))
-                p.items.forEach { person ->
-                    personRow(person.account.id,label(person.account.id),next("transfer_direction",target=person.account.id).copy(back=action.copy(page=p.index)))
-                }
-                pages(p.index,p.pages); back(ScreenAction("debts",action.group)); "С кем рассчитываемся?"
-            }
             "administrators", "admin_candidates" -> {
                 val p=service.administrators(requireNotNull(a),telegramAdmins,action.kind=="admin_candidates",action.page)
                 p.items.forEach { entry ->
@@ -232,62 +225,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                 back(next("training"))
                 "Если карточки в группе нет, её можно опубликовать заново. При неизвестном результате прежней отправки в группе могла остаться старая копия. Данные тренировки не дублируются."
             }
-            "balances", "settled" -> {
-                val p = service.roster(requireNotNull(a), action.page, balanceOnly = true, settled = action.kind == "settled")
-                pages(p.index, p.pages)
-                if(action.kind=="settled") row("👥 Баланс группы",action.back?.takeIf { it.kind=="balances" } ?: ScreenAction("balances",action.group,back=ScreenAction("debts",action.group)))
-                else row("⚖️ Нулевой баланс",next("settled").copy(back=action))
-                back(ScreenAction("debts",action.group))
-                (if(action.kind=="settled") "⚖️ Нулевой баланс" else "👥 Баланс группы")+" · ${p.total}\n\n"+
-                    p.items.joinToString("\n") { "${clean(it.account.name,48)} · баланс: ${signed(it.balance)} ₽" }
-            }
-            "debts" -> {
-                requireNotNull(a)
-                val balances = service.balances(a)
-                val transfers = suggestTransfers(balances.mapKeys { ParticipantId(it.key.toString()) }).filter { it.from.value == a.userId.toString() || it.to.value == a.userId.toString() }
-                val index = action.page.coerceIn(0, maxOf(0, (transfers.size - 1) / 8))
-                transfers.drop(index * 8).take(8).forEach {
-                    val from = it.from.value.toLong(); val to = it.to.value.toLong()
-                    row("${if (from == a.userId) "Я → ${shortName(to)}" else "${shortName(from)} → я"}: ${it.amount} ₽",
-                        next("suggested_transfer", target = if (from == a.userId) to else from, value = it.amount, option = if (from == a.userId) "out" else "in").copy(back=action))
-                }
-                pages(index, maxOf(1, (transfers.size + 7) / 8))
-                row("💸 Записать перевод", next("transfer_people").copy(back=action))
-                row("🧾 История переводов",next("transfers").copy(back=action))
-                row("👥 Баланс группы",next("balances").copy(back=action))
-                menu()
-                "Мой баланс: ${signed(balances[a.userId] ?: 0)} ₽\n" + if (transfers.isEmpty()) "Сейчас рассчитываться не с кем." else "Предлагаемые переводы для взаиморасчётов. Отмечай перевод после передачи денег."
-            }
-            "transfers" -> {
-                val p = service.transfers(requireNotNull(a), action.page)
-                p.items.forEach { row("${date(it.date)} · ${it.amount} ₽ · ${if (it.from == a.userId) "${shortName(it.to)} ←" else "${shortName(it.from)} →"}", next("transfer", it.id).copy(back=action.copy(page=p.index))) }
-                pages(p.index, p.pages); back(ScreenAction("debts",action.group))
-                "Мои переводы · ${p.total}"
-            }
-            "transfer" -> {
-                val t = service.transfer(requireNotNull(a), action.id)
-                checkAccounting(a.userId in setOf(t.from, t.to) || service.isAdmin(a), ErrorCode.FORBIDDEN, "Перевод доступен его сторонам")
-                if (a.userId in setOf(t.from, t.to)) {
-                    if(t.status!=PaymentStatus.CANCELLED) row("✏️ Исправить сумму",next("edit_transfer_amount",version=t.version).copy(back=action))
-                    if (t.status == PaymentStatus.ACTIVE) row("Уточнить перевод", next("review_transfer", version = t.version))
-                    if (t.status == PaymentStatus.REVIEW && t.reviewer == a.userId) {
-                        row("Всё верно", next("confirm_transfer", version = t.version))
-                        row("Отменить запись", next("cancel_transfer", version = t.version))
-                    }
-                }
-                row("История изменений",next("transfer_history").copy(back=action))
-                back(ScreenAction("transfers",action.group,back=ScreenAction("debts",action.group)))
-                "${name(t.from)} → ${name(t.to)}\n${t.amount} ₽ · ${date(t.date)}\n" + when (t.status) {
-                    PaymentStatus.ACTIVE -> "Учтён"
-                    PaymentStatus.REVIEW -> "Уточняем · пока не влияет на баланс"
-                    PaymentStatus.CANCELLED -> "Отменён"
-                } + if (t.note.isNotBlank()) "\n${clean(t.note, 300)}" else ""
-            }
-            "transfer_direction" -> {
-                row("Я отправил → ${shortName(action.user)}", next("transfer_amount", option = "out").copy(back=action))
-                row("Я получил ← ${shortName(action.user)}", next("transfer_amount", option = "in").copy(back=action))
-                back(next("transfer_people")); "Кто кому передал деньги?"
-            }
             "form" -> {
                 val f = requireNotNull(form)
                 if(PaymentInput.isForm(f)) {
@@ -296,10 +233,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                     content.text
                 } else {
                 fun formAction(kind: String) = next(kind, option = state.formSignature(f))
-                fun similarText() = if(f.similar.isEmpty()) "" else "\nРанее записано:\n"+f.similar.take(2).joinToString("\n") {
-                    val t=service.transfer(requireNotNull(a),it)
-                    "${shortName(t.from)} → ${shortName(t.to)} · ${t.amount} ₽ · ${date(t.date)}"
-                }
                 when (f.kind) {
                     "title" -> { row("Оставить «${clean(f.title, 30)}»", formAction("form_next")); "Напиши название тренировки." }
                     "date" -> {
@@ -349,21 +282,6 @@ class Screens(private val service: SettlementService, private val state: Interac
                             "\n\nБудет опубликован и закреплён неанонимный опрос. Тренировка появится после завершения сбора." else if (f.training.isEmpty()) "Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." else "Данные изменятся в существующей тренировке."
                     }
                     "paid" -> "${name(f.user)}\nНапиши общую сумму оплаты стола в рублях. Можно 0."
-                    "edit_transfer_amount" -> "Текущая сумма: ${f.amount} ₽\nНапиши исправленную сумму в рублях."
-                    "edit_transfer_ready", "edit_transfer_duplicate" -> {
-                        row("✅ Сохранить сумму",formAction("save_transfer_amount"))
-                        (if(f.kind=="edit_transfer_duplicate") "Похожий перевод за последние 24 часа уже есть. Подтвердить исправление?\n" else "Проверь исправленную сумму:\n")+"${f.amount} ₽"+similarText()
-                    }
-                    "transfer_amount" -> "${if (f.direction == "out") "Я → ${name(f.user)}" else "${name(f.user)} → я"}\nНапиши сумму уже переданных денег в целых рублях."
-                    "transfer_ready", "transfer_duplicate" -> {
-                        row(if (f.kind == "transfer_duplicate") "Это ещё один перевод — записать" else "Деньги переданы — записать", formAction("save_transfer"))
-                        if (f.kind == "transfer_ready") row("Изменить дату", formAction("transfer_date"))
-                        if (f.kind == "transfer_ready") row("Комментарий", formAction("transfer_note"))
-                        (if (f.kind == "transfer_duplicate") "Похожий перевод уже записан за последние 24 часа. Это ещё один перевод?\n\n" else "") +
-                            "${if (f.direction == "out") "Я → ${name(f.user)}" else "${name(f.user)} → я"}\n${f.amount} ₽ · ${date(f.date)}" + if (f.note.isNotBlank()) "\n${clean(f.note, 300)}"+similarText() else similarText()
-                    }
-                    "transfer_date" -> "Напиши дату перевода: ДД.ММ.ГГГГ."
-                    "transfer_note" -> "Напиши комментарий к переводу, не длиннее 300 символов."
                     "pick_account", "pick_players", "pick_add_player" -> "Выбери реальный аккаунт кнопкой под строкой ввода. Он появится в составе этой группы."
                     else -> error("Unknown input form")
                 }.also {
@@ -376,15 +294,15 @@ class Screens(private val service: SettlementService, private val state: Interac
                         })
                     } else if(f.kind=="pick_add_player") row("Назад",requireNotNull(f.origin))
                     else if(f.kind=="pick_players") row("Назад к выбору",next("add_players",id=f.training,page=f.page,option=state.formSignature(f)))
-                    else row("Отмена",f.origin ?: next(if (f.training.isNotEmpty()) "training" else "debts", id = f.training))
+                    else row("Отмена",f.origin ?: next(if (f.training.isNotEmpty()) "training" else "menu", id = f.training))
                 }
                 }
             }
-            "history", "transfer_history" -> {
-                val p = service.history(requireNotNull(a), action.id.takeIf { it.isNotEmpty() && action.kind=="history" }, action.page,action.id.takeIf { action.kind=="transfer_history" })
+            "history" -> {
+                val p = service.history(requireNotNull(a), action.id.takeIf { it.isNotEmpty() }, action.page)
                 val historyZone=ZoneId.of(service.group(action.group).timeZone)
                 pages(p.index, p.pages)
-                back(next(if(action.kind=="transfer_history") "transfer" else if (action.id.isEmpty()) "menu" else "training"))
+                back(next(if (action.id.isEmpty()) "menu" else "training"))
                 "История изменений · ${p.total}\n\n" + p.items.joinToString("\n\n") { "${Instant.parse(it.occurredAt).atZone(historyZone).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} · ${if(it.kind=="MigrateTrainingState") "Обновление бота" else shortName(it.actorId)}\n${historyDescriptions.describe(it).take(330)}" }
             }
             else -> error("Unknown screen: ${action.kind}")
@@ -400,7 +318,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it },photoId)
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "debts", "balances", "settled", "transfers", "transfer", "transfer_people", "transfer_direction", "transfer_amount", "new", "edit_details", "profile_preview", "ask_paid", "edit_transfer_amount", "save_transfer_amount", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history", "transfer_history")
+        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

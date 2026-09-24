@@ -136,6 +136,19 @@ class FinanceFlowTest {
         message(2,"150")
         assertNull(bot.state.form(2,2));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
     }
+    @Test fun `historical cancelled transfer stays readable without returning to pending receipts`() {
+        setup()
+        run(SettlementCommand.RecordTransfer("old",2,1,120,"2026-09-13"),Access(-1,2))
+        run(SettlementCommand.ChangeTransfer("old",1,TransferChange.REVIEW),Access(-1,2))
+        run(SettlementCommand.ChangeTransfer("old",2,TransferChange.CANCEL),Access(-1,2))
+        open(2)
+        assertTrue(rows(2).flatten().contains("Принять платеж(0)"))
+        click(2,"История платежей")
+        assertTrue(latest(2).text!!.contains("Отменён"))
+        click(2,rows(2).first().single())
+        assertTrue(latest(2).text!!.contains("Запись отменена"))
+        assertTrue(bot.service.balances(Access(-1,2)).values.all { it==0L })
+    }
     @Test fun `other payment input waits for receipt detects duplicates and moves the menu below text`() {
         setup();open(2);val menu=latest(2);click(2,"Другой платёж");click(2,"Игрок 1")
         assertTrue(latest(2).text!!.contains("Напиши сумму в рублях"))

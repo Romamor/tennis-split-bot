@@ -33,8 +33,8 @@ internal object ButtonAppearance {
             "select_group","form_group_select","groups" -> "👥"
             "edit_training","edit_details","form_restart" -> "✏️"
             "training_status","set_training_status" -> when(action.option) { "CANCELLED"->"🚫";"CLOSED"->"✅";"OPEN"->"🔓";else->"🔄" }
-            "history","transfer_history","finance_history" -> "📜"
-            "finance","finance_balances","balances","settled" -> "💰"
+            "history","finance_history" -> "📜"
+            "finance","finance_balances" -> "💰"
             "finance_send","finance_send_confirm","finance_send_save","payment_new","finance_payment" -> "💸"
             "finance_receive","finance_receive_confirm","finance_receive_save" -> "📥"
             "payment_save","save_training","save_poll","save_attendance","save_players","save_default_title","save_default_time" -> "✅"

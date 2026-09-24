@@ -119,11 +119,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 if(plan.command is SettlementCommand.CreateTraining) requirePublication(plan.screen.group,plan.user)
                 try {
                     service.execute(requireNotNull(a), "telegram:${update.id}", plan.command)
-                    if (plan.command is SettlementCommand.RecordTransfer || plan.command is SettlementCommand.EditTransferAmount || plan.command is SettlementCommand.SendOtherPayment || plan.command is SettlementCommand.RecordAdminPayment) effective = plan.copy(form = null)
+                    if (plan.command is SettlementCommand.SendOtherPayment || plan.command is SettlementCommand.RecordAdminPayment) effective = plan.copy(form = null)
                 }
                 catch (duplicate: DuplicateTransfer) {
                     effective = plan.copy(command = null, screen = ScreenAction("form", plan.screen.group),
-                        form = requireNotNull(plan.form).copy(kind = if(plan.command is SettlementCommand.SendOtherPayment) "payment_duplicate" else if(plan.command is SettlementCommand.EditTransferAmount) "edit_transfer_duplicate" else "transfer_duplicate",similar=duplicate.ids))
+                        form = requireNotNull(plan.form).copy(kind = "payment_duplicate",similar=duplicate.ids))
                 }
             }
             effective=pollWorkflow.execute(effective,a,::requirePublication)
@@ -336,7 +336,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","debts","balances","settled","transfers","transfer_people","transfer_direction","transfer","history","transfer_history","administrators","admin_candidates","close_panel")
+        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","history","administrators","admin_candidates","close_panel")
         val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
         val exiting=action.kind in exits
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
@@ -461,7 +461,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val f=InputForm("title", action.group, t.id, version = t.version, title = t.title, date = t.date, time = t.startTime,origin=action.back)
                 formPlan(f.copy(baseline=formValues(f)))
             }
-            "form_next", "form_restart", "form_photo", "form_photo_remove", "save_training", "save_poll", "save_transfer", "save_transfer_amount", "transfer_date", "transfer_note" -> {
+            "form_next", "form_restart", "form_photo", "form_photo_remove", "save_training", "save_poll" -> {
                 val f = requireNotNull(savedForm) { "Открой форму заново" }
                 checkAccounting(f.group == action.group, ErrorCode.FORBIDDEN, "Эта форма относится к другой группе")
                 checkAccounting(action.option == state.formSignature(f), ErrorCode.STALE_VERSION, "Форма изменилась. Используй кнопки текущего сообщения")
@@ -470,11 +470,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     "form_restart" -> formPlan(f.copy(kind = "title"))
                     "form_photo" -> { require(f.kind=="ready" && f.pollId.isNotEmpty());formPlan(f.copy(kind="poll_photo")) }
                     "form_photo_remove" -> { require(f.kind=="ready" && f.pollId.isNotEmpty());formPlan(f.copy(pollPhotoId=null)) }
-                    "transfer_date", "transfer_note" -> formPlan(f.copy(kind = action.kind))
-                    "save_transfer_amount" -> {
-                        require(f.kind in setOf("edit_transfer_ready","edit_transfer_duplicate"))
-                        plan(f.origin ?: ScreenAction("transfer",f.group,f.transfer),SettlementCommand.EditTransferAmount(f.transfer,f.version,f.amount,f.kind=="edit_transfer_duplicate"),f)
-                    }
                     "save_poll" -> {
                         require(f.kind=="ready" && f.pollId.isNotEmpty())
                         val group=requireNotNull(f.publishGroup)
@@ -493,13 +488,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                             plan(ScreenAction("my_training",group,id,back=ScreenAction("my_trainings",0)),command)
                         } else plan(f.origin?.takeIf { it.kind=="training" } ?: ScreenAction("training",f.group,id),command)
                     }
-                    else -> {
-                        require(f.kind in setOf("transfer_ready", "transfer_duplicate")) { "Сначала заполни перевод" }
-                        val id = UUID.randomUUID().toString()
-                        plan(ScreenAction("transfer", f.group, id,back=ScreenAction("transfers",f.group,back=ScreenAction("debts",f.group))), SettlementCommand.RecordTransfer(id,
-                            if (f.direction == "out") user.id else f.user, if (f.direction == "out") f.user else user.id,
-                            f.amount, f.date, f.note, allowSimilar = f.kind == "transfer_duplicate"), f)
-                    }
+                    else -> error("Неизвестное действие формы")
                 }
             }
             "participation", "participation_time", "participation_payment", "participation_change" -> {
@@ -555,19 +544,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 plan(action.copy(kind="admin_person"),SettlementCommand.SetAdministrator(action.user,action.value==1L))
             }
             "ask_paid" -> formPlan(InputForm("paid", action.group, action.id, action.user,origin=action.copy(kind="player")))
-            "edit_transfer_amount" -> {
-                val t=service.transfer(requireNotNull(a),action.id)
-                checkAccounting(user.id in setOf(t.from,t.to) && t.status!=PaymentStatus.CANCELLED,ErrorCode.FORBIDDEN,"Исправлять могут стороны действующего перевода")
-                val f=InputForm("edit_transfer_amount",action.group,transfer=t.id,version=t.version,amount=t.amount,origin=action.back)
-                formPlan(f.copy(baseline=formValues(f)))
-            }
-            "transfer_amount", "suggested_transfer" -> formPlan(InputForm(if (action.kind == "suggested_transfer") "transfer_ready" else "transfer_amount",
-                action.group, user = action.user, date = today(), direction = action.option, amount = action.value,origin=action.back))
-            "review_transfer", "confirm_transfer", "cancel_transfer" -> plan(action.copy(kind = "transfer"), SettlementCommand.ChangeTransfer(action.id, action.version, when (action.kind) {
-                "review_transfer" -> TransferChange.REVIEW
-                "confirm_transfer" -> TransferChange.CONFIRM
-                else -> TransferChange.CANCEL
-            }))
             "pick_account" -> {
                 checkAccounting(canEdit(requireNotNull(a),action.id), ErrorCode.FORBIDDEN, "Добавлять может создатель тренировки или администратор этой группы")
                 formPlan(InputForm("pick_account", action.group, action.id, request = (update.id % Int.MAX_VALUE).toInt()))
@@ -602,7 +578,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun form(updated: InputForm) = EventPlan(user.id, chat, ScreenAction("form", f.group, f.training), form = updated)
         fun parsedDate() = runCatching { LocalDate.parse(text, DateTimeFormatter.ofPattern("dd.MM.uuuu").withResolverStyle(java.time.format.ResolverStyle.STRICT)) }.getOrElse { LocalDate.parse(text) }.toString()
         return when (f.kind) {
-            "edit_transfer_amount" -> form(f.copy(kind="edit_transfer_ready",amount=parseAmount(text)))
             "add_players" -> EventPlan(user.id,chat,ScreenAction("add_players",f.group,f.training,page=f.page),form=f,
                 notice="Отметь людей кнопками списка, затем нажми «Добавить».")
             "title" -> { require(text.length in 1..100) { "Название: от 1 до 100 символов" }; form(advance(f.copy(title = text))) }
@@ -621,9 +596,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 EventPlan(user.id, chat, ScreenAction("player", f.group, f.training, user = f.user),
                     draft=draft.copy(value=service.previewAttendance(draft.value,AttendanceChange.SET_PAID,amount,service.training(auth,f.training).rules)))
             }
-            "transfer_amount" -> form(f.copy(kind = "transfer_ready", amount = parseAmount(text)))
-            "transfer_date" -> form(f.copy(kind = "transfer_ready", date = parsedDate()))
-            "transfer_note" -> { require(text.length <= 300) { "Комментарий не длиннее 300 символов" }; form(f.copy(kind = "transfer_ready", note = text)) }
             else -> form(f)
         }
     }

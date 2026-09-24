@@ -510,7 +510,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     }
     fun financePayments(a:Access,page:Int=0,incomingOnly:Boolean=false):Page<MoneyTransfer> = database.read { c ->
         known(c,a.groupId,a.userId)
-        val condition="FROM transfers WHERE group_id=? AND "+if(incomingOnly) "to_user=? AND status='REVIEW'" else "(from_user=? OR to_user=?) AND status IN ('ACTIVE','REVIEW')"
+        val condition="FROM transfers WHERE group_id=? AND "+if(incomingOnly) "to_user=? AND status='REVIEW'" else "(from_user=? OR to_user=?)"
         val args=if(incomingOnly) arrayOf<Any>(a.groupId,a.userId) else arrayOf<Any>(a.groupId,a.userId,a.userId)
         val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(incomingOnly) 3 else 5
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))

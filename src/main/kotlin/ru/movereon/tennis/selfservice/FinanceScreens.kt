@@ -74,7 +74,12 @@ internal class FinanceScreens(private val service:SettlementService) {
                 checkAccounting(a.userId in setOf(t.from,t.to) || service.isAdmin(a),ErrorCode.FORBIDDEN,"Платёж доступен его сторонам и администратору группы")
                 val admin=service.administrativePayment(a,t.id)
                 row(if(action.back==null) "К моим финансам" else "Назад",action.back ?: ScreenAction("finance",a.groupId))
-                ScreenContent("${if(t.status==PaymentStatus.REVIEW) "Ожидает подтверждения" else "Платёж учтён"}\n"+
+                val status=when(t.status) {
+                    PaymentStatus.REVIEW -> "Ожидает подтверждения"
+                    PaymentStatus.ACTIVE -> "Платёж учтён"
+                    PaymentStatus.CANCELLED -> "Запись отменена"
+                }
+                ScreenContent("$status\n"+
                     "От кого: ${person(t.from)}\nКому: ${person(t.to)}\n${t.amount} ₽ · ${date(t.date)}"+
                     if(admin) "\nЗаписал администратор: ${person(t.createdBy)}. Подтверждение участников не требуется."
                     else if(t.status==PaymentStatus.REVIEW) "\nБаланс изменится после подтверждения получателем." else "")
@@ -84,7 +89,11 @@ internal class FinanceScreens(private val service:SettlementService) {
                 p.items.forEach { row("${date(it.date)} · ${person(it.from)} → ${person(it.to)} · ${it.amount} ₽",next("finance_payment",id=it.id).copy(back=action.copy(page=p.index))) }
                 pages(p.index,p.pages);row("⬅️ Назад",ScreenAction("finance",a.groupId))
                 table("История платежей",listOf("От кого","Кому","Сумма","Дата","Статус"),p.items.map {
-                    listOf(person(it.from),person(it.to),"${it.amount} ₽",date(it.date),if(it.status==PaymentStatus.ACTIVE) "Выполнен" else "В процессе")
+                    listOf(person(it.from),person(it.to),"${it.amount} ₽",date(it.date),when(it.status) {
+                        PaymentStatus.ACTIVE -> "Выполнен"
+                        PaymentStatus.REVIEW -> "В процессе"
+                        PaymentStatus.CANCELLED -> "Отменён"
+                    })
                 })
             }
             else -> error("Unknown finance screen")
