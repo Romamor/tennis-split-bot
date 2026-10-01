@@ -518,14 +518,15 @@ class SelfServiceBotTest {
     @Test fun `40 players with guests fit in one rich card across training states`() {
         setup();create();val auth=Access(-1,1,true);val original=bot.service.trainings(auth).items.single()
         val users=(5L..44L).toList()
-        users.forEach { bot.service.remember(Account(it,"Участник $it " + "ДлинноеИмя".repeat(6)));bot.service.rememberMembership(-1,it,true) }
+        users.forEach { bot.service.remember(Account(it,"Участник $it " + "ДлинноеИмя".repeat(6),username=if(it==5L) "training_player" else null));bot.service.rememberMembership(-1,it,true) }
         val players=users.mapIndexed { i,user -> Attendance(user,true,60,60,paid=if(i==0) 400 else 0,ordinal=i,guestCount=1) }
         for(phase in TrainingPhase.entries) {
             val content=TrainingCard.render(original.copy(players=players,phase=phase),bot.service::account)
             assertEquals(81,Regex("<tr>").findAll(content.html).count())
             assertTrue(content.text.length>4096);assertTrue(content.text.length<=32768)
             assertFalse(content.text.contains("Страница"))
-            users.forEach { assertTrue(content.html.contains("tg://user?id=$it")) }
+            assertTrue(content.html.contains("href=\"https://t.me/training_player\""))
+            users.filter { it!=5L }.forEach { assertTrue(content.html.contains("tg://user?id=$it")) }
         }
         bot.service.execute(auth,"add",SettlementCommand.AddPlayers(original.id,1,users))
         users.forEach { bot.service.execute(auth,"guest:$it",SettlementCommand.ChangeAttendance(original.id,it,AttendanceChange.ADJUST_GUESTS,1)) }

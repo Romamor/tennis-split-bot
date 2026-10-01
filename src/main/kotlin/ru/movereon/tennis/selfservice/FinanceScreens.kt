@@ -65,7 +65,7 @@ internal class FinanceScreens(private val service:SettlementService) {
             "finance_balances" -> {
                 val p=service.financeBalances(a,action.page)
                 pages(p.index,p.pages);row("⬅️ Назад",ScreenAction("finance",a.groupId))
-                val data=table("Баланс группы",listOf("Участник","Баланс"),p.items.map { listOf(person(it.account.id),"${if(it.balance>0) "+" else ""}${it.balance} ₽") },p.items.map { it.account.id })
+                val data=table("Баланс группы",listOf("Участник","Баланс"),p.items.map { listOf(person(it.account.id),"${if(it.balance>0) "+" else ""}${it.balance} ₽") },p.items.map { it.account })
                 val note="+ — участнику осталось получить; − — участнику осталось внести. Ожидающие подтверждения платежи пока не учтены."
                 ScreenContent(data.text+"\n"+note,data.html+"<p>${TrainingCard.escape(note)}</p>")
             }
@@ -131,11 +131,11 @@ internal class FinanceScreens(private val service:SettlementService) {
         }
         nav();ScreenContent(body)
     }
-    private fun table(title:String,headers:List<String>,values:List<List<String>>,participantIds:List<Long>?=null):ScreenContent {
-        require(participantIds==null || participantIds.size==values.size)
+    private fun table(title:String,headers:List<String>,values:List<List<String>>,participants:List<Account>?=null):ScreenContent {
+        require(participants==null || participants.size==values.size)
         val plain=title+if(values.isEmpty()) "\nСписок пуст." else "\n"+(listOf(headers)+values).joinToString("\n") { it.joinToString(" | ") }
         val html="<h3>${TrainingCard.escape(title)}</h3>"+if(values.isEmpty()) "<p>Список пуст.</p>" else RichTable.OPEN+"<tr>"+headers.joinToString("") { "<th>${TrainingCard.escape(it)}</th>" }+"</tr>"+values.mapIndexed { rowIndex,row -> "<tr>"+row.mapIndexed { index,value ->
-            val content=if(index==0 && participantIds!=null) TrainingCard.profileLink(participantIds[rowIndex],value) else TrainingCard.escape(value)
+            val content=if(index==0 && participants!=null) participants[rowIndex].let { TrainingCard.profileLink(it.id,value,it.username) } else TrainingCard.escape(value)
             "<td${if(headers[index] in setOf("Сумма","Баланс")) " align=\"right\"" else ""}>$content</td>"
         }.joinToString("")+"</tr>" }.joinToString("")+"</table>"
         return ScreenContent(plain,html)

@@ -5,6 +5,7 @@ import ru.movereon.tennis.core.*
 
 /** One complete content model for public cards and personal interaction panels. */
 internal object TrainingCard {
+    private val publicUsername=Regex("[A-Za-z0-9_]+")
     data class Row(val user:Long,val name:String,val minutes:Long,val paid:Long,val balance:Long?,val guest:Int=0)
     data class Content(val text:String,val html:String)
     fun render(t:TrainingRecord,account:(Long)->Account):Content {
@@ -43,7 +44,7 @@ internal object TrainingCard {
             else {
                 append(RichTable.OPEN+"<tr><th>Участник</th>"+(if(t.rules.trackTime) "<th>Время</th>" else "")+"<th>Оплата</th><th>Баланс</th></tr>")
                 rows.forEach {
-                    append("<tr><td>${profileLink(it.user,it.name)}</td>")
+                    append("<tr><td>${profileLink(it.user,it.name,account(it.user).username)}</td>")
                     if(t.rules.trackTime) append("<td align=\"right\">${Screens.hours(it.minutes)}</td>")
                     append("<td align=\"right\">${it.paid} ₽</td>")
                     append("<td align=\"right\">${it.balance?.let(Screens::signed) ?: "—"} ₽</td></tr>")
@@ -54,6 +55,9 @@ internal object TrainingCard {
         }
         return Content(text,html)
     }
-    fun profileLink(user:Long,name:String)="<a href=\"tg://user?id=$user\">${escape(name)}</a>"
+    fun profileLink(user:Long,name:String,username:String?=null):String {
+        val url=username?.takeIf { publicUsername.matches(it) }?.let { "https://t.me/$it" } ?: "tg://user?id=$user"
+        return "<a href=\"$url\">${escape(name)}</a>"
+    }
     fun escape(value:String)=value.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;")
 }
