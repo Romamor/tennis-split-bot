@@ -112,7 +112,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     it.copy(newGroupPanel = true, previousGroupPanel = state.currentEphemeral(user.id, message.chat.id)) else it }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
-            val a = if (plan.screen.group < 0) access(plan.screen.group, plan.user) else null
+            val closingOwnPanel=plan.chat<0 && plan.screen.kind=="close_panel" && plan.command==null
+            val a = if (plan.screen.group < 0 && !closingOwnPanel) access(plan.screen.group, plan.user) else null
             var effective = plan
             plan.defaultUpdate?.let { service.updateTrainingDefaults(plan.user,it) }
             if (plan.command != null) {
@@ -223,8 +224,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
             val button = token?.let(state::button)
             if (button == null) {
-                if (message.ephemeralId != null && message.from?.id == identity.id && message.receiver?.id == user.id)
-                    closePanel(user.id, chat, message.ephemeralId)
+                if (chat<0 && message.ephemeralId != null && message.from?.id == identity.id &&
+                    (message.receiver==null || message.receiver.id==user.id))
+                    closePanel(user.id, chat, message.ephemeralId,required=true)
                 answer(callback, "Это старое меню. Нажми «Открыть» на актуальной карточке или /start в личном чате.")
                 return null
             }
@@ -304,7 +306,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             action=ScreenAction("finance",requireNotNull(savedForm).group)
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
-        val a = if (action.group < 0) access(action.group, user.id) else null
+        val a = if (action.group < 0 && action.kind!="close_panel") access(action.group, user.id) else null
         if(action.kind in setOf("poll_settings","poll_setting_save","group_rule_save"))
             checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
         if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard")) {
@@ -618,11 +620,19 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             return
         }
         if (plan.chat < 0 && plan.screen.kind in setOf("private_link", "close_panel")) {
-            closePanel(plan.user, plan.chat, plan.ephemeral)
-            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Открыть» на общей карточке." else null
-            plan.callback?.let { runCatching { api.answer(it, text, text != null) } }
+            try { closePanel(plan.user, plan.chat, plan.ephemeral,required=true) }
+            catch(f:TelegramFailure) {
+                if(f.kind in setOf(FailureKind.UNCERTAIN,FailureKind.RETRY_LATER) || f.code in setOf(401,409)) throw f
+                plan.callback?.let { runCatching { api.answer(it,"Не удалось закрыть панель. Попробуй ещё раз.",true) } }
+                return
+            }
+            val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Открыть» на общей карточке." else "Панель закрыта"
+            plan.callback?.let { runCatching { api.answer(it, text, plan.screen.kind=="private_link") } }
             return
         }
+        if(plan.chat<0 && plan.newGroupPanel && plan.previousGroupPanel!=null &&
+            state.currentEphemeral(plan.user,plan.chat)==plan.previousGroupPanel)
+            closePanel(plan.user,plan.chat,plan.previousGroupPanel,required=true)
         val scope = "personal:${plan.user}:${plan.chat}"
         val administrators=if (plan.screen.kind in setOf("administrators","admin_candidates","admin_person")) {
             checkAccounting(a?.telegramAdmin==true,ErrorCode.FORBIDDEN,"Управлять назначениями могут администраторы Telegram-группы")
@@ -719,19 +729,20 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    private fun deletePanel(user: Long, chat: Long, id: Long): Boolean {
+    private fun deletePanel(user: Long, chat: Long, id: Long, required:Boolean=false): Boolean {
         try { api.deleteEphemeral(chat, user, id); return true }
         catch (failure: TelegramFailure) {
             if (failure.kind == FailureKind.MESSAGE_MISSING) return true
             if (failure.code in setOf(401,409)) throw failure
             System.err.println("Telegram: закрытие персональной панели; ${failure.kind}, код=${failure.code ?: "нет"}")
+            if(required) throw failure
             return false
         }
     }
-    private fun closePanel(user: Long, chat: Long, id: Long? = null) {
+    private fun closePanel(user: Long, chat: Long, id: Long? = null, required:Boolean=false) {
         val current = state.currentEphemeral(user, chat)
         val target = id ?: current ?: return
-        if (!deletePanel(user, chat, target)) return
+        if (!deletePanel(user, chat, target,required)) return
         if (current == null || current == target) {
             state.rememberEphemeral(user, chat, null)
             state.replace("personal:$user:$chat", emptySet())

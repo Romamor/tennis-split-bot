@@ -15,6 +15,7 @@ class SelfServiceBotTest {
     private val ephemeralMessages = mutableMapOf<Pair<Long, Long>, TgMessage>()
     private val deletedEphemerals = mutableListOf<Triple<Long,Long,Long>>()
     private var nextEphemeral = 700L
+    private var panelDeleteFailure:TelegramFailure?=null
     private val answers = mutableListOf<String>()
     private val answerAlerts = mutableListOf<Boolean>()
     private var clock = object : Clock() {
@@ -39,6 +40,7 @@ class SelfServiceBotTest {
         override fun requestUsers(chatId: Long, text: String, requestId: Int) = fake.send(chatId, text, null, false)
         override fun deleteEphemeral(chatId: Long, userId: Long, ephemeralId: Long) {
             deletedEphemerals += Triple(chatId,userId,ephemeralId)
+            panelDeleteFailure?.let { panelDeleteFailure=null;throw it }
             if (ephemeralMessages[chatId to userId]?.ephemeralId==ephemeralId) ephemeralMessages.remove(chatId to userId)
         }
     }
@@ -836,6 +838,61 @@ class SelfServiceBotTest {
         assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
         assertEquals(other,ephemeralMessages[-1L to 3L]);assertEquals(1,fake.sent.count { it.chat.id==-1L })
         assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty())
+    }
+
+    @Test fun `closing own panel works when membership lookup is unavailable`() {
+        setup();create();click(2,"Открыть",publicCard())
+        val calls=fake.membershipCalls.size
+        fake.memberFailure=true
+        panelClick(2,"Закрыть")
+        assertEquals(calls,fake.membershipCalls.size)
+        assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
+        assertEquals("Панель закрыта",answers.last())
+    }
+
+    @Test fun `temporary close failure keeps the event pending and retry closes the same panel`() {
+        setup();create();click(2,"Открыть",publicCard())
+        val panel=ephemeralMessages.getValue(-1L to 2L)
+        val button=panel.keyboard!!.rows.flatten().single { it.text.endsWith("Закрыть") }
+        val update=TgUpdate(updateId++,callback=TgCallback("retry-close",TgUser(2),panel,button.callbackData))
+        panelDeleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        assertFailsWith<TelegramFailure> { bot.handle(update) }
+        assertFalse(bot.state.completed(update.id));assertEquals(panel.ephemeralId,bot.state.currentEphemeral(2,-1))
+        fake.memberFailure=true;bot.handle(update)
+        assertTrue(bot.state.completed(update.id));assertNull(bot.state.currentEphemeral(2,-1))
+        assertFalse(ephemeralMessages.containsKey(-1L to 2L))
+    }
+
+    @Test fun `reopening waits for old panel deletion instead of creating a duplicate`() {
+        setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
+        val old=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
+        val next=nextEphemeral
+        val card=publicCard();val button=card.keyboard!!.rows.flatten().single { it.text.endsWith("Открыть") }
+        val update=TgUpdate(updateId++,callback=TgCallback("retry-open",TgUser(2),card,button.callbackData))
+        panelDeleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        assertFailsWith<TelegramFailure> { bot.handle(update) }
+        assertEquals(next,nextEphemeral);assertEquals(old,ephemeralMessages[-1L to 2L])
+        assertFalse(bot.state.completed(update.id));bot.handle(update)
+        assertTrue(bot.state.completed(update.id));assertNotEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertEquals(other,ephemeralMessages[-1L to 3L])
+    }
+
+    @Test fun `rejected close reports failure and leaves the close button usable`() {
+        setup();create();click(2,"Открыть",publicCard())
+        val panel=ephemeralMessages.getValue(-1L to 2L)
+        panelDeleteFailure=TelegramFailure(FailureKind.REJECTED,400)
+        panelClick(2,"Закрыть")
+        assertEquals(panel,ephemeralMessages[-1L to 2L]);assertTrue(answerAlerts.last())
+        assertTrue(answers.last().contains("Не удалось закрыть"))
+        panelClick(2,"Закрыть");assertNull(bot.state.currentEphemeral(2,-1))
+    }
+
+    @Test fun `expired panel callback without receiver metadata closes only the callers panel`() {
+        setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
+        val panel=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
+        bot.handle(TgUpdate(updateId++,callback=TgCallback("old-panel",TgUser(2),panel.copy(receiver=null),"n:missing-token")))
+        assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
+        assertEquals(other,ephemeralMessages[-1L to 3L])
     }
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
