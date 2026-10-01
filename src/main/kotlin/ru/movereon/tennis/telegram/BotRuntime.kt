@@ -33,6 +33,24 @@ class BotConfig(val token: String, val database: Path, val timeZone: String, val
     }
 }
 
+internal fun awaitBotIdentity(api:TelegramApi,pause:(Long)->Unit={ Thread.sleep(it) }):TgUser {
+    while(true) {
+        try { return api.me() }
+        catch(f:TelegramFailure) {
+            if(f.kind !in setOf(FailureKind.UNCERTAIN,FailureKind.RETRY_LATER) || f.code in setOf(401,409)) throw f
+            System.err.println("Telegram временно недоступен при запуске; повторим getMe без перезапуска JVM.")
+            pause((f.retryAfter ?: 3).coerceIn(1,60)*1000L)
+        }
+    }
+}
+
+internal fun runBotCycle(receive:()->List<TgUpdate>,handle:(TgUpdate)->Unit,finishDrain:()->Unit,maintain:()->Unit) {
+    val updates=receive()
+    updates.sortedBy { it.id }.forEach(handle)
+    if(updates.isEmpty()) finishDrain()
+    maintain()
+}
+
 /** No webhook or public HTTP listener. A file lock prevents two local pollers sharing this database. */
 fun runBot() {
     val config = BotConfig.load()
@@ -42,14 +60,13 @@ fun runBot() {
         val lock=channel.tryLock() ?: error("С этой базой уже работает другой процесс бота")
         lock.use {
             val api=HttpTelegramApi(config.token)
-            val bot=SelfServiceBot(api,Database(path),api.me(),zone=config.timeZone)
+            val bot=SelfServiceBot(api,Database(path),awaitBotIdentity(api),zone=config.timeZone)
             println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
             while(!Thread.currentThread().isInterrupted) {
                 try {
-                    bot.maintain()
-                    val updates=api.updates(bot.state.offset(),if(bot.hasClosingPolls()) 0 else config.pollTimeout)
-                    updates.sortedBy { it.id }.forEach(bot::handle)
-                    if(updates.isEmpty()) bot.finishPollsAfterDrain()
+                    runBotCycle(
+                        { api.updates(bot.state.offset(),if(bot.hasClosingPolls()) 0 else config.pollTimeout) },
+                        bot::handle,bot::finishPollsAfterDrain,bot::maintain)
                 } catch (failure: TelegramFailure) {
                     if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
                     System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")

@@ -221,13 +221,19 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     }
 
     private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement {
+        val started=System.nanoTime()
         val response = try {
             val request = HttpRequest.newBuilder(URI("${endpoint.toString().trimEnd('/')}/bot$token/$method"))
                 .timeout(Duration.ofSeconds(timeout.toLong())).header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build()
             client.send(request, HttpResponse.BodyHandlers.ofString())
-        } catch (_: IOException) { throw TelegramFailure(FailureKind.UNCERTAIN) }
+        } catch (failure: IOException) {
+            System.err.println("Telegram: $method; транспорт=${failure.javaClass.simpleName}")
+            throw TelegramFailure(FailureKind.UNCERTAIN)
+        }
         catch (_: InterruptedException) { Thread.currentThread().interrupt(); throw TelegramFailure(FailureKind.UNCERTAIN) }
+        val elapsedMs=(System.nanoTime()-started)/1_000_000
+        if(method!="getUpdates" && elapsedMs>=2000) System.err.println("Telegram: $method; длительность=${elapsedMs}мс")
         val envelope = try { json.parseToJsonElement(response.body()).jsonObject } catch (_: Exception) { throw TelegramFailure(FailureKind.UNCERTAIN) }
         if (envelope["ok"]?.jsonPrimitive?.booleanOrNull == true) return envelope["result"] ?: throw TelegramFailure(FailureKind.UNCERTAIN)
         val code = envelope["error_code"]?.jsonPrimitive?.intOrNull ?: response.statusCode()
@@ -239,6 +245,7 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             "message to edit not found" in description || "message to unpin not found" in description || "message to delete not found" in description -> FailureKind.MESSAGE_MISSING
             else -> FailureKind.REJECTED
         }
+        if(kind==FailureKind.REJECTED) System.err.println("Telegram: $method; отказ, код=$code")
         throw TelegramFailure(kind, code, envelope["parameters"]?.jsonObject?.get("retry_after")?.jsonPrimitive?.intOrNull)
     }
 }

@@ -16,6 +16,7 @@ class SelfServiceBotTest {
     private val deletedEphemerals = mutableListOf<Triple<Long,Long,Long>>()
     private var nextEphemeral = 700L
     private var panelDeleteFailure:TelegramFailure?=null
+    private var panelEditFailure:TelegramFailure?=null
     private var forcedNextEphemeral:Long?=null
     private val answers = mutableListOf<String>()
     private val answerAlerts = mutableListOf<Boolean>()
@@ -33,6 +34,7 @@ class SelfServiceBotTest {
             TgMessage(chat = TgChat(chatId, "supergroup"), from = fake.bot, text = text, keyboard = keyboard,
                 receiver = TgUser(userId, firstName = "User $userId"), ephemeralId = forcedNextEphemeral?.also { forcedNextEphemeral=null } ?: nextEphemeral++).also { ephemeralMessages[chatId to userId] = it }
         override fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {
+            panelEditFailure?.let { panelEditFailure=null;throw it }
             val old = ephemeralMessages[chatId to userId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
             assertEquals(old.ephemeralId, ephemeralId)
             ephemeralMessages[chatId to userId] = old.copy(text = text, keyboard = keyboard)
@@ -834,7 +836,7 @@ class SelfServiceBotTest {
         setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
         val old=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
         click(2,"Открыть",publicCard())
-        assertNotEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
         panelClick(2,"Закрыть")
         assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
         assertEquals(other,ephemeralMessages[-1L to 3L]);assertEquals(1,fake.sent.count { it.chat.id==-1L })
@@ -864,17 +866,17 @@ class SelfServiceBotTest {
         assertFalse(ephemeralMessages.containsKey(-1L to 2L))
     }
 
-    @Test fun `reopening waits for old panel deletion instead of creating a duplicate`() {
+    @Test fun `reopening waits for a failed edit without deleting or duplicating the panel`() {
         setup();create();click(2,"Открыть",publicCard());click(3,"Открыть",publicCard())
         val old=ephemeralMessages.getValue(-1L to 2L);val other=ephemeralMessages.getValue(-1L to 3L)
         val next=nextEphemeral
         val card=publicCard();val button=card.keyboard!!.rows.flatten().single { it.text.endsWith("Открыть") }
         val update=TgUpdate(updateId++,callback=TgCallback("retry-open",TgUser(2),card,button.callbackData))
-        panelDeleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        panelEditFailure=TelegramFailure(FailureKind.RETRY_LATER,429)
         assertFailsWith<TelegramFailure> { bot.handle(update) }
         assertEquals(next,nextEphemeral);assertEquals(old,ephemeralMessages[-1L to 2L])
         assertFalse(bot.state.completed(update.id));bot.handle(update)
-        assertTrue(bot.state.completed(update.id));assertNotEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertTrue(bot.state.completed(update.id));assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
         assertEquals(other,ephemeralMessages[-1L to 3L])
     }
 
@@ -901,17 +903,30 @@ class SelfServiceBotTest {
         val old=ephemeralMessages.getValue(-1L to 2L)
         val card=publicCard();val button=card.keyboard!!.rows.flatten().single { it.text.endsWith("Открыть") }
         val update=TgUpdate(updateId++,callback=TgCallback("reused-id",TgUser(2),card,button.callbackData))
+        ephemeralMessages.remove(-1L to 2L)
         forcedNextEphemeral=old.ephemeralId
         bot.state.database.write { c -> c.createStatement().use {
             it.execute("CREATE TRIGGER test_completion_failure BEFORE UPDATE OF completed ON bot_events WHEN NEW.update_id=${update.id} AND NEW.completed=1 BEGIN SELECT RAISE(ABORT,'simulated completion crash'); END")
         } }
         assertFailsWith<java.sql.SQLException> { bot.handle(update) }
         bot.state.database.write { c -> c.createStatement().use { it.execute("DROP TRIGGER test_completion_failure") } }
-        assertFalse(bot.state.completed(update.id));assertFalse(bot.state.plan(update.id)!!.newGroupPanel)
+        assertFalse(bot.state.completed(update.id));assertEquals(old.ephemeralId,bot.state.plan(update.id)!!.ephemeral)
         val deletions=deletedEphemerals.size;val next=nextEphemeral
         bot.handle(update)
         assertTrue(bot.state.completed(update.id));assertEquals(deletions,deletedEphemerals.size)
         assertEquals(next,nextEphemeral);assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+    }
+
+    @Test fun `a stale panel button cannot change attendance or close a newer panel`() {
+        setup();create();click(2,"Открыть",publicCard())
+        val old=ephemeralMessages.getValue(-1L to 2L)
+        panelClick(2,"Закрыть");click(2,"Открыть",publicCard())
+        val current=ephemeralMessages.getValue(-1L to 2L)
+        click(2,"Присоединиться",old)
+        assertTrue(bot.service.trainings(Access(-1,2)).items.single().players.isEmpty())
+        assertEquals(current,ephemeralMessages[-1L to 2L])
+        assertEquals(current.ephemeralId,bot.state.currentEphemeral(2,-1))
+        assertTrue(answers.last().contains("прежняя панель"))
     }
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {
@@ -956,7 +971,7 @@ class SelfServiceBotTest {
         bot.service.execute(Access(-1,1,true),"second-training",SettlementCommand.CreateTraining("second","Вторая","2026-09-10","20:00"));bot.maintain()
         val second=fake.messages.values.single { it.chat.id==-1L && it.text!!.startsWith("Вторая") }
         click(2,"Открыть",second)
-        assertNotEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
+        assertEquals(panelId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
         assertTrue(ephemeralMessages.getValue(-1L to 2L).text!!.startsWith("Вторая"))
         assertEquals(saved,bot.service.training(Access(-1,2),saved.id));assertTrue(bot.service.training(Access(-1,2),"second").players.isEmpty())
     }

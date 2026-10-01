@@ -224,7 +224,7 @@ class PollFlowTest {
         assertEquals(0,count("SELECT COUNT(*) FROM trainings"))
         click("Завершить сбор",2,public);val panel=panels.getValue(2)
         click("Завершить сбор",2,public)
-        assertNotEquals(panel.ephemeralId,panels.getValue(2).ephemeralId)
+        assertEquals(panel.ephemeralId,panels.getValue(2).ephemeralId)
         click("Завершить сбор",3,panel)
         assertTrue(alerts.last().contains("другого участника"))
         click("Завершить сбор",2,panels.getValue(2))

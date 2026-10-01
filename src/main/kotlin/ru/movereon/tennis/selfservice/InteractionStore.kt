@@ -29,7 +29,6 @@ import java.util.UUID
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
-    val newGroupPanel: Boolean = false, val previousGroupPanel: Long? = null,
     val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null)
 @Serializable data class PrivatePollView(val message:Long,val screen:ScreenAction,val revision:String)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
@@ -78,8 +77,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun rememberEphemeral(user: Long, chat: Long, id: Long?, deliveredEvent:Long?=null) = database.write { c ->
         sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=?,panel_json=CASE WHEN ? IS NULL THEN NULL ELSE panel_json END WHERE user_id=? AND chat_id=?", id, id, user, chat)
         if(id!=null && deliveredEvent!=null)
-            sqlUpdate(c,"""UPDATE bot_events SET plan_json=json_set(plan_json,'$.newGroupPanel',json('false'),
-                '$.previousGroupPanel',NULL,'$.ephemeral',?) WHERE update_id=? AND plan_json IS NOT NULL""",id,deliveredEvent)
+            sqlUpdate(c,"""UPDATE bot_events SET plan_json=json_set(plan_json,'$.ephemeral',?) WHERE update_id=? AND plan_json IS NOT NULL""",id,deliveredEvent)
     }
     fun panel(user:Long,group:Long,screen:ScreenAction?) = database.write { c ->
         sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",screen?.let { json.encodeToString(it) },user,group)

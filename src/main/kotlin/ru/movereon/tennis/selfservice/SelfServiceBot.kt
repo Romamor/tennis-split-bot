@@ -108,8 +108,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             val plan = saved ?: prepare(update, message, user)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
-                ?.let { if (callback != null && message.chat.id < 0 && message.ephemeralId == null)
-                    it.copy(newGroupPanel = true, previousGroupPanel = state.currentEphemeral(user.id, message.chat.id)) else it }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
             val closingOwnPanel=plan.chat<0 && plan.screen.kind=="close_panel" && plan.command==null
@@ -233,6 +231,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             checkAccounting(button.owner == null || button.owner == user.id, ErrorCode.FORBIDDEN, "Эта панель открыта для другого участника")
             checkAccounting(chat > 0 || button.action.group == chat, ErrorCode.FORBIDDEN, "Эта кнопка относится к другой группе")
             if (chat < 0) checkAccounting(message.receiver == null || message.receiver.id == user.id, ErrorCode.FORBIDDEN, "Это чужая персональная панель")
+            if (chat < 0 && message.ephemeralId != null) {
+                val current = state.currentEphemeral(user.id, chat)
+                if (current != null && current != message.ephemeralId) {
+                    closePanel(user.id, chat, message.ephemeralId, required=true)
+                    answer(callback, "Это прежняя панель. Используй последнюю открытую панель.")
+                    return null
+                }
+            }
             action = button.action
             if (chat > 0 && message.from?.id == identity.id) {
                 val key = "personal:${user.id}:$chat"
@@ -630,9 +636,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             plan.callback?.let { runCatching { api.answer(it, text, plan.screen.kind=="private_link") } }
             return
         }
-        if(plan.chat<0 && plan.newGroupPanel && plan.previousGroupPanel!=null &&
-            state.currentEphemeral(plan.user,plan.chat)==plan.previousGroupPanel)
-            closePanel(plan.user,plan.chat,plan.previousGroupPanel,required=true)
         val scope = "personal:${plan.user}:${plan.chat}"
         val administrators=if (plan.screen.kind in setOf("administrators","admin_candidates","admin_person")) {
             checkAccounting(a?.telegramAdmin==true,ErrorCode.FORBIDDEN,"Управлять назначениями могут администраторы Telegram-группы")
@@ -649,17 +652,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             try {
                 val current = state.currentEphemeral(plan.user, plan.chat) ?: plan.ephemeral
                 var updated = false
-                // An accepted edit does not make a dismissed panel visible again. A public
-                // click needs a fresh send; a saved event reuses the panel it already delivered.
-                val reopen = plan.newGroupPanel && current == plan.previousGroupPanel
-                if (current != null && !reopen) {
+                // Reuse the known panel: Telegram may accept deletion without delivering it
+                // to the client, so delete-and-send can leave several visible copies.
+                if (current != null) {
                     try {
                         if(out.richHtml!=null) api.editEphemeralRich(plan.chat,plan.user,current,out.text,out.richHtml,out.keyboard)
                         else api.editEphemeral(plan.chat, plan.user, current, out.text, out.keyboard)
                         state.rememberEphemeral(plan.user, plan.chat, current)
                         updated = true
                     } catch (failure: TelegramFailure) {
-                        if (failure.kind != FailureKind.MESSAGE_MISSING && !(failure.kind == FailureKind.REJECTED && failure.code == 400)) throw failure
+                        if (failure.kind != FailureKind.MESSAGE_MISSING) throw failure
                     }
                 }
                 if (!updated) {
@@ -668,7 +670,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId,event)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
-                listOfNotNull(plan.previousGroupPanel, plan.ephemeral).distinct()
+                listOfNotNull(plan.ephemeral).distinct()
                     .filter { it != current && it != state.currentEphemeral(plan.user, plan.chat) }
                     .forEach { deletePanel(plan.user, plan.chat, it) }
                 state.replace(scope, out.tokens)

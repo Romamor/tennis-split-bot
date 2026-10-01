@@ -16,6 +16,8 @@ class PanelVisibilityTest {
     private var nextPanel=100L
     private var seq=1L
     private var sends=0
+    private var loseDeletionEvents=false
+    private var editFailure:TelegramFailure?=null
     private val api=object:TelegramApi by fake {
         override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage {
             sends++
@@ -25,11 +27,12 @@ class PanelVisibilityTest {
         }
         override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) {
-            // Telegram accepts editing an old message without showing it again in the client.
-            stored[ephemeralId]?.let { stored[ephemeralId]=it.copy(text=text,keyboard=keyboard) }
+            editFailure?.let { throw it }
+            val old=stored[ephemeralId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
+            stored[ephemeralId]=old.copy(text=text,keyboard=keyboard)
         }
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
-        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { visible.remove(ephemeralId);stored.remove(ephemeralId) }
+        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { if(!loseDeletionEvents) visible.remove(ephemeralId);stored.remove(ephemeralId) }
     }
     private lateinit var bot:SelfServiceBot
     private fun setup() {
@@ -43,23 +46,23 @@ class PanelVisibilityTest {
         return TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(1,firstName="Игрок"),m,b.callbackData)).also(bot::handle)
     }
     private fun panel()=stored.getValue(visible.single())
-    @Test fun `open restores an invisible cached panel without duplicate visible menus`() {
+    @Test fun `four opens reuse one visible panel even when deletion events would be lost`() {
         setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
         val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
-        press(card,"Открыть");visible.clear()
-        press(card,"Открыть")
-        assertEquals(1,visible.size,"Editing the old cached id must not be mistaken for opening a panel")
-        press(card,"Открыть");assertEquals(1,visible.size)
+        loseDeletionEvents=true
+        repeat(4) { press(card,"Открыть") }
+        assertEquals(1,visible.size)
+        assertEquals(1,sends)
         val id=panel().ephemeralId
         press(panel(),"Присоединиться");assertEquals(id,panel().ephemeralId)
         press(panel(),"Время · 0 ч");assertEquals(id,panel().ephemeralId)
     }
-    @Test fun `finish poll opens visible confirmation after a previously dismissed panel`() {
+    @Test fun `finish poll replaces a panel only after Telegram reports it missing`() {
         setup();val a=Access(-1,1,true);bot.polls.setEnabled(a,true)
         val p=bot.polls.create(a,"p","Теннис","2026-09-14","18:30","Не приду")
         PollWorkflow(bot.polls,bot.state,api).publish(p)
         val message=fake.messages.getValue(-1L to bot.polls.get(-1,"p").message!!)
-        press(message,"Завершить сбор");visible.clear()
+        press(message,"Завершить сбор");visible.clear();stored.clear()
         press(message,"Завершить сбор")
         assertEquals(1,visible.size);assertTrue(panel().text!!.contains("перейти к учёту"))
         press(panel(),"Завершить сбор");bot.finishPollsAfterDrain()
@@ -76,7 +79,7 @@ class PanelVisibilityTest {
         val poll=fake.messages.getValue(-1L to bot.polls.get(-1,"p").message!!)
         for(enabled in listOf(true,false,true)) {
             bot.polls.setEnabled(a,enabled)
-            visible.clear();press(card,"Открыть")
+            press(card,"Открыть")
             assertEquals(1,visible.size);assertTrue(panel().keyboard!!.rows.flatten().any { it.text.endsWith("Присоединиться") })
             press(poll,"Завершить сбор")
             assertEquals(1,visible.size);assertTrue(panel().text!!.contains("перейти к учёту"))
@@ -84,6 +87,17 @@ class PanelVisibilityTest {
         assertTrue(bot.service.training(a,"t").players.isEmpty())
         assertEquals("OPEN",bot.polls.get(-1,"p").status)
     }
+    @Test fun `rejected or uncertain edit does not create another panel`() {
+        setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
+        val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
+        press(card,"Открыть")
+        for(kind in listOf(FailureKind.REJECTED,FailureKind.UNCERTAIN)) {
+            editFailure=TelegramFailure(kind,400)
+            press(card,"Открыть")
+            assertEquals(1,sends);assertEquals(1,visible.size)
+        }
+    }
+
     @Test fun `replay after successful panel delivery creates no second panel`() {
         setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
         val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
