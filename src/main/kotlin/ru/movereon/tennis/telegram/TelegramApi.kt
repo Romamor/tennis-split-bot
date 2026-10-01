@@ -47,10 +47,11 @@ import java.time.Duration
 }
 
 enum class FailureKind { REJECTED, RETRY_LATER, UNCERTAIN, NOT_MODIFIED, MESSAGE_MISSING }
-class TelegramFailure(val kind: FailureKind, val code: Int? = null, val retryAfter: Int? = null) :
+class TelegramFailure(val kind: FailureKind, val code: Int? = null, val retryAfter: Int? = null, val backgroundDeferred:Boolean=false) :
     IOException("Telegram request failed: $kind${code?.let { " ($it)" } ?: ""}")
 
 interface TelegramApi {
+    fun background(block:()->Unit) = block()
     fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard,photoId:String?=null):TgMessage = throw TelegramFailure(FailureKind.REJECTED)
     fun stopPoll(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) { throw TelegramFailure(FailureKind.REJECTED) }
@@ -79,10 +80,17 @@ interface TelegramApi {
 }
 
 /** No redirects, URL logging or upstream exception causes: the request URL contains the token. */
-class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org")) : TelegramApi {
+class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org"), private val backgroundBudgetMillis:Long=5000) : TelegramApi {
+    private var backgroundDeadline:Long?=null
+    override fun background(block:()->Unit) {
+        val previous=backgroundDeadline
+        backgroundDeadline=System.nanoTime()+backgroundBudgetMillis*1_000_000
+        try { block() } finally { backgroundDeadline=previous }
+    }
     private val json = Json { ignoreUnknownKeys = true }
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).followRedirects(HttpClient.Redirect.NEVER).build()
     init {
+        require(backgroundBudgetMillis>0)
         require(token.matches(Regex("[0-9]+:[A-Za-z0-9_-]{20,}"))) { "Некорректный формат токена бота" }
         require(endpoint.scheme == "https" || endpoint.scheme == "http" && endpoint.host in setOf("127.0.0.1", "localhost", "::1"))
     }
@@ -222,9 +230,12 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
 
     private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement {
         val started=System.nanoTime()
+        val remaining=backgroundDeadline?.minus(started)
+        if(remaining!=null && remaining<=0) throw TelegramFailure(FailureKind.RETRY_LATER,retryAfter=1,backgroundDeferred=true)
+        val requestTimeout=Duration.ofNanos(minOf(Duration.ofSeconds(timeout.toLong()).toNanos(),remaining ?: Long.MAX_VALUE))
         val response = try {
             val request = HttpRequest.newBuilder(URI("${endpoint.toString().trimEnd('/')}/bot$token/$method"))
-                .timeout(Duration.ofSeconds(timeout.toLong())).header("Content-Type", "application/json")
+                .timeout(requestTimeout).header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build()
             client.send(request, HttpResponse.BodyHandlers.ofString())
         } catch (failure: IOException) {

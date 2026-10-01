@@ -9,6 +9,30 @@ import ru.movereon.tennis.core.*
 
 /** One normalized database. Pre-release legacy schemas are intentionally not migrated. */
 class Database(path: Path, private val trace:((String)->Unit)?=null, private val readOnly:Boolean=false) {
+    val openedConnections=java.util.concurrent.atomic.AtomicLong()
+    private val idleConnections=java.util.ArrayDeque<Connection>()
+    private var reuseConnections=false
+    /** Runtime scope only: two reusable connections allow reads nested inside a write. */
+    fun <T> withConnectionReuse(block:()->T):T {
+        synchronized(idleConnections) { check(!reuseConnections);reuseConnections=true }
+        try { return block() }
+        finally {
+            synchronized(idleConnections) {
+                reuseConnections=false
+                while(idleConnections.isNotEmpty()) idleConnections.removeFirst().close()
+            }
+        }
+    }
+    private fun <T> withConnection(block:(Connection)->T):T {
+        val connection=synchronized(idleConnections) { if(idleConnections.isEmpty()) null else idleConnections.removeFirst() } ?: connect()
+        try { return block(connection) }
+        finally {
+            synchronized(idleConnections) {
+                if(reuseConnections && !connection.isClosed && idleConnections.size<2) idleConnections.addLast(connection)
+                else connection.close()
+            }
+        }
+    }
     val readTransactions=java.util.concurrent.atomic.AtomicLong()
     val writeTransactions=java.util.concurrent.atomic.AtomicLong()
     val path=path.toAbsolutePath().normalize()
@@ -50,11 +74,12 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
         }
     }
     private fun connect(): Connection = DriverManager.getConnection(if(readOnly) "jdbc:sqlite:${path.toUri()}?mode=ro" else "jdbc:sqlite:$path").also { c ->
+        openedConnections.incrementAndGet()
         c.createStatement().use { s -> s.execute("PRAGMA foreign_keys=ON");s.execute("PRAGMA busy_timeout=5000");s.execute(if(readOnly) "PRAGMA query_only=ON" else "PRAGMA synchronous=FULL") }
     }
     fun <T> read(block:(Connection)->T):T=transaction(false,block)
     fun <T> write(block:(Connection)->T):T { check(!readOnly) { "База открыта только для чтения" };return transaction(true,block) }
-    private fun <T> transaction(write:Boolean,block:(Connection)->T):T=connect().use { c ->
+    private fun <T> transaction(write:Boolean,block:(Connection)->T):T=withConnection { c ->
         if(write) writeTransactions.incrementAndGet() else readTransactions.incrementAndGet()
         val previous=sqlTrace.get();sqlTrace.set(trace)
         c.createStatement().use { it.execute(if(write) "BEGIN IMMEDIATE" else "BEGIN") }

@@ -16,7 +16,7 @@ class Screens(private val service: SettlementService, private val state: Interac
     private val pollScreens=PollScreens(service,polls)
     private val trainingScreens=TrainingScreens(service,state)
     private val financeScreens=FinanceScreens(service)
-    data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null,val photoId:String?=null)
+    data class Output(val text: String, val keyboard: TgKeyboard, val tokens: Set<String>, val richHtml:String?=null,val photoId:String?=null,val trainingVersion:Long?=null)
     private fun name(id: Long): String = service.account(id).let { u ->
         clean(u.name, 36) + (u.username?.let { " · @${clean(it, 32)}" } ?: "")
     }
@@ -47,6 +47,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         }
         var richHtml:String?=null
         var photoId:String?=null
+        var trainingVersion:Long?=null
         val text = when (action.kind) {
             "profile_preview" -> {
                 rows+=listOf(TgButton("Открыть профиль Telegram",url="tg://user?id=${action.user}"))
@@ -79,7 +80,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             in TrainingScreens.kinds -> {
                 val content=trainingScreens.render(this,a,::personRow,::label,::account)
-                richHtml=content.html;photoId=content.photoId
+                richHtml=content.html;photoId=content.photoId;trainingVersion=content.trainingVersion
                 content.text
             }
             "player" -> {
@@ -307,7 +308,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
-        finishScreen(this,text,richHtml,notice,inGroup,photoId)
+        finishScreen(this,text,richHtml,notice,inGroup,photoId).copy(trainingVersion=trainingVersion)
         }
     }
     private fun finishScreen(layout:ScreenLayout,text:String,richHtml:String?,notice:String?,inGroup:Boolean,photoId:String?=null):Output=with(layout) {

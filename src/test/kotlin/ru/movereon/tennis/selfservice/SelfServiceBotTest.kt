@@ -1178,6 +1178,68 @@ class SelfServiceBotTest {
         assertEquals(16L,bot.state.form(1,1)!!.order!!.first())
     }
 
+    @Test fun `navigation cache avoids repeated lookups but cannot authorize a removed member`() {
+        setup();create();message(2,"/start")
+        val before=fake.membershipCalls.size
+        repeat(3) { message(2,"/start") }
+        assertEquals(before,fake.membershipCalls.size)
+        fake.members[-1L to 2L]=TgMember("left")
+        click(2,"Открыть",publicCard())
+        assertNull(bot.state.currentEphemeral(2,-1))
+        assertEquals(-1L to 2L,fake.membershipCalls.last())
+    }
+    @Test fun `warm navigation permissions do not authorize a former group administrator`() {
+        setup();message(1,"/start")
+        fake.members[-1L to 1L]=TgMember("member")
+        val token=bot.state.button(ScreenAction("group_rule_save",-1,value=0,option="guests"),null,"regression",true)
+        message(1,"/start n_$token")
+        assertTrue(bot.service.groupTrainingRules(-1).guestsEnabled)
+        assertEquals(-1L to 1L,fake.membershipCalls.last())
+    }
+    @Test fun `payment and time changes do not rescan the ledger or recompute attendance`() {
+        val queries=mutableListOf<String>();setup { queries+=it };create();join(2)
+        queries.clear();pay(2,50)
+        assertFalse(queries.any { "SET attendance_count=" in it })
+        assertFalse(queries.any { it.startsWith("SELECT user_id,amount FROM balance_entries") })
+        assertEquals(50,bot.service.trainings(Access(-1,2)).items.single().players.single().paid)
+    }
+
+    @Test fun `unchanged button sets and completed deliveries do not rewrite old rows`() {
+        setup();create()
+        val t=bot.service.trainings(Access(-1,1,true)).items.single()
+        val scope="dedup-buttons"
+        val first=bot.state.button(ScreenAction("menu",0),1,scope)
+        val second=bot.state.button(ScreenAction("settings",0),1,scope)
+        val tokens=setOf(first,second);bot.state.protect(tokens);bot.state.replace(scope,tokens)
+        val db=bot.service.database
+        db.write { c -> c.createStatement().use {
+            it.execute("CREATE TABLE button_write_probe(n INTEGER)")
+            it.execute("INSERT INTO button_write_probe VALUES(0)")
+            it.execute("CREATE TRIGGER probe_button_writes AFTER UPDATE ON bot_buttons BEGIN UPDATE button_write_probe SET n=n+1; END")
+        } }
+        bot.state.protect(tokens);bot.state.replace(scope,tokens)
+        assertEquals(0,db.read { c -> ru.movereon.tennis.storage.sqlQuery(c,"SELECT n FROM button_write_probe") { it.getInt(1) }.single() })
+        bot.state.replace(scope,setOf(second))
+        assertEquals(1,db.read { c -> ru.movereon.tennis.storage.sqlQuery(c,"SELECT n FROM button_write_probe") { it.getInt(1) }.single() })
+        assertNotNull(bot.state.button(first),"Retired buttons keep their grace period")
+        clock.now=clock.now.plusSeconds(121);bot.state.cleanup();assertNull(bot.state.button(first));assertNotNull(bot.state.button(second))
+        val before=db.read { c -> ru.movereon.tennis.storage.sqlQuery(c,"SELECT delivered_at FROM actions WHERE training_id=?",t.id) { it.getString(1) } }
+        bot.state.cardDelivered(-1,t.id,Long.MAX_VALUE)
+        val after=db.read { c -> ru.movereon.tennis.storage.sqlQuery(c,"SELECT delivered_at FROM actions WHERE training_id=?",t.id) { it.getString(1) } }
+        assertEquals(before,after)
+    }
+
+    @Test fun `unknown first card delivery does not keep the maintenance loop busy`() {
+        setup()
+        bot.service.execute(Access(-1,1,true),"uncertain-card",SettlementCommand.CreateTraining("uncertain","Теннис","2026-09-09","18:30"))
+        fake.acceptThenFail={chat,_ -> chat==-1L}
+        bot.maintain()
+        val delivery=bot.state.delivery("training:-1:uncertain")!!
+        assertEquals("UNKNOWN",delivery.status);assertNull(delivery.message)
+        assertEquals(25,bot.nextPollTimeout(25))
+        val sent=fake.sent.size;bot.maintain();assertEquals(sent,fake.sent.size)
+    }
+
     @Test fun `render batches button writes and roster reads use prepared attendance`() {
         val queries=mutableListOf<String>();setup { queries+=it };create()
         val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()

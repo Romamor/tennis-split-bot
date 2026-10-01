@@ -1,0 +1,950 @@
+[
+    {
+        "scenario": "menu_groups_1",
+        "reads": 16,
+        "writes": 14,
+        "sql": 43,
+        "telegram": {
+            "delete": 1,
+            "member": 2,
+            "send": 1
+        },
+        "elapsedMs": 21.871833
+    },
+    {
+        "scenario": "menu_groups_1",
+        "reads": 16,
+        "writes": 14,
+        "sql": 43,
+        "telegram": {
+            "delete": 1,
+            "member": 2,
+            "send": 1
+        },
+        "elapsedMs": 17.973583
+    },
+    {
+        "scenario": "menu_groups_1",
+        "reads": 16,
+        "writes": 14,
+        "sql": 43,
+        "telegram": {
+            "delete": 1,
+            "member": 2,
+            "send": 1
+        },
+        "elapsedMs": 17.443166
+    },
+    {
+        "scenario": "menu_groups_1",
+        "reads": 16,
+        "writes": 14,
+        "sql": 43,
+        "telegram": {
+            "delete": 1,
+            "member": 2,
+            "send": 1
+        },
+        "elapsedMs": 17.219125
+    },
+    {
+        "scenario": "menu_groups_1",
+        "reads": 16,
+        "writes": 14,
+        "sql": 43,
+        "telegram": {
+            "delete": 1,
+            "member": 2,
+            "send": 1
+        },
+        "elapsedMs": 16.91075
+    },
+    {
+        "scenario": "menu_groups_5",
+        "reads": 16,
+        "writes": 18,
+        "sql": 47,
+        "telegram": {
+            "delete": 1,
+            "member": 6,
+            "send": 1
+        },
+        "elapsedMs": 18.712709
+    },
+    {
+        "scenario": "menu_groups_5",
+        "reads": 16,
+        "writes": 18,
+        "sql": 47,
+        "telegram": {
+            "delete": 1,
+            "member": 6,
+            "send": 1
+        },
+        "elapsedMs": 18.83375
+    },
+    {
+        "scenario": "menu_groups_5",
+        "reads": 16,
+        "writes": 18,
+        "sql": 47,
+        "telegram": {
+            "delete": 1,
+            "member": 6,
+            "send": 1
+        },
+        "elapsedMs": 18.245084
+    },
+    {
+        "scenario": "menu_groups_5",
+        "reads": 16,
+        "writes": 18,
+        "sql": 47,
+        "telegram": {
+            "delete": 1,
+            "member": 6,
+            "send": 1
+        },
+        "elapsedMs": 18.942708
+    },
+    {
+        "scenario": "menu_groups_5",
+        "reads": 16,
+        "writes": 18,
+        "sql": 47,
+        "telegram": {
+            "delete": 1,
+            "member": 6,
+            "send": 1
+        },
+        "elapsedMs": 19.024875
+    },
+    {
+        "scenario": "menu_groups_20",
+        "reads": 16,
+        "writes": 33,
+        "sql": 62,
+        "telegram": {
+            "delete": 1,
+            "member": 21,
+            "send": 1
+        },
+        "elapsedMs": 25.328583
+    },
+    {
+        "scenario": "menu_groups_20",
+        "reads": 16,
+        "writes": 33,
+        "sql": 62,
+        "telegram": {
+            "delete": 1,
+            "member": 21,
+            "send": 1
+        },
+        "elapsedMs": 26.9655
+    },
+    {
+        "scenario": "menu_groups_20",
+        "reads": 16,
+        "writes": 33,
+        "sql": 62,
+        "telegram": {
+            "delete": 1,
+            "member": 21,
+            "send": 1
+        },
+        "elapsedMs": 25.392125
+    },
+    {
+        "scenario": "menu_groups_20",
+        "reads": 16,
+        "writes": 33,
+        "sql": 62,
+        "telegram": {
+            "delete": 1,
+            "member": 21,
+            "send": 1
+        },
+        "elapsedMs": 26.751209
+    },
+    {
+        "scenario": "menu_groups_20",
+        "reads": 16,
+        "writes": 33,
+        "sql": 62,
+        "telegram": {
+            "delete": 1,
+            "member": 21,
+            "send": 1
+        },
+        "elapsedMs": 25.983417
+    },
+    {
+        "scenario": "payment_handle_panels_1",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 15.726375
+    },
+    {
+        "scenario": "payment_maintenance_panels_1",
+        "reads": 20,
+        "writes": 12,
+        "sql": 67,
+        "telegram": {
+            "editEphemeralRich": 1,
+            "editRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 17.536875
+    },
+    {
+        "scenario": "idle_maintenance_panels_1",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.281333
+    },
+    {
+        "scenario": "payment_handle_panels_1",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.767375
+    },
+    {
+        "scenario": "payment_maintenance_panels_1",
+        "reads": 20,
+        "writes": 12,
+        "sql": 67,
+        "telegram": {
+            "editEphemeralRich": 1,
+            "editRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 17.721709
+    },
+    {
+        "scenario": "idle_maintenance_panels_1",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.014667
+    },
+    {
+        "scenario": "payment_handle_panels_1",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 15.169833
+    },
+    {
+        "scenario": "payment_maintenance_panels_1",
+        "reads": 20,
+        "writes": 12,
+        "sql": 67,
+        "telegram": {
+            "editEphemeralRich": 1,
+            "editRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 18.035542
+    },
+    {
+        "scenario": "idle_maintenance_panels_1",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.083
+    },
+    {
+        "scenario": "payment_handle_panels_1",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.259084
+    },
+    {
+        "scenario": "payment_maintenance_panels_1",
+        "reads": 20,
+        "writes": 12,
+        "sql": 67,
+        "telegram": {
+            "editEphemeralRich": 1,
+            "editRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 17.409917
+    },
+    {
+        "scenario": "idle_maintenance_panels_1",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.161834
+    },
+    {
+        "scenario": "payment_handle_panels_1",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 15.42025
+    },
+    {
+        "scenario": "payment_maintenance_panels_1",
+        "reads": 20,
+        "writes": 12,
+        "sql": 67,
+        "telegram": {
+            "editEphemeralRich": 1,
+            "editRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 16.699333
+    },
+    {
+        "scenario": "idle_maintenance_panels_1",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.941
+    },
+    {
+        "scenario": "payment_handle_panels_10",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.622208
+    },
+    {
+        "scenario": "payment_maintenance_panels_10",
+        "reads": 65,
+        "writes": 57,
+        "sql": 328,
+        "telegram": {
+            "editEphemeralRich": 10,
+            "editRich": 1,
+            "member": 10
+        },
+        "elapsedMs": 60.974459
+    },
+    {
+        "scenario": "idle_maintenance_panels_10",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.885625
+    },
+    {
+        "scenario": "payment_handle_panels_10",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.447916
+    },
+    {
+        "scenario": "payment_maintenance_panels_10",
+        "reads": 65,
+        "writes": 57,
+        "sql": 328,
+        "telegram": {
+            "editEphemeralRich": 10,
+            "editRich": 1,
+            "member": 10
+        },
+        "elapsedMs": 58.751917
+    },
+    {
+        "scenario": "idle_maintenance_panels_10",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.8985
+    },
+    {
+        "scenario": "payment_handle_panels_10",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.045292
+    },
+    {
+        "scenario": "payment_maintenance_panels_10",
+        "reads": 65,
+        "writes": 57,
+        "sql": 328,
+        "telegram": {
+            "editEphemeralRich": 10,
+            "editRich": 1,
+            "member": 10
+        },
+        "elapsedMs": 59.982791
+    },
+    {
+        "scenario": "idle_maintenance_panels_10",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.80025
+    },
+    {
+        "scenario": "payment_handle_panels_10",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.517709
+    },
+    {
+        "scenario": "payment_maintenance_panels_10",
+        "reads": 65,
+        "writes": 57,
+        "sql": 328,
+        "telegram": {
+            "editEphemeralRich": 10,
+            "editRich": 1,
+            "member": 10
+        },
+        "elapsedMs": 57.495292
+    },
+    {
+        "scenario": "idle_maintenance_panels_10",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.118125
+    },
+    {
+        "scenario": "payment_handle_panels_10",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.399959
+    },
+    {
+        "scenario": "payment_maintenance_panels_10",
+        "reads": 65,
+        "writes": 57,
+        "sql": 328,
+        "telegram": {
+            "editEphemeralRich": 10,
+            "editRich": 1,
+            "member": 10
+        },
+        "elapsedMs": 62.7485
+    },
+    {
+        "scenario": "idle_maintenance_panels_10",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.9805
+    },
+    {
+        "scenario": "payment_handle_panels_20",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.540375
+    },
+    {
+        "scenario": "payment_maintenance_panels_20",
+        "reads": 115,
+        "writes": 107,
+        "sql": 618,
+        "telegram": {
+            "editEphemeralRich": 20,
+            "editRich": 1,
+            "member": 20
+        },
+        "elapsedMs": 106.977375
+    },
+    {
+        "scenario": "idle_maintenance_panels_20",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.996958
+    },
+    {
+        "scenario": "payment_handle_panels_20",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.741416
+    },
+    {
+        "scenario": "payment_maintenance_panels_20",
+        "reads": 115,
+        "writes": 107,
+        "sql": 618,
+        "telegram": {
+            "editEphemeralRich": 20,
+            "editRich": 1,
+            "member": 20
+        },
+        "elapsedMs": 106.073709
+    },
+    {
+        "scenario": "idle_maintenance_panels_20",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.839625
+    },
+    {
+        "scenario": "payment_handle_panels_20",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.405416
+    },
+    {
+        "scenario": "payment_maintenance_panels_20",
+        "reads": 115,
+        "writes": 107,
+        "sql": 618,
+        "telegram": {
+            "editEphemeralRich": 20,
+            "editRich": 1,
+            "member": 20
+        },
+        "elapsedMs": 109.827208
+    },
+    {
+        "scenario": "idle_maintenance_panels_20",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.823209
+    },
+    {
+        "scenario": "payment_handle_panels_20",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.178542
+    },
+    {
+        "scenario": "payment_maintenance_panels_20",
+        "reads": 115,
+        "writes": 107,
+        "sql": 618,
+        "telegram": {
+            "editEphemeralRich": 20,
+            "editRich": 1,
+            "member": 20
+        },
+        "elapsedMs": 108.221791
+    },
+    {
+        "scenario": "idle_maintenance_panels_20",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 4.246666
+    },
+    {
+        "scenario": "payment_handle_panels_20",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.056542
+    },
+    {
+        "scenario": "payment_maintenance_panels_20",
+        "reads": 115,
+        "writes": 107,
+        "sql": 618,
+        "telegram": {
+            "editEphemeralRich": 20,
+            "editRich": 1,
+            "member": 20
+        },
+        "elapsedMs": 110.716041
+    },
+    {
+        "scenario": "idle_maintenance_panels_20",
+        "reads": 7,
+        "writes": 1,
+        "sql": 10,
+        "telegram": {},
+        "elapsedMs": 3.89975
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.041333
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.132042
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.463208
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.653584
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.291541
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.203542
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.533666
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.116292
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.282375
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.343208
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.895708
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.789875
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.571917
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.388209
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.066792
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 6.076875
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.487459
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.417
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.778584
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.818625
+    },
+    {
+        "scenario": "payment_with_idle_connection",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 5.620875
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.362375
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 13.618041
+    },
+    {
+        "scenario": "payment_current_connections",
+        "reads": 13,
+        "writes": 12,
+        "sql": 68,
+        "telegram": {
+            "answer": 1,
+            "editEphemeralRich": 1,
+            "member": 1
+        },
+        "elapsedMs": 14.457625
+    }
+]

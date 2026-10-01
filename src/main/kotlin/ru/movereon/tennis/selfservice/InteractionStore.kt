@@ -2,7 +2,7 @@ package ru.movereon.tennis.selfservice
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import ru.movereon.tennis.application.SettlementCommand
 import ru.movereon.tennis.application.DefaultTrainingUpdate
 import ru.movereon.tennis.application.Attendance
@@ -79,8 +79,33 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         if(id!=null && deliveredEvent!=null)
             sqlUpdate(c,"""UPDATE bot_events SET plan_json=json_set(plan_json,'$.ephemeral',?) WHERE update_id=? AND plan_json IS NOT NULL""",id,deliveredEvent)
     }
-    fun panel(user:Long,group:Long,screen:ScreenAction?) = database.write { c ->
-        sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",screen?.let { json.encodeToString(it) },user,group)
+    fun panel(user:Long,group:Long,screen:ScreenAction?,trainingVersion:Long?=null) = database.write { c ->
+        val payload=screen?.let { JsonObject(json.encodeToJsonElement(it).jsonObject+mapOf(
+            "rendered_version" to (trainingVersion?.let(::JsonPrimitive) ?: JsonNull),
+            "refreshed_at" to JsonPrimitive(clock.millis()),"retry_after" to JsonPrimitive(0))).toString() }
+        sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",payload,user,group)
+    }
+    data class PendingPanel(val user:Long,val group:Long,val message:Long,val screen:ScreenAction)
+    fun pendingPanels(limit:Int=4):List<PendingPanel> = database.read { c ->
+        sqlQuery(c,"""SELECT s.user_id,s.chat_id,s.ephemeral_id,s.panel_json FROM bot_sessions s
+            JOIN trainings t ON t.group_id=s.chat_id AND t.id=json_extract(s.panel_json,'$.id')
+            WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') LIKE 'participation%'
+            AND (t.status<>'OPEN' OR COALESCE(json_extract(s.panel_json,'$.rendered_version'),-1)<>t.version)
+            AND COALESCE(json_extract(s.panel_json,'$.retry_after'),0)<=?
+            ORDER BY (t.status<>'OPEN') DESC,COALESCE(json_extract(s.panel_json,'$.refreshed_at'),0),s.chat_id,s.user_id LIMIT ?""",clock.millis(),limit) {
+            PendingPanel(it.getLong(1),it.getLong(2),it.getLong(3),json.decodeFromString(it.getString(4)))
+        }
+    }
+    fun panelRefreshDelay(maximum:Int):Int = database.read { c ->
+        val next=sqlQuery(c,"""SELECT MIN(COALESCE(json_extract(s.panel_json,'$.retry_after'),0)) FROM bot_sessions s
+            JOIN trainings t ON t.group_id=s.chat_id AND t.id=json_extract(s.panel_json,'$.id')
+            WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') LIKE 'participation%'
+            AND (t.status<>'OPEN' OR COALESCE(json_extract(s.panel_json,'$.rendered_version'),-1)<>t.version)""") { it.getString(1)?.toLong() }.single()
+        if(next==null) maximum else ((next-clock.millis()).coerceAtLeast(0)/1000+1).coerceAtMost(maximum.toLong()).toInt()
+    }
+    fun retryPanel(panel:PendingPanel,delayMillis:Long) = database.write { c ->
+        sqlUpdate(c,"""UPDATE bot_sessions SET panel_json=json_set(panel_json,'$.retry_after',?)
+            WHERE user_id=? AND chat_id=? AND ephemeral_id=?""",clock.millis()+delayMillis,panel.user,panel.group,panel.message)
     }
     fun panels(group:Long,training:String):List<Pair<Long,ScreenAction>> = database.read { c ->
         sqlQuery(c,"SELECT user_id,panel_json FROM bot_sessions WHERE chat_id=? AND ephemeral_id IS NOT NULL AND json_extract(panel_json,'$.id')=? AND json_extract(panel_json,'$.kind') LIKE 'participation%'",group,training) {
@@ -174,13 +199,19 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }.singleOrNull()
     }
     /** Protection happens before the network request, so uncertain sends keep usable buttons. */
-    fun protect(tokens: Set<String>) = database.write { c -> tokens.forEach { sqlUpdate(c, "UPDATE bot_buttons SET active=1 WHERE token=?", it) } }
+    fun protect(tokens: Set<String>) {
+        if(tokens.isEmpty()) return
+        database.write { c -> sqlUpdate(c,"UPDATE bot_buttons SET active=1 WHERE active=0 AND token IN (${tokens.joinToString(",") { "?" }})",*tokens.toTypedArray()) }
+    }
     fun activeTokens(scope: String): Set<String> = database.read { c ->
         sqlQuery(c, "SELECT token FROM bot_buttons WHERE scope=? AND active=1", scope) { it.getString(1) }.toSet()
     }
     fun replace(scope: String, tokens: Set<String>) = database.write { c ->
-        sqlUpdate(c, "UPDATE bot_buttons SET active=0,expires_at=? WHERE scope=? AND permanent=0", clock.instant().epochSecond + 120, scope)
-        tokens.forEach { sqlUpdate(c, "UPDATE bot_buttons SET active=1 WHERE token=? AND scope=?", it, scope) }
+        val marks=tokens.joinToString(",") { "?" }
+        val except=if(tokens.isEmpty()) "" else " AND token NOT IN ($marks)"
+        sqlUpdate(c,"UPDATE bot_buttons SET active=0,expires_at=? WHERE scope=? AND permanent=0 AND active=1$except",
+            clock.instant().epochSecond+120,scope,*tokens.toTypedArray())
+        if(tokens.isNotEmpty()) sqlUpdate(c,"UPDATE bot_buttons SET active=1 WHERE scope=? AND active=0 AND token IN ($marks)",scope,*tokens.toTypedArray())
     }
     fun cleanup() = database.write { c ->
         // Keep completed IDs for deduplication, but retire their no-longer-needed recovery plans.
@@ -236,7 +267,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }
     }
     fun cardDelivered(group: Long, training: String, through: Long) = database.write { c ->
-        sqlUpdate(c, "UPDATE actions SET delivered_at=? WHERE group_id=? AND training_id=? AND id<=? AND needs_delivery=1",
+        sqlUpdate(c, "UPDATE actions SET delivered_at=? WHERE group_id=? AND training_id=? AND id<=? AND needs_delivery=1 AND delivered_at IS NULL",
             clock.instant().toString(), group, training, through)
     }
 }

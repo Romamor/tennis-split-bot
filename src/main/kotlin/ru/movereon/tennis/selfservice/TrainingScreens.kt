@@ -6,7 +6,7 @@ import ru.movereon.tennis.telegram.*
 import ru.movereon.tennis.selfservice.Screens.Companion.phase
 import ru.movereon.tennis.selfservice.Screens.Companion.hours
 
-internal data class ScreenContent(val text:String,val html:String?=null,val photoId:String?=null)
+internal data class ScreenContent(val text:String,val html:String?=null,val photoId:String?=null,val trainingVersion:Long?=null)
 
 /** Cards, editor and shared live attendance controls. No Telegram calls or financial writes. */
 internal class TrainingScreens(private val service:SettlementService,private val state:InteractionStore) {
@@ -14,6 +14,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
     fun render(layout:ScreenLayout,a:Access?,personRow:(Long,String,ScreenAction)->Unit,label:(Long)->String,account:(Long)->Account):ScreenContent = with(layout) {
         var richHtml:String?=null
         var photoId:String?=null
+        var trainingVersion:Long?=null
         val text=when(action.kind) {
             "training", "public", "my_training" -> {
                 val t = service.training(requireNotNull(a), action.id)
@@ -85,6 +86,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
             }
             "participation", "participation_time", "participation_payment" -> {
                 val t=service.training(requireNotNull(a),action.id)
+                trainingVersion=t.version
                 service.requireOpen(t)
                 val content=TrainingCard.render(t,account)
                 richHtml=content.html
@@ -131,7 +133,7 @@ internal class TrainingScreens(private val service:SettlementService,private val
             }
             else -> error("Not a training screen: ${action.kind}")
         }
-        ScreenContent(text,richHtml,photoId)
+        ScreenContent(text,richHtml,photoId,trainingVersion)
     }
     companion object {
         val kinds=setOf("training","public","my_training","training_status","add_player_list","exclude_player_list","manage_players","participation","participation_time","participation_payment")

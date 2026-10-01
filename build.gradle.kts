@@ -20,7 +20,7 @@ dependencies {
 application { mainClass.set("ru.movereon.tennis.DemoKt") }
 
 tasks.test {
-    useJUnitPlatform { excludeTags("storage-simulation") }
+    useJUnitPlatform { excludeTags("storage-simulation", "performance-audit") }
     testLogging { events("failed", "skipped") }
 }
 
@@ -65,4 +65,13 @@ tasks.register<JavaExec>("settlementBenchmark") {
         target.writeText(classpath.asPath)
     }
     args(providers.gradleProperty("benchmarkMode").getOrElse("all"), providers.gradleProperty("benchmarkDir").getOrElse("build/settlement-benchmark"))
+}
+
+// Explicit local profiling workload; excluded from normal regression tests.
+tasks.register<Test>("performanceAudit") {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("performance-audit") }
+    systemProperty("audit.dir", providers.gradleProperty("auditDir").getOrElse("build/performance-audit"))
+    outputs.upToDateWhen { false }
 }

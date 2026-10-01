@@ -60,18 +60,23 @@ fun runBot() {
         val lock=channel.tryLock() ?: error("С этой базой уже работает другой процесс бота")
         lock.use {
             val api=HttpTelegramApi(config.token)
-            val bot=SelfServiceBot(api,Database(path),awaitBotIdentity(api),zone=config.timeZone)
-            println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
-            while(!Thread.currentThread().isInterrupted) {
-                try {
-                    runBotCycle(
-                        { api.updates(bot.state.offset(),if(bot.hasClosingPolls()) 0 else config.pollTimeout) },
-                        bot::handle,bot::finishPollsAfterDrain,bot::maintain)
-                } catch (failure: TelegramFailure) {
-                    if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
-                    System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")
-                    try { Thread.sleep((failure.retryAfter ?: 3).coerceIn(1,60)*1000L) }
-                    catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+            val database=Database(path)
+            database.withConnectionReuse {
+                val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone)
+                println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
+                var maintenanceDeferred=false
+                while(!Thread.currentThread().isInterrupted) {
+                    try {
+                        runBotCycle(
+                            { api.updates(bot.state.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } },
+                            bot::handle,bot::finishPollsAfterDrain,{ api.background(bot::maintain) })
+                    } catch (failure: TelegramFailure) {
+                        if(failure.backgroundDeferred) { maintenanceDeferred=true;continue }
+                        if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
+                        System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")
+                        try { Thread.sleep((failure.retryAfter ?: 3).coerceIn(1,60)*1000L) }
+                        catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+                    }
                 }
             }
         }

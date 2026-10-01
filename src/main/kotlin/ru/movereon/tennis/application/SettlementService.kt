@@ -18,7 +18,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun remember(account: Account) = database.write { c ->
         require(account.id > 0)
         sqlUpdate(c, """INSERT INTO users(id,first_name,last_name,username,is_bot) VALUES(?,?,?,?,?)
-            ON CONFLICT(id) DO UPDATE SET first_name=excluded.first_name,last_name=excluded.last_name,username=excluded.username""",
+            ON CONFLICT(id) DO UPDATE SET first_name=excluded.first_name,last_name=excluded.last_name,username=excluded.username
+            WHERE users.first_name IS NOT excluded.first_name OR users.last_name IS NOT excluded.last_name OR users.username IS NOT excluded.username""",
             account.id, account.firstName, account.lastName, account.username, account.isBot)
     }
 
@@ -26,13 +27,13 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         require(group.id < 0 && group.title.isNotBlank())
         ZoneId.of(group.timeZone)
         sqlUpdate(c, """INSERT INTO groups(id,title,time_zone) VALUES(?,?,?)
-            ON CONFLICT(id) DO UPDATE SET title=excluded.title""", group.id, group.title, group.timeZone)
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title WHERE groups.title IS NOT excluded.title""", group.id, group.title, group.timeZone)
     }
 
     /** Called for identities actually received from Telegram, never an arbitrary name or username. */
     fun rememberMembership(groupId: Long, userId: Long, present: Boolean) = database.write { c ->
         sqlUpdate(c, """INSERT INTO group_users(group_id,user_id,present) VALUES(?,?,?)
-            ON CONFLICT(group_id,user_id) DO UPDATE SET present=excluded.present""", groupId, userId, present)
+            ON CONFLICT(group_id,user_id) DO UPDATE SET present=excluded.present WHERE group_users.present<>excluded.present""", groupId, userId, present)
     }
 
     fun account(id: Long): Account = database.read { account(it, id) }
@@ -55,8 +56,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"))
         }, total, index)
     }
-    fun knownGroups():List<SettlementGroup> = database.read { c ->
-        sqlQuery(c,"SELECT id,title,time_zone FROM groups ORDER BY title,id") { SettlementGroup(it.getLong(1),it.getString(2),it.getString(3)) }
+    fun knownGroups(user:Long?=null):List<SettlementGroup> = database.read { c ->
+        sqlQuery(c,"SELECT id,title,time_zone FROM groups WHERE ? IS NULL OR EXISTS(SELECT 1 FROM group_users gu WHERE gu.group_id=groups.id AND gu.user_id=? AND gu.present=1) ORDER BY title,id",user,user) { SettlementGroup(it.getLong(1),it.getString(2),it.getString(3)) }
     }
     fun trainingDefaults(user:Long):TrainingDefaults = database.read { c ->
         account(c,user)
@@ -259,6 +260,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 after = json.encodeToString(transfer(c, a.groupId, transferId))
             }
             else -> {
+                var refreshRoster=command !is SettlementCommand.CreateTraining && command !is SettlementCommand.EditTraining
                 if (command is SettlementCommand.CreateTraining) {
                     allowed(present(c,a), "Создавать тренировку может участник этой группы")
                     trainingId = command.id
@@ -321,6 +323,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val row = old.players.firstOrNull { it.userId == command.userId }
                                 ?: Attendance(command.userId, false, ordinal = (old.players.maxOfOrNull { it.ordinal } ?: -1) + 1)
                             val changed = old.rules.change(row, command)
+                            refreshRoster=changed.playing!=row.playing
                             if (changed==row) return@write ActionReceipt(0,old.version)
                             if(!changed.playing && changed.paid==0L)
                                 sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,changed.userId)
@@ -343,6 +346,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             if(input==current) return@write ActionReceipt(0,old.version)
                             val row=(current ?: Attendance(command.userId,false,ordinal=(old.players.maxOfOrNull { it.ordinal } ?: -1)+1))
                                 .copy(playing=input.playing,minutes=input.minutes,guestMinutes=if(input.guestCount>0) input.minutes else 0,guestCount=input.guestCount,paid=input.paid)
+                            refreshRoster=row.playing!=(current?.playing ?: false)
                             if (row==current || current==null && !row.playing && row.paid==0L) return@write ActionReceipt(0,old.version)
                             if(!row.playing && row.paid==0L)
                                 sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,row.userId)
@@ -390,12 +394,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                     }
                     sqlUpdate(c, "UPDATE trainings SET version=? WHERE group_id=? AND id=?", version, a.groupId, trainingId)
                 }
-                refreshAttendance(c,a.groupId)
+                if(refreshRoster) refreshAttendance(c,a.groupId)
                 after = json.encodeToString(readTraining(c, a.groupId, trainingId))
             }
         }
         // Validate the whole batch before writing any ledger rows. The transaction also covers the edited records.
-        applyEntries(database.balances(c, a.groupId).mapKeys { ParticipantId(it.key.toString()) }, entries)
+        if(entries.isNotEmpty()) applyEntries(database.balances(c, a.groupId).mapKeys { ParticipantId(it.key.toString()) }, entries)
         sqlUpdate(c, """INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,transfer_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, command.javaClass.simpleName, trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
         val actionId = sqlQuery(c, "SELECT last_insert_rowid()") { it.getLong(1) }.single()

@@ -21,6 +21,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     val screens = Screens(service, state, requireNotNull(identity.username))
     private val paymentInput=PaymentInput(service,state)
     private var lastCleanup = Long.MIN_VALUE
+    private val cardRetries=object:LinkedHashMap<Pair<Long,String>,Long>() {
+        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Pair<Long,String>,Long>?)=size>256
+    }
+    private val navigationMembership=NavigationMembershipCache(clock)
     private val checkedMembership = mutableMapOf<Pair<Long,Long>, Access>()
     init {
         val bound = database.read { c -> sqlQuery(c, "SELECT id FROM users WHERE is_bot=1") { it.getLong(1) }.singleOrNull() }
@@ -38,23 +42,27 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         require(group < 0)
         checkedMembership[group to user]?.let { return it }
         val member = api.member(group, user)
+        navigationMembership.remember(group,user,member)
         service.rememberMembership(group, user, member.present)
         checkAccounting(member.present, ErrorCode.FORBIDDEN, "Доступ только участникам этой Telegram-группы")
         return Access(group, user, member.admin).also { checkedMembership[group to user] = it }
     }
-    private fun groupOptions(user:Long,forPublication:Boolean=false):List<GroupOption> = service.knownGroups().mapNotNull { group ->
+    private fun groupOptions(user:Long,forPublication:Boolean=false,discover:Boolean=false):List<GroupOption> {
+        val known=service.knownGroups(user)
+        val groups=if(discover || known.isEmpty()) service.knownGroups() else known
+        return groups.mapNotNull { group ->
         try {
-            val member=api.member(group.id,user)
+            val member=navigationMembership.get(group.id,user) { api.member(group.id,user) }
             service.rememberMembership(group.id,user,member.present)
             if(!member.present) null else {
                 val auth=Access(group.id,user,member.admin)
-                checkedMembership[group.id to user]=auth
-                val canPublish=(forPublication || polls.enabled(group.id)) && api.member(group.id,identity.id).let { it.present && it.admin }
+                val canPublish=(forPublication || polls.enabled(group.id)) && navigationMembership.get(group.id,identity.id) { api.member(group.id,identity.id) }.let { it.present && it.admin }
                 GroupOption(group,service.isAdmin(auth),member.admin,canPublish)
             }
         } catch(f:TelegramFailure) {
             if(f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) null else throw f
         }
+    }
     }
     private fun requirePublication(group:Long,user:Long) {
         access(group,user)
@@ -86,6 +94,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val memberUpdate = update.memberUpdate ?: update.botMemberUpdate
             if (memberUpdate != null) {
                 if (memberUpdate.chat.id < 0) {
+                    navigationMembership.invalidate(memberUpdate.chat.id)
                     service.register(SettlementGroup(memberUpdate.chat.id, memberUpdate.chat.title ?: "Группа", zone))
                     remember(memberUpdate.from)
                     memberUpdate.member.user?.takeUnless { it.isBot }?.let {
@@ -97,6 +106,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (user == null || user.isBot || message == null) { state.complete(update.id); return }
             remember(user)
             if (message.chat.id < 0) {
+                if(message.newMembers.isNotEmpty() || message.leftMember!=null) navigationMembership.invalidate(message.chat.id)
                 val title = message.chat.title ?: runCatching { service.group(message.chat.id).title }.getOrDefault("Группа")
                 service.register(SettlementGroup(message.chat.id, title, zone))
                 message.newMembers.filterNot { it.isBot }.forEach { remember(it); service.rememberMembership(message.chat.id, it.id, true) }
@@ -643,7 +653,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 remember(it);service.rememberMembership(plan.screen.group,it.id,true)
             }.map { it.id }.toSet()+plan.user
         } else emptySet()
-        val options=if(plan.screen.kind in setOf("menu","groups","settings") || plan.form?.kind=="group") groupOptions(plan.user,forPublication=plan.form?.kind=="group") else emptyList()
+        val options=if(plan.screen.kind in setOf("menu","groups","settings") || plan.form?.kind=="group") groupOptions(plan.user,forPublication=plan.form?.kind=="group",discover=plan.screen.kind=="groups" || plan.form?.kind=="group") else emptyList()
         val out = screens.render(plan.screen, a, scope, plan.user, plan.form, plan.notice, inGroup = plan.chat < 0, telegramAdmins=administrators,groupOptions=options)
         if (plan.chat < 0) {
             // Only training data already visible on the shared card is rendered inside the group.
@@ -674,7 +684,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     .filter { it != current && it != state.currentEphemeral(plan.user, plan.chat) }
                     .forEach { deletePanel(plan.user, plan.chat, it) }
                 state.replace(scope, out.tokens)
-                state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") || it.kind in setOf("poll_detail","poll_close_confirm") })
+                state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") || it.kind in setOf("poll_detail","poll_close_confirm") },out.trainingVersion)
             } catch (failure: TelegramFailure) {
                 if (failure.code in setOf(401, 409)) throw failure
                 System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
@@ -802,17 +812,18 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         state.reconcilePins()
         unpinCards()
         retirePrivateMenus()
-        state.pendingCards().forEach { (group, training, through) ->
-            if (state.delivery("training:$group:$training")?.status != "FAILED") {
-                try { if (refreshCard(group, training)) {
-                    refreshPanels(group,training)
-                    state.cardDelivered(group, training, through)
-                } }
-                catch (failure: TelegramFailure) {
-                    if (failure.kind != FailureKind.REJECTED || failure.code in setOf(401,409)) throw failure
-                }
+        state.pendingCards().filter { (group,training,_) ->
+            (cardRetries[group to training] ?: 0)<=clock.millis() && canRefreshCard(group,training)
+        }.take(2).forEach { (group,training,through) ->
+            try {
+                if(refreshCard(group,training)) { state.cardDelivered(group,training,through);cardRetries.remove(group to training) }
+            } catch(f:TelegramFailure) {
+                if(f.code in setOf(401,409)) throw f
+                cardRetries[group to training]=clock.millis()+(f.retryAfter ?: 5).coerceIn(1,60)*1000L
+                if(f.kind==FailureKind.RETRY_LATER) throw f
             }
         }
+        refreshPendingPanels()
         refreshPrivatePollViews()
         state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
         pinCards()
@@ -869,34 +880,57 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    private fun refreshPanels(group:Long,training:String) {
-        state.panels(group,training).forEach { (user,screen) ->
+    /** Progress is stored in panel_json, so unfinished refreshes survive a restart. */
+    private fun refreshPendingPanels() {
+        state.pendingPanels().forEach { panel ->
+            val (user,group,id,screen)=panel
+            val scope="personal:$user:$group"
+            val oldTokens=state.activeTokens(scope)
             try {
                 val auth=access(group,user)
-                val t=service.training(auth,training)
-                if(t.phase != TrainingPhase.OPEN) {
-                    closePanel(user,group)
-                } else {
-                    val id=state.currentEphemeral(user,group) ?: return@forEach
-                    val scope="personal:$user:$group"
+                val t=service.training(auth,screen.id)
+                if(t.phase != TrainingPhase.OPEN) closePanel(user,group,id,required=true)
+                else {
                     val player=t.players.firstOrNull { it.userId==user }
                     val available=player?.playing==true || screen.kind=="participation_payment" && (player?.paid ?: 0)>0
                     val shown=if(available && (screen.kind!="participation_time" || t.rules.trackTime)) screen else screen.copy(kind="participation")
                     val out=screens.render(shown,auth,scope,user,inGroup=true)
-                    state.panel(user,group,shown)
                     state.protect(out.tokens)
                     api.editEphemeralRich(group,user,id,out.text,requireNotNull(out.richHtml),out.keyboard)
                     state.replace(scope,out.tokens)
+                    state.panel(user,group,shown,out.trainingVersion)
                 }
             } catch(f:AccountingException) {
                 if(f.code!=ErrorCode.FORBIDDEN) throw f
-                closePanel(user,group)
+                closePanel(user,group,id)
+                if(state.currentEphemeral(user,group)!=null) state.retryPanel(panel,30_000)
             } catch(f:TelegramFailure) {
-                if(f.kind==FailureKind.MESSAGE_MISSING || f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) {
-                    state.rememberEphemeral(user,group,null);state.replace("personal:$user:$group",emptySet())
-                } else throw f
+                if(f.code in setOf(401,409)) throw f
+                if(f.kind==FailureKind.MESSAGE_MISSING) {
+                    state.rememberEphemeral(user,group,null);state.replace(scope,emptySet())
+                } else {
+                    if(f.kind==FailureKind.REJECTED) state.replace(scope,oldTokens)
+                    state.retryPanel(panel,if(f.kind==FailureKind.RETRY_LATER) (f.retryAfter ?: 3).coerceIn(1,60)*1000L else if(f.kind==FailureKind.REJECTED) 30_000 else 5_000)
+                    if(f.kind==FailureKind.RETRY_LATER) throw f
+                }
             }
         }
+    }
+    fun hasPendingPanelRefreshes()=state.pendingPanels(1).isNotEmpty()
+    private fun canRefreshCard(group:Long,training:String):Boolean {
+        val delivery=state.delivery("training:$group:$training")
+        return delivery?.status!="FAILED" && (delivery?.status!="UNKNOWN" || delivery.message!=null)
+    }
+    fun nextPollTimeout(maximum:Int):Int {
+        if(hasClosingPolls()) return 0
+        var wait=state.panelRefreshDelay(maximum)
+        state.pendingCards().forEach { (group,training,_) ->
+            if(canRefreshCard(group,training)) {
+                val due=cardRetries[group to training] ?: 0
+                wait=minOf(wait,((due-clock.millis()).coerceAtLeast(0)/1000+1).coerceAtMost(maximum.toLong()).toInt())
+            }
+        }
+        return wait
     }
     private fun refreshCard(group: Long, training: String, allowCreate:Boolean?=null): Boolean {
         val author = service.database.read { c -> sqlQuery(c, "SELECT created_by FROM trainings WHERE group_id=? AND id=?", group, training) { it.getLong(1) }.single() }

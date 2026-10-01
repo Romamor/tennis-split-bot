@@ -34,6 +34,15 @@ class HttpTelegramApiTest {
     }
     @AfterEach fun stop() { server.stop(0) }
 
+    @Test fun `background budget defers unsent requests and does not constrain foreground requests`() {
+        val limited=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),backgroundBudgetMillis=5)
+        val failure=assertFailsWith<TelegramFailure> { limited.background { Thread.sleep(20);limited.me() } }
+        assertTrue(failure.backgroundDeferred);assertEquals(FailureKind.RETRY_LATER,failure.kind)
+        assertTrue(bodies.isEmpty(),"An expired budget must not issue another request")
+        response={ 200 to """{"ok":true,"result":{"id":123456,"is_bot":true,"first_name":"Test"}}""" }
+        assertEquals(123456,limited.me().id)
+    }
+
     @Test fun `rich cards and ephemeral tables use Telegram rich message API and pin requests notify members`() {
         response={ method -> 200 to if(method=="sendRichMessage")
             """{"ok":true,"result":{"message_id":77,"chat":{"id":-123,"type":"supergroup"},"receiver_user":{"id":22},"ephemeral_message_id":73}}"""
