@@ -103,11 +103,17 @@ class FinanceFlowTest {
         assertEquals(5,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
         for(u in 3L..11L) run(SettlementCommand.RecordTransfer("reverse$u",2,u,60,"2026-09-13"),Access(-1,2))
         run(SettlementCommand.RecordTransfer("extra",12,2,30,"2026-09-13"),Access(-1,12))
+        bot.service.remember(Account(12,"<Игрок & 12>"))
         open(2);click(2,"Баланс группы")
         assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
         assertEquals(11,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
+        val firstPage=fake.richMessages.getValue(2L to latest(2).id)
+        assertEquals(10,Regex("<a href=\"tg://user\\?id=").findAll(firstPage).count())
+        assertTrue(firstPage.contains("<a href=\"tg://user?id=12\">&lt;Игрок &amp; 12&gt;</a>"))
+        assertFalse(latest(2).text!!.contains("tg://"))
         assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
         assertEquals(2,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
+        assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<a href=\"tg://user?id=9\">Игрок 9</a>"))
     }
     @Test fun `pending receipts use three rows and clicking a receipt removes only that row`() {
         setup()

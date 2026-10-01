@@ -43,7 +43,7 @@ internal object TrainingCard {
             else {
                 append(RichTable.OPEN+"<tr><th>Участник</th>"+(if(t.rules.trackTime) "<th>Время</th>" else "")+"<th>Оплата</th><th>Баланс</th></tr>")
                 rows.forEach {
-                    append("<tr><td><a href=\"tg://user?id=${it.user}\">${escape(it.name)}</a></td>")
+                    append("<tr><td>${profileLink(it.user,it.name)}</td>")
                     if(t.rules.trackTime) append("<td align=\"right\">${Screens.hours(it.minutes)}</td>")
                     append("<td align=\"right\">${it.paid} ₽</td>")
                     append("<td align=\"right\">${it.balance?.let(Screens::signed) ?: "—"} ₽</td></tr>")
@@ -54,5 +54,6 @@ internal object TrainingCard {
         }
         return Content(text,html)
     }
+    fun profileLink(user:Long,name:String)="<a href=\"tg://user?id=$user\">${escape(name)}</a>"
     fun escape(value:String)=value.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;")
 }
