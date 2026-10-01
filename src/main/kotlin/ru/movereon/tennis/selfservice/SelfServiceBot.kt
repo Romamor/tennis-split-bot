@@ -665,7 +665,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 if (!updated) {
                     val sent = if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,requireNotNull(plan.callback),out.text,out.richHtml,out.keyboard)
                         else api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard)
-                    state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId)
+                    state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId,event)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
                 listOfNotNull(plan.previousGroupPanel, plan.ephemeral).distinct()

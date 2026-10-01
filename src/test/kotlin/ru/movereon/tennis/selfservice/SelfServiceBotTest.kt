@@ -16,6 +16,7 @@ class SelfServiceBotTest {
     private val deletedEphemerals = mutableListOf<Triple<Long,Long,Long>>()
     private var nextEphemeral = 700L
     private var panelDeleteFailure:TelegramFailure?=null
+    private var forcedNextEphemeral:Long?=null
     private val answers = mutableListOf<String>()
     private val answerAlerts = mutableListOf<Boolean>()
     private var clock = object : Clock() {
@@ -30,7 +31,7 @@ class SelfServiceBotTest {
 
         override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
             TgMessage(chat = TgChat(chatId, "supergroup"), from = fake.bot, text = text, keyboard = keyboard,
-                receiver = TgUser(userId, firstName = "User $userId"), ephemeralId = nextEphemeral++).also { ephemeralMessages[chatId to userId] = it }
+                receiver = TgUser(userId, firstName = "User $userId"), ephemeralId = forcedNextEphemeral?.also { forcedNextEphemeral=null } ?: nextEphemeral++).also { ephemeralMessages[chatId to userId] = it }
         override fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {
             val old = ephemeralMessages[chatId to userId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
             assertEquals(old.ephemeralId, ephemeralId)
@@ -893,6 +894,24 @@ class SelfServiceBotTest {
         bot.handle(TgUpdate(updateId++,callback=TgCallback("old-panel",TgUser(2),panel.copy(receiver=null),"n:missing-token")))
         assertNull(bot.state.currentEphemeral(2,-1));assertFalse(ephemeralMessages.containsKey(-1L to 2L))
         assertEquals(other,ephemeralMessages[-1L to 3L])
+    }
+
+    @Test fun `replay after delivery with a reused ephemeral id does not delete the new panel`() {
+        setup();create();click(2,"Открыть",publicCard())
+        val old=ephemeralMessages.getValue(-1L to 2L)
+        val card=publicCard();val button=card.keyboard!!.rows.flatten().single { it.text.endsWith("Открыть") }
+        val update=TgUpdate(updateId++,callback=TgCallback("reused-id",TgUser(2),card,button.callbackData))
+        forcedNextEphemeral=old.ephemeralId
+        bot.state.database.write { c -> c.createStatement().use {
+            it.execute("CREATE TRIGGER test_completion_failure BEFORE UPDATE OF completed ON bot_events WHEN NEW.update_id=${update.id} AND NEW.completed=1 BEGIN SELECT RAISE(ABORT,'simulated completion crash'); END")
+        } }
+        assertFailsWith<java.sql.SQLException> { bot.handle(update) }
+        bot.state.database.write { c -> c.createStatement().use { it.execute("DROP TRIGGER test_completion_failure") } }
+        assertFalse(bot.state.completed(update.id));assertFalse(bot.state.plan(update.id)!!.newGroupPanel)
+        val deletions=deletedEphemerals.size;val next=nextEphemeral
+        bot.handle(update)
+        assertTrue(bot.state.completed(update.id));assertEquals(deletions,deletedEphemerals.size)
+        assertEquals(next,nextEphemeral);assertEquals(old.ephemeralId,ephemeralMessages.getValue(-1L to 2L).ephemeralId)
     }
 
     @Test fun `private navigation uses a direct link and removes the group panel without an explanatory message`() {

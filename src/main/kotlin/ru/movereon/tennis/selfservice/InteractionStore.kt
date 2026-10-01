@@ -75,8 +75,11 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun currentEphemeral(user: Long, chat: Long): Long? = database.read { c ->
         sqlQuery(c, "SELECT ephemeral_id FROM bot_sessions WHERE user_id=? AND chat_id=?", user, chat) { it.getString(1)?.toLong() }.singleOrNull()
     }
-    fun rememberEphemeral(user: Long, chat: Long, id: Long?) = database.write { c ->
+    fun rememberEphemeral(user: Long, chat: Long, id: Long?, deliveredEvent:Long?=null) = database.write { c ->
         sqlUpdate(c, "UPDATE bot_sessions SET ephemeral_id=?,panel_json=CASE WHEN ? IS NULL THEN NULL ELSE panel_json END WHERE user_id=? AND chat_id=?", id, id, user, chat)
+        if(id!=null && deliveredEvent!=null)
+            sqlUpdate(c,"""UPDATE bot_events SET plan_json=json_set(plan_json,'$.newGroupPanel',json('false'),
+                '$.previousGroupPanel',NULL,'$.ephemeral',?) WHERE update_id=? AND plan_json IS NOT NULL""",id,deliveredEvent)
     }
     fun panel(user:Long,group:Long,screen:ScreenAction?) = database.write { c ->
         sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",screen?.let { json.encodeToString(it) },user,group)
