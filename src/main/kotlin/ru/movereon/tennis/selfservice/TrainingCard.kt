@@ -2,6 +2,8 @@ package ru.movereon.tennis.selfservice
 
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.core.*
+import java.math.BigInteger
+import java.math.RoundingMode
 
 /** One complete content model for public cards and personal interaction panels. */
 internal object TrainingCard {
@@ -10,6 +12,7 @@ internal object TrainingCard {
     data class Content(val text:String,val html:String)
     fun render(t:TrainingRecord,account:(Long)->Account):Content {
         val slots=t.calculation()
+        val summary=averageCost(slots,t.rules.trackTime)
         val allocation=if(slots.players.isNotEmpty() && slots.payments.isNotEmpty()) calculateTraining(slots) else null
         val known=slots.payments.isEmpty() || allocation!=null
         var slotIndex=0
@@ -37,6 +40,7 @@ internal object TrainingCard {
                 rows.forEach { append("${it.name} | "+(if(t.rules.trackTime) "${Screens.hours(it.minutes)} | " else "")+"${it.paid} ₽ | ${it.balance?.let(Screens::signed) ?: "—"} ₽\n") }
                 if(note!=null) append("\n$note")
             }
+            append(if(endsWith("\n")) "\n" else "\n\n").append(summary)
         }
         val html=buildString {
             append("<h3>${escape(t.title)}</h3><p>${escape(whenText)}<br>Статус: ${escape(Screens.phase(t.phase))}</p>")
@@ -52,8 +56,18 @@ internal object TrainingCard {
                 append("</table>")
                 if(note!=null) append("<p>${escape(note)}</p>")
             }
+            append("<p>${escape(summary)}</p>")
         }
         return Content(text,html)
+    }
+    private fun averageCost(training:Training,trackTime:Boolean):String {
+        val paid=training.payments.fold(BigInteger.ZERO) { sum,p -> sum+p.amount.toBigInteger() }
+        val divisor=if(trackTime) training.players.fold(BigInteger.ZERO) { sum,p -> sum+p.minutes.toBigInteger() }
+            else training.players.size.toBigInteger()
+        val numerator=if(trackTime) paid*60.toBigInteger() else paid
+        val amount=if(divisor.signum()==0) "—" else
+            numerator.toBigDecimal().divide(divisor.toBigDecimal(),0,RoundingMode.HALF_UP).toPlainString()+" ₽"
+        return (if(trackTime) "Час: " else "На человека: ")+amount
     }
     fun profileLink(user:Long,name:String,username:String?=null):String {
         val url=username?.takeIf { publicUsername.matches(it) }?.let { "https://t.me/$it" } ?: "tg://user?id=$user"
