@@ -1,6 +1,6 @@
 # Аватар Telegram
 
-Дополнительный вариант: [«Атака титанов»](telegram-avatar-aot-v2.png),
+Дополнительный вариант: [«Атака титанов»](telegram-avatar-aot-v3.png),
 [описание и промпт](AVATAR_AOT.md).
 
 [telegram-avatar-v1.png](telegram-avatar-v1.png) — квадратный аватар бота:
