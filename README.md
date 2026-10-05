@@ -655,6 +655,9 @@ OR-Tools и экспоненциальный поиск остались тол�
 
 ## Аватар бота
 
+Вариант с «Атакой титанов»: [иконка](assets/branding/telegram-avatar-aot-v2.png),
+[описание](assets/branding/AVATAR_AOT.md).
+
 Готовый [аватар для Telegram](assets/branding/telegram-avatar-v1.png) и
 [описание генерации](assets/branding/README.md). Файл не устанавливается в профиль
 бота автоматически.
