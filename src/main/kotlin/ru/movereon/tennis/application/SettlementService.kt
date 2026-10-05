@@ -90,9 +90,10 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 completedCount++;minutes+=it.getLong(2).toBigInteger();paid+=it.getLong(3).toBigInteger()
             }
         }
-        val index=page.coerceIn(0,maxOf(0,(total-1)/3))
-        val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT 3 OFFSET ?",user,user,index*3) { it.getLong(1) to it.getString(2) }
-        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,3),minutes.toAmount(),paid.toAmount(),completedCount)
+        val size=5
+        val index=page.coerceIn(0,maxOf(0,(total-1)/size))
+        val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT ? OFFSET ?",user,user,size,index*size) { it.getLong(1) to it.getString(2) }
+        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid.toAmount(),completedCount)
     }
     fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
     private val groupSettings=GroupSettings(database,clock)
