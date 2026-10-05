@@ -655,6 +655,9 @@ OR-Tools и экспоненциальный поиск остались тол�
 
 ## Аватар бота
 
+[Новые варианты для выбора](assets/branding/alternatives/README.md):
+минимализм, титан-талисман и пиксельная иконка.
+
 Вариант с «Атакой титанов»: [иконка](assets/branding/telegram-avatar-aot-v3.png),
 [описание](assets/branding/AVATAR_AOT.md).
 
