@@ -46,6 +46,50 @@ class FinanceFlowTest {
         run(SettlementCommand.ChangeAttendance(id,1,AttendanceChange.SET_PAID,paid))
         run(SettlementCommand.FinishTraining(id,bot.service.training(Access(-1,1),id).version))
     }
+    @Test fun `admins browse all group payments and return to the same page without changing receipts`() {
+        setup()
+        for(i in 1L..13L) run(SettlementCommand.SendOtherPayment("all$i",3,i),Access(-1,2))
+        run(SettlementCommand.SendOtherPayment("other-group",3,999),Access(-2,2))
+        fake.members[-1L to 1L]=TgMember("administrator")
+        run(SettlementCommand.SetAdministrator(4,true),Access(-1,1,true))
+        for(user in listOf(1L,4L)) {
+            open(user);click(user,"Все переводы группы")
+            assertTrue(latest(user).text!!.startsWith("Все переводы группы"))
+            assertFalse(latest(user).text!!.contains("999 ₽"))
+            assertTrue(rows(user).flatten().contains("1 / 2"))
+            click(user,"Дальше ›");val list=latest(user);val label=rows(user).first().single()
+            click(user,label);assertTrue(latest(user).text!!.contains("Ожидает подтверждения"))
+            assertEquals(listOf(listOf("⬅️ Назад")),rows(user))
+            click(user,"Назад");assertEquals(list.text,latest(user).text)
+            assertTrue(rows(user).flatten().contains("2 / 2"))
+            click(user,"⬅️ Назад");click(user,"История платежей")
+            assertTrue(latest(user).text!!.contains("Список пуст"))
+        }
+        open(2);assertFalse(rows(2).flatten().any { it.contains("Все переводы группы") })
+        open(4,"Группа 2");assertFalse(rows(4).flatten().any { it.contains("Все переводы группы") })
+        assertEquals(13,bot.service.pendingPaymentCount(Access(-1,3)))
+        assertTrue(bot.service.balances(Access(-1,1)).isEmpty())
+    }
+
+    @Test fun `revoked admins cannot use saved group history pages or foreign payment details`() {
+        setup()
+        for(i in 1L..11L) run(SettlementCommand.SendOtherPayment("p$i",3,i),Access(-1,2))
+        for(user in listOf(1L,4L)) {
+            if(user==1L) fake.members[-1L to user]=TgMember("administrator")
+            else run(SettlementCommand.SetAdministrator(user,true),Access(-1,1,true))
+            open(user);val menu=latest(user);click(user,"Все переводы группы")
+            val list=latest(user);val detail=rows(user).first().single()
+            if(user==1L) fake.members[-1L to user]=TgMember("member")
+            else run(SettlementCommand.SetAdministrator(user,false),Access(-1,1,true))
+            for(label in listOf("Дальше ›",detail)) {
+                val count=alerts.size;click(user,label,list)
+                assertEquals(count+1,alerts.size);assertTrue(alerts.last().contains("администратор"))
+            }
+            val count=alerts.size;click(user,"Все переводы группы",menu)
+            assertEquals(count+1,alerts.size)
+        }
+    }
+
     @Test fun `send and receive screens follow the diagram and return to the right menus`() {
         setup();seedBalance();open(2)
         assertEquals("Мои финансы:\nБаланс: −150 ₽ — тебе осталось внести",latest(2).text)

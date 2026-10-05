@@ -512,11 +512,24 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))
         Page(all.drop(index*size).take(size),all.size,index,size)
     }
-    fun financePayments(a:Access,page:Int=0,incomingOnly:Boolean=false):Page<MoneyTransfer> = database.read { c ->
+    fun financePayments(a:Access,page:Int=0,incomingOnly:Boolean=false,allGroup:Boolean=false):Page<MoneyTransfer> = database.read { c ->
         known(c,a.groupId,a.userId)
-        val condition="FROM transfers WHERE group_id=? AND "+if(incomingOnly) "to_user=? AND status='REVIEW'" else "(from_user=? OR to_user=?)"
-        val args=if(incomingOnly) arrayOf<Any>(a.groupId,a.userId) else arrayOf<Any>(a.groupId,a.userId,a.userId)
-        val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(incomingOnly) 3 else 5
+        require(!allGroup || !incomingOnly)
+        if(allGroup) {
+            allowed(present(c,a),"Доступ только участникам этой группы")
+            requireAdmin(c,a)
+        }
+        val condition="FROM transfers WHERE group_id=?"+when {
+            allGroup -> ""
+            incomingOnly -> " AND to_user=? AND status='REVIEW'"
+            else -> " AND (from_user=? OR to_user=?)"
+        }
+        val args=when {
+            allGroup -> arrayOf<Any>(a.groupId)
+            incomingOnly -> arrayOf<Any>(a.groupId,a.userId)
+            else -> arrayOf<Any>(a.groupId,a.userId,a.userId)
+        }
+        val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(allGroup) 10 else if(incomingOnly) 3 else 5
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))
         val ids=sqlQuery(c,"SELECT id $condition ORDER BY occurred_on DESC,created_at DESC,id LIMIT ? OFFSET ?",*args,size,index*size) { it.getString(1) }
         Page(ids.map { transfer(c,a.groupId,it) },total,index,size)

@@ -17,7 +17,10 @@ internal class FinanceScreens(private val service:SettlementService) {
                 rows+=listOf(button("Отправить платеж",next("finance_send")),button("Принять платеж(${summary.pendingReceiveCount})",next("finance_receive")))
                 rows+=listOf(button("Другой платёж",next("payment_new")),button("История платежей",next("finance_history")))
                 row("Баланс группы",next("finance_balances"))
-                if(service.isAdmin(a)) row("Записать платёж за участников",next("payment_new",option="admin"))
+                if(service.isAdmin(a)) {
+                    row("📜 Все переводы группы",next("finance_group_history"))
+                    row("Записать платёж за участников",next("payment_new",option="admin"))
+                }
                 row("Назад",ScreenAction("menu",0))
                 val balance=when {
                     summary.balance>0 -> "+${summary.balance} ₽ — тебе осталось получить"
@@ -84,11 +87,12 @@ internal class FinanceScreens(private val service:SettlementService) {
                     if(admin) "\nЗаписал администратор: ${person(t.createdBy)}. Подтверждение участников не требуется."
                     else if(t.status==PaymentStatus.REVIEW) "\nБаланс изменится после подтверждения получателем." else "")
             }
-            "finance_history" -> {
-                val p=service.financePayments(a,action.page)
+            "finance_history", "finance_group_history" -> {
+                val allGroup=action.kind=="finance_group_history"
+                val p=service.financePayments(a,action.page,allGroup=allGroup)
                 p.items.forEach { row("${date(it.date)} · ${person(it.from)} → ${person(it.to)} · ${it.amount} ₽",next("finance_payment",id=it.id).copy(back=action.copy(page=p.index))) }
                 pages(p.index,p.pages);row("⬅️ Назад",ScreenAction("finance",a.groupId))
-                table("История платежей",listOf("От кого","Кому","Сумма","Дата","Статус"),p.items.map {
+                table(if(allGroup) "Все переводы группы" else "История платежей",listOf("От кого","Кому","Сумма","Дата","Статус"),p.items.map {
                     listOf(person(it.from),person(it.to),"${it.amount} ₽",date(it.date),when(it.status) {
                         PaymentStatus.ACTIVE -> "Выполнен"
                         PaymentStatus.REVIEW -> "В процессе"
@@ -141,7 +145,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         return ScreenContent(plain,html)
     }
     companion object {
-        val kinds=setOf("finance","finance_send","finance_send_confirm","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history")
+        val kinds=setOf("finance","finance_send","finance_send_confirm","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history")
         val retiredActions=setOf("finance_debtors","debts","balances","settled","transfers","transfer","transfer_people","transfer_direction","transfer_amount","suggested_transfer","save_transfer","transfer_date","transfer_note","edit_transfer_amount","save_transfer_amount","review_transfer","confirm_transfer","cancel_transfer","transfer_history")
         fun retiredForm(form:InputForm?)=form?.kind?.let { it.startsWith("transfer_") || it.startsWith("edit_transfer_") }==true
         fun retiredCommand(command:SettlementCommand?)=command is SettlementCommand.RecordTransfer || command is SettlementCommand.ChangeTransfer || command is SettlementCommand.EditTransferAmount

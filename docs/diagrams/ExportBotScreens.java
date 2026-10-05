@@ -73,6 +73,8 @@ class ExportBotScreens {
     capture("admin_"+kind,"form","","",form(kind,"","\"paymentFrom\":4,\"user\":5,\"amount\":100,\"adminPayment\":true"),false,null);
    run(auth,new SettlementCommand.RecordAdminPayment("admin-payment",4,5,100));
    cap("admin_payment_saved","finance_payment","admin-payment");
+   cap("finance_group_history","finance_group_history","");
+   capture("finance_group_history_detail","finance_payment","admin-payment","\"back\":{\"kind\":\"finance_group_history\",\"group\":-1}",null,false,null);
   }
   capture("profile","profile_preview","","\"user\":4,\"back\":{\"kind\":\"finance_send\",\"group\":-1},\"resume\":{\"kind\":\"finance_send_confirm\",\"group\":-1,\"user\":4,\"value\":200}",null,false,null);
   capture("exit","exit_confirm","own","\"back\":{\"kind\":\"menu\",\"group\":-1},\"resume\":{\"kind\":\"form\",\"group\":-1}",null,false,null);

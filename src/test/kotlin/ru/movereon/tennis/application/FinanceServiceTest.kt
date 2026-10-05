@@ -27,6 +27,35 @@ class FinanceServiceTest {
         run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
         run(SettlementCommand.FinishTraining("t",s.training(recipient,"t").version))
     }
+    @Test fun `group payment history is admin scoped paginated and includes every status`() {
+        setup()
+        val admin=Access(-1,12)
+        run(SettlementCommand.SetAdministrator(12,true),Access(-1,1,true))
+        for(i in 1..12) run(SettlementCommand.SendOtherPayment("group$i",3,i.toLong()),payer)
+        run(SettlementCommand.ReceivePayment("group1"),Access(-1,3))
+        run(SettlementCommand.RecordTransfer("cancelled",2,3,50,"2026-01-01"),payer)
+        run(SettlementCommand.ChangeTransfer("cancelled",1,TransferChange.REVIEW),payer)
+        run(SettlementCommand.ChangeTransfer("cancelled",2,TransferChange.CANCEL),payer)
+        run(SettlementCommand.SendOtherPayment("foreign",3,999),Access(-2,2))
+        val before=s.balances(admin)
+        val first=s.financePayments(admin,allGroup=true)
+        val last=s.financePayments(admin,page=1,allGroup=true)
+        assertEquals(13,first.total);assertEquals(10,first.items.size);assertEquals(3,last.items.size)
+        val all=first.items+last.items
+        assertEquals(13,all.map { it.id }.toSet().size)
+        assertEquals(PaymentStatus.entries.toSet(),all.map { it.status }.toSet())
+        assertTrue(all.all { it.groupId==-1L });assertEquals("cancelled",all.last().id)
+        assertEquals(0,s.financePayments(admin).total)
+        assertEquals(13,s.financePayments(Access(-1,1,true),allGroup=true).total)
+        assertFailsWith<AccountingException> { s.financePayments(payer,allGroup=true) }
+        assertFailsWith<AccountingException> { s.financePayments(Access(-2,12),allGroup=true) }
+        run(SettlementCommand.SetAdministrator(12,false),Access(-1,1,true))
+        assertFailsWith<AccountingException> { s.financePayments(admin,page=1,allGroup=true) }
+        s.rememberMembership(-1,1,false)
+        assertFailsWith<AccountingException> { s.financePayments(Access(-1,1,true),allGroup=true) }
+        assertEquals(before,s.balances(admin))
+    }
+
     @Test fun `sending reserves amount while only recipient confirmation changes posted balances`() {
         setup();val before=s.balances(payer)
         val sent=s.execute(payer,"send",SettlementCommand.SendPayment("p",1,150))
