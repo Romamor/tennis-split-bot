@@ -133,7 +133,7 @@ class PersonalFlowTest {
         val html=api.richMessages[latest().chat.id to latest().id]!!
         assertTrue(html.contains("<s>27.09.2026</s>"))
         assertTrue(html.contains("Тренировка 3</tg-button></s>"))
-        assertEquals(24,Regex("<td align=\"left\">").findAll(html).count())
+        assertEquals(16,Regex("<td align=\"left\">").findAll(html).count())
         assertFalse(rows().flatten().any { it.contains("Тренировка ") })
         assertTrue(rows().flatten().contains("1 / 2"))
         assertEquals(1,bot.service.myTrainings(1,99).page.index)

@@ -142,7 +142,12 @@ def body_html(s):
  raw=re.sub(r'<table[^>]*>','<table style="border-collapse:collapse;width:100%;font-size:12px">',raw)
  raw=raw.replace('<th align="left">','<th style="text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px">')
  raw=raw.replace('<th>','<th style="font-weight:normal;border-bottom:1px solid #52606c;padding:5px">').replace('<td>','<td style="border-bottom:1px solid #52606c;padding:5px">').replace('<td align="right">','<td style="text-align:right;border-bottom:1px solid #52606c;padding:5px">')
- raw=re.sub(r'<tg-button[^>]*>(.*?)</tg-button>',r'<span style="color:#a6d8fc">\1</span>',raw)
+ def rich_button(match):
+  style=re.search(r'style="([^"]+)"',match.group(1))
+  color={'primary':'#2479c4','success':'#32814e','danger':'#bd454c'}.get(style.group(1) if style else '')
+  css=f'color:#fff;background:{color};border-radius:4px;padding:3px 7px' if color else 'color:#a6d8fc'
+  return f'<span style="{css}">{match.group(2)}</span>'
+ raw=re.sub(r'<tg-button([^>]*)>(.*?)</tg-button>',rich_button,raw)
  raw=raw.replace('<td align="left">','<td style="text-align:left;border-bottom:1px solid #52606c;padding:5px">')
  raw=re.sub(r'<a href="[^"]+">', '<span style="color:#a6d8fc">',raw).replace('</a>','</span>');return raw
 
@@ -197,8 +202,8 @@ for role,name in roles.items():
   bhvalue=body_html(s);vertex(gid+'-body',bhvalue,0,66,w,bh,parent=gid,style='rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;')
   preview.append(f'<div class="screen" style="left:{x}px;top:{sy}px;width:{w}px;height:{h}px"><h3>{html.escape(titles.get(key,key))}</h3><div class="context">'+('Общий чат' if key.startswith('public') or key in ('equal_public','simple_public','poll_training') else 'Персональная панель' if s['group'] else 'Личный чат')+f'</div><div class="bubble" data-key="{key}" style="height:{bh}px">{bhvalue}</div>')
   for ii,b in enumerate(s.get('inline',[])):
-   bid=f'{gid}-inline{ii}';bx=w*0.38
-   # The demo table has one header row and one-line training rows.
+   bid=f'{gid}-inline{ii}';bx=w*0.45
+   # Each demo training cell contains a one-line coloured title.
    header=s['html'].split('<table',1)[0];header_lines=1+header.count('<br>')
    by=66+14+header_lines*20+14+30+ii*30
    vertex(bid,'',bx,by,110,30,parent=gid,style='fillColor=none;strokeColor=none;')
