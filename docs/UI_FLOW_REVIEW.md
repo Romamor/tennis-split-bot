@@ -458,3 +458,7 @@ Telegram-группы; назначенные администраторы бо�
 Нижняя клавиатура содержит только навигацию. Обычные подписи кнопок Telegram
 не поддерживают такое форматирование; строки используют rich HTML и
 `<tg-button type="callback_data" style="link">` внутри ячейки таблицы.
+
+Основание оформления: [Rich HTML](https://core.telegram.org/bots/api#rich-html-style)
+и [RichMessageButton](https://core.telegram.org/bots/api#richmessagebutton).
+Зачёркивание применяется к тексту ячейки, а не к подписи встроенной кнопки.
