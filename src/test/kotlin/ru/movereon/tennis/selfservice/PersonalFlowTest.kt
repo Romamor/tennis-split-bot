@@ -127,7 +127,7 @@ class PersonalFlowTest {
             if(i==3) bot.service.execute(a,"cancel$i",SettlementCommand.CancelTraining(id,bot.service.training(a,id).version))
         }
         message("/start");click("🏓 Мои тренировки")
-        assertTrue(latest().text!!.startsWith("Тренировок: 2\nВремя: 3 ч\nПотрачено денег: 300 ₽"))
+        assertTrue(latest().text!!.startsWith("Тренировок: 2\nВремя: 3 ч\nСтоимость тренировок: 300 ₽\nОсталось внести: 0 ₽"))
         val first=api.trainingLinks(latest()).map { it.text };assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
         assertEquals(8,api.trainingLinks(latest()).size)
         val html=api.richMessages[latest().chat.id to latest().id]!!
@@ -152,7 +152,7 @@ class PersonalFlowTest {
         bot.service.execute(admin,"reopen-stats",SettlementCommand.ReopenTraining("t2",bot.service.training(admin,"t2").version))
         val reopened=bot.service.myTrainings(1)
         assertEquals(10,reopened.page.total);assertEquals(1,reopened.completedCount)
-        assertEquals(120,reopened.minutes);assertEquals(200,reopened.paid)
+        assertEquals(120,reopened.minutes);assertEquals(200.toBigInteger(),reopened.participationCost)
         bot.service.execute(admin,"cancel-stats",SettlementCommand.CancelTraining("t2",bot.service.training(admin,"t2").version))
         assertEquals(1,bot.service.myTrainings(1).completedCount)
         val other=Access(-1,2,true)
@@ -161,6 +161,6 @@ class PersonalFlowTest {
         bot.service.execute(other,"finish-stats",SettlementCommand.FinishTraining("t3",bot.service.training(other,"t3").version))
         val finished=bot.service.myTrainings(1)
         assertEquals(10,finished.page.total);assertEquals(2,finished.completedCount)
-        assertEquals(210,finished.minutes);assertEquals(350,finished.paid)
+        assertEquals(210,finished.minutes);assertEquals(350.toBigInteger(),finished.participationCost)
     }
 }

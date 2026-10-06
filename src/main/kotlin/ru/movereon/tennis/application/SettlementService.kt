@@ -90,10 +90,23 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 completedCount++;minutes+=it.getLong(2).toBigInteger();paid+=it.getLong(3).toBigInteger()
             }
         }
+        var trainingEffect=java.math.BigInteger.ZERO
+        val balances=mutableMapOf<Long,java.math.BigInteger>()
+        // Read the user's posted entries once. Completed-training effect = paid minus their allocated share.
+        sqlEach(c,"""SELECT b.group_id,b.amount,t.status FROM balance_entries b
+            JOIN actions a ON a.id=b.action_id AND a.group_id=b.group_id
+            LEFT JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
+            WHERE b.user_id=? AND b.group_id IN (SELECT group_id FROM group_users WHERE user_id=?)""",user,user) {
+            val group=it.getLong(1);val amount=it.getLong(2).toBigInteger()
+            balances[group]=(balances[group] ?: java.math.BigInteger.ZERO)+amount
+            if(it.getString(3)=="CLOSED") trainingEffect+=amount
+        }
+        // Groups settle separately: a credit in one group cannot cover a payment owed in another.
+        val remaining=balances.values.filter { it.signum()<0 }.fold(java.math.BigInteger.ZERO) { sum,balance -> sum-balance }
         val size=8
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT ? OFFSET ?",user,user,size,index*size) { it.getLong(1) to it.getString(2) }
-        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid.toAmount(),completedCount)
+        MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid-trainingEffect,remaining,completedCount)
     }
     fun groupTrainingRules(group:Long):TrainingRules=database.read { readGroupTrainingRules(it,group) }
     private val groupSettings=GroupSettings(database,clock)

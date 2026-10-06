@@ -62,7 +62,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "my_trainings" -> {
                 val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
-                val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽",p.items) {
+                val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nСтоимость тренировок: ${data.participationCost} ₽\nОсталось внести: ${data.remainingToPay} ₽",p.items) {
                     button(clean(it.title,34),ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index)))
                 }
                 richHtml=content.html
