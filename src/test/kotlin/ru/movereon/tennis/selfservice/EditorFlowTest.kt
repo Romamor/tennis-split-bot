@@ -40,7 +40,7 @@ class EditorFlowTest {
         bot.handle(TgUpdate(sequence++,TgMessage(sequence,TgChat(user,"private"),TgUser(user,firstName="Игрок $user"),text)))
     }
     private fun click(text:String,user:Long=1,source:TgMessage=latest(user)):TgUpdate {
-        val button=source.keyboard!!.rows.flatten().single { it.text==text || it.text.endsWith(" $text") }
+        val button=(source.keyboard!!.rows.flatten()+fake.trainingLinks(source)).single { it.text==text || it.text.endsWith(" $text") }
         return TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),source,button.callbackData)).also(bot::handle)
     }
     private fun openEditor(user:Long=1) {
@@ -55,7 +55,7 @@ class EditorFlowTest {
         assertEquals(listOf(listOf("🔄 Изменить статус"),listOf("✏️ Изменить название и время"),listOf("Добавить игрока","Исключить игрока"),listOf("👥 Управление игроками"),listOf("📜 История изменений"),listOf("🏠 Меню")),rows())
         assertEquals(TrainingCard.render(training(),bot.service::account).text,latest().text)
         message("/start");click("🏓 Мои тренировки")
-        click(rows().first().single());click("Редактировать")
+        click(fake.trainingLinks(latest()).first().text);click("Редактировать")
         assertEquals(listOf("Назад","Меню"),rows().last())
         click("Назад");assertEquals(listOf("🏓 Открыть","✏️ Редактировать","⬅️ Назад"),rows().flatten())
         openEditor(3);assertTrue(latest(3).text!!.contains("создатель"))

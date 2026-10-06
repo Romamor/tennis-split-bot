@@ -38,7 +38,7 @@ class PersonalFlowTest {
         bot.handle(TgUpdate(sequence++,TgMessage(sequence,TgChat(user,"private"),TgUser(user,firstName="Игрок $user"),text)))
     }
     private fun click(label:String,user:Long=1) {
-        val m=latest(user);val choices=m.keyboard!!.rows.flatten();val b=choices.firstOrNull { it.text==label } ?: choices.single { it.text.endsWith(" $label") }
+        val m=latest(user);val choices=m.keyboard!!.rows.flatten()+api.trainingLinks(m);val b=choices.firstOrNull { it.text==label } ?: choices.single { it.text.endsWith(" $label") }
         bot.handle(TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),m,b.callbackData)))
     }
     private fun toGroupStep() {
@@ -127,21 +127,25 @@ class PersonalFlowTest {
             if(i==3) bot.service.execute(a,"cancel$i",SettlementCommand.CancelTraining(id,bot.service.training(a,id).version))
         }
         message("/start");click("🏓 Мои тренировки")
-        assertEquals("Тренировок: 2\nВремя: 3 ч\nПотрачено денег: 300 ₽",latest().text)
-        val first=rows().take(5).flatten();assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
-        assertEquals(5,rows().flatten().count { it.contains("Тренировка ") })
+        assertTrue(latest().text!!.startsWith("Тренировок: 2\nВремя: 3 ч\nПотрачено денег: 300 ₽"))
+        val first=api.trainingLinks(latest()).map { it.text };assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
+        assertEquals(5,api.trainingLinks(latest()).size)
+        val html=api.richMessages[latest().chat.id to latest().id]!!
+        assertTrue(html.contains("<s>27.09.2026 · Тренировка 3</s>"))
+        assertEquals(5,Regex("<td align=\"left\">").findAll(html).count())
+        assertFalse(rows().flatten().any { it.contains("Тренировка ") })
         assertTrue(rows().flatten().contains("1 / 2"))
         assertEquals(1,bot.service.myTrainings(1,99).page.index)
         assertEquals(5,bot.service.myTrainings(1,-1).page.items.size)
         click(first[2]);assertEquals(listOf(listOf("⬅️ Назад")),rows())
         assertFalse(latest().text!!.contains("не влияет на баланс"));click("Назад")
-        assertEquals(first,rows().take(5).flatten())
+        assertEquals(first,api.trainingLinks(latest()).map { it.text })
         click(first[1]);assertEquals(listOf(listOf("✏️ Редактировать"),listOf("⬅️ Назад")),rows())
         click("Редактировать");click("Изменить статус");assertEquals(listOf("🔓 Открыта","⬅️ Назад"),rows().flatten());click("⬅️ Назад")
         click("Назад");click("Назад");click("Дальше ›")
-        val second=rows().take(2).flatten();assertTrue(second[0].contains("Ранняя 2"));assertTrue(second[1].contains("Ранняя 1"))
+        val second=api.trainingLinks(latest()).map { it.text };assertTrue(second[0].contains("Ранняя 2"));assertTrue(second[1].contains("Ранняя 1"))
         click(second[1]);assertEquals(listOf(listOf("🏓 Открыть"),listOf("⬅️ Назад")),rows())
-        click("Назад");assertEquals(second,rows().take(2).flatten())
+        click("Назад");assertEquals(second,api.trainingLinks(latest()).map { it.text })
 
         val admin=Access(-2,2,true)
         bot.service.execute(admin,"reopen-stats",SettlementCommand.ReopenTraining("t2",bot.service.training(admin,"t2").version))

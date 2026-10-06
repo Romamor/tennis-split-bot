@@ -62,17 +62,23 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "my_trainings" -> {
                 val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
-                p.items.forEach { row("${date(it.date)} · ${clean(it.title,34)} · ${phase(it.phase)}",ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index))) }
+                val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽",p.items) {
+                    button("Открыть",ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index)))
+                }
+                richHtml=content.html
                 pages(p.index,p.pages,ScreenAction("my_trainings",0,page=p.index))
                 row("Назад",ScreenAction("menu",0))
-                "Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽"
+                content.text
             }
             "trainings" -> {
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")
-                p.items.forEach { row("${date(it.date)} · ${clean(it.title, 28)} · ${phase(it.phase)}", next("training", it.id, option = "").copy(back=action.copy(page=p.index))) }
+                val content=TrainingList.render((if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else "",p.items) {
+                    button("Открыть",next("training", it.id, option = "").copy(back=action.copy(page=p.index)))
+                }
+                richHtml=content.html
                 pages(p.index, p.pages)
                 menu()
-                (if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else ""
+                content.text
             }
             in FinanceScreens.kinds -> {
                 val content=financeScreens.render(this,a,::account,::personRow)

@@ -79,7 +79,7 @@ class SelfServiceBotTest {
     }
     private fun latest(user: Long) = fake.messages.values.last { it.chat.id == user }
     private fun click(user: Long, label: String, message: TgMessage = latest(user)): TgUpdate {
-        val choices=requireNotNull(message.keyboard).rows.flatten()
+        val choices=requireNotNull(message.keyboard).rows.flatten()+fake.trainingLinks(message)
         if(choices.none { it.text.contains(label) } && message.chat.id>0 && message.text?.startsWith("Выбери группу")==true) {
             click(user,preferredGroup[user] ?: "Первая",message)
             return click(user,label)
