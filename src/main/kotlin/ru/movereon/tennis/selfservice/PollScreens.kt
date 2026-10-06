@@ -15,7 +15,7 @@ internal class PollScreens(private val service:SettlementService,private val pol
                 val index=page.index
                 page.items.forEach { row("${date(it.date)} · ${clean(it.title,32)}",next("poll_detail",it.id).copy(back=action.copy(page=index))) }
                 pages(index,page.pages)
-                row("Назад",ScreenAction("groups",0,option="polls"))
+                row("Назад",ScreenAction("groups_back",0,option="polls"))
                 "Опросы · ${page.total}"
             }
             "poll_detail", "poll_close_confirm", "poll_discard_confirm" -> {

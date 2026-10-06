@@ -36,7 +36,7 @@ def resolve(key,b):
  if k=='close_panel' and key in ('equal_personal','simple_personal'):return [key.replace('_personal','_public')]
  if k=='participation_change' and key in ('equal_personal','simple_personal'):return [key]
  if k=='new_poll':return ['poll_title']
- if k=='groups' and opt in ('polls','poll_settings'):return ['choose_polls' if opt=='polls' else 'choose_poll_settings']
+ if k in ('groups','groups_back') and opt in ('polls','poll_settings'):return ['choose_polls' if opt=='polls' else 'choose_poll_settings']
  if k=='select_group' and opt in ('polls','poll_settings'):return ['poll_list' if opt=='polls' else 'poll_settings']
  if k in ('poll_detail','poll_list','poll_close_confirm'):return [k]
  if k=='poll_close':return ['poll_training']
@@ -86,7 +86,7 @@ def resolve(key,b):
  if k=='form_cancel':return ['menu']
  if k in ('save_default_time','save_default_title'):return ['training_settings']
  if k in ('form_date_adjust','form_time_adjust'):return [key]
- if k=='groups':return ['choose_manage' if opt=='manage' else 'choose_admins' if opt=='administrators' else 'choose_finance']
+ if k in ('groups','groups_back'):return ['choose_manage' if opt=='manage' else 'choose_admins' if opt=='administrators' else 'choose_finance']
  if k=='alert_back':return [opt]
  if k=='edit_training' and role==1 and id!='own':return ['edit_denied']
  if k=='edit_training':return ['training_closed' if key in ('public_closed','my_closed') else 'training_cancelled' if key in ('public_cancelled','my_cancelled') else 'training_own' if id=='own' else 'training_other']
@@ -192,7 +192,7 @@ for role,name in roles.items():
  def vertex(cid,value,x,y,w,h,parent='1',style='',html_mode=True):
   c=E.SubElement(root,'mxCell',id=cid,value=value,style=style+('html=1;' if html_mode else 'html=0;')+'whiteSpace=wrap;fontFamily=Arial;',vertex='1',parent=parent);E.SubElement(c,'mxGeometry',x=str(x),y=str(y),width=str(w),height=str(h),attrib={'as':'geometry'});return c
  vertex('title',name+' · экраны и переходы от кнопок',40,25,PW-80,65,style='fontSize=30;fontColor=#1e344a;align=left;strokeColor=none;fillColor=none;',html_mode=False)
- vertex('help','Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.<br>По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии.',40,105,PW-80,90,style='fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;')
+ vertex('help','Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.<br>По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Выбор группы показывается только при нескольких доступных группах; отдельная стрелка пропускает выбор при одной. Перед публикацией группа видна явно. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии.',40,105,PW-80,90,style='fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;')
  for i,(title,cy) in enumerate(category_heads):vertex('section'+str(i),title,40,cy,PW-80,48,style='fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;',html_mode=False)
  for key,s in screens.items():
   x,sy,w,h,bh=positions[key];gid='screen-'+key
@@ -227,6 +227,14 @@ for role,name in roles.items():
  edges=[];unknown=[]
  for ei,(bid,(bx,by,bw,bh,key,b)) in enumerate(buttons_geo.items()):
   dests=[input_next[key]] if b['target'] and b['target']['kind']=='input' else resolve(key,b)
+  # Picker destinations have a direct alternative when only one group is eligible.
+  single={'choose_finance':'finance','choose_manage':'all','choose_admins':'administrators','choose_polls':'poll_list','choose_poll_settings':'poll_settings','new_group':'new_ready','poll_group':'poll_ready'}
+  skip_label=None
+  if len(dests)==1 and dests[0] in single:
+   direct=single[dests[0]]
+   if b['target']['kind']=='groups_back':direct='settings' if b['target'].get('option') in ('poll_settings','administrators') else 'menu'
+   elif b['target']['kind']=='form_back':direct='poll_poll_decline' if key.startswith('poll_') else 'new_time'
+   dests=dests+[direct];skip_label=True
   if not dests:continue
   for di,dest in enumerate(dests):
    if dest not in positions:unknown.append((key,b['text'],dest));continue
@@ -244,6 +252,7 @@ for role,name in roles.items():
     points=[start,(lane,start[1]),(lane,gutter),(destlane,gutter),(destlane,dy+80),end]
    style=f'edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor={"#a5adb5" if back else "#557eaa"};'+('dashed=1;' if back else '')+'exitX=1;exitY=0.5;exitPerimeter=1;entryX='+('1;entryY=0.05;' if dest==key else '0;entryY=0.1;')
    label=('Есть совпадение за сутки' if 'duplicate' in dest else 'Без совпадения' if len(dests)>1 and dest=='transfer' else 'Если данные изменились' if dest=='player_conflict' else '')
+   if skip_label:label='Несколько доступных групп' if di==0 else 'Одна группа (Назад: 0–1)'
    ec=E.SubElement(root,'mxCell',id=f'edge{ei}-{di}',value=label,style=style,edge='1',parent=kind,source=bid,target='screen-'+dest)
    geom=E.SubElement(ec,'mxGeometry',relative='1',attrib={'as':'geometry'});arr=E.SubElement(geom,'Array',attrib={'as':'points'})
    for px,py in points[1:-1]:E.SubElement(arr,'mxPoint',x=str(px),y=str(py))

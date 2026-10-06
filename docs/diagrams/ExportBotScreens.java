@@ -55,7 +55,7 @@ class ExportBotScreens {
   attendance("other",true,60,350,1);capture("personal_guest","participation","other","",null,true,null);
   run(auth,new SettlementCommand.ChangeAttendance("other",user,AttendanceChange.LEAVE,0));capture("personal_left","participation","other","",null,true,null);capture("personal_owner","participation","own","",null,true,null);
   sql("DELETE FROM training_players WHERE training_id='other' AND user_id=?",user);
-  for(String kind:List.of("title","date","time","group","ready"))capture("new_"+kind,"form","","",form(kind,"","\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
+  for(String kind:List.of("title","date","time","group","ready"))capture("new_"+kind,"form","","",form(kind,"","\"publishGroup\":-1,\"origin\":{\"kind\":\"menu\",\"group\":0}"),false,null);
   cap("finance","finance","");cap("finance_balances","finance_balances","");
   run(new Access(-1,4,true),new SettlementCommand.RecordTransfer("seed-finance",4,user,300,"2026-09-12","",null,false));
   cap("finance_send","finance_send","");

@@ -71,6 +71,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                 content.text
             }
             "trainings" -> {
+                if(action.option=="all") checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Доступно администратору этой группы")
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")
                 val content=TrainingList.render((if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else "",p.items) {
                     button(clean(it.title,34),next("training", it.id, option = "").copy(back=action.copy(page=p.index)))
@@ -261,7 +262,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                         "${if(f.kind=="default_time") "Начало по умолчанию" else "Начало тренировки"}: ${f.time}\nМожно написать время в формате ЧЧ:ММ."
                     }
                     "group" -> {
-                        val choices=groupOptions.filter { it.canPublish && (f.pollId.isEmpty() || polls.enabled(it.group.id)) }
+                        val choices=GroupSelection.publication(groupOptions,f.pollId.isNotEmpty(),polls::enabled)
                         val index=f.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
                         choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),formAction("form_group_select").copy(value=it.group.id)) }
                         pages(index,maxOf(1,(choices.size+7)/8),formAction("form_group_page"))
@@ -286,7 +287,7 @@ class Screens(private val service: SettlementService, private val state: Interac
                         "${clean(f.title, 100)}\n${date(f.date)} · ${f.time}\n" + if(f.pollId.isNotEmpty()) "Группа: ${clean(service.group(requireNotNull(f.publishGroup)).title,60)}\n\n"+
                             TrainingPoll(requireNotNull(f.publishGroup),f.pollId,f.title,f.date,f.time,f.declineLabel,requireNotNull(user),null,null,"PENDING",false,null,null).options().joinToString("\n")+
                             (if(f.pollPhotoId!=null) "\n\nФото: добавлено." else "")+
-                            "\n\nБудет опубликован и закреплён неанонимный опрос. Тренировка появится после завершения сбора." else if (f.training.isEmpty()) "Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." else "Данные изменятся в существующей тренировке."
+                            "\n\nБудет опубликован и закреплён неанонимный опрос. Тренировка появится после завершения сбора." else if (f.training.isEmpty()) "Группа: ${clean(service.group(requireNotNull(f.publishGroup)).title,60)}\n\nКарточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." else "Данные изменятся в существующей тренировке."
                     }
                     "paid" -> "${name(f.user)}\nНапиши общую сумму оплаты стола в рублях. Можно 0."
                     "pick_account", "pick_players", "pick_add_player" -> "Выбери реальный аккаунт кнопкой под строкой ввода. Он появится в составе этой группы."
@@ -325,7 +326,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it },photoId)
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
+        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "groups_back", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

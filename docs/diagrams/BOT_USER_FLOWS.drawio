@@ -12,7 +12,7 @@
         <mxCell id="title" value="Участник · экраны и переходы от кнопок" style="fontSize=30;fontColor=#1e344a;align=left;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="25" width="2340" height="65" />
         </mxCell>
-        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Выбор группы показывается только при нескольких доступных группах; отдельная стрелка пропускает выбор при одной. Перед публикацией группа видна явно. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="105" width="2340" height="90" />
         </mxCell>
         <mxCell id="section0" value="Участие в общем чате" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
@@ -703,7 +703,7 @@
           <mxGeometry as="geometry" x="217.5" y="282" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="4021" width="430" height="329" />
+          <mxGeometry as="geometry" x="1830" y="4021" width="430" height="369" />
         </mxCell>
         <mxCell id="screen-new_ready-label" value="Перед публикацией" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -711,17 +711,17 @@
         <mxCell id="screen-new_ready-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="148" />
+        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Группа: Теннис по субботам&lt;br&gt;&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="188" />
         </mxCell>
         <mxCell id="screen-new_ready-button0-0" value="✅ Опубликовать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="219" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="259" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-0" value="Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-1" value="Отмена" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="217.5" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="217.5" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="650" y="5877" width="430" height="392" />
@@ -2163,13 +2163,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge4-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
+        <mxCell id="edge4-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1153" y="2696.5" />
               <mxPoint x="1153" y="3080" />
               <mxPoint x="-13" y="3080" />
               <mxPoint x="-13" y="5957" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="2696.5" />
+              <mxPoint x="1153" y="3080" />
+              <mxPoint x="577" y="3080" />
+              <mxPoint x="577" y="5957" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -2991,11 +3001,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge94-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
+        <mxCell id="edge94-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1153" y="4372.5" />
               <mxPoint x="1153" y="4101" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge94-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="4372.5" />
+              <mxPoint x="1153" y="3956" />
+              <mxPoint x="1769" y="3956" />
+              <mxPoint x="1769" y="4101" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -3019,11 +3039,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge97-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
+        <mxCell id="edge97-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1189" y="4478.0" />
               <mxPoint x="1189" y="4101" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge97-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="4478.0" />
+              <mxPoint x="1189" y="3971" />
+              <mxPoint x="1733" y="3971" />
+              <mxPoint x="1733" y="4101" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -3066,27 +3096,37 @@
         <mxCell id="edge102-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_ready-button0-0" target="screen-my_training">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2321" y="4261.5" />
+              <mxPoint x="2321" y="4301.5" />
               <mxPoint x="2321" y="2396" />
               <mxPoint x="1757" y="2396" />
               <mxPoint x="1757" y="2521" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge103-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
+        <mxCell id="edge103-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2333" y="4309.5" />
+              <mxPoint x="2333" y="4349.5" />
               <mxPoint x="2333" y="3971" />
               <mxPoint x="1155" y="3971" />
               <mxPoint x="1155" y="4101" />
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge103-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_time">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2333" y="4349.5" />
+              <mxPoint x="2333" y="3971" />
+              <mxPoint x="565" y="3971" />
+              <mxPoint x="565" y="4101" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="edge104-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-1" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="4309.5" />
+              <mxPoint x="2345" y="4349.5" />
               <mxPoint x="2345" y="2386" />
               <mxPoint x="553" y="2386" />
               <mxPoint x="553" y="2521" />
@@ -4599,13 +4639,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge268-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
+        <mxCell id="edge268-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="599" y="17074.5" />
               <mxPoint x="599" y="5812" />
               <mxPoint x="11" y="5812" />
               <mxPoint x="11" y="5957" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge268-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="17074.5" />
+              <mxPoint x="599" y="5812" />
+              <mxPoint x="601" y="5812" />
+              <mxPoint x="601" y="5957" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -4627,13 +4677,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge271-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
+        <mxCell id="edge271-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="527" y="17218.5" />
               <mxPoint x="527" y="17364" />
               <mxPoint x="565" y="17364" />
               <mxPoint x="565" y="18301" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge271-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-poll_list">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="17218.5" />
+              <mxPoint x="527" y="17364" />
+              <mxPoint x="1155" y="17364" />
+              <mxPoint x="1155" y="18301" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -4869,11 +4929,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge299-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
+        <mxCell id="edge299-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="539" y="17744.5" />
               <mxPoint x="539" y="17604" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge299-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="17744.5" />
+              <mxPoint x="539" y="17454" />
+              <mxPoint x="1155" y="17454" />
+              <mxPoint x="1155" y="17604" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -4897,11 +4967,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge302-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
+        <mxCell id="edge302-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="575" y="17850.0" />
               <mxPoint x="575" y="17604" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge302-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="575" y="17850.0" />
+              <mxPoint x="575" y="17469" />
+              <mxPoint x="1203" y="17469" />
+              <mxPoint x="1203" y="17604" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -4951,13 +5031,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge308-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
+        <mxCell id="edge308-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1719" y="17980.5" />
               <mxPoint x="1719" y="17469" />
               <mxPoint x="625" y="17469" />
               <mxPoint x="625" y="17604" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge308-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1719" y="17980.5" />
+              <mxPoint x="1719" y="17469" />
+              <mxPoint x="35" y="17469" />
+              <mxPoint x="35" y="17604" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -5031,13 +5121,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge316-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
+        <mxCell id="edge316-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="527" y="18765.5" />
               <mxPoint x="527" y="17459" />
               <mxPoint x="613" y="17459" />
               <mxPoint x="613" y="17604" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge316-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="18765.5" />
+              <mxPoint x="527" y="17459" />
+              <mxPoint x="23" y="17459" />
+              <mxPoint x="23" y="17604" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -5085,13 +5185,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge322-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
+        <mxCell id="edge322-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1779" y="18476.5" />
               <mxPoint x="1779" y="18156" />
               <mxPoint x="625" y="18156" />
               <mxPoint x="625" y="18301" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge322-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="18476.5" />
+              <mxPoint x="1779" y="2376" />
+              <mxPoint x="625" y="2376" />
+              <mxPoint x="625" y="2521" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -5303,7 +5413,7 @@
         <mxCell id="title" value="Администратор бота · экраны и переходы от кнопок" style="fontSize=30;fontColor=#1e344a;align=left;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="25" width="2340" height="65" />
         </mxCell>
-        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Выбор группы показывается только при нескольких доступных группах; отдельная стрелка пропускает выбор при одной. Перед публикацией группа видна явно. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="105" width="2340" height="90" />
         </mxCell>
         <mxCell id="section0" value="Участие в общем чате" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
@@ -6015,7 +6125,7 @@
           <mxGeometry as="geometry" x="217.5" y="282" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="4309" width="430" height="329" />
+          <mxGeometry as="geometry" x="1830" y="4309" width="430" height="369" />
         </mxCell>
         <mxCell id="screen-new_ready-label" value="Перед публикацией" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -6023,17 +6133,17 @@
         <mxCell id="screen-new_ready-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="148" />
+        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Группа: Теннис по субботам&lt;br&gt;&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="188" />
         </mxCell>
         <mxCell id="screen-new_ready-button0-0" value="✅ Опубликовать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="219" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="259" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-0" value="Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-1" value="Отмена" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="217.5" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="217.5" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="650" y="6165" width="430" height="488" />
@@ -7883,13 +7993,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge4-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
+        <mxCell id="edge4-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1153" y="2792.5" />
               <mxPoint x="1153" y="3176" />
               <mxPoint x="-13" y="3176" />
               <mxPoint x="-13" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="2792.5" />
+              <mxPoint x="1153" y="3176" />
+              <mxPoint x="577" y="3176" />
+              <mxPoint x="577" y="6245" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -7913,13 +8033,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge7-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-choose_manage">
+        <mxCell id="edge7-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-choose_manage">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1189" y="2936.5" />
               <mxPoint x="1189" y="3191" />
               <mxPoint x="35" y="3191" />
               <mxPoint x="35" y="12370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-all">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="2936.5" />
+              <mxPoint x="1189" y="3191" />
+              <mxPoint x="625" y="3191" />
+              <mxPoint x="625" y="12370" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -8813,11 +8943,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge104-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
+        <mxCell id="edge104-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1165" y="4660.5" />
               <mxPoint x="1165" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge104-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="4660.5" />
+              <mxPoint x="1165" y="4254" />
+              <mxPoint x="1733" y="4254" />
+              <mxPoint x="1733" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -8841,11 +8981,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge107-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
+        <mxCell id="edge107-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1201" y="4766.0" />
               <mxPoint x="1201" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge107-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1201" y="4766.0" />
+              <mxPoint x="1201" y="4239" />
+              <mxPoint x="1781" y="4239" />
+              <mxPoint x="1781" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -8888,27 +9038,37 @@
         <mxCell id="edge112-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_ready-button0-0" target="screen-my_training">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2333" y="4549.5" />
+              <mxPoint x="2333" y="4589.5" />
               <mxPoint x="2333" y="2472" />
               <mxPoint x="1805" y="2472" />
               <mxPoint x="1805" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge113-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
+        <mxCell id="edge113-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2345" y="4597.5" />
+              <mxPoint x="2345" y="4637.5" />
               <mxPoint x="2345" y="4239" />
               <mxPoint x="1203" y="4239" />
               <mxPoint x="1203" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge113-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_time">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2345" y="4637.5" />
+              <mxPoint x="2345" y="4239" />
+              <mxPoint x="613" y="4239" />
+              <mxPoint x="613" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="edge114-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-1" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2357" y="4597.5" />
+              <mxPoint x="2357" y="4637.5" />
               <mxPoint x="2357" y="2492" />
               <mxPoint x="601" y="2492" />
               <mxPoint x="601" y="2617" />
@@ -9781,13 +9941,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge208-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-choose_poll_settings">
+        <mxCell id="edge208-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="527" y="18914.5" />
               <mxPoint x="527" y="19189" />
               <mxPoint x="1155" y="19189" />
               <mxPoint x="1155" y="22866" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge208-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="18914.5" />
+              <mxPoint x="527" y="19189" />
+              <mxPoint x="1745" y="19189" />
+              <mxPoint x="1745" y="22866" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11013,13 +11183,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge341-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
+        <mxCell id="edge341-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="611" y="20823.5" />
               <mxPoint x="611" y="6095" />
               <mxPoint x="-25" y="6095" />
               <mxPoint x="-25" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge341-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="611" y="20823.5" />
+              <mxPoint x="611" y="6095" />
+              <mxPoint x="565" y="6095" />
+              <mxPoint x="565" y="6245" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11041,13 +11221,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge344-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
+        <mxCell id="edge344-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="539" y="20967.5" />
               <mxPoint x="539" y="21139" />
               <mxPoint x="613" y="21139" />
               <mxPoint x="613" y="22081" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge344-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-poll_list">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="20967.5" />
+              <mxPoint x="539" y="21139" />
+              <mxPoint x="1203" y="21139" />
+              <mxPoint x="1203" y="22081" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11061,13 +11251,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge346-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-choose_manage">
+        <mxCell id="edge346-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-choose_manage">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="563" y="21063.5" />
               <mxPoint x="563" y="12225" />
               <mxPoint x="-1" y="12225" />
               <mxPoint x="-1" y="12370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge346-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-all">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="563" y="21063.5" />
+              <mxPoint x="563" y="12225" />
+              <mxPoint x="589" y="12225" />
+              <mxPoint x="589" y="12370" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11293,11 +11493,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge373-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
+        <mxCell id="edge373-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="563" y="21524.5" />
               <mxPoint x="563" y="21384" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge373-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="563" y="21524.5" />
+              <mxPoint x="563" y="21254" />
+              <mxPoint x="1191" y="21254" />
+              <mxPoint x="1191" y="21384" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11321,11 +11531,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge376-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
+        <mxCell id="edge376-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="599" y="21630.0" />
               <mxPoint x="599" y="21384" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge376-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="21630.0" />
+              <mxPoint x="599" y="21239" />
+              <mxPoint x="1155" y="21239" />
+              <mxPoint x="1155" y="21384" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11375,13 +11595,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge382-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
+        <mxCell id="edge382-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1743" y="21760.5" />
               <mxPoint x="1743" y="21239" />
               <mxPoint x="577" y="21239" />
               <mxPoint x="577" y="21384" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge382-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1743" y="21760.5" />
+              <mxPoint x="1743" y="21239" />
+              <mxPoint x="-13" y="21239" />
+              <mxPoint x="-13" y="21384" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11455,13 +11685,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge390-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
+        <mxCell id="edge390-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="551" y="22545.5" />
               <mxPoint x="551" y="21259" />
               <mxPoint x="565" y="21259" />
               <mxPoint x="565" y="21384" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge390-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="22545.5" />
+              <mxPoint x="551" y="21259" />
+              <mxPoint x="-25" y="21259" />
+              <mxPoint x="-25" y="21384" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11509,13 +11749,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge396-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
+        <mxCell id="edge396-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1695" y="22256.5" />
               <mxPoint x="1695" y="21956" />
               <mxPoint x="577" y="21956" />
               <mxPoint x="577" y="22081" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge396-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="22256.5" />
+              <mxPoint x="1695" y="2492" />
+              <mxPoint x="577" y="2492" />
+              <mxPoint x="577" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11609,13 +11859,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge407-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
+        <mxCell id="edge407-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="2309" y="23330.5" />
               <mxPoint x="2309" y="22716" />
               <mxPoint x="1203" y="22716" />
               <mxPoint x="1203" y="22866" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge407-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button3-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2309" y="23330.5" />
+              <mxPoint x="2309" y="18589" />
+              <mxPoint x="23" y="18589" />
+              <mxPoint x="23" y="18739" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11775,13 +12035,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge425-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
+        <mxCell id="edge425-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="539" y="24313.5" />
               <mxPoint x="539" y="22716" />
               <mxPoint x="1155" y="22716" />
               <mxPoint x="1155" y="22866" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge425-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button3-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="24313.5" />
+              <mxPoint x="539" y="18589" />
+              <mxPoint x="-25" y="18589" />
+              <mxPoint x="-25" y="18739" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -11837,7 +12107,7 @@
         <mxCell id="title" value="Суперадминистратор группы · экраны и переходы от кнопок" style="fontSize=30;fontColor=#1e344a;align=left;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="25" width="2340" height="65" />
         </mxCell>
-        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+        <mxCell id="help" value="Экраны выгружены из Screens.render: выпуск с календарём, настройками начала и снятием закрепов. Стрелка начинается у кнопки или поля ответа. Петля меняет данные на этом же экране. Примерные значения не описывают все возможные суммы.&lt;br&gt;По умолчанию видны основные маршруты внутри сценария. Слои «Возвраты и меню», «Между сценариями», «Изменение значений» включаются через Вид → Слои. Выбор группы показывается только при нескольких доступных группах; отдельная стрелка пропускает выбор при одной. Перед публикацией группа видна явно. Создание: отмена возвращает в меню. Правка реквизитов предупреждает о несохранённом вводе. Участие сохраняется при нажатии." style="fontSize=16;align=left;strokeColor=none;fillColor=none;fontColor=#486071;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="105" width="2340" height="90" />
         </mxCell>
         <mxCell id="section0" value="Участие в общем чате" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
@@ -12558,7 +12828,7 @@
           <mxGeometry as="geometry" x="217.5" y="282" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1830" y="4309" width="430" height="329" />
+          <mxGeometry as="geometry" x="1830" y="4309" width="430" height="369" />
         </mxCell>
         <mxCell id="screen-new_ready-label" value="Перед публикацией" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
@@ -12566,17 +12836,17 @@
         <mxCell id="screen-new_ready-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0" y="66" width="430" height="148" />
+        <mxCell id="screen-new_ready-body" value="Теннис&lt;br&gt;12.09.2026 · 18:30&lt;br&gt;Группа: Теннис по субботам&lt;br&gt;&lt;br&gt;Карточка появится в группе и будет закреплена с уведомлением участников. Для закрепления боту нужно соответствующее право." style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="188" />
         </mxCell>
         <mxCell id="screen-new_ready-button0-0" value="✅ Опубликовать" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="219" width="430.0" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="259" width="430.0" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-0" value="Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="0.0" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="0.0" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-new_ready-button1-1" value="Отмена" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-new_ready">
-          <mxGeometry as="geometry" x="217.5" y="267" width="212.5" height="43" />
+          <mxGeometry as="geometry" x="217.5" y="307" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="650" y="6165" width="430" height="488" />
@@ -14570,13 +14840,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge4-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
+        <mxCell id="edge4-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1153" y="2792.5" />
               <mxPoint x="1153" y="3176" />
               <mxPoint x="-13" y="3176" />
               <mxPoint x="-13" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="2792.5" />
+              <mxPoint x="1153" y="3176" />
+              <mxPoint x="577" y="3176" />
+              <mxPoint x="577" y="6245" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -14600,13 +14880,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge7-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-choose_manage">
+        <mxCell id="edge7-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-choose_manage">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1189" y="2936.5" />
               <mxPoint x="1189" y="3191" />
               <mxPoint x="35" y="3191" />
               <mxPoint x="35" y="12370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge7-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu-button4-0" target="screen-all">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="2936.5" />
+              <mxPoint x="1189" y="3191" />
+              <mxPoint x="625" y="3191" />
+              <mxPoint x="625" y="12370" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -15518,11 +15808,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge106-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
+        <mxCell id="edge106-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1189" y="4660.5" />
               <mxPoint x="1189" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge106-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-button3-0" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1189" y="4660.5" />
+              <mxPoint x="1189" y="4244" />
+              <mxPoint x="1793" y="4244" />
+              <mxPoint x="1793" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -15546,11 +15846,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge109-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
+        <mxCell id="edge109-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1117" y="4766.0" />
               <mxPoint x="1117" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge109-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_time-input" target="screen-new_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1117" y="4766.0" />
+              <mxPoint x="1117" y="4259" />
+              <mxPoint x="1757" y="4259" />
+              <mxPoint x="1757" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -15593,27 +15903,37 @@
         <mxCell id="edge114-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-new_ready-button0-0" target="screen-my_training">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2357" y="4549.5" />
+              <mxPoint x="2357" y="4589.5" />
               <mxPoint x="2357" y="2492" />
               <mxPoint x="1781" y="2492" />
               <mxPoint x="1781" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge115-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
+        <mxCell id="edge115-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2369" y="4597.5" />
+              <mxPoint x="2369" y="4637.5" />
               <mxPoint x="2369" y="4259" />
               <mxPoint x="1179" y="4259" />
               <mxPoint x="1179" y="4389" />
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge115-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-0" target="screen-new_time">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2369" y="4637.5" />
+              <mxPoint x="2369" y="4259" />
+              <mxPoint x="589" y="4259" />
+              <mxPoint x="589" y="4389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="edge116-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-new_ready-button1-1" target="screen-menu">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2381" y="4597.5" />
+              <mxPoint x="2381" y="4637.5" />
               <mxPoint x="2381" y="2482" />
               <mxPoint x="577" y="2482" />
               <mxPoint x="577" y="2617" />
@@ -16486,13 +16806,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge210-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-choose_poll_settings">
+        <mxCell id="edge210-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="551" y="18914.5" />
               <mxPoint x="551" y="19209" />
               <mxPoint x="1215" y="19209" />
               <mxPoint x="1215" y="24397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge210-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-settings-button1-0" target="screen-poll_settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="18914.5" />
+              <mxPoint x="551" y="19209" />
+              <mxPoint x="1805" y="19209" />
+              <mxPoint x="1805" y="24397" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -17726,13 +18056,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge344-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
+        <mxCell id="edge344-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-choose_finance">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="539" y="22354.5" />
               <mxPoint x="539" y="6110" />
               <mxPoint x="23" y="6110" />
               <mxPoint x="23" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge344-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button1-0" target="screen-finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="22354.5" />
+              <mxPoint x="539" y="6110" />
+              <mxPoint x="613" y="6110" />
+              <mxPoint x="613" y="6245" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -17754,13 +18094,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge347-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
+        <mxCell id="edge347-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="575" y="22498.5" />
               <mxPoint x="575" y="22655" />
               <mxPoint x="577" y="22655" />
               <mxPoint x="577" y="23612" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge347-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-menu_polls-button4-0" target="screen-poll_list">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="575" y="22498.5" />
+              <mxPoint x="575" y="22655" />
+              <mxPoint x="1167" y="22655" />
+              <mxPoint x="1167" y="23612" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -17774,13 +18124,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge349-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-choose_manage">
+        <mxCell id="edge349-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-choose_manage">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="599" y="22594.5" />
               <mxPoint x="599" y="12240" />
               <mxPoint x="-37" y="12240" />
               <mxPoint x="-37" y="12370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge349-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-menu_polls-button6-0" target="screen-all">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="22594.5" />
+              <mxPoint x="599" y="12240" />
+              <mxPoint x="553" y="12240" />
+              <mxPoint x="553" y="12370" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18006,11 +18366,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge376-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
+        <mxCell id="edge376-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="599" y="23055.5" />
               <mxPoint x="599" y="22915" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge376-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-button0-0" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="599" y="23055.5" />
+              <mxPoint x="599" y="22770" />
+              <mxPoint x="1155" y="22770" />
+              <mxPoint x="1155" y="22915" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18034,11 +18404,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge379-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
+        <mxCell id="edge379-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="527" y="23161.0" />
               <mxPoint x="527" y="22915" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge379-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-poll_poll_decline-input" target="screen-poll_ready">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="23161.0" />
+              <mxPoint x="527" y="22785" />
+              <mxPoint x="1203" y="22785" />
+              <mxPoint x="1203" y="22915" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18088,13 +18468,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge385-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
+        <mxCell id="edge385-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1779" y="23291.5" />
               <mxPoint x="1779" y="22785" />
               <mxPoint x="625" y="22785" />
               <mxPoint x="625" y="22915" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge385-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready-button2-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="23291.5" />
+              <mxPoint x="1779" y="22785" />
+              <mxPoint x="35" y="22785" />
+              <mxPoint x="35" y="22915" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18168,13 +18558,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge393-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
+        <mxCell id="edge393-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_group">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="587" y="24076.5" />
               <mxPoint x="587" y="22775" />
               <mxPoint x="613" y="22775" />
               <mxPoint x="613" y="22915" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge393-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_ready_photo-button3-0" target="screen-poll_poll_decline">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="587" y="24076.5" />
+              <mxPoint x="587" y="22775" />
+              <mxPoint x="23" y="22775" />
+              <mxPoint x="23" y="22915" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18222,13 +18622,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge399-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
+        <mxCell id="edge399-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-choose_polls">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1731" y="23787.5" />
               <mxPoint x="1731" y="23472" />
               <mxPoint x="625" y="23472" />
               <mxPoint x="625" y="23612" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge399-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_list-button1-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1731" y="23787.5" />
+              <mxPoint x="1731" y="2477" />
+              <mxPoint x="625" y="2477" />
+              <mxPoint x="625" y="2617" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18340,13 +18750,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge412-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-choose_poll_settings">
+        <mxCell id="edge412-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="2369" y="24909.5" />
               <mxPoint x="2369" y="24252" />
               <mxPoint x="1143" y="24252" />
               <mxPoint x="1143" y="24397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge412-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-poll_settings-button4-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2369" y="24909.5" />
+              <mxPoint x="2369" y="18594" />
+              <mxPoint x="-37" y="18594" />
+              <mxPoint x="-37" y="18739" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -18696,13 +19116,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge451-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-choose_poll_settings">
+        <mxCell id="edge451-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-choose_poll_settings">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="527" y="25940.5" />
               <mxPoint x="527" y="24267" />
               <mxPoint x="1179" y="24267" />
               <mxPoint x="1179" y="24397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge451-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-rules_settings-button4-0" target="screen-settings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="25940.5" />
+              <mxPoint x="527" y="18609" />
+              <mxPoint x="-1" y="18609" />
+              <mxPoint x="-1" y="18739" />
             </Array>
           </mxGeometry>
         </mxCell>

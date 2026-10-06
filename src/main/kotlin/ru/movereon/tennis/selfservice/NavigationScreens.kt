@@ -10,11 +10,11 @@ internal class NavigationScreens(private val service:SettlementService,private v
     fun render(layout:ScreenLayout,a:Access?,groupOptions:List<GroupOption>):String=with(layout) {
         when(action.kind) {
             "groups" -> {
-                val choices=groupOptions.filter { when(action.option) { "manage","poll_settings"->it.admin;"administrators"->it.superAdmin;else->true } }
+                val choices=GroupSelection.choices(groupOptions,action.option)
                 val index=action.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
                 choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),ScreenAction("select_group",0,value=it.group.id,option=action.option)) }
                 pages(index,maxOf(1,(choices.size+7)/8),action.copy(group=0))
-                row("Назад",ScreenAction(if(action.option in setOf("administrators","poll_settings")) "settings" else "menu",0))
+                row("Назад",GroupSelection.parent(action.option))
                 "Выбери группу."+if(choices.isEmpty()) "\nНет доступных групп." else ""
             }
             "menu" -> {
@@ -42,7 +42,7 @@ internal class NavigationScreens(private val service:SettlementService,private v
                 row(if(rules.trackTime) "🕒 Учёт времени: включён" else "🕒 Учёт времени: выключен",next("group_rule_save",value=if(rules.trackTime) 0 else 1,option="time"))
                 row(if(enabled) "📊 Сбор через опрос: включён" else "📊 Сбор через опрос: выключен",next("poll_setting_save",value=if(enabled) 0 else 1))
                 if(a.telegramAdmin) row("🛡️ Администраторы группы",next("administrators"))
-                row("Назад",ScreenAction("groups",0,option="poll_settings"))
+                row("Назад",ScreenAction("groups_back",0,option="poll_settings"))
                 menu()
                 "${clean(service.group(a.groupId).title,60)}\nНастройки группы\nГости и учёт времени применяются к новым и открытым тренировкам. Запрет гостей не удаляет записанных. Без учёта времени стоимость делится поровну; введённые длительности сохраняются и вернутся при включении. Учтённые расчёты не меняются.\nСбор через опрос разрешает создавать опрос перед тренировкой. Обычное создание остаётся доступным; опубликованные опросы можно завершить после выключения."
             }

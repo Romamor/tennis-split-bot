@@ -58,7 +58,7 @@ class TrainingRulesTest {
     }
     @Test fun `defaults retain guests and individual time and settings are admin only and group scoped`() {
         setup();assertEquals(TrainingRules(),bot.service.groupTrainingRules(-1))
-        message("/start");click("Настройки");click("Настройки групп");click("Группа 1")
+        message("/start");click("Настройки");click("Настройки групп")
         assertTrue(latest().text!!.contains("новым и открытым"))
         click("Гости: разрешены");click("Учёт времени: включён")
         assertEquals(TrainingRules(false,false),bot.service.groupTrainingRules(-1))

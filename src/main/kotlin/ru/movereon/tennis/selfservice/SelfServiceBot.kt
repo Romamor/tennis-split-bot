@@ -64,6 +64,37 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
     }
     }
+    private fun publicationChoices(user:Long,form:InputForm)=GroupSelection.publication(
+        groupOptions(user,forPublication=true,discover=true),form.pollId.isNotEmpty(),polls::enabled)
+
+    private fun groupDestination(section:String,choice:GroupOption,user:Long):ScreenAction {
+        val auth=access(choice.group.id,user)
+        return GroupSelection.destination(section,choice.copy(admin=service.isAdmin(auth),superAdmin=auth.telegramAdmin))
+    }
+
+    /** Resolve before sending a message: the common single-group path has no intermediate picker. */
+    private fun skipSingleGroup(plan:EventPlan):EventPlan {
+        if(plan.chat<0 || plan.command!=null) return plan
+        val screen=plan.screen
+        if(screen.kind in setOf("groups","groups_back")) {
+            val choices=GroupSelection.choices(groupOptions(plan.user,discover=true),screen.option)
+            val next=when {
+                screen.kind=="groups_back" && choices.size<=1 -> GroupSelection.parent(screen.option)
+                screen.kind=="groups_back" -> screen.copy(kind="groups")
+                choices.size==1 -> groupDestination(screen.option,choices.single(),plan.user)
+                else -> screen
+            }
+            return plan.copy(screen=next)
+        }
+        val form=plan.form
+        if(form?.kind=="group" && form.group==0L && form.training.isEmpty()) {
+            val only=publicationChoices(plan.user,form).singleOrNull() ?: return plan
+            requirePublication(only.group.id,plan.user)
+            return plan.copy(form=form.copy(kind="ready",publishGroup=only.group.id))
+        }
+        return plan
+    }
+
     private fun requirePublication(group:Long,user:Long) {
         access(group,user)
         checkAccounting(api.member(group,identity.id).let { it.present && it.admin },ErrorCode.FORBIDDEN,
@@ -117,6 +148,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 else previous
             }
             val plan = saved ?: prepare(update, message, user)
+                ?.let(::skipSingleGroup)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
@@ -310,13 +342,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind=="select_group") {
             val choice=groupOptions(user.id).firstOrNull { it.group.id==action.value }
                 ?: throw AccountingException(ErrorCode.FORBIDDEN,"Группа больше недоступна")
-            action=when(action.option) {
-                "poll_settings" -> { checkAccounting(choice.admin,ErrorCode.FORBIDDEN,"Доступно администратору этой группы");ScreenAction("poll_settings",choice.group.id) }
-                "polls" -> ScreenAction("poll_list",choice.group.id)
-                "manage" -> { checkAccounting(choice.admin,ErrorCode.FORBIDDEN,"Доступно администратору этой группы");ScreenAction("trainings",choice.group.id,option="all") }
-                "administrators" -> { checkAccounting(choice.superAdmin,ErrorCode.FORBIDDEN,"Назначать могут администраторы Telegram-группы");ScreenAction("administrators",choice.group.id) }
-                else -> ScreenAction("finance",choice.group.id)
-            }
+            action=groupDestination(action.option,choice,user.id)
         }
         if(FinanceScreens.retiredForm(savedForm) && action.kind in setOf("form","form_next","form_restart","form_date_adjust","form_time_adjust"))
             action=ScreenAction("finance",requireNotNull(savedForm).group)
@@ -354,7 +380,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","trainings","training","roster","history","administrators","admin_candidates","close_panel")
+        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","groups_back","trainings","training","roster","history","administrators","admin_candidates","close_panel")
         val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
         val exiting=action.kind in exits
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
@@ -437,7 +463,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 checkAccounting(f.training.isEmpty() && f.group==0L && action.option==state.formSignature(f),ErrorCode.STALE_VERSION,"Форма изменилась. Используй текущие кнопки.")
                 when(action.kind) {
                     "form_cancel" -> plan(ScreenAction("menu",0))
-                    "form_back" -> formPlan(f.copy(kind=when(f.kind) { "date"->"title";"time"->"date";"poll_decline"->"time";"poll_photo"->"ready";"group"->if(f.pollId.isNotEmpty()) "poll_decline" else "time";"ready"->"group";else->error("No previous step") }))
+                    "form_back" -> {
+                        val beforeGroup=if(f.pollId.isNotEmpty()) "poll_decline" else "time"
+                        val previous=when(f.kind) {
+                            "date"->"title";"time"->"date";"poll_decline"->"time";"poll_photo"->"ready"
+                            "group"->beforeGroup
+                            "ready"->if(publicationChoices(user.id,f).size<=1) beforeGroup else "group"
+                            else->error("No previous step")
+                        }
+                        formPlan(f.copy(kind=previous))
+                    }
                     "form_group_page" -> { require(f.kind=="group");formPlan(f.copy(page=action.page)) }
                     else -> {
                         require(f.kind=="group")

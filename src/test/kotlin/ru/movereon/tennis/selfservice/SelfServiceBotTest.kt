@@ -780,7 +780,7 @@ class SelfServiceBotTest {
         assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("Администраторы") })
         click(1,"Настройки")
         assertFalse(latest(1).keyboard!!.rows.flatten().any { it.text.contains("Администраторы") })
-        click(1,"Настройки групп");click(1,"Первая");click(1,"Администраторы группы")
+        click(1,"Настройки групп");click(1,"Администраторы группы")
         click(1,"Назад")
         assertTrue(latest(1).text!!.contains("Настройки группы") && latest(1).text!!.contains("Первая"))
         click(1,"Администраторы группы")
