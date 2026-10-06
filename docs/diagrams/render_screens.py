@@ -140,6 +140,7 @@ def body_html(s):
  raw=s['html'];raw=re.sub(r'<h3>(.*?)</h3>',r'<div style="font-size:19px;margin-bottom:9px">\1</div>',raw)
  raw=raw.replace('<img src="tg://photo?id=training-photo"/>','<div style="padding:18px;border:1px solid #637d93;border-radius:8px;text-align:center;margin-bottom:10px">🖼 Фото из опроса</div>')
  raw=re.sub(r'<table[^>]*>','<table style="border-collapse:collapse;width:100%;font-size:12px">',raw)
+ raw=raw.replace('<th align="left">','<th style="text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px">')
  raw=raw.replace('<th>','<th style="font-weight:normal;border-bottom:1px solid #52606c;padding:5px">').replace('<td>','<td style="border-bottom:1px solid #52606c;padding:5px">').replace('<td align="right">','<td style="text-align:right;border-bottom:1px solid #52606c;padding:5px">')
  raw=re.sub(r'<tg-button[^>]*>(.*?)</tg-button>',r'<span style="color:#a6d8fc">\1</span>',raw)
  raw=raw.replace('<td align="left">','<td style="text-align:left;border-bottom:1px solid #52606c;padding:5px">')
@@ -196,12 +197,12 @@ for role,name in roles.items():
   bhvalue=body_html(s);vertex(gid+'-body',bhvalue,0,66,w,bh,parent=gid,style='rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;')
   preview.append(f'<div class="screen" style="left:{x}px;top:{sy}px;width:{w}px;height:{h}px"><h3>{html.escape(titles.get(key,key))}</h3><div class="context">'+('Общий чат' if key.startswith('public') or key in ('equal_public','simple_public','poll_training') else 'Персональная панель' if s['group'] else 'Личный чат')+f'</div><div class="bubble" data-key="{key}" style="height:{bh}px">{bhvalue}</div>')
   for ii,b in enumerate(s.get('inline',[])):
-   bid=f'{gid}-inline{ii}';bx=w-105
-   # The demo labels fit one line, followed by a status line; header has 1 or 3 lines.
+   bid=f'{gid}-inline{ii}';bx=w*0.38
+   # The demo table has one header row and one-line training rows.
    header=s['html'].split('<table',1)[0];header_lines=1+header.count('<br>')
-   by=66+14+header_lines*20+14+ii*50+5
-   vertex(bid,'',bx,by,90,40,parent=gid,style='fillColor=none;strokeColor=none;')
-   buttons_geo[bid]=(x+bx,sy+by,90,40,key,b)
+   by=66+14+header_lines*20+14+30+ii*30
+   vertex(bid,'',bx,by,110,30,parent=gid,style='fillColor=none;strokeColor=none;')
+   buttons_geo[bid]=(x+bx,sy+by,110,30,key,b)
   ry=66+bh+5
   for ri,row in enumerate(s['rows']):
    rh=48+(20 if max((len(b['text']) for b in row),default=0)>37 else 0);bw=(w-5*(len(row)-1))/len(row)

@@ -90,7 +90,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 completedCount++;minutes+=it.getLong(2).toBigInteger();paid+=it.getLong(3).toBigInteger()
             }
         }
-        val size=5
+        val size=8
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT ? OFFSET ?",user,user,size,index*size) { it.getLong(1) to it.getString(2) }
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid.toAmount(),completedCount)

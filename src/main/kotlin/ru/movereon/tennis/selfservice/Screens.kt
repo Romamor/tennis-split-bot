@@ -63,7 +63,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             "my_trainings" -> {
                 val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
                 val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nПотрачено денег: ${data.paid} ₽",p.items) {
-                    button("Открыть",ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index)))
+                    button(clean(it.title,34),ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index)))
                 }
                 richHtml=content.html
                 pages(p.index,p.pages,ScreenAction("my_trainings",0,page=p.index))
@@ -73,7 +73,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             "trainings" -> {
                 val p = service.trainings(requireNotNull(a), action.page, mine = action.option == "mine", unfinished = action.option == "open")
                 val content=TrainingList.render((if (action.option == "mine") "Мои тренировки" else "Тренировки группы") + " · ${p.total}" + if (p.total == 0) "\nЗаписей пока нет." else "",p.items) {
-                    button("Открыть",next("training", it.id, option = "").copy(back=action.copy(page=p.index)))
+                    button(clean(it.title,34),next("training", it.id, option = "").copy(back=action.copy(page=p.index)))
                 }
                 richHtml=content.html
                 pages(p.index, p.pages)

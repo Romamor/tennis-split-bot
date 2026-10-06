@@ -109,7 +109,7 @@ class PersonalFlowTest {
 
     @Test fun `my trainings aggregate groups paginate by creation date and open a separate viewer`() {
         setup()
-        for(i in 1..2) {
+        for(i in 1..5) {
             clock.now=clock.now.plusSeconds(3600)
             val a=Access(-1,2,true)
             bot.service.execute(a,"earlier-create$i",SettlementCommand.CreateTraining("early$i","Ранняя $i","2026-09-01","18:30"))
@@ -129,14 +129,15 @@ class PersonalFlowTest {
         message("/start");click("🏓 Мои тренировки")
         assertTrue(latest().text!!.startsWith("Тренировок: 2\nВремя: 3 ч\nПотрачено денег: 300 ₽"))
         val first=api.trainingLinks(latest()).map { it.text };assertTrue(first[0].contains("Тренировка 5"));assertTrue(first[2].contains("Тренировка 3"))
-        assertEquals(5,api.trainingLinks(latest()).size)
+        assertEquals(8,api.trainingLinks(latest()).size)
         val html=api.richMessages[latest().chat.id to latest().id]!!
-        assertTrue(html.contains("<s>27.09.2026 · Тренировка 3</s>"))
-        assertEquals(5,Regex("<td align=\"left\">").findAll(html).count())
+        assertTrue(html.contains("<s>27.09.2026</s>"))
+        assertTrue(html.contains("Тренировка 3</tg-button></s>"))
+        assertEquals(24,Regex("<td align=\"left\">").findAll(html).count())
         assertFalse(rows().flatten().any { it.contains("Тренировка ") })
         assertTrue(rows().flatten().contains("1 / 2"))
         assertEquals(1,bot.service.myTrainings(1,99).page.index)
-        assertEquals(5,bot.service.myTrainings(1,-1).page.items.size)
+        assertEquals(8,bot.service.myTrainings(1,-1).page.items.size)
         click(first[2]);assertEquals(listOf(listOf("⬅️ Назад")),rows())
         assertFalse(latest().text!!.contains("не влияет на баланс"));click("Назад")
         assertEquals(first,api.trainingLinks(latest()).map { it.text })
@@ -150,7 +151,7 @@ class PersonalFlowTest {
         val admin=Access(-2,2,true)
         bot.service.execute(admin,"reopen-stats",SettlementCommand.ReopenTraining("t2",bot.service.training(admin,"t2").version))
         val reopened=bot.service.myTrainings(1)
-        assertEquals(7,reopened.page.total);assertEquals(1,reopened.completedCount)
+        assertEquals(10,reopened.page.total);assertEquals(1,reopened.completedCount)
         assertEquals(120,reopened.minutes);assertEquals(200,reopened.paid)
         bot.service.execute(admin,"cancel-stats",SettlementCommand.CancelTraining("t2",bot.service.training(admin,"t2").version))
         assertEquals(1,bot.service.myTrainings(1).completedCount)
@@ -159,7 +160,7 @@ class PersonalFlowTest {
         assertEquals(1,bot.service.myTrainings(1).completedCount)
         bot.service.execute(other,"finish-stats",SettlementCommand.FinishTraining("t3",bot.service.training(other,"t3").version))
         val finished=bot.service.myTrainings(1)
-        assertEquals(7,finished.page.total);assertEquals(2,finished.completedCount)
+        assertEquals(10,finished.page.total);assertEquals(2,finished.completedCount)
         assertEquals(210,finished.minutes);assertEquals(350,finished.paid)
     }
 }

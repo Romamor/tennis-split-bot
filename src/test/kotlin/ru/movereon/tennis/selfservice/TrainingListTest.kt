@@ -12,10 +12,14 @@ class TrainingListTest {
     @Test fun `cancelled label is struck while status and open callback remain readable`() {
         val result=TrainingList.render("Тренировки",TrainingPhase.entries.map(::training)) { TgButton("Открыть","n:${it.id}") }
         val html=requireNotNull(result.html)
-        assertEquals(1,Regex("<s>").findAll(html).count())
-        assertTrue(html.contains("<s>06.10.2026 · Теннис</s><br>Отменена"))
-        assertEquals(3,Regex("<td align=\"left\">").findAll(html).count())
-        for(phase in TrainingPhase.entries) assertTrue(html.contains("data=\"n:${phase.name}\">Открыть</tg-button>"))
+        assertEquals(2,Regex("<s>").findAll(html).count())
+        assertTrue(html.contains(RichTable.OPEN))
+        assertTrue(html.contains("<th align=\"left\">Дата</th><th align=\"left\">Тренировка</th><th align=\"left\">Статус</th>"))
+        assertTrue(html.contains("<s>06.10.2026</s>"))
+        assertTrue(html.contains("<s><tg-button type=\"callback_data\" style=\"link\" data=\"n:CANCELLED\">Теннис</tg-button></s>"))
+        assertFalse(html.contains("Открыть"))
+        assertEquals(9,Regex("<td align=\"left\">").findAll(html).count())
+        for(phase in TrainingPhase.entries) assertTrue(html.contains("data=\"n:${phase.name}\">Теннис</tg-button>"))
         assertTrue(result.text.contains("Отменена"))
     }
 
