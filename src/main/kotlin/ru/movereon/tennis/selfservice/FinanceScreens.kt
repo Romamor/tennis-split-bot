@@ -58,7 +58,7 @@ internal class FinanceScreens(private val service:SettlementService) {
             }
             "finance_received" -> { row("💰 К моим финансам",ScreenAction("finance",a.groupId));structured("Перевод учтён.\nБаланс обновлён.") }
             "finance_balances" -> {
-                val p=service.financeBalances(a,action.page)
+                val p=service.financeBalances(a,action.page,playedOnly=true)
                 pages(p.index,p.pages);footer()
                 peopleTable(this,"Баланс группы",p.items,a.userId) { id -> ScreenAction("payment_new",a.groupId,user=id,back=action.copy(page=p.index)) }
             }

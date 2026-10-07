@@ -127,7 +127,11 @@ class FinanceFlowTest {
         assertEquals(11,Regex("<tr>").findAll(html(4)).count());assertFalse(rows(4).flatten().any { it.contains("→") });click(4,"Дальше ›")
         val list=latest(4);record(4);click(4,"Назад")
         assertEquals(list.text,latest(4).text);assertTrue(rows(4).flatten().contains("2 / 3"))
-        assertFalse(latest(4).text!!.contains("999 ₽"));click(4,"⬅️ Назад");click(4,"Баланс группы")
+        assertFalse(latest(4).text!!.contains("999 ₽"));click(4,"⬅️ Назад")
+        // Only participants of a non-cancelled training are included in the group balance view.
+        run(SettlementCommand.CreateTraining("roster","Теннис","2026-10-08","18:30"))
+        run(SettlementCommand.AddPlayers("roster",1,(1L..20L).toList()))
+        click(4,"Баланс группы")
         assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertEquals(15,Regex("<a href=").findAll(html(4)).count())
         assertFalse(html(4).contains("<th>Перевод</th>"));assertFalse(html(4).contains(">＋</tg-button>"))
         assertFalse(rows(4).flatten().any { it.contains("Игрок") });click(4,"Дальше ›")
@@ -198,6 +202,15 @@ class FinanceFlowTest {
             }
             println("Finance amount changes, 20 members, reused connections: median=${times.sorted()[times.size/2]} ms; max=${times.max()} ms (fake Telegram, network excluded)")
         }
+    }
+    @Test fun `group balance hides chat members without a training while recipient selection remains available`() {
+        setup();seedBalance();open(4);click(4,"Баланс группы")
+        assertEquals(3,Regex("<tr>").findAll(html(4)).count())
+        assertFalse(html(4).contains("tg://user?id=3\""))
+        assertEquals(0,bot.service.financeBalances(Access(-2,4),playedOnly=true).total)
+        assertTrue(html(4).contains("tg://user?id=1\""));assertTrue(html(4).contains("tg://user?id=2\""))
+        click(4,"⬅️ Назад");click(4,"Перевести");click(4,"Записать свой перевод")
+        assertTrue(html(4).contains("tg://user?id=3\""))
     }
     @Test fun `my training table shows only personal playing time without guests`() {
         setup();seedBalance();run(SettlementCommand.CreateTraining("guest","Гость","2026-10-07","18:30"))

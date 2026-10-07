@@ -223,7 +223,7 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
  else if(v==='duplicate'){body='<h2>Это ещё один перевод?</h2>'+detail(d,true)+'<p>За последние сутки уже есть перевод с теми же участниками и суммой.</p>';buttons=[row(key('Да, это ещё один','save-duplicate')),row(key('Посмотреть предыдущий','previous')),nav()]}
  else if(v==='saved'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>'+(p.status==='PENDING'?'Ожидает подтверждения':'Перевод учтён')+'</h2>'+detail(p)+(p.status==='PENDING'?'<p>Получатель увидит его в «Принять платёж». Баланс пока не изменился.</p>':`<p>Записал администратор: ${esc(name(p.author))}.<br>Баланс обновлён.</p>`);buttons=[];if(admin())buttons.push(row(key('Изменить сумму','edit-payment-amount')));if(canCancelPayment(p))buttons.push(row(key('Отменить перевод','cancel-payment')));buttons.push(row(key('К моим финансам','nav','finance')))}
  else if(v==='balances'){
-  let b=totals(),list=byBalance(g().members,b),chunk=pageOf(list,peoplePageSize);
+  let b=totals(),list=byBalance(g().members.filter(id=>g().played.includes(id)),b),chunk=pageOf(list,peoplePageSize);
   body='<h2>Баланс группы</h2>'+peopleHint()+peopleTable(chunk,b)+balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
   if(g().payments.some(p=>p.status==='PENDING'))body+='<p class="fp-small">Ожидающие подтверждения переводы пока не учтены.</p>';
   buttons=[pages(list,peoplePageSize),row(key('Назад','nav','finance'))];
