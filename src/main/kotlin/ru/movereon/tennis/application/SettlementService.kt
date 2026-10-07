@@ -36,6 +36,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             ON CONFLICT(group_id,user_id) DO UPDATE SET present=excluded.present WHERE group_users.present<>excluded.present""", groupId, userId, present)
     }
 
+    /** A failed access probe must not create a group participant. Explicit invitations still use rememberMembership. */
+    fun observeMembership(groupId:Long,userId:Long,present:Boolean) {
+        if(present) rememberMembership(groupId,userId,true)
+        else database.write { c -> sqlUpdate(c,"UPDATE group_users SET present=0 WHERE group_id=? AND user_id=? AND present<>0",groupId,userId) }
+    }
+
     fun account(id: Long): Account = database.read { account(it, id) }
     internal fun requireKnownGroupMember(a:Access)=database.read { known(it,a.groupId,a.userId) }
     fun groupAccount(a:Access,user:Long):Account = database.read { c ->
@@ -515,7 +521,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val all=sqlQuery(c,"""SELECT u.*,gu.present,gu.attendance_count,gu.has_played FROM group_users gu
             JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0""",a.groupId) {
             AccountBalance(readAccount(it),balances[it.getLong("id")] ?: 0,it.getInt("attendance_count"),it.getBoolean("present"),it.getBoolean("has_played"))
-        }.filter { exclude==null || it.account.id!=exclude }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
+        }.filter { (exclude==null || it.account.id!=exclude) && (it.present || it.hasPlayed || it.balance!=0L) }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
             .thenByDescending { it.balance }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
         val size=15
         val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))

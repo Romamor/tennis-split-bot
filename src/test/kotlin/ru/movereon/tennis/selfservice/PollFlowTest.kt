@@ -199,7 +199,7 @@ class PollFlowTest {
         bot.polls.attach(p,original.poll.id,original.id)
         assertEquals("UNKNOWN",bot.polls.get(-1,p.id).status)
         assertFailsWith<IllegalArgumentException> { bot.polls.finish(bot.polls.get(-1,p.id)) }
-        message("/start");click("Мои опросы");click("Группа 1");click("14.09.2026 · Теннис")
+        message("/start");click("Мои опросы");click("14.09.2026 · Теннис")
         click("Отменить опрос");click("Отменить опрос")
         assertEquals(0,count("SELECT COUNT(*) FROM training_polls"))
         assertEquals(0,count("SELECT COUNT(*) FROM trainings"))
@@ -295,7 +295,7 @@ class PollFlowTest {
         setup();val p=publish();val id=latest().id
         fake.messages.remove(2L to id);vote(p,3,1);bot.maintain()
         assertFalse(fake.messages.containsKey(2L to id));assertTrue(bot.state.privatePollViews().isEmpty())
-        message("/start");click("Мои опросы");click("Группа 1");click("14.09.2026 · Теннис")
+        message("/start");click("Мои опросы");click("14.09.2026 · Теннис")
         val card=latest();fake.members[-1L to 2L]=TgMember("left")
         vote(p,4,1);bot.maintain();assertEquals(card,latest());assertTrue(bot.state.privatePollViews().isEmpty())
     }

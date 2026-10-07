@@ -79,6 +79,21 @@ class PaymentCorrectionTest {
             assertTrue(service.database.verify().contains("целостность в порядке"))
         } finally { pool.shutdownNow() }
     }
+    @Test fun `failed checks of other groups never introduce strangers into group balances`() {
+        setup();service.remember(Account(25,"В другой группе"));service.rememberMembership(-2,25,true)
+        service.observeMembership(-1,25,false)
+        assertFalse(service.groupAccounts(sender).any { it.id==25L })
+        assertFalse(service.financeBalances(sender).items.any { it.account.id==25L })
+        // Older records of unsuccessful probes are hidden without removing history or touching balances.
+        service.rememberMembership(-1,25,false)
+        service.rememberMembership(-1,20,false)
+        val ids=service.financeBalances(sender).items+service.financeBalances(sender,1).items
+        assertFalse(ids.any { it.account.id in setOf(20L,25L) })
+        execute(SettlementCommand.RecordAdminPayment("historic",25,2,50),admin)
+        val after=service.financeBalances(sender).items+service.financeBalances(sender,1).items
+        assertTrue(after.any { it.account.id==25L && it.balance==50L })
+        assertTrue(service.database.verify().contains("целостность в порядке"))
+    }
     @Test fun `history uses one page select instead of one query per transfer`() {
         setup();repeat(21) { execute(SettlementCommand.SendOtherPayment("p$it",2,it+1L)) }
         statements.clear()

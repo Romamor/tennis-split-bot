@@ -43,7 +43,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         checkedMembership[group to user]?.let { return it }
         val member = api.member(group, user)
         navigationMembership.remember(group,user,member)
-        service.rememberMembership(group, user, member.present)
+        service.observeMembership(group, user, member.present)
         checkAccounting(member.present, ErrorCode.FORBIDDEN, "Доступ только участникам этой Telegram-группы")
         return Access(group, user, member.admin).also { checkedMembership[group to user] = it }
     }
@@ -53,7 +53,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         return groups.mapNotNull { group ->
         try {
             val member=navigationMembership.get(group.id,user) { api.member(group.id,user) }
-            service.rememberMembership(group.id,user,member.present)
+            service.observeMembership(group.id,user,member.present)
             if(!member.present) null else {
                 val auth=Access(group.id,user,member.admin)
                 val canPublish=(forPublication || polls.enabled(group.id)) && navigationMembership.get(group.id,identity.id) { api.member(group.id,identity.id) }.let { it.present && it.admin }
@@ -77,8 +77,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(plan.chat<0 || plan.command!=null) return plan
         val screen=plan.screen
         if(screen.kind in setOf("groups","groups_back")) {
-            val choices=GroupSelection.choices(groupOptions(plan.user,discover=true),screen.option)
+            val choices=GroupSelection.choices(groupOptions(plan.user,discover=true),screen.option) { polls.hasActive(it.group.id,plan.user,it.admin) }
             val next=when {
+                screen.option=="polls" && choices.isEmpty() -> GroupSelection.parent(screen.option)
                 screen.kind=="groups_back" && choices.size<=1 -> GroupSelection.parent(screen.option)
                 screen.kind=="groups_back" -> screen.copy(kind="groups")
                 choices.size==1 -> groupDestination(screen.option,choices.single(),plan.user)

@@ -6,10 +6,11 @@ import ru.movereon.tennis.core.checkAccounting
 
 /** Shared eligibility rules for the visible picker and automatic single-group navigation. */
 internal object GroupSelection {
-    fun choices(options:List<GroupOption>,section:String)=options.filter {
+    fun choices(options:List<GroupOption>,section:String,hasPolls:(GroupOption)->Boolean={ true })=options.filter {
         when(section) {
             "manage","poll_settings" -> it.admin
             "administrators" -> it.superAdmin
+            "polls" -> hasPolls(it)
             else -> true
         }
     }

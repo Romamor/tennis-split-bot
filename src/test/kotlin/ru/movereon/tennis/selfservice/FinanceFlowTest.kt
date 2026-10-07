@@ -43,14 +43,19 @@ class FinanceFlowTest {
         return callback(u,source,requireNotNull(button.callbackData))
     }
     private fun callback(u:Long,source:TgMessage,data:String)=TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),source,data)).also(bot::handle)
-    private fun inline(u:Long,id:Long,value:Long=0) {
+    private fun inline(u:Long,id:Long,value:Long?=null) {
         val token=Regex("<tg-button[^>]*data=\"([^\"]+)\"[^>]*>").findAll(html(u)).map { it.groupValues[1] }.single { data ->
-            val a=bot.state.button(data.removePrefix("n:"))!!.action;a.user==id && a.value==value
+            val a=bot.state.button(data.removePrefix("n:"))!!.action;a.user==id && (value==null || a.value==value)
         }
         callback(u,latest(u),token)
     }
+    private fun record(u:Long,index:Int=0) {
+        val tokens=Regex("data=\"([^\"]+)\"").findAll(html(u)).map { it.groupValues[1] }
+            .filter { bot.state.button(it.removePrefix("n:"))?.action?.kind=="finance_payment" }.distinct().toList()
+        callback(u,latest(u),tokens[index])
+    }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"Мои финансы");click(u,group) }
-    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.contains("Принять перевод(") }) }
+    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.contains("Принять платёж(") }) }
     private fun own(u:Long,to:Long,amount:String) {
         click(u,"Перевести");click(u,"Записать свой перевод");inline(u,to);click(u,"Ввести сумму сообщением");message(u,amount)
     }
@@ -63,27 +68,33 @@ class FinanceFlowTest {
     @Test fun `approved main menu calculated send and receipt confirmation never double post`() {
         setup();seedBalance();open(2)
         assertEquals("Мои финансы:\n−150 ₽ — оплачено за тебя другими участниками группы",latest(2).text)
-        assertEquals(listOf(listOf("📤 Перевести","📥 Принять перевод(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
+        assertTrue(html(2).startsWith("<h3>Мои финансы</h3>"))
+        assertTrue(html(2).contains("type=\"callback_data\" style=\"danger\""))
+        val balanceBefore=bot.service.balances(Access(-1,2));val current=latest(2).id
+        inline(2,0);assertEquals(current,latest(2).id);assertEquals(balanceBefore,bot.service.balances(Access(-1,2)))
+
+        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
         click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
-        assertTrue(html(2).contains("150 ₽"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
+        assertTrue(html(2).startsWith("<h3>Отправка перевода</h3>"));assertTrue(html(2).contains("<h2>150 ₽</h2>"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
         assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Рекомендуется 150 ₽" }.disabled)
         val saved=click(2,"Перевод отправлен");bot.handle(saved)
         assertNull(bot.state.form(2,2));assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
         open(2);click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
         assertTrue(rows(2).flatten().contains("✍️ Записать свой перевод"))
-        open(1);receive(1);click(1,"Игрок 2 · 150 ₽ · 07.10.2026")
+        open(1);assertTrue(html(1).contains("type=\"callback_data\" style=\"success\""))
+        receive(1);click(1,"Игрок 2 · 150 ₽ · 07.10.2026")
         assertTrue(latest(1).text!!.contains("Игрок 2 (−150 ₽)"));assertEquals("primary",latest(1).keyboard!!.rows.first().single().style)
         val accepted=click(1,"Да, получил");bot.handle(accepted)
         assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
         assertEquals(1,bot.service.financePayments(Access(-1,1)).total)
     }
     @Test fun `custom amount updates same message rounding stays disabled until balance or recommendation selected`() {
-        setup();seedBalance();open(2);click(2,"Баланс группы");inline(2,1)
+        setup();seedBalance();open(2);click(2,"Перевести");click(2,"Записать свой перевод");inline(2,1)
         val id=latest(2).id;val heights=rows(2).map { it.size }
-        assertEquals(0,bot.state.form(2,2)!!.amount)
-        click(2,"➕ 100 ₽");assertEquals(100,bot.state.form(2,2)!!.amount)
-        assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🔢 Округлить" }.disabled)
+        assertEquals(150,bot.state.form(2,2)!!.amount)
+        click(2,"Ввести сумму сообщением");message(2,"100")
+        assertEquals(100,bot.state.form(2,2)!!.amount)
         assertEquals(heights,rows(2).map { it.size })
         click(2,"Ввести сумму сообщением");message(2,"267")
         assertEquals(id,latest(2).id);assertEquals(267,bot.state.form(2,2)!!.amount)
@@ -105,7 +116,7 @@ class FinanceFlowTest {
         assertEquals(PaymentStatus.CANCELLED,bot.service.transfer(Access(-1,2),transfer.id).status)
         assertEquals(0,bot.service.pendingPaymentCount(Access(-1,1)));assertEquals(1,bot.service.paymentSuggestions(Access(-1,2)).total)
         open(3);click(3,"История переводов");click(3,"Все")
-        val label=rows(3).flatten().single { it.contains("Игрок 2 → Игрок 1") };click(3,label)
+        record(3)
         assertTrue(latest(3).text!!.contains("Перевод отменён"));assertEquals(listOf(listOf("⬅️ Назад")),rows(3))
         click(3,"Назад");assertTrue(latest(3).text!!.startsWith("История переводов · Все"))
     }
@@ -113,22 +124,26 @@ class FinanceFlowTest {
         setup();for(i in 1L..22L) run(SettlementCommand.SendOtherPayment("all$i",3,i),Access(-1,2))
         run(SettlementCommand.SendOtherPayment("other",3,999),Access(-2,2))
         open(4);click(4,"История переводов");assertTrue(latest(4).text!!.contains("Список пуст"));click(4,"Все")
-        assertEquals(10,rows(4).flatten().count { it.contains("→") });click(4,"Дальше ›")
-        val list=latest(4);click(4,rows(4).flatten().first { it.contains("→") });click(4,"Назад")
+        assertEquals(11,Regex("<tr>").findAll(html(4)).count());assertFalse(rows(4).flatten().any { it.contains("→") });click(4,"Дальше ›")
+        val list=latest(4);record(4);click(4,"Назад")
         assertEquals(list.text,latest(4).text);assertTrue(rows(4).flatten().contains("2 / 3"))
         assertFalse(latest(4).text!!.contains("999 ₽"));click(4,"⬅️ Назад");click(4,"Баланс группы")
         assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertEquals(15,Regex("<a href=").findAll(html(4)).count())
+        assertFalse(html(4).contains("<th>Перевод</th>"));assertFalse(html(4).contains(">＋</tg-button>"))
         assertFalse(rows(4).flatten().any { it.contains("Игрок") });click(4,"Дальше ›")
         assertEquals(6,Regex("<tr>").findAll(html(4)).count())
         click(4,"⬅️ Назад");click(4,"Перевести");click(4,"Записать свой перевод")
         assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertFalse(html(4).contains("tg://user?id=4\""))
         click(4,"Назад");assertTrue(latest(4).text!!.startsWith("Перевести"))
+        click(4,"Записать свой перевод");inline(4,1);assertEquals(0,bot.state.form(4,4)!!.amount)
+        click(4,"➕ 100 ₽");assertNotNull(latest(4).keyboard!!.rows.flatten().single { it.text=="🔢 Округлить" }.disabled)
+        click(4,"✖️ Отмена")
         assertEquals(0,bot.service.financePayments(Access(-2,4)).total)
     }
     @Test fun `admin edits confirmed transfer amount and cancels it with ledger reversal and attribution`() {
         setup();fake.members[-1L to 1L]=TgMember("administrator")
         run(SettlementCommand.RecordAdminPayment("p",2,3,75),Access(-1,1,true))
-        open(1);click(1,"История переводов");click(1,"Все");click(1,rows(1).flatten().single { it.contains("→") })
+        open(1);click(1,"История переводов");click(1,"Все");record(1)
         click(1,"Изменить сумму");val id=latest(1).id;message(1,"125")
         assertEquals(id,latest(1).id);assertTrue(latest(1).text!!.contains("Администратор: Игрок 1. Изменил сумму: 75 ₽ → 125 ₽."))
         assertEquals(mapOf(2L to 125L,3L to -125L),bot.service.balances(Access(-1,1)))
@@ -142,7 +157,7 @@ class FinanceFlowTest {
     @Test fun `revoked admin cannot edit or cancel a foreign payment using old buttons or pending text form`() {
         setup();fake.members[-1L to 1L]=TgMember("administrator")
         run(SettlementCommand.SendOtherPayment("p",3,75),Access(-1,2));open(1);click(1,"История переводов");click(1,"Все")
-        click(1,rows(1).flatten().single { it.contains("→") });val detail=latest(1)
+        record(1);val detail=latest(1)
         click(1,"Изменить сумму");fake.members[-1L to 1L]=TgMember("member");message(1,"125")
         assertEquals(75,bot.service.transfer(Access(-1,2),"p").amount)
         click(1,"Изменить сумму",detail);assertTrue(alerts.last().contains("администратор"))
@@ -161,7 +176,7 @@ class FinanceFlowTest {
     }
     @Test fun `ordinary confirmed sender cannot cancel and pending receipt edits stay pending`() {
         setup();run(SettlementCommand.SendOtherPayment("p",1,100),Access(-1,2));run(SettlementCommand.ReceivePayment("p"))
-        open(2);click(2,"История переводов");click(2,rows(2).flatten().single { it.contains("→") })
+        open(2);click(2,"История переводов");record(2)
         assertEquals(listOf(listOf("⬅️ Назад")),rows(2))
         run(SettlementCommand.SendOtherPayment("pending",1,120),Access(-1,2))
         run(SettlementCommand.EditPaymentAmount("pending",1,150),Access(-1,3,true))
