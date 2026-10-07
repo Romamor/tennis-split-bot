@@ -23,8 +23,8 @@ internal class PaymentInput(private val service:SettlementService,private val st
                 val calculated=action.kind=="finance_send_confirm"
                 val context=if(calculated) service.paymentDraftContext(a,user,action.user) else null
                 if(calculated) checkAccounting(context!!.recommendation==action.value,ErrorCode.INVALID_STATE,"Сумма изменилась. Обнови предложения переводов")
-                return show(InputForm("payment_ready",a.groupId,user=action.user,paymentFrom=user,amount=action.value,
-                    roundingAvailable=calculated || action.value>0,origin=origin))
+                return show(InputForm("payment_ready",a.groupId,user=action.user,paymentFrom=user,amount=if(calculated) action.value else 0,
+                    roundingAvailable=calculated,origin=origin))
             }
             return show(InputForm(if(admin) "payment_from" else "payment_to",a.groupId,
                 paymentFrom=if(admin) 0 else user,adminPayment=admin,origin=origin))
@@ -42,8 +42,8 @@ internal class PaymentInput(private val service:SettlementService,private val st
                 if(f.kind=="payment_from") show(f.copy(kind="payment_to",paymentFrom=action.user,user=0,page=0))
                 else {
                     require(action.user!=f.paymentFrom) { "Выбери другого участника" }
-                    show(f.copy(kind="payment_ready",user=action.user,amount=action.value,page=0,recipientPage=f.page,
-                        recipientOrigin=ScreenAction("form",a.groupId),roundingAvailable=action.value>0,waitingForAmount=false,rounded=false))
+                    show(f.copy(kind="payment_ready",user=action.user,amount=0,page=0,recipientPage=f.page,
+                        recipientOrigin=ScreenAction("form",a.groupId),roundingAvailable=false,waitingForAmount=false,rounded=false))
                 }
             }
             "payment_back" -> when(f.kind) {

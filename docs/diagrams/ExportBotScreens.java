@@ -65,13 +65,14 @@ class ExportBotScreens {
   cap("finance_receive","finance_receive","");cap("finance_history","finance_history","");
   capture("finance_receive_confirm","finance_receive_confirm","pending-in","\"back\":{\"kind\":\"finance_receive\",\"group\":-1}",null,false,null);
   run(auth,new SettlementCommand.SendPayment("pending-out",4,350));cap("finance_send_empty","finance_send","");
-  run(auth,new SettlementCommand.ReceivePayment("pending-in"));cap("finance_receive_empty","finance_receive","");
+  run(auth,new SettlementCommand.ReceivePayment("pending-in",null));cap("finance_receive_empty","finance_receive","");
   cap("finance_received","finance_received","");
   for(String kind:List.of("payment_to","payment_amount","payment_ready"))
    capture(kind,"form","","",form(kind.equals("payment_amount")?"payment_ready":kind,"","\"waitingForAmount\":"+kind.equals("payment_amount")+",\"paymentFrom\":"+user+",\"user\":4,\"amount\":75"),false,null);
   run(auth,new SettlementCommand.SendOtherPayment("other-payment",4,75,false));
   capture("payment_duplicate","form","","",form("payment_duplicate","","\"paymentFrom\":"+user+",\"user\":4,\"amount\":75,\"similar\":[\"other-payment\"]"),false,null);
   cap("finance_payment","finance_payment","other-payment");
+  capture("payment_edit","form","","",form("payment_edit","","\"paymentFrom\":"+user+",\"user\":4,\"amount\":75,\"transfer\":\"other-payment\",\"version\":1,\"origin\":{\"kind\":\"finance_payment\",\"group\":-1,\"id\":\"other-payment\"}"),false,null);
   capture("payment_previous","finance_payment","other-payment","\"back\":{\"kind\":\"form\",\"group\":-1}",null,false,null);
   capture("finance_history_detail","finance_payment","other-payment","\"back\":{\"kind\":\"finance_history\",\"group\":-1}",null,false,null);
   cap("finance_group_history","finance_group_history","");

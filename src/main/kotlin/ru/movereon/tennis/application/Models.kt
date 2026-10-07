@@ -62,9 +62,12 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
     @Serializable data class RecordAdminPayment(val id:String,val from:Long,val to:Long,val amount:Long):SettlementCommand
     @Serializable data class CancelPayment(val id:String,val version:Long):SettlementCommand
     @Serializable data class EditPaymentAmount(val id:String,val version:Long,val amount:Long):SettlementCommand
-    @Serializable data class ReceivePayment(val id:String):SettlementCommand
+    @Serializable data class ReceivePayment(val id:String,val version:Long?=null):SettlementCommand
     @Serializable data class RecordTransfer(val id:String,val from:Long,val to:Long,val amount:Long,val date:String,val note:String="",val onBehalfOf:Long?=null,val allowSimilar:Boolean=false):SettlementCommand
     @Serializable data class ChangeTransfer(val id:String,val version:Long,val change:TransferChange,val onBehalfOf:Long?=null):SettlementCommand
     @Serializable data class EditTransferAmount(val id:String,val version:Long,val amount:Long,val allowSimilar:Boolean=false):SettlementCommand
 }
 class DuplicateTransfer(val ids:List<String>):IllegalStateException("Похожий перевод уже есть")
+
+/** Shared permission rule: recipients and observers never edit pending amounts. */
+internal fun canEditPayment(a:Access,t:MoneyTransfer,admin:Boolean)=a.groupId==t.groupId && (admin || t.from==a.userId && t.status==PaymentStatus.REVIEW)

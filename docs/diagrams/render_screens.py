@@ -18,8 +18,8 @@ categories.insert(5,('Редактор: игроки и статусы',['add_pl
 titles.update({'choose_finance':'Группа для финансов','finance':'Мои финансы','finance_send':'Отправка перевода','finance_send_confirm':'Подтверждение отправки','finance_receive':'Принятие перевода','finance_history':'История переводов','finance_group_history':'Все переводы группы','finance_group_history_detail':'Детали из общей истории','finance_balances':'Баланс группы','finance_send_empty':'Нет доступных переводов для отправки','finance_receive_empty':'Нет переводов для принятия'})
 categories.insert(2,('Мои финансы: отправка и подтверждение',['choose_finance','finance','finance_send','finance_send_confirm','finance_receive','finance_history','finance_group_history','finance_group_history_detail','finance_balances','finance_send_empty','finance_receive_empty','finance_receive_confirm','finance_received','finance_history_detail']))
 titles.update({'finance_receive_confirm':'Деньги пришли?','finance_received':'Получение учтено','payment_previous':'Предыдущий похожий перевод','finance_history_detail':'Детали перевода из истории','payment_to':'Произвольный перевод · кому','payment_amount':'Произвольная сумма','payment_ready':'Перед отметкой отправки','payment_duplicate':'Возможный повтор за сутки','finance_payment':'Ожидает подтверждения','admin_payment_from':'Администратор · от кого','admin_payment_to':'Администратор · кому','admin_payment_amount':'Администратор · сумма','admin_payment_ready':'Записать с немедленным учётом','admin_payment_saved':'Запись администратора учтена'})
-titles.update({'payment_cancel_confirm':'Отменить перевод?','payment_cancelled':'Перевод отменён','admin_payment_edit':'Изменение суммы администратором'})
-categories.insert(3,('Произвольные переводы и запись администратором',['payment_to','payment_amount','payment_ready','finance_payment','payment_duplicate','payment_previous','payment_cancel_confirm','payment_cancelled','admin_payment_edit','admin_payment_from','admin_payment_to','admin_payment_amount','admin_payment_ready','admin_payment_saved']))
+titles.update({'payment_cancel_confirm':'Отменить перевод?','payment_cancelled':'Перевод отменён','admin_payment_edit':'Изменение суммы администратором','payment_edit':'Отправитель: изменить ожидающую сумму'})
+categories.insert(3,('Произвольные переводы и запись администратором',['payment_to','payment_amount','payment_ready','finance_payment','payment_duplicate','payment_previous','payment_cancel_confirm','payment_cancelled','payment_edit','admin_payment_edit','admin_payment_from','admin_payment_to','admin_payment_amount','admin_payment_ready','admin_payment_saved']))
 # Same-screen arrows indicate updating values; data in each screen is an illustrative snapshot.
 poll_steps=['poll_title','poll_date','poll_time','poll_poll_decline','poll_group','poll_ready']
 titles.update(dict(zip(poll_steps,['Опрос · название','Опрос · дата','Опрос · начало','Опрос · четвёртый ответ','Опрос · группа','Опрос · публикация'])))
@@ -71,11 +71,12 @@ def resolve(key,b):
  if k=='payment_pick':return ['admin_payment_to' if key=='admin_payment_from' else 'admin_payment_ready' if key.startswith('admin_') else 'payment_ready']
  if k in ('payment_page','payment_adjust','payment_balance','payment_recommend','payment_round'):return [key]
  if k=='payment_type':return ['admin_payment_amount' if key.startswith('admin_') else 'payment_amount']
- if k=='finance_payment_edit':return ['admin_payment_edit']
+ if k=='finance_payment_edit':return ['payment_edit' if role==1 else 'admin_payment_edit']
  if k=='finance_payment_cancel_confirm':return ['payment_cancel_confirm']
  if k=='finance_payment_cancel_save':return ['payment_cancelled']
  if k=='payment_cancel':return ['finance']
  if k=='payment_back' and key=='finance_send_confirm':return ['finance_send']
+ if k=='payment_back' and key=='payment_edit':return ['finance_payment']
  if k=='payment_back' and key=='admin_payment_edit':return ['admin_payment_saved']
  if k=='payment_back':return [{'payment_to':'finance','payment_amount':'payment_to','payment_ready':'payment_to','payment_duplicate':'payment_ready','admin_payment_from':'finance','admin_payment_to':'admin_payment_from','admin_payment_amount':'admin_payment_to','admin_payment_ready':'admin_payment_to'}[key]]
  if k=='payment_save':return ['admin_payment_saved'] if key.startswith('admin_') else ['finance_payment'] if key=='payment_duplicate' else ['finance_payment','payment_duplicate']
@@ -137,7 +138,7 @@ def resolve(key,b):
  if k=='admin_person':return ['role_super' if a.get('user')==3 else 'role_admin' if a.get('user')==2 else 'role_member']
  if k=='set_admin':return ['role_admin' if a.get('value') else 'role_super' if key=='role_super_extra' else 'role_member']
  raise ValueError((key,label,k))
-input_next={'admin_payment_edit':'admin_payment_saved','payment_amount':'payment_ready','admin_payment_amount':'admin_payment_ready','default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
+input_next={'payment_edit':'finance_payment','admin_payment_edit':'admin_payment_saved','payment_amount':'payment_ready','admin_payment_amount':'admin_payment_ready','default_time':'default_time','new_title':'new_date','new_date':'new_time','new_time':'new_group','edit_title':'edit_date','edit_date':'edit_time','edit_time':'edit_ready','paid':'player','pick_players':'add_players','pick_add_player':'add_player_list'}
 input_next.update(dict(zip(poll_steps[:4],poll_steps[1:5])))
 input_next['poll_photo']='poll_ready_photo'
 class Plain(HTMLParser):

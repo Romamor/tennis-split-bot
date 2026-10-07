@@ -55,7 +55,7 @@ class FinanceFlowTest {
         callback(u,latest(u),tokens[index])
     }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"Мои финансы");click(u,group) }
-    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.contains("Принять платёж(") }) }
+    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.endsWith("Принять платёж") }) }
     private fun own(u:Long,to:Long,amount:String) {
         click(u,"Перевести");click(u,"Записать свой перевод");inline(u,to);click(u,"Ввести сумму сообщением");message(u,amount)
     }
@@ -73,10 +73,10 @@ class FinanceFlowTest {
         val balanceBefore=bot.service.balances(Access(-1,2));val current=latest(2).id
         inline(2,0);assertEquals(current,latest(2).id);assertEquals(balanceBefore,bot.service.balances(Access(-1,2)))
 
-        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
+        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
         click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
-        assertTrue(html(2).startsWith("<h3>Отправка перевода</h3>"));assertTrue(html(2).contains("<h2>150 ₽</h2>"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
-        assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Рекомендуется 150 ₽" }.disabled)
+        assertTrue(html(2).startsWith("<h3>Отправка перевода</h3>"));assertTrue(html(2).contains("<aside><b>150 ₽</b></aside>"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
+        assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Предлагается ботом 150 ₽" }.disabled)
         val saved=click(2,"Перевод отправлен");bot.handle(saved)
         assertNull(bot.state.form(2,2));assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
@@ -92,14 +92,15 @@ class FinanceFlowTest {
     @Test fun `custom amount updates same message rounding stays disabled until balance or recommendation selected`() {
         setup();seedBalance();open(2);click(2,"Перевести");click(2,"Записать свой перевод");inline(2,1)
         val id=latest(2).id;val heights=rows(2).map { it.size }
-        assertEquals(150,bot.state.form(2,2)!!.amount)
+        assertEquals(0,bot.state.form(2,2)!!.amount)
+        assertTrue(html(2).contains("<aside><b>— ₽</b></aside>"))
         click(2,"Ввести сумму сообщением");message(2,"100")
         assertEquals(100,bot.state.form(2,2)!!.amount)
         assertEquals(heights,rows(2).map { it.size })
         click(2,"Ввести сумму сообщением");message(2,"267")
         assertEquals(id,latest(2).id);assertEquals(267,bot.state.form(2,2)!!.amount)
         assertTrue(latest(2).text!!.contains("267 ₽"));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
-        click(2,"Рекомендуется 150 ₽");assertTrue(latest(2).text!!.contains("150 ₽"));assertEquals(id,latest(2).id)
+        click(2,"Предлагается ботом 150 ₽");assertTrue(latest(2).text!!.contains("150 ₽"));assertEquals(id,latest(2).id)
         click(2,"Округлить");assertEquals(200,bot.state.form(2,2)!!.amount)
         click(2,"➖ 50 ₽");assertEquals(150,bot.state.form(2,2)!!.amount)
         click(2,"Ввести сумму сообщением");message(2,"bad")
@@ -203,6 +204,58 @@ class FinanceFlowTest {
             println("Finance amount changes, 20 members, reused connections: median=${times.sorted()[times.size/2]} ms; max=${times.max()} ms (fake Telegram, network excluded)")
         }
     }
+    @Test fun `typed amount stays above buttons and input cleanup retries without deleting the card`() {
+        setup();open(2);own(2,1,"267")
+        val card=latest(2);val pending=bot.state.retiredPrivateMenus(2).single { it.key.startsWith("input:") }
+        assertTrue(html(2).contains("<aside><b>267 ₽</b></aside>"));assertNotEquals(card.id,pending.message)
+        assertFalse(fake.deleted.any { it.first==2L && it.second==pending.message })
+        fake.deleteFailure=TelegramFailure(FailureKind.RETRY_LATER,429)
+        assertFailsWith<TelegramFailure> { bot.maintain() }
+        assertEquals(267,bot.state.form(2,2)!!.amount);assertEquals(card.id,latest(2).id)
+        fake.deleteFailure=null;bot.maintain()
+        assertTrue(fake.deleted.contains(2L to requireNotNull(pending.message)))
+        assertFalse(fake.deleted.contains(2L to card.id));assertTrue(bot.state.retiredPrivateMenus(2).isEmpty())
+        assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
+    }
+    @Test fun `balance chooses recipient without prefilled amount while calculated transfers still start with a sum`() {
+        setup();seedBalance();open(2);click(2,"Баланс группы");inline(2,1)
+        val f=bot.state.form(2,2)!!
+        assertEquals(1,f.user);assertEquals(0,f.amount);assertFalse(f.roundingAvailable)
+        assertTrue(html(2).contains("<aside><b>— ₽</b></aside>"))
+        assertNotNull(latest(2).keyboard!!.rows.first().single().disabled)
+        click(2,"Предлагается ботом 150 ₽");assertEquals(150,bot.state.form(2,2)!!.amount)
+        click(2,"✖️ Отмена");click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
+        assertEquals(150,bot.state.form(2,2)!!.amount)
+    }
+    @Test fun `sender edits waiting payment but stale receipt cannot confirm a changed amount`() {
+        setup();run(SettlementCommand.SendOtherPayment("editable",1,100),Access(-1,2))
+        open(1);receive(1);click(1,"Игрок 2 · 100 ₽ · 07.10.2026");val oldReceipt=latest(1)
+        open(2);click(2,"История переводов");record(2);click(2,"Изменить сумму");message(2,"150")
+        assertEquals(PaymentStatus.REVIEW,bot.service.transfer(Access(-1,2),"editable").status)
+        assertTrue(latest(2).text!!.contains("Отправитель: Игрок 2. Изменил сумму: 100 ₽ → 150 ₽."))
+        assertTrue(bot.service.balances(Access(-1,2)).isEmpty())
+        val n=alerts.size;click(1,"Да, получил",oldReceipt);assertEquals(n+1,alerts.size)
+        assertTrue(bot.service.balances(Access(-1,1)).isEmpty())
+        open(1);receive(1);click(1,"Игрок 2 · 150 ₽ · 07.10.2026");click(1,"Да, получил")
+        assertEquals(mapOf(1L to -150L,2L to 150L),bot.service.balances(Access(-1,1)))
+        open(2);click(2,"История переводов");record(2)
+        assertFalse(rows(2).flatten().any { it.contains("Изменить сумму") })
+        assertFalse(rows(2).flatten().any { it.contains("Отменить перевод") })
+    }
+    @Test fun `receive button has no counter is disabled when empty and green when receipts wait`() {
+        setup();open(1)
+        fun receiveButton(u:Long)=latest(u).keyboard!!.rows.flatten().single { it.text=="💰 Принять платёж" }
+        val empty=receiveButton(1)
+        assertNotNull(empty.disabled);assertNull(empty.callbackData);assertNull(empty.style)
+        run(SettlementCommand.SendOtherPayment("incoming",1,125),Access(-1,2))
+        open(1);val waiting=receiveButton(1)
+        assertNull(waiting.disabled);assertNotNull(waiting.callbackData);assertEquals("success",waiting.style)
+        assertEquals("💰 Принять платёж",waiting.text)
+        open(1,"Группа 2");assertNotNull(receiveButton(1).disabled)
+        open(1);receive(1);click(1,"Игрок 2 · 125 ₽ · 07.10.2026");click(1,"Да, получил")
+        click(1,"К моим финансам");assertNotNull(receiveButton(1).disabled)
+        assertTrue(bot.service.balances(Access(-1,1)).isNotEmpty())
+    }
     @Test fun `group balance hides chat members without a training while recipient selection remains available`() {
         setup();seedBalance();open(4);click(4,"Баланс группы")
         assertEquals(3,Regex("<tr>").findAll(html(4)).count())
@@ -217,10 +270,10 @@ class FinanceFlowTest {
         run(SettlementCommand.AddPlayers("guest",1,listOf(2)));run(SettlementCommand.ChangeAttendance("guest",2,AttendanceChange.SET_MINUTES,90))
         run(SettlementCommand.ChangeAttendance("guest",2,AttendanceChange.ADJUST_GUESTS,1))
         message(2,"/start");click(2,"Мои тренировки")
-        assertTrue(html(2).contains("<th>Играл</th>"));assertTrue(html(2).contains("<td>1,5 ч</td>"));assertFalse(html(2).contains("<td>3 ч</td>"))
+        assertTrue(html(2).contains("<th align=\"right\">Играл</th>"));assertTrue(html(2).contains("<td align=\"right\">1,5 ч</td>"));assertFalse(html(2).contains("<td align=\"right\">3 ч</td>"))
         run(SettlementCommand.CancelTraining("guest",bot.service.training(Access(-1,1),"guest").version))
         message(2,"/start");click(2,"Мои тренировки")
-        assertTrue(html(2).contains("<td></td>"));assertFalse(html(2).contains("<td>1,5 ч</td>"))
+        assertTrue(html(2).contains("<td align=\"right\"></td>"));assertFalse(html(2).contains("<td align=\"right\">1,5 ч</td>"))
         assertEquals(90,bot.service.training(Access(-1,2),"guest").players.single().minutes)
 
     }

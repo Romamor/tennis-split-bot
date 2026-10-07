@@ -31,7 +31,7 @@ import java.util.UUID
     val command: SettlementCommand? = null, val form: InputForm? = null, val callback: String? = null,
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
-    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null)
+    val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null,val inputMessage:Long?=null)
 @Serializable data class PrivatePollView(val message:Long,val screen:ScreenAction,val revision:String)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
@@ -225,16 +225,16 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             Delivery(key, it.getLong("chat_id"), it.getString("user_id")?.toLong(), it.getString("message_id")?.toLong(), it.getString("ephemeral_id")?.toLong(), it.getString("status"))
         }.singleOrNull()
     }
-    fun retirePrivateMenu(user:Long,chat:Long,message:Long) = database.write { c ->
+    fun retirePrivateMenu(user:Long,chat:Long,message:Long,input:Boolean=false) = database.write { c ->
         require(chat>0 && user==chat && message>0)
         sqlUpdate(c,"""INSERT INTO bot_deliveries(delivery_key,chat_id,user_id,message_id,status)
             VALUES(?,?,?,?,'RETRY') ON CONFLICT(delivery_key) DO UPDATE SET status='RETRY'""",
-            "retired:$chat:$message",chat,user,message)
+            "${if(input) "input" else "retired"}:$chat:$message",chat,user,message)
     }
     fun retiredPrivateMenus(user:Long?=null):List<Delivery> = database.read { c ->
         sqlQuery(c,"""SELECT d.* FROM bot_deliveries d JOIN bot_deliveries live
             ON live.delivery_key='personal:' || d.user_id || ':' || d.chat_id
-            WHERE d.delivery_key LIKE 'retired:%' AND d.status='RETRY' AND d.chat_id>0
+            WHERE (d.delivery_key LIKE 'retired:%' OR d.delivery_key LIKE 'input:%') AND d.status='RETRY' AND d.chat_id>0
             AND live.status='SENT' AND live.message_id IS NOT NULL AND d.message_id<>live.message_id
             AND (? IS NULL OR d.user_id=?) LIMIT 20""",user,user) {
             Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))

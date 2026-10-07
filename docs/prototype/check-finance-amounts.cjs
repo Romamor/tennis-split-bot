@@ -7,6 +7,19 @@ const html=fs.readFileSync(path.join(__dirname,'finance-proposal.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new vm.Script(script);
 const between=(start,end)=>script.slice(script.indexOf(start),script.indexOf(end));
+const receiveMarkup=vm.runInNewContext(`
+ const esc=x=>String(x);
+ ${between('function decorateButton(', 'const nav=')}
+ ${between('function receiveButton(', 'const pendingIncoming=')}
+ [receiveButton(0),receiveButton(1),receiveButton(7)]
+`);
+assert.ok(receiveMarkup[0].includes(' disabled'));
+assert.ok(!receiveMarkup[0].includes('data-style="success"'));
+for(const markup of receiveMarkup.slice(1)) {
+ assert.ok(!markup.includes(' disabled'));
+ assert.ok(markup.includes('data-style="success"'));
+ assert.ok(markup.includes('Принять платёж</button>'));
+}
 const context=vm.createContext({assert});
 vm.runInContext(`
  const state={view:'review',actor:1};
@@ -47,7 +60,7 @@ vm.runInContext(`
  for(const amount of [0,49,100,123,267])assert.equal(amountControls({...draft,amount}).length,3,'Constant number of rows');
  const message=detail(draft,true);
  assert.ok(message.includes('<div class="fp-amount">123 ₽</div>'),'Amount remains explicitly visible');
- assert.ok(!message.includes('Рекомендуется'),'Recommendation appears only on its button');
+ assert.ok(!message.includes('Предлагается ботом'),'Recommendation appears only on its button');
  assert.ok(!message.includes('fp-invisible'),'Message contents stay visible after reset');
  const count=group.payments.length;
  draft.waitingForAmount=true;draft.amountText='126';
@@ -64,7 +77,7 @@ vm.runInContext(`
  assert.equal(amountReset({amount:300,balancePresetAmount:323}),'','No separate balance button');
  assert.equal(amountReset({amount:300,roundingOriginal:323}),'','No before-rounding button');
  const resetFree={amount:250};assert.equal(amountReset(resetFree),'','No reset button for an arbitrary amount');assert.throws(()=>restoreAmount(resetFree),/Сумма для возврата недоступна/);assert.equal(resetFree.amount,250);
- assert.ok(amountReset(draft).includes('Рекомендуется'));
+ assert.ok(amountReset(draft).includes('Предлагается ботом'));
  const pending={id:1,from:1,to:2,amount:100,status:'PENDING'};group.payments.push(pending);
  assert.equal(totals()[1],-500);assert.equal(totals(true)[1],-400);
  const pendingCard=detail(pending);
@@ -97,6 +110,12 @@ vm.runInContext(`
  state.actor=3;assert.equal(historyPayments('mine').length,0);assert.equal(historyPayments('all').length,3);
  assert.throws(()=>editPaymentAmount(otherPending,'400'),'Reading a transfer does not grant editing rights');
  assert.equal(canCancelPayment(otherPending),false,'Reading another transfer does not grant cancellation rights');
+ state.actor=1;editPaymentAmount(otherPending,'350');
+ assert.equal(otherPending.amount,350);assert.equal(otherPending.status,'PENDING');
+ assert.equal(otherPending.audit.at(-1).admin,false);
+ assert.ok(paymentAudit(otherPending).includes('Отправитель:'));
+ otherPending.status='COMPLETED';assert.throws(()=>editPaymentAmount(otherPending,'400'));
+
 `,context);
 assert.ok(!script.includes("go('amount')"),'No separate manual-entry screen');
 assert.ok(!script.includes('amountEntryButtons'),'No duplicate manual-entry keyboard');

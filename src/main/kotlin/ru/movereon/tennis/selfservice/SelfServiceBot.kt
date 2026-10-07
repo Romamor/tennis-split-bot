@@ -222,6 +222,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             else effective.draft?.let { state.attendanceDraft(plan.user,plan.screen.group,it) }
             state.session(plan.user, plan.chat, plan.screen.group, effective.form)
             deliver(update.id, effective, a)
+            effective.inputMessage?.let { state.retirePrivateMenu(effective.user,effective.chat,it,input=true) }
             state.complete(update.id)
         } catch (failure: TelegramFailure) {
             if (failure.kind in setOf(FailureKind.UNCERTAIN, FailureKind.RETRY_LATER)) throw failure
@@ -403,13 +404,17 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             in PaymentInput.actions -> paymentInput.prepare(user.id,chat,requireNotNull(a),action,savedForm).copy(callback=callback?.id)
             "finance_payment_cancel_save" -> plan(action.back ?: ScreenAction("finance_payment",action.group,action.id),SettlementCommand.CancelPayment(action.id,action.version))
             "finance_payment_edit" -> {
-                checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Изменить сумму может только администратор этой группы")
-                val t=service.transfer(a,action.id)
+                val auth=requireNotNull(a);val isAdmin=service.isAdmin(auth)
+                val t=service.transfer(auth,action.id)
+                checkAccounting(canEditPayment(auth,t,isAdmin),ErrorCode.FORBIDDEN,"Изменить сумму может отправитель до подтверждения или администратор группы")
                 plan(ScreenAction("form",a.groupId),form=InputForm("payment_edit",a.groupId,transfer=t.id,version=t.version,
-                    user=t.to,paymentFrom=t.from,adminPayment=true,amount=t.amount,waitingForAmount=true,origin=action.back ?: ScreenAction("finance_payment",a.groupId,t.id)))
+                    user=t.to,paymentFrom=t.from,adminPayment=isAdmin,amount=t.amount,waitingForAmount=true,origin=action.back ?: ScreenAction("finance_payment",a.groupId,t.id)))
             }
             "finance_send_save" -> plan(action.back ?: ScreenAction("finance_send",action.group),SettlementCommand.SendPayment(UUID.randomUUID().toString(),action.user,action.value))
-            "finance_receive_save" -> plan(ScreenAction("finance_received",action.group),SettlementCommand.ReceivePayment(action.id))
+            "finance_receive_save" -> {
+                checkAccounting(action.version>0,ErrorCode.STALE_VERSION,"Открой перевод заново перед подтверждением")
+                plan(ScreenAction("finance_received",action.group),SettlementCommand.ReceivePayment(action.id,action.version))
+            }
             "set_training_status" -> {
                 val t=service.training(requireNotNull(a),action.id)
                 val target=TrainingPhase.valueOf(action.option)
@@ -634,7 +639,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun advance(f: InputForm) = f.copy(kind = when (f.kind) { "title" -> "date"; "date" -> "time"; "time" -> if(f.pollId.isNotEmpty()) "poll_decline" else if(f.training.isEmpty()) "group" else "ready"; "poll_decline" -> "group"; else -> error("Форма уже заполнена") })
     private fun textInput(update: TgUpdate, user: TgUser, chat: Long, f: InputForm, text: String): EventPlan {
         val auth=f.group.takeIf { it<0 }?.let { access(it,user.id) }
-        if(PaymentInput.isForm(f)) return paymentInput.text(user.id,chat,requireNotNull(auth),f,text)
+        if(PaymentInput.isForm(f)) {
+            val input=paymentInput.text(user.id,chat,requireNotNull(auth),f,text)
+            val accepted=input.form?.kind=="payment_ready" && input.form.waitingForAmount==false || input.command is SettlementCommand.EditPaymentAmount
+            return input.copy(inputMessage=update.message?.id?.takeIf { accepted && chat==user.id && it>0 })
+        }
         if(f.kind=="paid") service.requireOpen(service.training(requireNotNull(auth),f.training))
         fun form(updated: InputForm) = EventPlan(user.id, chat, ScreenAction("form", f.group, f.training), form = updated)
         fun parsedDate() = runCatching { LocalDate.parse(text, DateTimeFormatter.ofPattern("dd.MM.uuuu").withResolverStyle(java.time.format.ResolverStyle.STRICT)) }.getOrElse { LocalDate.parse(text) }.toString()
@@ -772,6 +781,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 catch(f:TelegramFailure) {
                     if(f.kind==FailureKind.MESSAGE_MISSING) { state.forgetDelivery(old.key);return@forEach }
                     if(f.kind!=FailureKind.REJECTED || f.code!=400) throw f
+                    if(old.key.startsWith("input:")) { state.forgetDelivery(old.key);return@forEach }
                     // Telegram cannot delete messages older than 48 hours; remove the old menu instead.
                     val text="Меню обновлено. Используй последнее сообщение бота."
                     api.editRich(old.chat,requireNotNull(old.message),text,"<p>$text</p>",TgKeyboard(emptyList()))

@@ -1112,9 +1112,9 @@ class SelfServiceBotTest {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои финансы");click(2,"Первая")
-        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
         click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
-        click(2,"Назад");click(2,"Принять платёж");assertEquals("Нет переводов для подтверждения",latest(2).text)
+        click(2,"Назад");assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="💰 Принять платёж" }.disabled)
     }
 
     @Test fun `back warns on unsaved selection and continues or discards without writing history`() {

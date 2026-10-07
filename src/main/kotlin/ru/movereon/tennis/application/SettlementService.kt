@@ -211,6 +211,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 val old=transfer(c,a.groupId,transferId)
                 allowed(present(c,a) && a.userId==old.to,"Принять платёж может только его получатель")
                 if(old.status==PaymentStatus.ACTIVE) return@write ActionReceipt(0,old.version)
+                command.version?.let { stale(old.version,it) }
                 state(old.status==PaymentStatus.REVIEW,"Этот платёж недоступен для принятия")
                 before=json.encodeToString(old);version=Math.addExact(old.version,1)
                 sqlUpdate(c,"UPDATE transfers SET status='ACTIVE',version=?,reviewer=NULL,review_party=NULL WHERE group_id=? AND id=?",version,a.groupId,transferId)
@@ -230,9 +231,10 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 after=json.encodeToString(transfer(c,a.groupId,transferId))
             }
             is SettlementCommand.EditPaymentAmount -> {
-                allowed(present(c,a),"Доступ только участникам этой группы");requireAdmin(c,a)
+                allowed(present(c,a),"Доступ только участникам этой группы")
                 transferId=command.id
                 val old=transfer(c,a.groupId,transferId)
+                allowed(canEditPayment(a,old,admin(c,a)),"Изменить сумму может отправитель до подтверждения или администратор группы")
                 stale(old.version,command.version)
                 require(command.amount>0) { "Укажи положительную сумму" }
                 if(command.amount==old.amount) return@write ActionReceipt(0,old.version)
@@ -445,7 +447,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         // Validate the whole batch before writing any ledger rows. The transaction also covers the edited records.
         if(entries.isNotEmpty()) applyEntries(database.balances(c, a.groupId).mapKeys { ParticipantId(it.key.toString()) }, entries)
         sqlUpdate(c, """INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,transfer_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, (if(command is SettlementCommand.CancelPayment && admin(c,a)) "AdminCancelPayment" else command.javaClass.simpleName), trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, (when { command is SettlementCommand.CancelPayment && admin(c,a)->"AdminCancelPayment";command is SettlementCommand.EditPaymentAmount && !admin(c,a)->"EditPendingPaymentAmount";else->command.javaClass.simpleName }), trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
         val actionId = sqlQuery(c, "SELECT last_insert_rowid()") { it.getLong(1) }.single()
         entries.forEachIndexed { index, entry ->
             sqlUpdate(c, "INSERT INTO balance_entries(action_id,group_id,entry_index,user_id,amount) VALUES(?,?,?,?,?)", actionId, a.groupId, index, entry.participant.value.toLong(), entry.amount)
@@ -551,7 +553,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         known(c,a.groupId,a.userId)
         val t=transfer(c,a.groupId,id)
         val administrative=count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind='RecordAdminPayment'",a.groupId,id)>0
-        val edits=sqlQuery(c,"""SELECT * FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('EditPaymentAmount','CancelPayment','AdminCancelPayment') ORDER BY id DESC LIMIT 5""",a.groupId,id) {
+        val edits=sqlQuery(c,"""SELECT * FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('EditPaymentAmount','EditPendingPaymentAmount','CancelPayment','AdminCancelPayment') ORDER BY id DESC LIMIT 5""",a.groupId,id) {
             AuditAction(it.getLong("id"),a.groupId,it.getLong("actor_id"),it.getString("kind"),null,id,it.getString("before_json"),it.getString("after_json"),it.getString("occurred_at"))
         }
         PaymentDetails(t,administrative,edits)

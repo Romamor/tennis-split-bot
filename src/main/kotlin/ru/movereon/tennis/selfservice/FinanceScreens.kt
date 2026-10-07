@@ -22,7 +22,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         when(action.kind) {
             "finance" -> {
                 val summary=service.financeSummary(a)
-                rows+=listOf(button("💸 Перевести",next("finance_send")),button("💰 Принять платёж(${summary.pendingReceiveCount})",next("finance_receive")))
+                rows+=listOf(button("💸 Перевести",next("finance_send")),control("💰 Принять платёж",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
                 row("💰 Баланс группы",next("finance_balances"));row("📜 История переводов",next("finance_history"))
                 if(service.isAdmin(a)) row("📝 Записать перевод за участников",next("payment_new",option="admin"))
                 row("⬅️ Назад",ScreenAction("menu",0))
@@ -52,7 +52,7 @@ internal class FinanceScreens(private val service:SettlementService) {
             "finance_receive_confirm" -> {
                 val t=service.transfer(a,action.id)
                 checkAccounting(t.to==a.userId && t.status==PaymentStatus.REVIEW,ErrorCode.INVALID_STATE,"Этот перевод недоступен для принятия")
-                rows+=listOf(control("✅ Да, получил",next("finance_receive_save"),style="primary"))
+                rows+=listOf(control("✅ Да, получил",next("finance_receive_save",version=t.version),style="primary"))
                 row("⬅️ Назад",action.back ?: next("finance_receive"))
                 val data=details(t,service.balances(a));ScreenContent("Деньги пришли?\n"+data.text,"<h3>Деньги пришли?</h3>"+data.html)
             }
@@ -73,7 +73,7 @@ internal class FinanceScreens(private val service:SettlementService) {
                     row("⬅️ Назад",action.back ?: next("finance_payment"))
                     ScreenContent("Отменить перевод?\n"+content.text,"<h3>Отменить перевод?</h3>"+content.html)
                 } else {
-                    if(isAdmin) row("✍️ Изменить сумму",next("finance_payment_edit").copy(back=action))
+                    if(canEditPayment(a,t,isAdmin)) row("✍️ Изменить сумму",next("finance_payment_edit").copy(back=action))
                     if(canCancel) rows+=listOf(control("🚫 Отменить перевод",next("finance_payment_cancel_confirm").copy(back=action),style="danger"))
                     row(if(action.back==null) "💰 К моим финансам" else "⬅️ Назад",action.back ?: ScreenAction("finance",a.groupId))
                     val status=when(t.status) { PaymentStatus.REVIEW->"Ожидает подтверждения";PaymentStatus.ACTIVE->"Перевод учтён";PaymentStatus.CANCELLED->"Перевод отменён" }
@@ -83,7 +83,7 @@ internal class FinanceScreens(private val service:SettlementService) {
                         data.edits.forEach { edit ->
                             val before=json.decodeFromString<MoneyTransfer>(requireNotNull(edit.before))
                             val after=json.decodeFromString<MoneyTransfer>(edit.after)
-                            if(edit.kind=="EditPaymentAmount") append("\nАдминистратор: ${person(edit.actorId)}. Изменил сумму: ${before.amount} ₽ → ${after.amount} ₽.")
+                            if(edit.kind in setOf("EditPaymentAmount","EditPendingPaymentAmount")) append("\n${if(edit.kind=="EditPaymentAmount") "Администратор" else "Отправитель"}: ${person(edit.actorId)}. Изменил сумму: ${before.amount} ₽ → ${after.amount} ₽.")
                             else append("\n${if(edit.kind=="AdminCancelPayment") "Администратор" else "Отменил"}: ${person(edit.actorId)}. Перевод отменён.")
                         }
                     }
@@ -139,7 +139,7 @@ internal class FinanceScreens(private val service:SettlementService) {
                 rows+=listOf(control("🔢 Округлить",act("payment_round"),!duplicate && f.roundingAvailable && !f.rounded && f.amount>0 && f.amount%100!=0L))
                 rows+=listOf(control("➕ 50 ₽",act("payment_adjust").copy(value=50),!duplicate),control("➕ 100 ₽",act("payment_adjust").copy(value=100),!duplicate))
                 rows+=listOf(control("➖ 50 ₽",act("payment_adjust").copy(value=-50),!duplicate && f.amount>0),control("➖ 100 ₽",act("payment_adjust").copy(value=-100),!duplicate && f.amount>0))
-                if(recommendation!=null) rows+=listOf(control("🧮 Рекомендуется $recommendation ₽",act("payment_recommend"),!duplicate && f.amount!=recommendation))
+                if(recommendation!=null) rows+=listOf(control("🧮 Предлагается ботом $recommendation ₽",act("payment_recommend"),!duplicate && f.amount!=recommendation))
                 rows+=listOf(control("✍️ Ввести сумму сообщением",act("payment_type"),!duplicate))
                 if(duplicate && f.similar.isNotEmpty()) row("📜 Посмотреть предыдущий",act("payment_previous").copy(id=f.similar.first()))
                 nav()
@@ -148,11 +148,12 @@ internal class FinanceScreens(private val service:SettlementService) {
                     return if(value==0L || duplicate) balanceHtml(value) else inline(signed(value),act("payment_balance").copy(user=id),if(value>0) "success" else "danger")
                 }
                 fun party(id:Long)=person(id)+" (${signed(context.balances[id] ?: 0)})"
-                val prompt=if(f.waitingForAmount || f.kind=="payment_amount") "Напиши сумму в рублях." else "\u00a0"
+                val amount=if(f.amount>0) "${f.amount} ₽" else "— ₽"
+                val prompt=if(f.waitingForAmount || f.kind=="payment_amount") "Напиши сумму в рублях." else if(f.amount==0L) "Укажи сумму перевода." else "\u00a0"
                 val head=if(duplicate) "Это ещё один перевод?" else if(f.adminPayment) "Запись администратором" else "Отправка перевода"
                 val tail=if(duplicate) "За последние сутки уже есть такой же перевод." else if(f.adminPayment) "Сразу учтём в балансе. Подтверждение участников не требуется." else "После перевода денег нажми «Перевод отправлен». Учтём сумму после подтверждения получателя."
-                ScreenContent("$head\nОт кого: ${party(f.paymentFrom)}\nКому: ${party(f.user)}\n${f.amount} ₽\n$tail\n$prompt",
-                    "<h3>${TrainingCard.escape(head)}</h3><p>От кого: ${TrainingCard.escape(person(f.paymentFrom))} (${balance(f.paymentFrom)})<br>Кому: ${TrainingCard.escape(person(f.user))} (${balance(f.user)})</p><h2>${f.amount} ₽</h2><p>${TrainingCard.escape(tail)}</p><p>$prompt</p>")
+                ScreenContent("$head\nОт кого: ${party(f.paymentFrom)}\nКому: ${party(f.user)}\n$amount\n$tail\n$prompt",
+                    "<h3>${TrainingCard.escape(head)}</h3><p>От кого: ${TrainingCard.escape(person(f.paymentFrom))} (${balance(f.paymentFrom)})<br>Кому: ${TrainingCard.escape(person(f.user))} (${balance(f.user)})</p><aside><b>$amount</b></aside><p>${TrainingCard.escape(tail)}</p><p>$prompt</p>")
             }
             else -> error("Unknown payment form")
         }
@@ -166,7 +167,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         val text=title+if(items.isEmpty()) "\nСписок пуст." else "\nУчастник | Баланс\n"+items.joinToString("\n") { "${clean(it.account.name,36)} | ${signed(it.balance)}" }
         val html=structured(title).html+if(items.isEmpty()) "<p>Список пуст.</p>" else RichTable.OPEN+"<tr><th>Участник</th><th>Баланс</th></tr>"+items.joinToString("") {
             val target=select(it.account.id)
-            val balance=if(it.account.id==sender) balanceHtml(it.balance) else layout.inline(signed(it.balance),target.copy(value=it.balance.toBigInteger().abs().toAmount()),if(it.balance>0) "success" else if(it.balance<0) "danger" else "link")
+            val balance=if(it.account.id==sender) balanceHtml(it.balance) else layout.inline(signed(it.balance),target,if(it.balance>0) "success" else if(it.balance<0) "danger" else "link")
             "<tr><td>${TrainingCard.profileLink(it.account.id,clean(it.account.name,36),it.account.username)}</td><td align=\"right\">$balance</td></tr>"
         }+"</table>"
         val hint=if(sender==0L) "Нажми на имя для профиля, на баланс — чтобы выбрать отправителя." else "Нажми на имя для профиля, на баланс — для перевода."

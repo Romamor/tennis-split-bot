@@ -16,7 +16,7 @@ internal object TrainingList {
             append("<p>${TrainingCard.escape(header).replace("\n","<br>")}</p>")
             if(trainings.isNotEmpty()) {
                 append(RichTable.OPEN)
-                append("<tr><th align=\"left\">Дата</th><th align=\"left\">Тренировка</th>"+if(personalUser!=null) "<th>Играл</th></tr>" else "</tr>")
+                append("<tr><th align=\"left\">Дата</th><th align=\"left\">Тренировка</th>"+if(personalUser!=null) "<th align=\"right\">Играл</th></tr>" else "</tr>")
                 trainings.forEach { t ->
                     val title=TrainingCard.escape(Screens.clean(t.title,34))
                     fun strike(value:String)=if(t.phase==TrainingPhase.CANCELLED) "<s>$value</s>" else value
@@ -29,7 +29,7 @@ internal object TrainingList {
                     val action=button.callbackData?.let {
                         "<tg-button type=\"callback_data\" style=\"$style\" data=\"${TrainingCard.escape(it)}\">$title</tg-button>"
                     } ?: "<tg-button type=\"url\" style=\"$style\" url=\"${TrainingCard.escape(requireNotNull(button.url))}\">$title</tg-button>"
-                    append("<tr><td align=\"left\">${strike(Screens.date(t.date))}</td><td align=\"left\">${strike(action)}</td>"+(if(personalUser!=null) "<td>${played(t)}</td>" else "")+"</tr>")
+                    append("<tr><td align=\"left\">${strike(Screens.date(t.date))}</td><td align=\"left\">${strike(action)}</td>"+(if(personalUser!=null) "<td align=\"right\">${played(t)}</td>" else "")+"</tr>")
                 }
                 append("</table>")
             }
