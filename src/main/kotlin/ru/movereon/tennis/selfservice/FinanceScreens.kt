@@ -22,7 +22,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         when(action.kind) {
             "finance" -> {
                 val summary=service.financeSummary(a)
-                rows+=listOf(button("💸 Перевести",next("finance_send")),control("📥 Проверить поступления",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
+                rows+=listOf(button("💸 Перевести",next("finance_send")),control("💰 Принять платёж",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
                 row("💰 Баланс группы",next("finance_balances"));row("📜 История переводов",next("finance_history"))
                 if(service.isAdmin(a)) row("📝 Записать перевод за участников",next("payment_new",option="admin"))
                 row("⬅️ Назад",ScreenAction("menu",0))
@@ -155,7 +155,7 @@ internal class FinanceScreens(private val service:SettlementService) {
                 val head=if(duplicate) "Это ещё один перевод?" else if(f.adminPayment) "Запись администратором" else "Отправка перевода"
                 val tail=if(duplicate) "За последние сутки уже есть такой же перевод." else if(f.adminPayment) "Сразу учтём в балансе. Подтверждение участников не требуется." else "После перевода денег нажми «Перевод отправлен». Учтём сумму после подтверждения получателя."
                 ScreenContent("$head\nОт кого: ${party(f.paymentFrom)}\nКому: ${party(f.user)}\n$amount\n$tail\n$prompt",
-                    "<h3>${TrainingCard.escape(head)}</h3><p>От кого: ${TrainingCard.escape(person(f.paymentFrom))} (${balance(f.paymentFrom)})<br>Кому: ${TrainingCard.escape(person(f.user))} (${balance(f.user)})</p><aside><b>$amount</b></aside><p>${TrainingCard.escape(tail)}</p><p>$prompt</p>")
+                    "<h3>${TrainingCard.escape(head)}</h3><p>От кого: ${TrainingCard.escape(person(f.paymentFrom))} (${balance(f.paymentFrom)})<br>Кому: ${TrainingCard.escape(person(f.user))} (${balance(f.user)})</p><h1>$amount</h1><p>${TrainingCard.escape(tail)}</p><p>$prompt</p>")
             }
             else -> error("Unknown payment form")
         }

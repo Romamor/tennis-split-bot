@@ -18,7 +18,7 @@ assert.ok(!receiveMarkup[0].includes('data-style="success"'));
 for(const markup of receiveMarkup.slice(1)) {
  assert.ok(!markup.includes(' disabled'));
  assert.ok(markup.includes('data-style="success"'));
- assert.ok(markup.includes('Проверить поступления</button>'));
+ assert.ok(markup.includes('Принять платёж</button>'));
 }
 const context=vm.createContext({assert});
 vm.runInContext(`
@@ -59,7 +59,7 @@ vm.runInContext(`
  assert.ok(!amountControls(draft)[1].includes('disabled'),'Plus buttons remain active at the recommended amount');
  for(const amount of [0,49,100,123,267])assert.equal(amountControls({...draft,amount}).length,3,'Constant number of rows');
  const message=detail(draft,true);
- assert.ok(message.includes('<div class="fp-amount">123 ₽</div>'),'Amount remains explicitly visible');
+ assert.ok(message.includes('<h1 class="fp-amount">123 ₽</h1>'),'Amount remains explicitly visible');
  assert.ok(!message.includes('Предлагается ботом'),'Recommendation appears only on its button');
  assert.ok(!message.includes('fp-invisible'),'Message contents stay visible after reset');
  const count=group.payments.length;

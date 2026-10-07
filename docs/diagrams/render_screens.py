@@ -146,7 +146,7 @@ class Plain(HTMLParser):
  def handle_data(self,s):self.parts.append(s)
 def body_html(s):
  if not s.get('html'):return html.escape(s['text']).replace('\n','<br>')
- raw=s['html'];raw=re.sub(r'<h3>(.*?)</h3>',r'<div style="font-size:19px;margin-bottom:9px">\1</div>',raw)
+ raw=s['html'];raw=re.sub(r'<h1>(.*?)</h1>',r'<div style="font-size:28px;font-weight:bold;line-height:36px;margin:12px 0">\1</div>',raw);raw=re.sub(r'<h3>(.*?)</h3>',r'<div style="font-size:19px;margin-bottom:9px">\1</div>',raw)
  raw=raw.replace('<img src="tg://photo?id=training-photo"/>','<div style="padding:18px;border:1px solid #637d93;border-radius:8px;text-align:center;margin-bottom:10px">🖼 Фото из опроса</div>')
  raw=re.sub(r'<table[^>]*>','<table style="border-collapse:collapse;width:100%;font-size:12px">',raw)
  raw=raw.replace('<th align="left">','<th style="text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px">')
@@ -165,7 +165,7 @@ def body_height(s):
  if str(s['role'])+':'+s['key'] in measured:return max(100,measured[str(s['role'])+':'+s['key']]+25)
  # Conservative wrapping estimate; exact overflow is checked in browser previews.
  if s.get('html'):
-  n=s['html'].count('<tr>');return max(220,150+n*47)+(75 if 'tg://photo?id=training-photo' in s['html'] else 0)
+  n=s['html'].count('<tr>');return max(220,150+n*47)+(75 if 'tg://photo?id=training-photo' in s['html'] else 0)+(48 if '<h1>' in s['html'] else 0)
  return max(115,28+sum(max(1,math.ceil(len(l)/34)) for l in s['text'].split('\n'))*20)
 def smooth(points,r=22):
  result=f'M {points[0][0]} {points[0][1]}'
