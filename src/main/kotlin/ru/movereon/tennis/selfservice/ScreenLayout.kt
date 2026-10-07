@@ -20,6 +20,14 @@ internal class ScreenLayout(
         tokens += token
         return TgButton(label, callbackData = "n:$token").also { actions[it]=next }
     }
+    fun control(label:String,next:ScreenAction,enabled:Boolean=true,style:String?=null):TgButton =
+        if(enabled) button(label,next).copy(style=style) else TgButton(label,disabled=kotlinx.serialization.json.JsonObject(emptyMap()))
+    fun inline(label:String,next:ScreenAction,style:String="link"):String {
+        val b=button(label,next)
+        val kind=if(b.callbackData!=null) "callback_data" else "url"
+        val attr=if(b.callbackData!=null) "data" else "url"
+        return "<tg-button type=\"$kind\" style=\"$style\" $attr=\"${TrainingCard.escape(b.callbackData ?: requireNotNull(b.url))}\">${TrainingCard.escape(label)}</tg-button>"
+    }
     fun next(kind: String, id: String = action.id, page: Int = 0, target: Long = action.user, value: Long = 0, version: Long = action.version, option: String = action.option) =
         ScreenAction(kind, action.group, id, page, target, value, version, option,back=action.back,resume=action.resume)
     fun row(label: String, next: ScreenAction) { rows += listOf(button(label, next)) }

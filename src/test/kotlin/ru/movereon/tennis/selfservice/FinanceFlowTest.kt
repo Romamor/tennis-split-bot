@@ -9,242 +9,186 @@ import java.nio.file.Path
 import java.time.*
 import kotlin.test.*
 
+/** Whole update -> permission -> draft -> ledger -> rendered-message regression tests. */
 class FinanceFlowTest {
     @TempDir lateinit var dir:Path
     private val fake=FakeTelegramApi()
     private val alerts=mutableListOf<String>()
+    private val queries=mutableListOf<String>()
+    private var editCalls=0
     private val api=object:TelegramApi by fake {
         override fun answer(callbackId:String,text:String?,alert:Boolean) { if(alert && text!=null) alerts+=text }
+        override fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?) {
+            editCalls++;fake.editRich(chatId,messageId,text,html,keyboard,photoId)
+        }
     }
     private lateinit var bot:SelfServiceBot
     private var seq=1L
     private fun setup() {
-        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite")),fake.bot,Clock.fixed(Instant.parse("2026-09-13T12:00:00Z"),ZoneOffset.UTC))
+        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite"),queries::add),fake.bot,Clock.fixed(Instant.parse("2026-10-07T12:00:00Z"),ZoneOffset.UTC))
         for(g in -2L..-1L) {
             bot.service.register(SettlementGroup(g,"Группа ${-g}","Europe/Moscow"))
-            for(u in 1L..12L) { bot.service.remember(Account(u,"Игрок $u"));bot.service.rememberMembership(g,u,true);fake.members[g to u]=TgMember("member") }
+            for(u in 1L..20L) { bot.service.remember(Account(u,"Игрок $u"));bot.service.rememberMembership(g,u,true);fake.members[g to u]=TgMember("member") }
             fake.members[g to fake.bot.id]=TgMember("administrator",user=fake.bot)
         }
     }
     private fun run(c:SettlementCommand,a:Access=Access(-1,1))=bot.service.execute(a,"seed${seq++}",c)
     private fun latest(u:Long)=fake.messages.values.last { it.chat.id==u }
     private fun rows(u:Long)=latest(u).keyboard!!.rows.map { row->row.map { it.text } }
+    private fun html(u:Long)=fake.richMessages.getValue(u to latest(u).id)
     private fun message(u:Long,text:String) { bot.handle(TgUpdate(seq++,TgMessage(seq,TgChat(u,"private"),TgUser(u,firstName="Игрок $u"),text))) }
     private fun click(u:Long,text:String,source:TgMessage=latest(u)):TgUpdate {
         val button=source.keyboard!!.rows.flatten().single { it.text==text || it.text.endsWith(" $text") }
-        return TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),source,button.callbackData)).also(bot::handle)
+        assertNull(button.disabled,"Button $text should be enabled")
+        return callback(u,source,requireNotNull(button.callbackData))
     }
-    private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"💰 Мои финансы");click(u,group) }
-    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.startsWith("Принять платеж(") }) }
-    private fun accept(u:Long,label:String) {
-        click(u,label);click(u,"Да, получил");click(u,"К моим финансам");receive(u)
+    private fun callback(u:Long,source:TgMessage,data:String)=TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(u,firstName="Игрок $u"),source,data)).also(bot::handle)
+    private fun inline(u:Long,id:Long,value:Long=0) {
+        val token=Regex("<tg-button[^>]*data=\"([^\"]+)\"[^>]*>").findAll(html(u)).map { it.groupValues[1] }.single { data ->
+            val a=bot.state.button(data.removePrefix("n:"))!!.action;a.user==id && a.value==value
+        }
+        callback(u,latest(u),token)
+    }
+    private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"Мои финансы");click(u,group) }
+    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.contains("Принять перевод(") }) }
+    private fun own(u:Long,to:Long,amount:String) {
+        click(u,"Перевести");click(u,"Записать свой перевод");inline(u,to);click(u,"Ввести сумму сообщением");message(u,amount)
     }
     private fun seedBalance(id:String="t",paid:Long=300) {
-        run(SettlementCommand.CreateTraining(id,"Теннис","2026-09-13","18:30"))
-        run(SettlementCommand.AddPlayers(id,1,listOf(1,2)))
+        run(SettlementCommand.CreateTraining(id,"Теннис","2026-10-07","18:30"));run(SettlementCommand.AddPlayers(id,1,listOf(1,2)))
         for(u in 1L..2L) run(SettlementCommand.ChangeAttendance(id,u,AttendanceChange.ADJUST_MINUTES,60))
         run(SettlementCommand.ChangeAttendance(id,1,AttendanceChange.SET_PAID,paid))
         run(SettlementCommand.FinishTraining(id,bot.service.training(Access(-1,1),id).version))
     }
-    @Test fun `admins browse all group payments and return to the same page without changing receipts`() {
-        setup()
-        for(i in 1L..13L) run(SettlementCommand.SendOtherPayment("all$i",3,i),Access(-1,2))
-        run(SettlementCommand.SendOtherPayment("other-group",3,999),Access(-2,2))
-        fake.members[-1L to 1L]=TgMember("administrator")
-        run(SettlementCommand.SetAdministrator(4,true),Access(-1,1,true))
-        for(user in listOf(1L,4L)) {
-            open(user);click(user,"Все переводы группы")
-            assertTrue(latest(user).text!!.startsWith("Все переводы группы"))
-            assertFalse(latest(user).text!!.contains("999 ₽"))
-            assertTrue(rows(user).flatten().contains("1 / 2"))
-            click(user,"Дальше ›");val list=latest(user);val label=rows(user).first().single()
-            click(user,label);assertTrue(latest(user).text!!.contains("Ожидает подтверждения"))
-            assertEquals(listOf(listOf("⬅️ Назад")),rows(user))
-            click(user,"Назад");assertEquals(list.text,latest(user).text)
-            assertTrue(rows(user).flatten().contains("2 / 2"))
-            click(user,"⬅️ Назад");click(user,"История платежей")
-            assertTrue(latest(user).text!!.contains("Список пуст"))
-        }
-        open(2);assertFalse(rows(2).flatten().any { it.contains("Все переводы группы") })
-        open(4,"Группа 2");assertFalse(rows(4).flatten().any { it.contains("Все переводы группы") })
-        assertEquals(13,bot.service.pendingPaymentCount(Access(-1,3)))
-        assertTrue(bot.service.balances(Access(-1,1)).isEmpty())
-    }
-
-    @Test fun `revoked admins cannot use saved group history pages or foreign payment details`() {
-        setup()
-        for(i in 1L..11L) run(SettlementCommand.SendOtherPayment("p$i",3,i),Access(-1,2))
-        for(user in listOf(1L,4L)) {
-            if(user==1L) fake.members[-1L to user]=TgMember("administrator")
-            else run(SettlementCommand.SetAdministrator(user,true),Access(-1,1,true))
-            open(user);val menu=latest(user);click(user,"Все переводы группы")
-            val list=latest(user);val detail=rows(user).first().single()
-            if(user==1L) fake.members[-1L to user]=TgMember("member")
-            else run(SettlementCommand.SetAdministrator(user,false),Access(-1,1,true))
-            for(label in listOf("Дальше ›",detail)) {
-                val count=alerts.size;click(user,label,list)
-                assertEquals(count+1,alerts.size);assertTrue(alerts.last().contains("администратор"))
-            }
-            val count=alerts.size;click(user,"Все переводы группы",menu)
-            assertEquals(count+1,alerts.size)
-        }
-    }
-
-    @Test fun `send and receive screens follow the diagram and return to the right menus`() {
+    @Test fun `approved main menu calculated send and receipt confirmation never double post`() {
         setup();seedBalance();open(2)
-        assertEquals("Мои финансы:\nБаланс: −150 ₽ — тебе осталось внести",latest(2).text)
-        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("💰 Баланс группы"),listOf("⬅️ Назад")),rows(2))
-        click(2,"Отправить платеж");click(2,"Игрок 1 · 150 ₽")
-        assertEquals(listOf(listOf("💸 Платеж отправлен · 150 ₽"),listOf("⬅️ Назад","Меню")),rows(2))
-        assertTrue(latest(2).text!!.contains("Отправь Игрок 1 150 ₽"))
-        click(2,"⬅️ Назад");click(2,"Игрок 1 · 150 ₽");val saved=click(2,"Платеж отправлен · 150 ₽");bot.handle(saved)
-        assertEquals("Нет доступных платежей",latest(2).text)
-        assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
-        open(2);assertTrue(latest(2).text!!.contains("Отправлено, ждёт подтверждения: 1 · 150 ₽"))
-        open(1);assertTrue(latest(1).text!!.contains("Тебе подтвердить получение: 1 · 150 ₽"))
-        click(2,"История платежей")
-        assertTrue(latest(2).text!!.contains("В процессе"));assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
-        open(1);receive(1);accept(1,"Игрок 2 · 150 ₽ · 13.09.2026")
-        assertEquals("Нет доступных платежей",latest(1).text)
-        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
-        click(1,"⬅️ Назад");click(1,"История платежей");assertTrue(latest(1).text!!.contains("Выполнен"))
-        click(1,"⬅️ Назад");click(1,"Назад");assertEquals("Что хочешь сделать?",latest(1).text)
-        assertTrue(fake.messages.values.none { it.chat.id<0 })
-    }
-    @Test fun `pending payment stays out of sends while a later training creates a separate suggestion`() {
-        setup();seedBalance();open(2);click(2,"Отправить платеж")
-        click(2,"Игрок 1 · 150 ₽");click(2,"Платеж отправлен · 150 ₽")
-        assertEquals("Нет доступных платежей",latest(2).text)
-        seedBalance("next",500)
-        click(2,"⬅️ Назад");click(2,"Отправить платеж")
-        assertEquals(listOf("💸 Игрок 1 · 250 ₽"),rows(2).flatten().filter { it.contains("Игрок ") })
-        click(2,"Игрок 1 · 250 ₽");click(2,"Платеж отправлен · 250 ₽")
-        assertEquals("Нет доступных платежей",latest(2).text)
-        open(1);receive(1)
-        assertTrue(rows(1).flatten().containsAll(listOf("📥 Игрок 2 · 150 ₽ · 13.09.2026","📥 Игрок 2 · 250 ₽ · 13.09.2026")))
-        accept(1,"Игрок 2 · 250 ₽ · 13.09.2026")
-        assertTrue(rows(1).flatten().contains("📥 Игрок 2 · 150 ₽ · 13.09.2026"))
-        accept(1,"Игрок 2 · 150 ₽ · 13.09.2026")
-        assertEquals("Нет доступных платежей",latest(1).text)
-        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
-    }
-    @Test fun `empty lists and another group never show payments from the first group`() {
-        setup();seedBalance();run(SettlementCommand.SendPayment("p",1,150),Access(-1,2))
-        open(1,"Группа 2");receive(1);assertEquals("Нет доступных платежей",latest(1).text)
-        click(1,"⬅️ Назад");click(1,"Отправить платеж");assertEquals("Нет доступных платежей",latest(1).text)
-        open(1);receive(1);assertTrue(rows(1).flatten().any { it.contains("150 ₽") })
-    }
-    @Test fun `available sends use three rows history five and group balances ten rows per page`() {
-        setup()
-        for(u in 3L..11L) run(SettlementCommand.RecordTransfer("seed$u",u,2,30,"2026-09-13"),Access(-1,u))
-        open(2);click(2,"Отправить платеж")
-        assertEquals(3,rows(2).flatten().count { it.contains("Игрок ") })
-        click(2,"Дальше ›");val row=rows(2).first().single();click(2,row);click(2,"⬅️ Назад")
-        assertTrue(rows(2).flatten().contains("2 / 3"));assertEquals(row,rows(2).first().single())
-        click(2,"⬅️ Назад");click(2,"История платежей")
-        assertEquals(6,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
-        assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
-        assertEquals(5,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
-        for(u in 3L..11L) run(SettlementCommand.RecordTransfer("reverse$u",2,u,60,"2026-09-13"),Access(-1,2))
-        run(SettlementCommand.RecordTransfer("extra",12,2,30,"2026-09-13"),Access(-1,12))
-        bot.service.remember(Account(12,"<Игрок & 12>",username="balance_player"))
-        open(2);click(2,"Баланс группы")
-        assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<table bordered striped compact>"))
-        assertEquals(11,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
-        val firstPage=fake.richMessages.getValue(2L to latest(2).id)
-        assertEquals(10,Regex("<a href=").findAll(firstPage).count())
-        assertTrue(firstPage.contains("<a href=\"https://t.me/balance_player\">&lt;Игрок &amp; 12&gt;</a>"))
-        assertFalse(latest(2).text!!.contains("tg://"))
-        assertTrue(rows(2).flatten().contains("1 / 2"));click(2,"Дальше ›")
-        assertEquals(2,Regex("<tr>").findAll(fake.richMessages.getValue(2L to latest(2).id)).count())
-        assertTrue(fake.richMessages.getValue(2L to latest(2).id).contains("<a href=\"tg://user?id=9\">Игрок 9</a>"))
-    }
-    @Test fun `pending receipts use three rows and clicking a receipt removes only that row`() {
-        setup()
-        for(i in 1..7) {
-            run(SettlementCommand.RecordTransfer("incoming$i",1,2,i*10L,"2026-09-13"))
-            run(SettlementCommand.ChangeTransfer("incoming$i",1,TransferChange.REVIEW))
-        }
-        open(2);receive(2)
-        assertEquals(3,rows(2).flatten().count { it.contains("Игрок ") });val row=rows(2).first().single()
-        accept(2,row);assertFalse(rows(2).flatten().contains(row))
-        assertEquals(6,bot.service.financePayments(Access(-1,2),incomingOnly=true).total)
-        assertEquals(1,bot.service.financePayments(Access(-1,2)).items.count { it.status==PaymentStatus.ACTIVE })
-    }
-    @Test fun `retired callbacks and persisted transfer forms cannot bypass receipt confirmation`() {
-        setup();seedBalance()
-        val command=SettlementCommand.RecordTransfer("legacy",2,1,150,"2026-09-13")
-        val pending=TgUpdate(seq++,TgMessage(seq,TgChat(2,"private"),TgUser(2),"150"))
-        bot.state.plan(pending.id,EventPlan(2,2,ScreenAction("transfer",-1,"legacy"),command))
-        bot.handle(pending)
-        assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
-        assertTrue(rows(2).flatten().contains("Отправить платеж"))
-        val old=bot.state.button(ScreenAction("save_transfer",-1),2,"personal:2:2")
-        bot.handle(TgUpdate(seq++,callback=TgCallback("retired",TgUser(2),latest(2),"n:$old")))
-        assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
-        bot.state.session(2,2,-1,InputForm("transfer_amount",-1,user=1))
-        message(2,"150")
-        assertNull(bot.state.form(2,2));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
-    }
-    @Test fun `historical cancelled transfer stays readable without returning to pending receipts`() {
-        setup()
-        run(SettlementCommand.RecordTransfer("old",2,1,120,"2026-09-13"),Access(-1,2))
-        run(SettlementCommand.ChangeTransfer("old",1,TransferChange.REVIEW),Access(-1,2))
-        run(SettlementCommand.ChangeTransfer("old",2,TransferChange.CANCEL),Access(-1,2))
-        open(2)
-        assertTrue(rows(2).flatten().contains("Принять платеж(0)"))
-        click(2,"История платежей")
-        assertTrue(latest(2).text!!.contains("Отменён"))
-        click(2,rows(2).first().single())
-        assertTrue(latest(2).text!!.contains("Запись отменена"))
-        assertTrue(bot.service.balances(Access(-1,2)).values.all { it==0L })
-    }
-    @Test fun `other payment input waits for receipt detects duplicates and moves the menu below text`() {
-        setup();open(2);val menu=latest(2);click(2,"Другой платёж");click(2,"Игрок 1")
-        assertTrue(latest(2).text!!.contains("Напиши сумму в рублях"))
-        val before=latest(2).id
-        message(2,"125");assertTrue(latest(2).id>before)
-        click(2,"Другой платёж",menu);assertEquals(125,bot.state.form(2,2)!!.amount)
-        assertEquals(listOf(listOf("✅ Платёж отправлен"),listOf("Назад","Отмена")),rows(2))
-        click(2,"Назад");assertEquals(125,bot.state.form(2,2)!!.amount)
-        message(2,"125");val submit=click(2,"Платёж отправлен");bot.handle(submit)
+        assertEquals("Мои финансы:\n−150 ₽ — оплачено за тебя другими участниками группы",latest(2).text)
+        assertEquals(listOf(listOf("📤 Перевести","📥 Принять перевод(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
+        click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
+        assertTrue(html(2).contains("150 ₽"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
+        assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Рекомендуется 150 ₽" }.disabled)
+        val saved=click(2,"Перевод отправлен");bot.handle(saved)
         assertNull(bot.state.form(2,2));assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
-        assertTrue(bot.service.balances(Access(-1,2)).isEmpty())
-        click(2,"К моим финансам");click(2,"Другой платёж");click(2,"Игрок 1");message(2,"125")
-        click(2,"Платёж отправлен");assertTrue(latest(2).text!!.contains("Это ещё один платёж"))
-        click(2,"Посмотреть предыдущий");assertTrue(latest(2).text!!.contains("125 ₽"));click(2,"Назад")
-        assertTrue(latest(2).text!!.contains("Это ещё один платёж"));click(2,"Отмена")
-        assertEquals(1,bot.service.pendingPaymentCount(Access(-1,1)))
-        open(1);assertTrue(rows(1).flatten().contains("Принять платеж(1)"));receive(1)
-        accept(1,"Игрок 2 · 125 ₽ · 13.09.2026")
-        click(1,"⬅️ Назад");assertTrue(rows(1).flatten().contains("Принять платеж(0)"))
-        assertEquals(mapOf(1L to -125L,2L to 125L),bot.service.balances(Access(-1,1)))
+        assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(Access(-1,2)))
+        open(2);click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
+        assertTrue(rows(2).flatten().contains("✍️ Записать свой перевод"))
+        open(1);receive(1);click(1,"Игрок 2 · 150 ₽ · 07.10.2026")
+        assertTrue(latest(1).text!!.contains("Игрок 2 (−150 ₽)"));assertEquals("primary",latest(1).keyboard!!.rows.first().single().style)
+        val accepted=click(1,"Да, получил");bot.handle(accepted)
+        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
+        assertEquals(1,bot.service.financePayments(Access(-1,1)).total)
     }
-    @Test fun `admin can record between other accounts with attribution and revoked rights stop saved input`() {
+    @Test fun `custom amount updates same message rounding stays disabled until balance or recommendation selected`() {
+        setup();seedBalance();open(2);click(2,"Баланс группы");inline(2,1)
+        val id=latest(2).id;val heights=rows(2).map { it.size }
+        assertEquals(0,bot.state.form(2,2)!!.amount)
+        click(2,"➕ 100 ₽");assertEquals(100,bot.state.form(2,2)!!.amount)
+        assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🔢 Округлить" }.disabled)
+        assertEquals(heights,rows(2).map { it.size })
+        click(2,"Ввести сумму сообщением");message(2,"267")
+        assertEquals(id,latest(2).id);assertEquals(267,bot.state.form(2,2)!!.amount)
+        assertTrue(latest(2).text!!.contains("267 ₽"));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
+        click(2,"Рекомендуется 150 ₽");assertTrue(latest(2).text!!.contains("150 ₽"));assertEquals(id,latest(2).id)
+        click(2,"Округлить");assertEquals(200,bot.state.form(2,2)!!.amount)
+        click(2,"➖ 50 ₽");assertEquals(150,bot.state.form(2,2)!!.amount)
+        click(2,"Ввести сумму сообщением");message(2,"bad")
+        assertEquals(150,bot.state.form(2,2)!!.amount);assertTrue(bot.state.form(2,2)!!.waitingForAmount)
+        message(2,"99");assertEquals(99,bot.state.form(2,2)!!.amount)
+        // Selecting another participant's signed balance uses its absolute amount, in the same form.
+        inline(2,1);assertEquals(150,bot.state.form(2,2)!!.amount)
+        assertEquals(listOf(1L to 150L,2L to -150L).toMap(),bot.service.balances(Access(-1,2)))
+    }
+    @Test fun `sender cancellation releases reservations and historical details remain readable to everyone`() {
+        setup();seedBalance();open(2);own(2,1,"150");click(2,"Перевод отправлен")
+        val transfer=bot.service.financePayments(Access(-1,2)).items.single()
+        click(2,"Отменить перевод");val cancel=click(2,"Да, отменить");bot.handle(cancel)
+        assertEquals(PaymentStatus.CANCELLED,bot.service.transfer(Access(-1,2),transfer.id).status)
+        assertEquals(0,bot.service.pendingPaymentCount(Access(-1,1)));assertEquals(1,bot.service.paymentSuggestions(Access(-1,2)).total)
+        open(3);click(3,"История переводов");click(3,"Все")
+        val label=rows(3).flatten().single { it.contains("Игрок 2 → Игрок 1") };click(3,label)
+        assertTrue(latest(3).text!!.contains("Перевод отменён"));assertEquals(listOf(listOf("⬅️ Назад")),rows(3))
+        click(3,"Назад");assertTrue(latest(3).text!!.startsWith("История переводов · Все"))
+    }
+    @Test fun `all history has ten records and balances have fifteen people with profile and transfer links`() {
+        setup();for(i in 1L..22L) run(SettlementCommand.SendOtherPayment("all$i",3,i),Access(-1,2))
+        run(SettlementCommand.SendOtherPayment("other",3,999),Access(-2,2))
+        open(4);click(4,"История переводов");assertTrue(latest(4).text!!.contains("Список пуст"));click(4,"Все")
+        assertEquals(10,rows(4).flatten().count { it.contains("→") });click(4,"Дальше ›")
+        val list=latest(4);click(4,rows(4).flatten().first { it.contains("→") });click(4,"Назад")
+        assertEquals(list.text,latest(4).text);assertTrue(rows(4).flatten().contains("2 / 3"))
+        assertFalse(latest(4).text!!.contains("999 ₽"));click(4,"⬅️ Назад");click(4,"Баланс группы")
+        assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertEquals(15,Regex("<a href=").findAll(html(4)).count())
+        assertFalse(rows(4).flatten().any { it.contains("Игрок") });click(4,"Дальше ›")
+        assertEquals(6,Regex("<tr>").findAll(html(4)).count())
+        click(4,"⬅️ Назад");click(4,"Перевести");click(4,"Записать свой перевод")
+        assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertFalse(html(4).contains("tg://user?id=4\""))
+        click(4,"Назад");assertTrue(latest(4).text!!.startsWith("Перевести"))
+        assertEquals(0,bot.service.financePayments(Access(-2,4)).total)
+    }
+    @Test fun `admin edits confirmed transfer amount and cancels it with ledger reversal and attribution`() {
         setup();fake.members[-1L to 1L]=TgMember("administrator")
-        open(1);click(1,"Записать платёж за участников");click(1,"Игрок 2");click(1,"Игрок 3");message(1,"75")
-        val pending=latest(1)
-        fake.members[-1L to 1L]=TgMember("member");click(1,"Записать платёж",pending)
-        assertTrue(alerts.last().contains("администратору"));assertTrue(bot.service.balances(Access(-1,1)).isEmpty())
-        fake.members[-1L to 1L]=TgMember("administrator");val saved=click(1,"Записать платёж",pending);bot.handle(saved)
-        assertTrue(latest(1).text!!.contains("Записал администратор: Игрок 1"))
-        assertEquals(mapOf(2L to 75L,3L to -75L),bot.service.balances(Access(-1,1)))
-        assertEquals(0,bot.service.pendingPaymentCount(Access(-1,3)))
-        open(3);click(3,"История платежей");click(3,rows(3).first().single())
-        assertTrue(latest(3).text!!.contains("Записал администратор: Игрок 1"))
-        assertEquals(listOf(listOf("⬅️ Назад")),rows(3))
-        open(1,"Группа 2");assertFalse(rows(1).flatten().contains("Записать платёж за участников"))
+        run(SettlementCommand.RecordAdminPayment("p",2,3,75),Access(-1,1,true))
+        open(1);click(1,"История переводов");click(1,"Все");click(1,rows(1).flatten().single { it.contains("→") })
+        click(1,"Изменить сумму");val id=latest(1).id;message(1,"125")
+        assertEquals(id,latest(1).id);assertTrue(latest(1).text!!.contains("Администратор: Игрок 1. Изменил сумму: 75 ₽ → 125 ₽."))
+        assertEquals(mapOf(2L to 125L,3L to -125L),bot.service.balances(Access(-1,1)))
+        click(1,"Отменить перевод");click(1,"Да, отменить")
+        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
+        assertTrue(latest(1).text!!.contains("Администратор: Игрок 1. Перевод отменён."))
+        click(1,"Изменить сумму");message(1,"200")
+        assertEquals(PaymentStatus.CANCELLED,bot.service.transfer(Access(-1,1),"p").status)
+        assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
     }
-    @Test fun `incoming counter includes every page while forms reject stale and cross group buttons`() {
-        setup()
-        for(i in 1L..7L) run(SettlementCommand.SendOtherPayment("p$i",2,i),Access(-1,1))
-        open(2);assertTrue(rows(2).flatten().contains("Принять платеж(7)"))
-        open(2,"Группа 2");assertTrue(rows(2).flatten().contains("Принять платеж(0)"))
-        open(1);assertTrue(rows(1).flatten().contains("Принять платеж(0)"))
-        click(1,"Другой платёж");click(1,"Игрок 2");message(1,"11")
-        val stale=latest(1);click(1,"Назад");message(1,"12");click(1,"Платёж отправлен",stale)
-        assertTrue(alerts.last().contains("Ввод изменился"));assertEquals(7,bot.service.pendingPaymentCount(Access(-1,2)))
-        click(1,"Отмена");assertNull(bot.state.form(1,1))
+    @Test fun `revoked admin cannot edit or cancel a foreign payment using old buttons or pending text form`() {
+        setup();fake.members[-1L to 1L]=TgMember("administrator")
+        run(SettlementCommand.SendOtherPayment("p",3,75),Access(-1,2));open(1);click(1,"История переводов");click(1,"Все")
+        click(1,rows(1).flatten().single { it.contains("→") });val detail=latest(1)
+        click(1,"Изменить сумму");fake.members[-1L to 1L]=TgMember("member");message(1,"125")
+        assertEquals(75,bot.service.transfer(Access(-1,2),"p").amount)
+        click(1,"Изменить сумму",detail);assertTrue(alerts.last().contains("администратор"))
+        val n=alerts.size;click(1,"Отменить перевод",detail);assertEquals(n+1,alerts.size)
+        assertEquals(PaymentStatus.REVIEW,bot.service.transfer(Access(-1,2),"p").status)
     }
-
+    @Test fun `duplicate confirmation stale forms and foreign group callbacks cannot create unintended transfers`() {
+        setup();open(2);own(2,1,"125");val old=latest(2);click(2,"➕ 50 ₽");click(2,"Перевод отправлен",old)
+        assertTrue(alerts.last().contains("Ввод изменился"));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
+        click(2,"Перевод отправлен");click(2,"К моим финансам");own(2,1,"175");click(2,"Перевод отправлен")
+        assertTrue(latest(2).text!!.contains("Это ещё один перевод"));assertEquals(1,bot.service.pendingPaymentCount(Access(-1,1)))
+        click(2,"Да, это ещё один");assertEquals(2,bot.service.pendingPaymentCount(Access(-1,1)))
+        val token=bot.state.button(ScreenAction("finance_payment",-2,"p"),2,"personal:2:2")
+        callback(2,latest(2),"n:$token");assertTrue(alerts.last().contains("Перевод не найден"))
+        assertEquals(0,bot.service.financePayments(Access(-2,2)).total)
+    }
+    @Test fun `ordinary confirmed sender cannot cancel and pending receipt edits stay pending`() {
+        setup();run(SettlementCommand.SendOtherPayment("p",1,100),Access(-1,2));run(SettlementCommand.ReceivePayment("p"))
+        open(2);click(2,"История переводов");click(2,rows(2).flatten().single { it.contains("→") })
+        assertEquals(listOf(listOf("⬅️ Назад")),rows(2))
+        run(SettlementCommand.SendOtherPayment("pending",1,120),Access(-1,2))
+        run(SettlementCommand.EditPaymentAmount("pending",1,150),Access(-1,3,true))
+        assertEquals(PaymentStatus.REVIEW,bot.service.transfer(Access(-1,2),"pending").status)
+        assertEquals(mapOf(1L to -100L,2L to 100L),bot.service.balances(Access(-1,2)))
+        assertTrue(bot.service.database.verify().contains("целостность в порядке"))
+    }
+    @Test fun `financial navigation keeps query count bounded and amount changes use one Telegram edit`() {
+        setup();seedBalance();open(2);click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
+        bot.service.database.withConnectionReuse {
+            val times=mutableListOf<Double>()
+            repeat(12) {
+                queries.clear();fake.membershipCalls.clear();val sent=fake.sent.size;val edits=editCalls
+                val start=System.nanoTime();click(2,"➕ 50 ₽");times+=(System.nanoTime()-start)/1e6
+                assertEquals(sent,fake.sent.size);assertEquals(edits+1,editCalls)
+                assertTrue(fake.membershipCalls.size<=2,"No per-person network requests")
+                assertTrue(queries.size<85,"No SQL work per button or participant: ${queries.size}")
+                assertEquals(1,queries.count { it.startsWith("SELECT from_user,to_user,amount") },"Recommendation computed once for the render")
+            }
+            println("Finance amount changes, 20 members, reused connections: median=${times.sorted()[times.size/2]} ms; max=${times.max()} ms (fake Telegram, network excluded)")
+        }
+    }
+    @Test fun `my training table shows only personal playing time without guests`() {
+        setup();seedBalance();run(SettlementCommand.CreateTraining("guest","Гость","2026-10-07","18:30"))
+        run(SettlementCommand.AddPlayers("guest",1,listOf(2)));run(SettlementCommand.ChangeAttendance("guest",2,AttendanceChange.SET_MINUTES,90))
+        run(SettlementCommand.ChangeAttendance("guest",2,AttendanceChange.ADJUST_GUESTS,1))
+        message(2,"/start");click(2,"Мои тренировки")
+        assertTrue(html(2).contains("<th>Играл</th>"));assertTrue(html(2).contains("<td>1,5 ч</td>"));assertFalse(html(2).contains("<td>3 ч</td>"))
+    }
 }

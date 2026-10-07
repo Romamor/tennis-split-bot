@@ -15,7 +15,7 @@ import java.time.Duration
     @SerialName("first_name") val firstName: String = "", val username: String? = null,
     @SerialName("last_name") val lastName: String = "")
 @Serializable data class TgChat(val id: Long, val type: String, val title: String? = null)
-@Serializable data class TgButton(val text: String, @SerialName("callback_data") val callbackData: String? = null, val url: String? = null, val style:String?=null)
+@Serializable data class TgButton(val text: String, @SerialName("callback_data") val callbackData: String? = null, val url: String? = null, val style:String?=null,val disabled:JsonObject?=null)
 @Serializable data class TgKeyboard(@SerialName("inline_keyboard") val rows: List<List<TgButton>>)
 @Serializable data class TgPoll(val id:String, @SerialName("is_closed") val isClosed:Boolean=false)
 @Serializable data class TgPollAnswer(@SerialName("poll_id") val pollId:String, val user:TgUser?=null,

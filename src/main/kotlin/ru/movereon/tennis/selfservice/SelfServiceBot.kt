@@ -144,7 +144,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 message.leftMember?.takeUnless { it.isBot }?.let { remember(it); service.rememberMembership(message.chat.id, it.id, false) }
             }
             val saved = state.plan(update.id)?.let { previous ->
-                if(FinanceScreens.retiredCommand(previous.command) || previous.screen.kind in FinanceScreens.retiredActions || FinanceScreens.retiredForm(previous.form)) previous.copy(command=null,form=null,screen=ScreenAction("finance",previous.screen.group),notice="Меню платежей обновилось. Используй «Отправить платеж» или «Принять платеж».")
+                if(FinanceScreens.retiredCommand(previous.command) || previous.screen.kind in FinanceScreens.retiredActions || FinanceScreens.retiredForm(previous.form)) previous.copy(command=null,form=null,screen=ScreenAction("finance",previous.screen.group),notice="Меню переводов обновилось. Используй «Перевести» или «Принять перевод».")
                 else previous
             }
             val plan = saved ?: prepare(update, message, user)
@@ -332,7 +332,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 require(photo.fileId.isNotBlank()) { "Некорректная фотография опроса" }
                 return EventPlan(user.id,chat,ScreenAction("form",0),form=savedForm.copy(kind="ready",pollPhotoId=photo.fileId))
             } else if(FinanceScreens.retiredForm(savedForm)) {
-                return EventPlan(user.id,chat,ScreenAction("finance",requireNotNull(savedForm).group),notice="Меню платежей обновилось. Используй «Отправить платеж» или «Принять платеж».")
+                return EventPlan(user.id,chat,ScreenAction("finance",requireNotNull(savedForm).group),notice="Меню переводов обновилось. Используй «Перевести» или «Принять перевод».")
             } else if (savedForm != null) return textInput(update, user, chat, savedForm, text)
             else action = ScreenAction("groups", 0)
         }
@@ -400,6 +400,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         val result = when (action.kind) {
             in PaymentInput.actions -> paymentInput.prepare(user.id,chat,requireNotNull(a),action,savedForm).copy(callback=callback?.id)
+            "finance_payment_cancel_save" -> plan(action.back ?: ScreenAction("finance_payment",action.group,action.id),SettlementCommand.CancelPayment(action.id,action.version))
+            "finance_payment_edit" -> {
+                checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Изменить сумму может только администратор этой группы")
+                val t=service.transfer(a,action.id)
+                plan(ScreenAction("form",a.groupId),form=InputForm("payment_edit",a.groupId,transfer=t.id,version=t.version,
+                    user=t.to,paymentFrom=t.from,adminPayment=true,amount=t.amount,waitingForAmount=true,origin=action.back ?: ScreenAction("finance_payment",a.groupId,t.id)))
+            }
             "finance_send_save" -> plan(action.back ?: ScreenAction("finance_send",action.group),SettlementCommand.SendPayment(UUID.randomUUID().toString(),action.user,action.value))
             "finance_receive_save" -> plan(ScreenAction("finance_received",action.group),SettlementCommand.ReceivePayment(action.id))
             "set_training_status" -> {
@@ -655,7 +662,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun answer(callback: TgCallback?, text: String) { callback?.let { runCatching { api.answer(it.id, text.take(180), true) } } }
     /** Freeze the old message identity with the input event, so retries cannot create another reply. */
     private fun positionAfterInput(plan: EventPlan, incomingPrivateMessage: Boolean): EventPlan {
-        if (!incomingPrivateMessage) return plan
+        if (!incomingPrivateMessage || plan.form?.kind in setOf("payment_ready","payment_duplicate","payment_edit") || plan.command is SettlementCommand.EditPaymentAmount) return plan
         val key = "personal:${plan.user}:${plan.chat}"
         val old = state.delivery(key)
         // A new user message permits a fresh reply even if the previous reply never arrived.

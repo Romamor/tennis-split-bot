@@ -20,6 +20,8 @@ data class MyTrainingPage(val page:Page<TrainingRecord>,val minutes:Long,val par
     val remainingToPay:BigInteger,val completedCount:Int)
 data class FinanceSummary(val balance:Long,val pendingSentCount:Int,val pendingSentAmount:BigInteger,
     val pendingReceiveCount:Int,val pendingReceiveAmount:BigInteger)
+data class PaymentDraftContext(val balances:Map<Long,Long>,val recommendation:Long?)
+data class PaymentDetails(val transfer:MoneyTransfer,val administrative:Boolean,val edits:List<AuditAction>)
 data class AccountBalance(val account:Account,val balance:Long,val attendance:Int,val present:Boolean,val hasPlayed:Boolean=attendance>0)
 enum class GroupRole { SUPERADMIN,ADMIN,MEMBER }
 data class GroupRoleEntry(val account:Account,val role:GroupRole)
@@ -58,6 +60,8 @@ data class Page<T>(val items:List<T>,val total:Int,val index:Int,val size:Int=8)
     @Serializable data class SendPayment(val id:String,val to:Long,val amount:Long):SettlementCommand
     @Serializable data class SendOtherPayment(val id:String,val to:Long,val amount:Long,val allowSimilar:Boolean=false):SettlementCommand
     @Serializable data class RecordAdminPayment(val id:String,val from:Long,val to:Long,val amount:Long):SettlementCommand
+    @Serializable data class CancelPayment(val id:String,val version:Long):SettlementCommand
+    @Serializable data class EditPaymentAmount(val id:String,val version:Long,val amount:Long):SettlementCommand
     @Serializable data class ReceivePayment(val id:String):SettlementCommand
     @Serializable data class RecordTransfer(val id:String,val from:Long,val to:Long,val amount:Long,val date:String,val note:String="",val onBehalfOf:Long?=null,val allowSimilar:Boolean=false):SettlementCommand
     @Serializable data class ChangeTransfer(val id:String,val version:Long,val change:TransferChange,val onBehalfOf:Long?=null):SettlementCommand

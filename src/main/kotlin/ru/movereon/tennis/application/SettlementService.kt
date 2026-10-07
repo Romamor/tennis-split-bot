@@ -211,6 +211,30 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 entries=transferEntries(old)
                 after=json.encodeToString(transfer(c,a.groupId,transferId))
             }
+            is SettlementCommand.CancelPayment -> {
+                transferId=command.id
+                val old=transfer(c,a.groupId,transferId)
+                allowed(present(c,a) && (admin(c,a) || old.from==a.userId && old.status==PaymentStatus.REVIEW),
+                    "Отменить подтверждённый или чужой перевод может только администратор группы")
+                stale(old.version,command.version)
+                state(old.status!=PaymentStatus.CANCELLED,"Перевод уже отменён")
+                before=json.encodeToString(old);version=Math.addExact(old.version,1)
+                sqlUpdate(c,"UPDATE transfers SET status='CANCELLED',version=?,reviewer=NULL,review_party=NULL WHERE group_id=? AND id=?",version,a.groupId,transferId)
+                if(old.status==PaymentStatus.ACTIVE) entries=transferEntries(old).map { it.copy(amount=-it.amount) }
+                after=json.encodeToString(transfer(c,a.groupId,transferId))
+            }
+            is SettlementCommand.EditPaymentAmount -> {
+                allowed(present(c,a),"Доступ только участникам этой группы");requireAdmin(c,a)
+                transferId=command.id
+                val old=transfer(c,a.groupId,transferId)
+                stale(old.version,command.version)
+                require(command.amount>0) { "Укажи положительную сумму" }
+                if(command.amount==old.amount) return@write ActionReceipt(0,old.version)
+                before=json.encodeToString(old);version=Math.addExact(old.version,1)
+                sqlUpdate(c,"UPDATE transfers SET amount=?,version=? WHERE group_id=? AND id=?",command.amount,version,a.groupId,transferId)
+                if(old.status==PaymentStatus.ACTIVE) entries=transferEntries(old).map { it.copy(amount=-it.amount) }+transferEntries(old.copy(amount=command.amount))
+                after=json.encodeToString(transfer(c,a.groupId,transferId))
+            }
             is SettlementCommand.RecordTransfer -> {
                 transferId = command.id
                 checkId(transferId)
@@ -415,12 +439,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         // Validate the whole batch before writing any ledger rows. The transaction also covers the edited records.
         if(entries.isNotEmpty()) applyEntries(database.balances(c, a.groupId).mapKeys { ParticipantId(it.key.toString()) }, entries)
         sqlUpdate(c, """INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,transfer_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, command.javaClass.simpleName, trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, (if(command is SettlementCommand.CancelPayment && admin(c,a)) "AdminCancelPayment" else command.javaClass.simpleName), trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
         val actionId = sqlQuery(c, "SELECT last_insert_rowid()") { it.getLong(1) }.single()
         entries.forEachIndexed { index, entry ->
             sqlUpdate(c, "INSERT INTO balance_entries(action_id,group_id,entry_index,user_id,amount) VALUES(?,?,?,?,?)", actionId, a.groupId, index, entry.participant.value.toLong(), entry.amount)
         }
-        if(command is SettlementCommand.SendOtherPayment || command is SettlementCommand.RecordAdminPayment)
+        if(command is SettlementCommand.SendOtherPayment || command is SettlementCommand.RecordAdminPayment || command is SettlementCommand.EditPaymentAmount || command is SettlementCommand.CancelPayment)
             availablePayments(c,database,a.groupId)
         ActionReceipt(actionId, version)
     }
@@ -485,15 +509,15 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         known(c,a.groupId,a.userId)
         count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind='RecordAdminPayment'",a.groupId,id)>0
     }
-    fun financeBalances(a:Access,page:Int=0):Page<AccountBalance> = database.read { c ->
+    fun financeBalances(a:Access,page:Int=0,exclude:Long?=null):Page<AccountBalance> = database.read { c ->
         known(c,a.groupId,a.userId)
         val balances=database.balances(c,a.groupId)
         val all=sqlQuery(c,"""SELECT u.*,gu.present,gu.attendance_count,gu.has_played FROM group_users gu
             JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0""",a.groupId) {
             AccountBalance(readAccount(it),balances[it.getLong("id")] ?: 0,it.getInt("attendance_count"),it.getBoolean("present"),it.getBoolean("has_played"))
-        }.filter { it.balance!=0L || it.hasPlayed }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
+        }.filter { exclude==null || it.account.id!=exclude }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
             .thenByDescending { it.balance }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
-        val size=10
+        val size=15
         val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))
         Page(all.drop(index*size).take(size),all.size,index,size)
     }
@@ -507,9 +531,29 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         sqlQuery(c,"SELECT u.* FROM users u JOIN group_users gu ON gu.user_id=u.id WHERE gu.group_id=? AND u.is_bot=0",a.groupId,map=::readAccount)
     }
     fun transfer(a: Access, id: String): MoneyTransfer = database.read { known(it, a.groupId, a.userId); transfer(it, a.groupId, id) }
-    private fun transfer(c: Connection, group: Long, id: String): MoneyTransfer = sqlQuery(c, "SELECT * FROM transfers WHERE group_id=? AND id=?", group, id) {
-        MoneyTransfer(group, id, it.getLong("from_user"), it.getLong("to_user"), it.getLong("amount"), it.getString("occurred_on"), it.getString("note"), PaymentStatus.valueOf(it.getString("status")), it.getLong("version"), it.getString("reviewer")?.toLong(), it.getString("review_party")?.toLong(), it.getLong("created_by"))
-    }.singleOrNull() ?: invalid("Перевод не найден в этой группе")
+    private fun transfer(c: Connection, group: Long, id: String): MoneyTransfer = sqlQuery(c,"SELECT * FROM transfers WHERE group_id=? AND id=?",group,id,map=::readTransfer)
+        .singleOrNull() ?: invalid("Перевод не найден в этой группе")
+    private fun readTransfer(r:ResultSet)=MoneyTransfer(r.getLong("group_id"),r.getString("id"),r.getLong("from_user"),r.getLong("to_user"),r.getLong("amount"),r.getString("occurred_on"),r.getString("note"),PaymentStatus.valueOf(r.getString("status")),r.getLong("version"),r.getString("reviewer")?.toLong(),r.getString("review_party")?.toLong(),r.getLong("created_by"))
+    /** One read snapshot; recommendations always use pending reservations as well as the posted ledger. */
+    fun paymentDraftContext(a:Access,from:Long,to:Long):PaymentDraftContext = database.read { c ->
+        known(c,a.groupId,a.userId);known(c,a.groupId,from);known(c,a.groupId,to)
+        val balances=database.balances(c,a.groupId)
+        val recommendation=availablePayments(c,database,a.groupId,balances).firstOrNull { it.from.value==from.toString() && it.to.value==to.toString() }?.amount
+        PaymentDraftContext(balances,recommendation)
+    }
+    fun paymentDetails(a:Access,id:String):PaymentDetails = database.read { c ->
+        known(c,a.groupId,a.userId)
+        val t=transfer(c,a.groupId,id)
+        val administrative=count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind='RecordAdminPayment'",a.groupId,id)>0
+        val edits=sqlQuery(c,"""SELECT * FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('EditPaymentAmount','CancelPayment','AdminCancelPayment') ORDER BY id DESC LIMIT 5""",a.groupId,id) {
+            AuditAction(it.getLong("id"),a.groupId,it.getLong("actor_id"),it.getString("kind"),null,id,it.getString("before_json"),it.getString("after_json"),it.getString("occurred_at"))
+        }
+        PaymentDetails(t,administrative,edits)
+    }
+    fun editedPayments(a:Access,ids:List<String>):Set<String> = database.read { c ->
+        known(c,a.groupId,a.userId)
+        if(ids.isEmpty()) emptySet() else sqlQuery(c,"SELECT DISTINCT transfer_id FROM actions WHERE group_id=? AND transfer_id IN (${ids.joinToString(",") { "?" }}) AND kind IN ('EditPaymentAmount','AdminCancelPayment')",a.groupId,*ids.toTypedArray()) { it.getString(1) }.toSet()
+    }
     fun transfers(a: Access, page: Int = 0): Page<MoneyTransfer> = database.read { c ->
         known(c, a.groupId, a.userId)
         val condition = "FROM transfers WHERE group_id=? AND (from_user=? OR to_user=?)"
@@ -531,7 +575,6 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         require(!allGroup || !incomingOnly)
         if(allGroup) {
             allowed(present(c,a),"Доступ только участникам этой группы")
-            requireAdmin(c,a)
         }
         val condition="FROM transfers WHERE group_id=?"+when {
             allGroup -> ""
@@ -543,10 +586,10 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             incomingOnly -> arrayOf<Any>(a.groupId,a.userId)
             else -> arrayOf<Any>(a.groupId,a.userId,a.userId)
         }
-        val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(allGroup) 10 else if(incomingOnly) 3 else 5
+        val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(incomingOnly) 3 else 10
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))
-        val ids=sqlQuery(c,"SELECT id $condition ORDER BY occurred_on DESC,created_at DESC,id LIMIT ? OFFSET ?",*args,size,index*size) { it.getString(1) }
-        Page(ids.map { transfer(c,a.groupId,it) },total,index,size)
+        val items=sqlQuery(c,"SELECT * $condition ORDER BY occurred_on DESC,created_at DESC,id LIMIT ? OFFSET ?",*args,size,index*size,map=::readTransfer)
+        Page(items,total,index,size)
     }
     fun balances(a: Access): Map<Long, Long> = database.read { known(it, a.groupId, a.userId); database.balances(it, a.groupId) }
     fun roster(a: Access, page: Int = 0, playedBefore: Boolean = false, balanceOnly: Boolean = false, settled: Boolean = false, exclude: Set<Long> = emptySet()): Page<AccountBalance> = database.read { c ->

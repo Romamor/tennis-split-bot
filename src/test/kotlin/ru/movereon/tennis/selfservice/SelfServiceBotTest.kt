@@ -647,11 +647,11 @@ class SelfServiceBotTest {
         setup();create();join(1,60);join(2,60);pay(1)
         val a=Access(-1,1,true);val t=bot.service.trainings(a).items.single()
         bot.service.execute(a,"finish-finance",SettlementCommand.FinishTraining(t.id,t.version))
-        open(2);click(2,"Мои финансы");click(2,"Отправить платеж");click(2,"User 1")
-        val sent=click(2,"Платеж отправлен");bot.handle(sent)
+        open(2);click(2,"Мои финансы");click(2,"Перевести");click(2,"User 1")
+        val sent=click(2,"Перевод отправлен");bot.handle(sent)
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(a))
-        assertEquals("Нет доступных платежей",latest(2).text)
-        open(1);click(1,"Мои финансы");click(1,"Принять платеж")
+        assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
+        open(1);click(1,"Мои финансы");click(1,"Принять перевод")
         click(1,"User 2");val received=click(1,"Да, получил");bot.handle(received)
         assertTrue(bot.service.balances(a).values.all { it==0L })
         assertEquals(1,bot.service.history(a).items.count { it.kind=="ReceivePayment" })
@@ -1112,9 +1112,9 @@ class SelfServiceBotTest {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои финансы");click(2,"Первая")
-        assertEquals(listOf(listOf("Отправить платеж","Принять платеж(0)"),listOf("Другой платёж","История платежей"),listOf("💰 Баланс группы"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
-        click(2,"Отправить платеж");assertEquals("Нет доступных платежей",latest(2).text)
-        click(2,"Назад");click(2,"Принять платеж");assertEquals("Нет доступных платежей",latest(2).text)
+        assertEquals(listOf(listOf("📤 Перевести","📥 Принять перевод(0)"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
+        click(2,"Назад");click(2,"Принять перевод");assertEquals("Нет переводов для подтверждения",latest(2).text)
     }
 
     @Test fun `back warns on unsaved selection and continues or discards without writing history`() {

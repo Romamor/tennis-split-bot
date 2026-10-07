@@ -62,7 +62,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             "my_trainings" -> {
                 val data=service.myTrainings(requireNotNull(user),action.page);val p=data.page
-                val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nСтоимость тренировок: ${data.participationCost} ₽\nОсталось внести: ${data.remainingToPay} ₽",p.items) {
+                val content=TrainingList.render("Тренировок: ${data.completedCount}\nВремя: ${hours(data.minutes)}\nСтоимость тренировок: ${data.participationCost} ₽\nОсталось внести: ${data.remainingToPay} ₽",p.items,personalUser=user) {
                     button(clean(it.title,34),ScreenAction("my_training",it.groupId,it.id,back=ScreenAction("my_trainings",0,page=p.index)))
                 }
                 richHtml=content.html
@@ -326,7 +326,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it },photoId)
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "groups_back", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
+        val privateActions = FinanceScreens.kinds + FinanceScreens.mutationActions + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "groups_back", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

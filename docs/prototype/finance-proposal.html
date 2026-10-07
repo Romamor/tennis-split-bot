@@ -1,38 +1,63 @@
 <div id="tennis-finance-proposal" aria-label="Финансовое меню бота">
 <style>
-#tennis-finance-proposal{--fp-bg:light-dark(#e4ebef,#101b25);--fp-surface:light-dark(#fff,#1b2b39);--fp-button:light-dark(#dcebf5,#2a4155);--fp-text:light-dark(#1b3040,#eaf2f7);--fp-muted:light-dark(#536d80,#afc3d3);--fp-accent:light-dark(#17669e,#8dceff);--fp-line:light-dark(#cbd9e2,#3a5061);--fp-warn:light-dark(#87501b,#edbf89);font:15px/1.45 system-ui,sans-serif;color:var(--fp-text);max-width:430px;margin:auto}
+#tennis-finance-proposal{--fp-bg:light-dark(#e4ebef,#101b25);--fp-surface:light-dark(#fff,#1b2b39);--fp-button:light-dark(#dcebf5,#2a4155);--fp-text:light-dark(#1b3040,#eaf2f7);--fp-muted:light-dark(#536d80,#afc3d3);--fp-accent:light-dark(#17669e,#8dceff);--fp-line:light-dark(#cbd9e2,#3a5061);--fp-warn:light-dark(#87501b,#edbf89);--fp-positive:light-dark(#18733c,#7ddd9c);--fp-negative:light-dark(#ba283d,#ff8d9b);font:15px/1.45 system-ui,sans-serif;color:var(--fp-text);max-width:430px;margin:auto}
 #tennis-finance-proposal *{box-sizing:border-box}#tennis-finance-proposal button,#tennis-finance-proposal select,#tennis-finance-proposal input{font:inherit}#tennis-finance-proposal .fp-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}#tennis-finance-proposal select{max-width:100%;padding:8px;border:1px solid var(--fp-line);border-radius:8px;background:var(--fp-surface);color:var(--fp-text)}#tennis-finance-proposal .fp-window{background:var(--fp-bg);border:1px solid var(--fp-line);border-radius:16px;overflow:hidden}#tennis-finance-proposal .fp-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--fp-surface);border-bottom:1px solid var(--fp-line)}#tennis-finance-proposal .fp-avatar{border-radius:50%;padding:9px;background:var(--fp-button)}#tennis-finance-proposal .fp-sub{font-size:12px;color:var(--fp-muted)}#tennis-finance-proposal .fp-thread{padding:16px 10px 20px;min-height:335px}#tennis-finance-proposal .fp-message{background:var(--fp-surface);border-radius:12px 12px 12px 3px;padding:16px;overflow-wrap:anywhere}#tennis-finance-proposal h2{font-size:20px;font-weight:500;margin:0 0 12px}#tennis-finance-proposal p{margin:8px 0}#tennis-finance-proposal .fp-small{font-size:13px;color:var(--fp-muted)}#tennis-finance-proposal .fp-keys{display:grid;gap:5px;margin-top:6px}#tennis-finance-proposal .fp-row{display:flex;gap:5px}#tennis-finance-proposal button{flex:1;min-width:0;min-height:44px;cursor:pointer;background:var(--fp-button);color:var(--fp-text);border:0;border-radius:6px;padding:11px 8px;font-weight:500;overflow-wrap:anywhere}#tennis-finance-proposal button:disabled{opacity:.4;cursor:default}#tennis-finance-proposal .fp-primary{color:var(--fp-accent)}#tennis-finance-proposal .fp-input{display:flex;gap:6px;margin-top:12px;align-items:center}#tennis-finance-proposal input{width:100%;min-width:0;padding:10px;background:var(--fp-surface);color:var(--fp-text);border:1px solid var(--fp-line);border-radius:6px;font-size:16px}#tennis-finance-proposal label{display:block;margin-top:12px}#tennis-finance-proposal table{width:100%;border-collapse:collapse;margin-top:12px;border:1px solid var(--fp-line);font-size:14px}#tennis-finance-proposal th,#tennis-finance-proposal td{padding:9px 7px;border-bottom:1px solid var(--fp-line);text-align:left;font-weight:400}#tennis-finance-proposal td:last-child,#tennis-finance-proposal th:last-child{text-align:right;font-variant-numeric:tabular-nums}#tennis-finance-proposal tbody tr:nth-child(even){background:var(--fp-bg)}#tennis-finance-proposal td button{background:transparent;padding:0;text-align:left;font-weight:400;color:var(--fp-accent)}#tennis-finance-proposal .fp-warning{color:var(--fp-warn)}#tennis-finance-proposal .fp-amount{font-size:28px;font-variant-numeric:tabular-nums;margin:12px 0}#tennis-finance-proposal .fp-caption{font-size:12px;color:var(--fp-muted);margin-top:10px}
+#tennis-finance-proposal .fp-keys button{white-space:pre-line}
+#tennis-finance-proposal .fp-invisible{visibility:hidden}
+#tennis-finance-proposal .fp-entry-note{min-height:38px}
+#tennis-finance-proposal .fp-stable-keys .fp-row{height:48px}
+#tennis-finance-proposal .fp-stable-keys button{height:48px;min-height:48px;white-space:nowrap}
 #tennis-finance-proposal .fp-keys button[data-style="primary"]{background:light-dark(#1976c9,#285f91);color:#fff}#tennis-finance-proposal .fp-keys button[data-style="danger"]{background:light-dark(#bd3944,#97404a);color:#fff}
 </style>
 <style>
 #tennis-finance-proposal .fp-composer{display:flex;gap:8px;align-items:center;padding:8px;margin-top:28px;border-radius:12px;background:var(--fp-surface)}
 #tennis-finance-proposal .fp-composer input{flex:1;border:0;background:transparent;padding:10px 8px}
 #tennis-finance-proposal .fp-composer button{flex:0 0 44px;border-radius:50%;padding:8px;color:var(--fp-accent);font-size:22px}
+#tennis-finance-proposal .fp-balance{white-space:nowrap;font-variant-numeric:tabular-nums}
+#tennis-finance-proposal .fp-positive{color:var(--fp-positive)}
+#tennis-finance-proposal .fp-negative{color:var(--fp-negative)}
+#tennis-finance-proposal .fp-zero{color:var(--fp-muted)}
+#tennis-finance-proposal a{color:var(--fp-accent);text-decoration:underline;text-underline-offset:3px}
+#tennis-finance-proposal a.fp-balance-choice.fp-positive{color:var(--fp-positive)}
+#tennis-finance-proposal a.fp-balance-choice.fp-negative{color:var(--fp-negative)}
+#tennis-finance-proposal a:focus-visible{outline:2px solid var(--fp-accent);outline-offset:3px;border-radius:2px}
+#tennis-finance-proposal .fp-people td,#tennis-finance-proposal .fp-people th{padding:7px 6px}
+#tennis-finance-proposal .fp-people td:nth-child(2),#tennis-finance-proposal .fp-people th:nth-child(2){text-align:right;white-space:nowrap}
+#tennis-finance-proposal .fp-people td:last-child{white-space:nowrap}
+#tennis-finance-proposal .fp-people a{display:inline-block;padding:3px 0}
+#tennis-finance-proposal .fp-people .fp-transfer{min-width:36px;text-align:center;font-size:22px;line-height:24px;text-decoration:none}
+#tennis-finance-proposal .fp-people th:last-child,#tennis-finance-proposal .fp-people td:last-child{width:64px;text-align:center}
 </style>
 <div class="fp-tools"><label for="fp-role">Смотреть от имени</label><select id="fp-role"><option value="1">Алексей · участник</option><option value="2">Борис · администратор</option><option value="3">Вера · суперадминистратор</option></select></div>
 <div class="fp-window"><div class="fp-header"><span class="fp-avatar" aria-hidden="true">🏓</span><div>Бот расчётов<div class="fp-sub" id="fp-context"></div></div></div><div class="fp-thread" id="fp-screen" aria-live="polite"></div></div>
-<div class="fp-caption">Финансовое меню · демонстрационные данные · платежи не отправляются</div>
+<div class="fp-caption">Предложение интерфейса · 15 участников на странице · демонстрационные данные. Бот только записывает перевод; деньги не отправляются.</div>
 <script>
 (()=>{'use strict';
 const root=document.getElementById('tennis-finance-proposal'),screen=root.querySelector('#fp-screen');
-const names=['Алексей','Борис','Вера','Глеб','Денис','Елена','Ирина','Кирилл','Лена','Максим','Нина','Ольга'];
-const groups=[{id:1,title:'Теннис по субботам',members:names.map((_,i)=>i+1),admins:[2,3],balances:{1:-300,2:450,3:-150},played:[1,2,3,4,5,6,7,8],payments:[]},{id:2,title:'Вечерний теннис',members:[1,2,3,4,5,6],admins:[3],balances:{1:200,2:-200},played:[1,2,4],payments:[]}];
-let sequence=0;const state={actor:1,group:1,view:'finance',page:0,draft:null,selected:null,error:''};
-const design={recipientColumns:'1'};
+const names=['Алексей','Борис','Вера','Глеб','Денис','Елена','Ирина','Кирилл','Лена','Максим','Нина','Ольга','Павел','Рита','Сергей','Татьяна','Фёдор','Юлия','Яна','Антон','Вадим','Зоя'];
+const groups=[{id:1,title:'Теннис по субботам',members:names.map((_,i)=>i+1),admins:[2,3],balances:{1:-323,2:923,3:-150,4:650,5:-700,6:400,7:-450,8:200,9:-250,10:100,11:-400},played:Array.from({length:20},(_,i)=>i+1),payments:[]},{id:2,title:'Вечерний теннис',members:[1,2,3,4,5,6],admins:[3],balances:{1:200,2:-200},played:[1,2,4],payments:[]}];
+let sequence=0;const state={actor:1,group:1,view:'finance',page:0,draft:null,selected:null,error:'',historyScope:'mine'};
+// Synthetic transfers between other participants make the administrator's history visible.
+for(let i=0;i<12;i++){
+ const from=4+i%8,to=4+(i+3)%8;
+ groups[0].payments.push({id:++sequence,from,to,amount:50+(i%4)*25,status:i%4===0?'PENDING':'COMPLETED',mode:'personal',author:from,time:Date.UTC(2026,9,6,12)-i*86400000});
+}
+const peoplePageSize=15;
 const g=()=>groups.find(x=>x.id===state.group),admin=()=>g().admins.includes(state.actor),name=id=>names[id-1],money=n=>Math.abs(n).toLocaleString('ru-RU')+' ₽',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function decorateSingleButton(markup){
+function decorateButton(markup){
  const action=(markup.match(/data-action="([^"]+)"/)||[])[1]||'',value=(markup.match(/data-value="([^"]*)"/)||[])[1]||'';
  return markup.replace(/(>)([^<>]*)(<\/button>)/,(all,open,label,close)=>{
   if(/^[\p{Extended_Pictographic}▲▼‹›]/u.test(label))return all;
-  let icon=label.startsWith('Назад')||label==='К составу'?'⬅️':label.startsWith('Закрыть')||label==='Отмена'?'✖️':label==='Открыть'||label.startsWith('Присоединиться')?'🏓':label==='Не участвую'?'🚪':label.startsWith('Оплата')||label==='Другая сумма'?'💵':label.startsWith('Время')?'🕒':label.includes('Редактировать')||label.startsWith('Изменить название')?'✏️':label.includes('История')?'📜':label==='Баланс группы'||label==='К моим финансам'?'💰':label.startsWith('Приду')||label.includes('правильно')||label.startsWith('Сохранить')||label==='Опубликовать'||label==='Записать платёж'||label==='Платёж отправлен'?'✅':label==='Меню'?'🏠':label.startsWith('Изменить статус')?'🔄':label==='Открыта'?'🔓':label==='Отменена'?'🚫':label==='Завершена'?'✅':label==='Название'?'📝':label==='Тренировка'?'⚙️':label.includes('гостя')||label==='Управление игроками'?'👥':action.includes('group')?'👥':action.includes('training')?'🏓':action==='person'||action.includes('player')||action.includes('pick')||action==='admin-person'?'👤':action==='receive'||action==='finance-receive'||label==='Да, получил'?'📥':action.includes('payment')||action.includes('finance')||action==='detail'?'💸':'➡️';
+  if(/^[+−-]\s*\d/.test(label))return open+(label.startsWith('+')?'➕ ':'➖ ')+label.replace(/^[+−-]\s*/,'')+close;
+  let icon=label.startsWith('Округлить')?'🔢':label.startsWith('Рекомендуется')?'🧮':label.startsWith('Отправить')||label.startsWith('Перевести')?'📤':label.startsWith('Принять')?'📥':action==='noop'?'📄':label.startsWith('Записать перевод за')?'📝':label==='Записать свой перевод'?'✍️':label.startsWith('Назад')||label==='К составу'?'⬅️':label.startsWith('Закрыть')||label==='Отмена'||label==='Отменить перевод'||label==='Да, отменить'?'✖️':label==='Открыть'||label.startsWith('Присоединиться')?'🏓':label==='Не участвую'?'🚪':label==='Ввести сумму сообщением'||label==='Изменить сумму'?'✍️':label.startsWith('Оплата')?'💵':label.startsWith('Время')?'🕒':label.includes('Редактировать')||label.startsWith('Изменить название')?'✏️':label.includes('История')||label==='Все переводы группы'?'📜':label.startsWith('Баланс группы')||label==='К моим финансам'?'💰':label.startsWith('Приду')||label.includes('правильно')||label.startsWith('Сохранить')||label==='Опубликовать'||label==='Записать перевод'||label==='Перевод отправлен'?'✅':label==='Меню'?'🏠':label.startsWith('Изменить статус')?'🔄':label==='Открыта'?'🔓':label==='Отменена'?'🚫':label==='Завершена'?'✅':label==='Название'?'📝':label==='Тренировка'?'⚙️':label.includes('гостя')||label==='Управление игроками'?'👥':action.includes('group')?'👥':action.includes('training')?'🏓':action==='person'||action.includes('player')||action.includes('pick')||action==='admin-person'?'👤':action==='receive'||action==='finance-receive'||label==='Да, получил'?'📥':action.includes('payment')||action.includes('finance')||action==='detail'?'💸':'➡️';
   return open+icon+' '+label+close;
  });
 }
-function buttonStyle(label){return label==='Открыть'||label.startsWith('Присоединиться')?'primary':label==='Не участвую'?'danger':''}
-const key=(label,action,value='',disabled=false)=>`<button type="button" data-action="${action}" data-value="${value}" data-style="${buttonStyle(label)}"${disabled?' disabled':''}>${esc(label)}</button>`,row=(...x)=>`<div class="fp-row">${(x.length===1?x.map(decorateSingleButton):x).join('')}</div>`;
+function buttonStyle(label){return ['Открыть','Перевод отправлен','Записать перевод','Да, получил'].includes(label)||label.startsWith('Присоединиться')?'primary':['Не участвую','Отмена','Отменить перевод','Да, отменить'].includes(label)?'danger':''}
+const key=(label,action,value='',disabled=false)=>decorateButton(`<button type="button" data-action="${action}" data-value="${value}" data-style="${buttonStyle(label)}" aria-label="${esc(label)}"${disabled?' disabled':''}>${esc(label)}</button>`),row=(...x)=>`<div class="fp-row">${x.join('')}</div>`;
 const nav=()=>row(key('Назад','back'),key('Отмена','cancel'));
-function go(view){state.view=view;state.page=0;state.error='';render()}
-function totals(pending=false){const b={...g().balances};for(const p of g().payments)if(p.status==='COMPLETED'||pending){b[p.from]=(b[p.from]||0)+p.amount;b[p.to]=(b[p.to]||0)-p.amount}return b}
+function go(view){state.editingPaymentAmount=null;delete state.paymentAmountText;state.view=view;state.page=0;state.error='';render()}
+function totals(pending=false){const b={...g().balances};for(const p of g().payments)if(p.status==='COMPLETED'||pending&&p.status==='PENDING'){b[p.from]=(b[p.from]||0)+p.amount;b[p.to]=(b[p.to]||0)-p.amount}return b}
 // Direct settlement portfolio, mirrored from core/DirectSettlement.kt for these demo screens.
 function directSettlements(b) {
  const ids=Object.keys(b).filter(id=>b[id]!==0).sort(),values=ids.map(id=>b[id]);
@@ -67,53 +92,281 @@ function directSettlements(b) {
 // End direct settlement portfolio.
 function suggestions(){return directSettlements(totals(true))}
 function available(){return suggestions().filter(x=>x.from===state.actor)}
+function roundingButton(disabled=false){return key('🔢 Округлить','round',100,disabled)}
+function roundPaymentAmount(amount){return Math.round(amount/100)*100}
+
+function refreshPaymentProposal(d){
+ const proposal=suggestions().find(x=>x.from===d.from&&x.to===d.to);
+ if(proposal)d.calculatedAmount=proposal.amount;else delete d.calculatedAmount;
+}
+function amountReset(d){
+ const amount=d.amount;
+ const target=d.calculatedAmount;
+ if(target===undefined)return '';
+ const label='Рекомендуется '+money(target);
+ return row(key(label,'reset-round','',amount===target||!Number.isSafeInteger(amount)));
+}
+function amountControls(d){
+ const amount=d.amount;
+ const invalid=!Number.isSafeInteger(amount)||amount<0;
+ const canRound=d.roundingAvailable===true&&d.roundingOriginal===undefined&&!invalid&&amount>0&&roundPaymentAmount(amount)!==amount;
+ return [
+  row(roundingButton(!canRound)),
+  row(key('+50 ₽','adjust-amount',50,invalid),key('+100 ₽','adjust-amount',100,invalid)),
+  row(key('−50 ₽','adjust-amount',-50,invalid||amount<=0),key('−100 ₽','adjust-amount',-100,invalid||amount<=0))
+ ];
+}
+function setPaymentAmount(d,amount){
+ if(!Number.isSafeInteger(amount)||amount<0)throw Error('Укажи сумму целыми рублями');
+ d.amount=amount;delete d.amountText;d.waitingForAmount=false;
+}
+function parsePaymentAmount(text){
+ const value=String(text).trim();
+ if(!/^\d+$/.test(value)||!Number.isSafeInteger(+value)||+value<=0)throw Error('Укажи положительную сумму в целых рублях');
+ return +value;
+}
+function commitTypedAmount(d,text){setPaymentAmount(d,parsePaymentAmount(text))}
+
+function restoreAmount(d){
+ const amount=d.calculatedAmount;
+ if(!Number.isSafeInteger(amount)||amount<0)throw Error('Сумма для возврата недоступна');
+ setPaymentAmount(d,amount);if(d.calculatedAmount!==undefined)delete d.balancePresetAmount;
+ delete d.roundingOriginal;d.roundingAvailable=d.calculatedAmount!==undefined||d.balancePresetAmount!==undefined;
+}
+function editableAmount(d){return d.amount}
+function paymentComposer(d){return `<div class="fp-composer" role="group" aria-label="Сообщение боту"><input id="fp-amount" aria-label="Новая сумма в рублях" inputmode="numeric" autocomplete="off" value="${esc(d.amountText??'')}" placeholder="${d.waitingForAmount?'Сумма в рублях…':'Сообщение…'}"><button type="button" data-action="amount-next" aria-label="Отправить сумму">↑</button></div>`}
 function pageOf(list,size=6){state.page=Math.max(0,Math.min(state.page,Math.ceil(list.length/size)-1));return list.slice(state.page*size,(state.page+1)*size)}
 function pages(list,size=6){return list.length>size?row(key('‹','page',-1,state.page===0),key(`${state.page+1} / ${Math.ceil(list.length/size)}`,'noop'),key('›','page',1,(state.page+1)*size>=list.length)):''}
-function detail(p){return `<p>От кого: ${esc(name(p.from))}<br>Кому: ${esc(name(p.to))}</p><div class="fp-amount">${money(p.amount)}</div>`}
-function duplicate(){let d=state.draft;return g().payments.some(p=>p.from===d.from&&p.to===d.to&&p.amount===d.amount&&Date.now()-p.time<86400000)}
+function byBalance(list,b){return list.slice().sort((a,c)=>Number(!(b[a]||0))-Number(!(b[c]||0))||(b[c]||0)-(b[a]||0)||name(a).localeCompare(name(c),'ru'))}
+function balance(value){return `<span class="fp-balance ${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}">${value>0?'+':value<0?'−':''}${money(value)}</span>`}
+function balanceLegend(){return '<p class="fp-small">+ — получить · − — осталось доплатить<br>Баланс участника во всей группе.</p>'}
+function peopleTable(ids,b,{sender=state.actor,chooseFrom=false}={}){
+ return '<table class="fp-people"><thead><tr><th>Участник</th><th>Баланс</th><th>'+(chooseFrom?'Выбрать':'Перевод')+'</th></tr></thead><tbody>'+ids.map(id=>{
+  const label=(chooseFrom?'Выбрать отправителя':'Записать перевод получателю')+' '+name(id);
+  const action=chooseFrom?'person':'transfer';
+  const link=chooseFrom||id!==sender?`<a class="fp-transfer" href="#${action}-${id}" data-action="${action}" data-value="${id}" aria-label="${esc(label)}" title="${esc(label)}">＋</a>`:'<span class="fp-zero" aria-label="Перевод себе недоступен">—</span>';
+  return `<tr><td><a href="#profile-${id}" data-action="profile" data-value="${id}">${esc(name(id))}</a></td><td>${balance(b[id]||0)}</td><td>${link}</td></tr>`;
+ }).join('')+'</tbody></table>';
+}
+function peopleHint(){return '<p class="fp-small">Имя — профиль · ＋ — записать перевод</p>'}
+function paymentPeople(p,withBalances=false){
+ const b=withBalances?totals():null;
+ const editable=state.draft===p&&['review','duplicate'].includes(state.view);
+ const person=id=>{
+  if(!b)return esc(name(id));
+  const value=b[id]||0,label='Подставить '+money(value)+' — баланс участника '+name(id);
+  const displayed=value&&editable?`<a class="fp-balance-choice ${value>0?'fp-positive':'fp-negative'}" href="#balance-${id}" data-action="use-balance" data-value="${id}" aria-label="${esc(label)}" title="${esc(label)}">${balance(value)}</a>`:balance(value);
+  return esc(name(id))+` (${displayed})`;
+ };
+ return `<p>От кого: ${person(p.from)}<br>Кому: ${person(p.to)}</p>`;
+}
+function detail(p,withBalances=false){return paymentPeople(p,withBalances||p.status==='PENDING')+`<div class="fp-amount">${money(p.amount)}</div>`+paymentAudit(p)}
+function duplicate(){let d=state.draft;return g().payments.some(p=>p.status!=='CANCELLED'&&p.from===d.from&&p.to===d.to&&p.amount===d.amount&&Date.now()-p.time<86400000)}
+function paymentStatus(p){return p.status==='PENDING'?'Ожидает подтверждения':p.status==='CANCELLED'?'Отменён':'Учтён'}
+function canCancelPayment(p){return p.status!=='CANCELLED'&&(admin()||p.status==='PENDING'&&p.from===state.actor)}
+function cancelPayment(p){
+ if(!canCancelPayment(p))throw Error('Отмена доступна отправителю до подтверждения или администратору группы');
+ (p.audit??=[]).push({actor:state.actor,admin:admin(),kind:'cancel',previousStatus:p.status,time:Date.now()});
+ p.status='CANCELLED';p.cancelledAt=Date.now();
+}
+function editPaymentAmount(p,text){
+ if(!admin())throw Error('Изменять перевод может администратор группы');
+ const amount=parsePaymentAmount(text);if(amount===p.amount)return;
+ (p.audit??=[]).push({actor:state.actor,admin:true,kind:'amount',before:p.amount,after:amount,time:Date.now()});
+ p.amount=amount;
+}
+function paymentAudit(p){
+ const edits=(p.audit||[]).filter(x=>x.admin);if(!edits.length)return '';
+ return '<p class="fp-small">'+edits.map(x=>`Администратор: ${esc(name(x.actor))}. ${x.kind==='cancel'?'Отменил перевод.':`Изменил сумму: ${money(x.before)} → ${money(x.after)}.`}`).join('<br>')+'</p>';
+}
+function historyPayments(scope){
+ if(!['mine','all'].includes(scope))throw Error('Неизвестный режим истории');
+ return g().payments.filter(p=>scope==='all'||[p.from,p.to].includes(state.actor)).slice().sort((a,b)=>b.time-a.time);
+}
+function historyTab(label,scope){
+ return key(label,'history-scope',scope).replace('data-style=""','data-style="'+(state.historyScope===scope?'primary':'')+'"').replace('type="button"','type="button" aria-pressed="'+(state.historyScope===scope)+'"');
+}
 const pendingIncoming=()=>g().payments.filter(x=>x.to===state.actor&&x.status==='PENDING');
 function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';root.querySelector('#fp-context').textContent='Личный чат · '+g().title;
- if(v==='finance'){let b=totals()[state.actor]||0,amount=b>0?'+'+money(b)+' — тебе осталось получить':b<0?'−'+money(b)+' — тебе осталось внести':'0 ₽',sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>Баланс: '+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие платежи пока не меняют баланс.':'')+'</p>';buttons=[row(key('Отправить платёж','nav','send'),key('Принять платёж('+pendingIncoming().length+')','nav','receive')),row(key('Другой платёж','new','personal'),key('История платежей','nav','history')),row(key('Баланс группы','nav','balances'))];if(admin())buttons.push(row(key('Записать платёж за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
+ if(d&&['review','duplicate'].includes(v))refreshPaymentProposal(d);
+ if(v==='finance'){let b=totals()[state.actor]||0,amount=balance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':''),sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>'+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие переводы пока не меняют баланс.':'')+'</p>';buttons=[row(key('Перевести','nav','send'),key('Принять перевод('+pendingIncoming().length+')','nav','receive')),row(key('Баланс группы','nav','balances')),row(key('История переводов','nav','history'))];if(admin())buttons.push(row(key('Записать перевод за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='groups'){body='<h2>Выбери группу</h2>';buttons=groups.map(x=>row(key(x.title,'group',x.id)));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='menu'){body='<h2>Что хочешь сделать?</h2>';buttons=[row(key('Мои финансы','nav','groups'))]}
- else if(v==='from'||v==='to'){body='<h2>'+(v==='from'?'От кого':'Кому')+'</h2>';if(v==='to')body+=`<p class="fp-small">От кого: ${esc(name(d.from))}</p>`;let list=g().members.filter(id=>v==='from'||id!==d.from),chunk=pageOf(list);for(let i=0;i<chunk.length;i+=+design.recipientColumns)buttons.push(row(...chunk.slice(i,i+(+design.recipientColumns)).map(id=>key(name(id),'person',id))));buttons.push(pages(list),nav())}
- else if(v==='amount'){body=`<h2>Сумма перевода</h2><p>От кого: ${esc(name(d.from))}<br>Кому: ${esc(name(d.to))}</p><p>Напиши сумму в рублях.</p><p class="fp-small">Например: 350</p>`;buttons=[nav()];composer=`<div class="fp-composer" role="group" aria-label="Ответ боту"><input id="fp-amount" aria-label="Сумма в рублях" inputmode="numeric" autocomplete="off" value="${esc(d.amountText??(d.amount||''))}" placeholder="Сообщение…"><button type="button" data-action="amount-next" aria-label="Отправить сумму">↑</button></div>`}
- else if(v==='review'){body='<h2>'+(d.mode==='admin'?'Запись администратором':'Отправка платежа')+'</h2>'+detail(d);if(d.mode==='admin'){body+='<p>Сразу учтём в балансе. Подтверждение участников не требуется.</p>';if(duplicate())body+='<p class="fp-warning">За последние сутки уже есть такой же платёж.</p>';buttons=[row(key('Записать платёж','save'))]}else{body+='<p>После перевода денег нажми «Платёж отправлен». Учтём сумму после подтверждения получателя.</p>';buttons=[row(key('Платёж отправлен','save'))]}buttons.push(nav())}
- else if(v==='duplicate'){body='<h2>Это ещё один платёж?</h2>'+detail(d)+'<p>За последние сутки уже есть перевод с теми же участниками и суммой.</p>';buttons=[row(key('Да, это ещё один','save-duplicate')),row(key('Посмотреть предыдущий','previous')),nav()]}
- else if(v==='saved'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>'+(p.status==='PENDING'?'Ожидает подтверждения':'Платёж учтён')+'</h2>'+detail(p)+(p.status==='PENDING'?'<p>Получатель увидит его в «Принять платёж». Баланс пока не изменился.</p>':`<p>Записал администратор: ${esc(name(p.author))}.<br>Баланс обновлён.</p>`);buttons=[row(key('К моим финансам','nav','finance'))]}
- else if(v==='balances'){let b=totals(),list=g().members.filter(id=>b[id]||g().played.includes(id)).sort((a,c)=>Number(!(b[a]||0))-Number(!(b[c]||0))||(b[c]||0)-(b[a]||0)||name(a).localeCompare(name(c),'ru')),chunk=pageOf(list,10);body='<h2>Баланс группы</h2><table><thead><tr><th>Участник</th><th>Баланс</th></tr></thead><tbody>'+chunk.map(id=>`<tr><td>${esc(name(id))}</td><td>${b[id]?((b[id]>0?'+':'−')+money(b[id])):'0 ₽'}</td></tr>`).join('')+'</tbody></table><p class="fp-small">+ — участнику осталось получить<br>− — участнику осталось внести</p>';if(g().payments.some(p=>p.status==='PENDING'))body+='<p class="fp-small">Ожидающие подтверждения платежи пока не учтены.</p>';buttons=[pages(list,10),row(key('Назад','nav','finance'))]}
- else if(v==='send'){let list=available(),chunk=pageOf(list,3);body='<h2>'+(list.length?'Доступные платежи':'Нет доступных платежей')+'</h2>';buttons=chunk.map(x=>row(key(name(x.to)+' · '+money(x.amount),'suggestion',x.to)));buttons.push(pages(list,3),row(key('Назад','nav','finance')))}
- else if(v==='receive'){let list=pendingIncoming(),chunk=pageOf(list,3);body='<h2>'+(list.length?'Принять платёж':'Нет платежей для принятия')+'</h2>';buttons=chunk.map(p=>row(key(name(p.from)+' · '+money(p.amount),'receive',p.id)));buttons.push(pages(list,3),row(key('Назад','nav','finance')))}
+ else if(v==='from'||v==='to'){
+  let b=totals(),list=byBalance(g().members.filter(id=>v==='from'||id!==d.from),b),chunk=pageOf(list,peoplePageSize);
+  body='<h2>'+(v==='from'?'От кого перевод':'Кому перевод')+'</h2>';
+  if(v==='to')body+=`<p class="fp-small">От кого: ${esc(name(d.from))}</p>`;
+  body+=v==='from'?'<p class="fp-small">Имя — профиль · ＋ — выбрать отправителя</p>':peopleHint();
+  body+=peopleTable(chunk,b,{sender:d.from,chooseFrom:v==='from'});
+  body+=balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
+  buttons=[pages(list,peoplePageSize),nav()];
+ }
+ else if(v==='review'){
+  body='<h2>'+(d.mode==='admin'?'Запись администратором':'Отправка перевода')+'</h2>'+detail(d,true);
+  if(d.mode==='admin'){
+   body+='<p>Сразу учтём в балансе. Подтверждение участников не требуется.</p>';
+   body+='<p class="fp-warning'+(duplicate()?'':' fp-invisible')+'" aria-hidden="'+!duplicate()+'">За последние сутки уже есть такой же перевод.</p>';
+  }else body+='<p>После перевода денег нажми «Перевод отправлен». Учтём сумму после подтверждения получателя.</p>';
+  const showPrompt=Boolean(state.error||d.waitingForAmount||d.amount<=0);
+  body+='<p id="fp-amount-prompt" class="fp-entry-note fp-small'+(showPrompt?'':' fp-invisible')+'" aria-hidden="'+!showPrompt+'">'+esc(state.error||(d.waitingForAmount?'Напиши сумму в рублях.':'Укажи сумму больше 0 ₽ для записи перевода.'))+'</p>';
+  buttons=[
+   row(key(d.mode==='admin'?'Записать перевод':'Перевод отправлен','save','',d.amount<=0)),
+   ...amountControls(d),
+   amountReset(d),row(key('Ввести сумму сообщением','edit-amount')),nav()
+  ];
+  composer=paymentComposer(d);
+ }
+ else if(v==='duplicate'){body='<h2>Это ещё один перевод?</h2>'+detail(d,true)+'<p>За последние сутки уже есть перевод с теми же участниками и суммой.</p>';buttons=[row(key('Да, это ещё один','save-duplicate')),row(key('Посмотреть предыдущий','previous')),nav()]}
+ else if(v==='saved'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>'+(p.status==='PENDING'?'Ожидает подтверждения':'Перевод учтён')+'</h2>'+detail(p)+(p.status==='PENDING'?'<p>Получатель увидит его в «Принять перевод». Баланс пока не изменился.</p>':`<p>Записал администратор: ${esc(name(p.author))}.<br>Баланс обновлён.</p>`);buttons=[];if(admin())buttons.push(row(key('Изменить сумму','edit-payment-amount')));if(canCancelPayment(p))buttons.push(row(key('Отменить перевод','cancel-payment')));buttons.push(row(key('К моим финансам','nav','finance')))}
+ else if(v==='balances'){
+  let b=totals(),list=byBalance(g().members,b),chunk=pageOf(list,peoplePageSize);
+  body='<h2>Баланс группы</h2>'+peopleHint()+peopleTable(chunk,b)+balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
+  if(g().payments.some(p=>p.status==='PENDING'))body+='<p class="fp-small">Ожидающие подтверждения переводы пока не учтены.</p>';
+  buttons=[pages(list,peoplePageSize),row(key('Назад','nav','finance'))];
+ }
+ else if(v==='profile'){body='<h2>'+esc(name(state.profile))+'</h2><p>В боте эта ссылка открывает профиль участника в Telegram.</p><p class="fp-small">Здесь показан вымышленный участник.</p>';buttons=[row(key('Назад','profile-back'))]}
+ else if(v==='send'){
+  let list=available(),chunk=pageOf(list,3);
+  body='<h2>Перевести</h2><p>'+(list.length?'Бот подобрал эти переводы для всей группы, стараясь уменьшить их количество.':'Сейчас готовых переводов нет.')+'</p><p>Можно выбрать готовый вариант или записать свой перевод — кому хочешь или с кем договорился.</p>';
+  buttons=chunk.map(x=>row(key(name(x.to)+' · '+money(x.amount),'suggestion',x.to)));
+  buttons.push(pages(list,3));
+  buttons.push(row(key('Записать свой перевод','own-transfer')),row(key('Назад','nav','finance')));
+ }
+ else if(v==='receive'){let list=pendingIncoming(),chunk=pageOf(list,3);body='<h2>'+(list.length?'Принять перевод':'Нет переводов для принятия')+'</h2>';buttons=chunk.map(p=>row(key(name(p.from)+' · '+money(p.amount),'receive',p.id)));buttons.push(pages(list,3),row(key('Назад','nav','finance')))}
  else if(v==='receive-review'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>Деньги пришли?</h2>'+detail(p);buttons=[row(key('Да, получил','accept')),row(key('Назад','nav','receive'))]}
- else if(v==='received'){body='<h2>Платёж учтён</h2><p>Баланс обновлён.</p>';buttons=[row(key('К моим финансам','nav','finance'))]}
- else if(v==='history'){let list=g().payments.filter(p=>[p.from,p.to].includes(state.actor)).slice().reverse(),chunk=pageOf(list,5);body='<h2>История платежей</h2>';if(!list.length)body+='<p>Платежей пока нет.</p>';if(list.length)body+='<table><thead><tr><th>Перевод</th><th>Сумма / статус</th></tr></thead><tbody>'+chunk.map(p=>`<tr><td>${key(name(p.from)+' → '+name(p.to),'detail',p.id)}</td><td>${money(p.amount)}<br><span class="fp-small">${p.status==='PENDING'?'В процессе':'Выполнен'}</span></td></tr>`).join('')+'</tbody></table>';buttons.push(pages(list,5),row(key('Назад','nav','finance')))}
- else if(v==='detail'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>Платёж</h2>'+detail(p)+`<p>${p.status==='PENDING'?'Ожидает подтверждения':'Учтён'}</p>`+(p.mode==='admin'?`<p>Записал администратор: ${esc(name(p.author))}.<br>Без подтверждения участников.</p>`:'');buttons=[row(key('Назад','detail-back'))]}
- screen.innerHTML=`<div class="fp-message">${body}${state.error?`<p class="fp-warning" role="alert">${esc(state.error)}</p>`:''}</div><div class="fp-keys">${buttons.join('')}</div>${composer}`;
+ else if(v==='received'){body='<h2>Перевод учтён</h2><p>Баланс обновлён.</p>';buttons=[row(key('К моим финансам','nav','finance'))]}
+ else if(v==='history'){
+  const scope=state.historyScope||'mine';
+  let list=historyPayments(scope),chunk=pageOf(list,10);
+  body='<h2>История переводов</h2><p class="fp-small">'+(scope==='all'?'Все переводы группы':'Мои переводы')+'</p>';
+  buttons.push(row(historyTab('👤 Мои','mine'),historyTab('👥 Все','all')));
+  if(!list.length)body+='<p>Переводов пока нет.</p>';
+  if(list.length)body+='<table><thead><tr><th>Перевод</th><th>Сумма / статус</th></tr></thead><tbody>'+chunk.map(p=>`<tr><td>${key(name(p.from)+' → '+name(p.to),'detail',p.id)}<br><span class="fp-small">${new Date(p.time).toLocaleDateString('ru-RU')}${p.audit?.some(x=>x.admin)?'<br>Правка администратора':''}</span></td><td>${money(p.amount)}<br><span class="fp-small">${p.status==='PENDING'?'В процессе':p.status==='CANCELLED'?'Отменён':'Выполнен'}</span></td></tr>`).join('')+'</tbody></table>';
+  buttons.push(pages(list,10),row(key('Назад','nav','finance')));
+ }
+ else if(v==='detail'){
+  const p=g().payments.find(x=>x.id===state.selected);
+  body='<h2>Перевод</h2>'+detail(p)+`<p>${paymentStatus(p)}</p>`+(p.mode==='admin'?`<p>Записал администратор: ${esc(name(p.author))}.<br>Без подтверждения участников.</p>`:'');
+  if(state.editingPaymentAmount===p.id){
+   if(!admin())throw Error('Изменять перевод может администратор группы');
+   body+='<p id="fp-amount-prompt" class="fp-small">Напиши новую сумму в рублях.</p>';
+   composer=paymentComposer({amountText:state.paymentAmountText,waitingForAmount:true});
+  }
+  if(admin())buttons.push(row(key('Изменить сумму','edit-payment-amount')));
+  if(canCancelPayment(p))buttons.push(row(key('Отменить перевод','cancel-payment')));
+  buttons.push(row(key('Назад','detail-back')));
+ }
+ else if(v==='cancel-confirm'){
+  const p=g().payments.find(x=>x.id===state.selected);
+  if(!canCancelPayment(p))throw Error('Перевод больше нельзя отменить');
+  body='<h2>Отменить перевод?</h2>'+detail(p)+(p.status==='COMPLETED'?'<p>Влияние перевода на баланс будет отменено. Запись останется в истории.</p>':'<p>Запись останется в истории. Получателю больше не нужно подтверждать её.</p>');
+  buttons=[row(key('Да, отменить','confirm-cancel')),row(key('Назад','cancel-back'))];
+ }
+ else if(v==='cancelled'){
+  const p=g().payments.find(x=>x.id===state.selected);
+  body='<h2>Перевод отменён</h2>'+detail(p)+'<p>Запись сохранена в истории.</p>';
+  buttons=[row(key('К моим финансам','nav','finance'))];
+ }
+ screen.innerHTML=`<div class="fp-message">${body}${state.error&&v!=='review'?`<p class="fp-warning" role="alert">${esc(state.error)}</p>`:''}</div><div class="fp-keys${v==='review'?' fp-stable-keys':''}">${buttons.join('')}</div>${composer}`;
 }
 function save(){let d=state.draft;if(d.mode==='admin'&&!admin())throw Error('Запись доступна администратору этой группы');if(d.mode!=='admin'&&d.from!==state.actor)throw Error('Можно записать только свою отправку');if(d.from===d.to||!g().members.includes(d.to)||!g().members.includes(d.from))throw Error('Выбери двух разных участников этой группы');if(!Number.isSafeInteger(d.amount)||d.amount<=0)throw Error('Укажи положительную сумму в целых рублях');let p={...d,id:++sequence,status:d.mode==='admin'?'COMPLETED':'PENDING',author:state.actor,time:Date.now()};g().payments.push(p);state.selected=p.id;state.draft=null;go('saved')}
-root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;let a=el.dataset.action,v=el.dataset.value;try{
+root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;if(el.tagName==='A')e.preventDefault();let a=el.dataset.action,v=el.dataset.value;state.error='';try{
  if(a==='amount-next')readAmount();
- else if(a==='nav'){state.draft=null;go(v)}
+ else if(a==='nav'){state.draft=null;if(v==='history')state.historyScope='mine';go(v)}
  else if(a==='group'){state.group=+v;go('finance')}
+ else if(a==='round'||a==='adjust-amount'){
+  if(state.view!=='review'||!state.draft)return;
+  if(a==='round'&&+v!==100||a==='adjust-amount'&&![-100,-50,50,100].includes(+v))return;
+  if(a==='round'&&state.draft.roundingAvailable!==true)return;
+  const current=editableAmount(state.draft);
+  const amount=a==='round'?roundPaymentAmount(current):Math.max(0,current+(+v));
+  if(!Number.isSafeInteger(amount))throw Error('Сумма слишком большая');
+  if(a==='round'&&state.draft.roundingOriginal===undefined)state.draft.roundingOriginal=current;
+  setPaymentAmount(state.draft,amount);render();
+ }
+ else if(a==='use-balance'){
+  const d=state.draft;if(!d||!['review','duplicate'].includes(state.view)||![d.from,d.to].includes(+v))return;
+  const amount=Math.abs(totals()[+v]||0);if(!Number.isSafeInteger(amount)||amount<=0)return;
+  setPaymentAmount(d,amount);d.balancePresetAmount=amount;d.roundingAvailable=true;
+  delete d.roundingOriginal;
+  go('review');
+ }
+ else if(a==='reset-round'){
+  const d=state.draft;if(state.view!=='review'||!d)return;
+  restoreAmount(d);render();
+ }
+ else if(a==='history-scope'){
+  if(!['mine','all'].includes(v))return;
+  state.historyScope=v;state.page=0;render();
+ }
  else if(a==='page'){state.page+=+v;render()}
- else if(a==='new'){if(v==='admin'&&!admin())throw Error('Нужны права администратора этой группы');state.draft={mode:v,from:v==='admin'?null:state.actor,to:null,amount:0};go(v==='admin'?'from':'to')}
- else if(a==='person'){if(state.view==='from'){state.draft.from=+v;state.draft.to=null;go('to')}else{state.draft.to=+v;go('amount')}}
- else if(a==='back'){if(state.view==='to')go(state.draft.mode==='admin'?'from':'finance');else go({from:'finance',amount:'to',review:'amount',duplicate:'review'}[state.view]||'finance')}
+ else if(a==='own-transfer'){
+  state.draft={mode:'personal',from:state.actor,to:null,amount:0,pickerReturn:'send',sendPage:state.page};go('to');
+ }
+ else if(a==='new'){if(!admin())throw Error('Нужны права администратора этой группы');state.draft={mode:'admin',from:null,to:null,amount:0};go('from')}
+ else if(a==='person'){state.draft.fromPage=state.page;state.draft.from=+v;state.draft.to=null;go('to')}
+ else if(a==='transfer'){
+  if(state.view==='balances')state.draft={mode:'personal',from:state.actor,to:null,amount:0};
+  if(!state.draft||+v===state.draft.from)throw Error('Выбери другого участника');
+  state.draft.recipientView=state.view;state.draft.toPage=state.page;state.draft.to=+v;
+  state.draft.roundingAvailable=false;delete state.draft.roundingOriginal;delete state.draft.balancePresetAmount;go('review');
+ }
+ else if(a==='edit-amount'){
+  state.draft.waitingForAmount=true;render();root.querySelector('#fp-amount').focus();
+ }
+ else if(a==='back'){
+  const d=state.draft;
+  const target=state.view==='to'?(d.mode==='admin'?'from':d.pickerReturn||'finance'):({from:'finance',review:d.source==='suggestion'?'send':d.recipientView||'to',duplicate:'review'}[state.view]||'finance');
+  const page=target==='send'?(d.sendPage||0):['to','balances'].includes(target)?(d.toPage||0):target==='from'?(d.fromPage||0):0;
+  if(['balances','send'].includes(target))state.draft=null;
+  go(target);state.page=page;render();
+ }
  else if(a==='cancel'){state.draft=null;go('finance')}
  else if(a==='save'){if(state.draft.mode!=='admin'&&duplicate())go('duplicate');else save()}
  else if(a==='save-duplicate')save();
- else if(a==='suggestion'){const x=available().find(x=>x.to===+v);state.draft={...x,mode:'personal'};go('review')}
+ else if(a==='suggestion'){const x=available().find(x=>x.to===+v);if(!x)throw Error('Перевод больше недоступен');state.draft={...x,amount:x.amount,calculatedAmount:x.amount,roundingAvailable:true,mode:'personal',source:'suggestion',sendPage:state.page};go('review')}
  else if(a==='receive'){state.selected=+v;go('receive-review')}
- else if(a==='accept'){const p=g().payments.find(x=>x.id===state.selected);if(p.to!==state.actor||p.status!=='PENDING')throw Error('Платёж недоступен для подтверждения');p.status='COMPLETED';go('received')}
- else if(a==='detail'){state.selected=+v;state.detailBack='history';go('detail')}
- else if(a==='previous'){let d=state.draft;state.selected=g().payments.findLast(p=>p.from===d.from&&p.to===d.to&&p.amount===d.amount).id;state.detailBack='duplicate';go('detail')}
- else if(a==='detail-back')go(state.detailBack);
+ else if(a==='accept'){const p=g().payments.find(x=>x.id===state.selected);if(p.to!==state.actor||p.status!=='PENDING')throw Error('Перевод недоступен для подтверждения');p.status='COMPLETED';go('received')}
+ else if(a==='edit-payment-amount'){
+  if(!admin())throw Error('Изменять перевод может администратор группы');
+  if(state.view==='saved'){state.detailBack='saved';state.detailPage=0;go('detail')}
+  state.editingPaymentAmount=state.selected;state.paymentAmountText='';render();root.querySelector('#fp-amount').focus();
+ }
+ else if(a==='cancel-payment'){
+  const p=g().payments.find(x=>x.id===state.selected);if(!p||!canCancelPayment(p))throw Error('Перевод больше нельзя отменить');
+  state.cancelReturn=state.view;state.cancelPage=state.page;go('cancel-confirm');
+ }
+ else if(a==='cancel-back'){go(state.cancelReturn);state.page=state.cancelPage||0;render()}
+ else if(a==='confirm-cancel'){
+  const p=g().payments.find(x=>x.id===state.selected);if(!p)throw Error('Перевод недоступен');
+  cancelPayment(p);go('cancelled');
+ }
+ else if(a==='profile'){state.profile=+v;state.profilePage=state.page;state.profileView=state.view;go('profile')}
+ else if(a==='profile-back'){go(state.profileView);state.page=state.profilePage;render()}
+ else if(a==='detail'){const p=g().payments.find(x=>x.id===+v);if(!p)throw Error('Перевод недоступен в этой группе');state.selected=+v;state.detailBack=state.view;state.detailPage=state.page;go('detail')}
+ else if(a==='previous'){let d=state.draft;state.selected=g().payments.findLast(p=>p.status!=='CANCELLED'&&p.from===d.from&&p.to===d.to&&p.amount===d.amount).id;state.detailBack='duplicate';state.detailPage=0;go('detail')}
+ else if(a==='detail-back'){go(state.detailBack);state.page=state.detailPage||0;render()}
 }catch(err){state.error=err.message;render()}});
-function readAmount(){let v=root.querySelector('#fp-amount').value.trim();if(!/^\d+$/.test(v)||!Number.isSafeInteger(+v)||+v<=0){state.error='Укажи положительную сумму в целых рублях';render();return}state.draft.amount=+v;go('review')}
-root.addEventListener('input',e=>{if(e.target.id==='fp-amount')state.draft.amountText=e.target.value});
+function readAmount(){
+ const value=root.querySelector('#fp-amount')?.value;if(value===undefined)return;
+ try{
+  if(state.view==='detail'&&state.editingPaymentAmount!==null){
+   const p=g().payments.find(x=>x.id===state.editingPaymentAmount);if(!p)throw Error('Перевод недоступен');
+   editPaymentAmount(p,value);state.editingPaymentAmount=null;delete state.paymentAmountText;
+  }else if(state.view==='review'&&state.draft)commitTypedAmount(state.draft,value);
+  else return;
+  state.error='';
+ }catch(error){state.error=error.message}
+ render();
+}
+root.addEventListener('input',e=>{if(e.target.id==='fp-amount'){
+ if(state.view==='detail'){state.paymentAmountText=e.target.value;return}
+ state.draft.amountText=e.target.value;state.draft.waitingForAmount=true;
+ const prompt=root.querySelector('#fp-amount-prompt');
+ prompt.textContent='Напиши сумму в рублях.';prompt.classList.remove('fp-invisible');prompt.setAttribute('aria-hidden','false');
+}});
 root.addEventListener('keydown',e=>{if(e.target.id==='fp-amount'&&e.key==='Enter'){e.preventDefault();readAmount()}});
 root.querySelector('#fp-role').addEventListener('change',e=>{state.actor=+e.target.value;state.draft=null;go('finance')});render();
-if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addSelect(design,'recipientColumns',{label:'Участников в строке',options:[{label:'Один',value:'1'},{label:'Два',value:'2'}]})}
 })();
 </script>
 </div>

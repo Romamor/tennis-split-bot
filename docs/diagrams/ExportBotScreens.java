@@ -59,7 +59,7 @@ class ExportBotScreens {
   cap("finance","finance","");cap("finance_balances","finance_balances","");
   run(new Access(-1,4,true),new SettlementCommand.RecordTransfer("seed-finance",4,user,300,"2026-09-12","",null,false));
   cap("finance_send","finance_send","");
-  capture("finance_send_confirm","finance_send_confirm","","\"user\":4,\"value\":200,\"back\":{\"kind\":\"finance_send\",\"group\":-1}",null,false,null);
+  capture("finance_send_confirm","form","","",form("payment_ready","","\"paymentFrom\":"+user+",\"user\":4,\"amount\":200,\"roundingAvailable\":true,\"origin\":{\"kind\":\"finance_send\",\"group\":-1}"),false,null);
   run(new Access(-1,4,true),new SettlementCommand.RecordTransfer("pending-in",4,user,150,"2026-09-12","",null,false));
   run(new Access(-1,4,true),new SettlementCommand.ChangeTransfer("pending-in",1,TransferChange.REVIEW,null));
   cap("finance_receive","finance_receive","");cap("finance_history","finance_history","");
@@ -68,17 +68,22 @@ class ExportBotScreens {
   run(auth,new SettlementCommand.ReceivePayment("pending-in"));cap("finance_receive_empty","finance_receive","");
   cap("finance_received","finance_received","");
   for(String kind:List.of("payment_to","payment_amount","payment_ready"))
-   capture(kind,"form","","",form(kind,"","\"paymentFrom\":"+user+",\"user\":4,\"amount\":75"),false,null);
+   capture(kind,"form","","",form(kind.equals("payment_amount")?"payment_ready":kind,"","\"waitingForAmount\":"+kind.equals("payment_amount")+",\"paymentFrom\":"+user+",\"user\":4,\"amount\":75"),false,null);
   run(auth,new SettlementCommand.SendOtherPayment("other-payment",4,75,false));
   capture("payment_duplicate","form","","",form("payment_duplicate","","\"paymentFrom\":"+user+",\"user\":4,\"amount\":75,\"similar\":[\"other-payment\"]"),false,null);
   cap("finance_payment","finance_payment","other-payment");
   capture("payment_previous","finance_payment","other-payment","\"back\":{\"kind\":\"form\",\"group\":-1}",null,false,null);
   capture("finance_history_detail","finance_payment","other-payment","\"back\":{\"kind\":\"finance_history\",\"group\":-1}",null,false,null);
+  cap("finance_group_history","finance_group_history","");
+  capture("finance_group_history_detail","finance_payment","other-payment","\"back\":{\"kind\":\"finance_history\",\"group\":-1,\"option\":\"all\"}",null,false,null);
+  capture("payment_cancel_confirm","finance_payment_cancel_confirm","other-payment","\"back\":{\"kind\":\"finance_payment\",\"group\":-1,\"id\":\"other-payment\"}",null,false,null);
+  run(auth,new SettlementCommand.CancelPayment("other-payment",1));cap("payment_cancelled","finance_payment","other-payment");
   if(user>=2) {
    for(String kind:List.of("payment_from","payment_to","payment_amount","payment_ready"))
-    capture("admin_"+kind,"form","","",form(kind,"","\"paymentFrom\":4,\"user\":5,\"amount\":100,\"adminPayment\":true"),false,null);
+    capture("admin_"+kind,"form","","",form(kind.equals("payment_amount")?"payment_ready":kind,"","\"waitingForAmount\":"+kind.equals("payment_amount")+",\"paymentFrom\":4,\"user\":5,\"amount\":100,\"adminPayment\":true"),false,null);
    run(auth,new SettlementCommand.RecordAdminPayment("admin-payment",4,5,100));
    cap("admin_payment_saved","finance_payment","admin-payment");
+   capture("admin_payment_edit","form","","",form("payment_edit","","\"paymentFrom\":4,\"user\":5,\"amount\":100,\"adminPayment\":true,\"transfer\":\"admin-payment\",\"version\":1,\"origin\":{\"kind\":\"finance_payment\",\"group\":-1,\"id\":\"admin-payment\"}"),false,null);
    cap("finance_group_history","finance_group_history","");
    capture("finance_group_history_detail","finance_payment","admin-payment","\"back\":{\"kind\":\"finance_group_history\",\"group\":-1}",null,false,null);
   }

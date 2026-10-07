@@ -27,7 +27,7 @@ class FinanceServiceTest {
         run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
         run(SettlementCommand.FinishTraining("t",s.training(recipient,"t").version))
     }
-    @Test fun `group payment history is admin scoped paginated and includes every status`() {
+    @Test fun `group payment history is member scoped paginated and includes every status`() {
         setup()
         val admin=Access(-1,12)
         run(SettlementCommand.SetAdministrator(12,true),Access(-1,1,true))
@@ -47,10 +47,10 @@ class FinanceServiceTest {
         assertTrue(all.all { it.groupId==-1L });assertEquals("cancelled",all.last().id)
         assertEquals(0,s.financePayments(admin).total)
         assertEquals(13,s.financePayments(Access(-1,1,true),allGroup=true).total)
-        assertFailsWith<AccountingException> { s.financePayments(payer,allGroup=true) }
-        assertFailsWith<AccountingException> { s.financePayments(Access(-2,12),allGroup=true) }
+        assertEquals(13,s.financePayments(payer,allGroup=true).total)
+        assertEquals(1,s.financePayments(Access(-2,12),allGroup=true).total)
         run(SettlementCommand.SetAdministrator(12,false),Access(-1,1,true))
-        assertFailsWith<AccountingException> { s.financePayments(admin,page=1,allGroup=true) }
+        assertEquals(13,s.financePayments(admin,page=1,allGroup=true).total)
         s.rememberMembership(-1,1,false)
         assertFailsWith<AccountingException> { s.financePayments(Access(-1,1,true),allGroup=true) }
         assertEquals(before,s.balances(admin))
@@ -195,12 +195,12 @@ class FinanceServiceTest {
         run(SettlementCommand.AddPlayers("open",1,(3L..12L).toList()))
         run(SettlementCommand.RecordAdminPayment("a",3,4,200),Access(-1,1,true))
         run(SettlementCommand.RecordAdminPayment("b",5,6,50),Access(-1,1,true))
-        val all=s.financeBalances(recipient).items+s.financeBalances(recipient,1).items
+        val all=s.financeBalances(recipient).items
         assertEquals(listOf(200L,150L,50L,-50L,-150L,-200L,0L,0L,0L,0L,0L,0L),all.map { it.balance })
-        assertEquals(12,s.financeBalances(recipient).total);assertEquals(10,s.financeBalances(recipient).items.size)
-        assertEquals(2,s.financeBalances(recipient,1).items.size)
+        assertEquals(12,s.financeBalances(recipient).total);assertEquals(12,s.financeBalances(recipient).items.size)
+        assertEquals(12,s.financeBalances(recipient,1).items.size)
         assertEquals(s.financeBalances(recipient,1),s.financeBalances(recipient,999))
-        assertTrue(s.financeBalances(Access(-2,1)).items.isEmpty())
+        assertEquals(12,s.financeBalances(Access(-2,1)).items.size)
     }
 
     @Test fun `arbitrary pending overflow rolls back payment and history`() {
