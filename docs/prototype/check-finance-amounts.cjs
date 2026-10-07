@@ -120,3 +120,14 @@ vm.runInContext(`
 assert.ok(!script.includes("go('amount')"),'No separate manual-entry screen');
 assert.ok(!script.includes('amountEntryButtons'),'No duplicate manual-entry keyboard');
 console.log('Finance checks passed: current-card input, amount controls, sender cancellation and admin edits/cancellation with audit.');
+
+const notices=vm.runInNewContext(`
+ const state={actor:1},name=id=>'Участник '+id,money=n=>n+' ₽',esc=s=>String(s),key=(label,action,value)=>'<button data-style="" data-action="'+action+'" data-value="'+value+'">'+label+'</button>';
+ ${between('function hasPaymentNotice(', 'function receiveButton(')}
+ const p={id:5,from:2,to:1,amount:600,status:'PENDING',notice:true,time:Date.now()};
+ [paymentNotice(p),paymentNotice({...p,to:3}),paymentNotice({...p,notice:false}),paymentNotice({...p,status:'COMPLETED'}),paymentNotice({...p,status:'CANCELLED'}),paymentNotice({...p,time:Date.now()-12*3600000})]
+`);
+assert.ok(notices[0].includes('Подтвердить получение'));
+assert.ok(notices[0].includes('600 ₽'));
+assert.ok(notices[0].includes('data-action="notice-open"'));
+for(const markup of notices.slice(1))assert.equal(markup,'','No stale, чужое, confirmed, cancelled or expired notification');

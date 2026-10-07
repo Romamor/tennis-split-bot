@@ -446,8 +446,10 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }
         // Validate the whole batch before writing any ledger rows. The transaction also covers the edited records.
         if(entries.isNotEmpty()) applyEntries(database.balances(c, a.groupId).mapKeys { ParticipantId(it.key.toString()) }, entries)
+        val paymentNotice=command is SettlementCommand.SendPayment || command is SettlementCommand.SendOtherPayment ||
+            command is SettlementCommand.ReceivePayment || command is SettlementCommand.EditPaymentAmount || command is SettlementCommand.CancelPayment
         sqlUpdate(c, """INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,transfer_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, (when { command is SettlementCommand.CancelPayment && admin(c,a)->"AdminCancelPayment";command is SettlementCommand.EditPaymentAmount && !admin(c,a)->"EditPendingPaymentAmount";else->command.javaClass.simpleName }), trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", a.groupId, requestId, a.userId, (when { command is SettlementCommand.CancelPayment && admin(c,a)->"AdminCancelPayment";command is SettlementCommand.EditPaymentAmount && !admin(c,a)->"EditPendingPaymentAmount";else->command.javaClass.simpleName }), trainingId, transferId, payload, before, after, version, clock.instant().toString(), trainingId != null || paymentNotice)
         val actionId = sqlQuery(c, "SELECT last_insert_rowid()") { it.getLong(1) }.single()
         entries.forEachIndexed { index, entry ->
             sqlUpdate(c, "INSERT INTO balance_entries(action_id,group_id,entry_index,user_id,amount) VALUES(?,?,?,?,?)", actionId, a.groupId, index, entry.participant.value.toLong(), entry.amount)

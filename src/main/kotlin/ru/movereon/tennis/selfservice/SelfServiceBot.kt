@@ -20,9 +20,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val pollWorkflow=PollWorkflow(polls,state,api)
     val screens = Screens(service, state, requireNotNull(identity.username))
     private val paymentInput=PaymentInput(service,state)
+    private val paymentNotifications=PaymentNotifications(service,state,clock) { key,group,user,out ->
+        sendOrdinary(key,group,user,user,out,key,recreateMissing=state.delivery(key)?.message==null)
+    }
     private var lastCleanup = Long.MIN_VALUE
     private val cardRetries=object:LinkedHashMap<Pair<Long,String>,Long>() {
         override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Pair<Long,String>,Long>?)=size>256
+    }
+    private val noticeDeletionRetries=object:LinkedHashMap<String,Long>() {
+        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<String,Long>?)=size>256
     }
     private val navigationMembership=NavigationMembershipCache(clock)
     private val checkedMembership = mutableMapOf<Pair<Long,Long>, Access>()
@@ -258,13 +264,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val chat = message.chat.id
         val savedForm = state.form(user.id, chat)
         var action: ScreenAction
+        var openedNotice=false
         if (callback != null) {
-            if(chat>0 && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
+            val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
+            val button = token?.let(state::button)
+            val incomingNotice=chat==user.id && button?.owner==user.id && button.scope.startsWith("payment-notice:") && state.delivery(button.scope)?.status!="BLOCKED"
+            if(chat>0 && !incomingNotice && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
                 state.retirePrivateMenu(user.id,chat,message.id)
                 retirePrivateMenus(user.id)
             }
-            val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
-            val button = token?.let(state::button)
             if (button == null) {
                 if (chat<0 && message.ephemeralId != null && message.from?.id == identity.id &&
                     (message.receiver==null || message.receiver.id==user.id))
@@ -284,6 +292,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
             }
             action = button.action
+            if(incomingNotice) {
+                state.observePaymentNotice(button.scope,user.id,message.id)
+                openedNotice=(state.delivery("personal:${user.id}:$chat")?.message ?: 0L)<(state.lastPaymentNoticeMessage(user.id) ?: message.id)
+            }
             if (chat > 0 && message.from?.id == identity.id) {
                 val key = "personal:${user.id}:$chat"
                 if (button.owner == user.id && button.scope == key && state.delivery(key)?.status == "UNKNOWN")
@@ -377,7 +389,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val personalOnly = Screens.privateActions
         if (chat < 0 && action.kind in personalOnly) return EventPlan(user.id, chat, action.copy(kind = "private_link"), callback = callback?.id, ephemeral = message.ephemeralId)
         fun plan(screen: ScreenAction = action, command: SettlementCommand? = null, form: InputForm? = null) =
-            EventPlan(user.id, chat, screen, command, form, callback?.id, message.ephemeralId)
+            EventPlan(user.id, chat, screen, command, form, callback?.id, message.ephemeralId,
+                newPrivateMessage=openedNotice,previousPrivateMessage=if(openedNotice) state.delivery("personal:${user.id}:$chat")?.message else null)
         fun today() = LocalDate.now(clock.withZone(ZoneId.of(if(action.group<0) service.group(action.group).timeZone else zone))).toString()
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
@@ -775,6 +788,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         plan.callback?.let { runCatching { api.answer(it) } }
     }
     private fun retirePrivateMenus(user:Long?=null) {
+        removePaymentNotices(user)
         state.retiredPrivateMenus(user).forEach { old ->
             try {
                 try { api.delete(old.chat,requireNotNull(old.message)) }
@@ -790,6 +804,27 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             } catch(f:TelegramFailure) {
                 if(f.kind==FailureKind.MESSAGE_MISSING || f.kind==FailureKind.NOT_MODIFIED) state.forgetDelivery(old.key)
                 else if(f.kind==FailureKind.REJECTED) state.deliveryResult(old.key,"BLOCKED")
+                if(f.kind==FailureKind.RETRY_LATER || f.code in setOf(401,409)) throw f
+            }
+        }
+    }
+    private fun removePaymentNotices(user:Long?=null) {
+        state.pendingNoticeRemovals().filter { (user==null || it.user==user) && (user!=null || (noticeDeletionRetries[it.key] ?: 0)<=clock.millis()) }.take(2).forEach { old ->
+            try {
+                try { api.delete(old.chat,requireNotNull(old.message)) }
+                catch(f:TelegramFailure) {
+                    if(f.kind==FailureKind.MESSAGE_MISSING) { state.noticeRemoved(old);return@forEach }
+                    if(f.kind!=FailureKind.REJECTED || f.code!=400) throw f
+                    val text="Уведомление закрыто. Актуальные переводы — в «Мои финансы»."
+                    api.editRich(old.chat,requireNotNull(old.message),text,"<p>$text</p>",TgKeyboard(emptyList()))
+                }
+                state.noticeRemoved(old);noticeDeletionRetries.remove(old.key)
+            } catch(f:TelegramFailure) {
+                if(f.kind in setOf(FailureKind.MESSAGE_MISSING,FailureKind.NOT_MODIFIED)) state.noticeRemoved(old)
+                else {
+                    noticeDeletionRetries[old.key]=clock.millis()+(f.retryAfter ?: 60).coerceIn(1,900)*1000L
+                    if(f.kind==FailureKind.REJECTED) state.deliveryResult(old.key,"BLOCKED")
+                }
                 if(f.kind==FailureKind.RETRY_LATER || f.code in setOf(401,409)) throw f
             }
         }
@@ -880,6 +915,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         refreshPrivatePollViews()
         state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
         pinCards()
+        paymentNotifications.maintain()
+        removePaymentNotices()
     }
     private fun privatePollRevision(screen:ScreenAction):String {
         val p=polls.get(screen.group,screen.id)
@@ -977,6 +1014,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     fun nextPollTimeout(maximum:Int):Int {
         if(hasClosingPolls()) return 0
         var wait=state.panelRefreshDelay(maximum)
+        if(state.hasPendingPaymentNotices()) wait=minOf(wait,1)
         state.pendingCards().forEach { (group,training,_) ->
             if(canRefreshCard(group,training)) {
                 val due=cardRetries[group to training] ?: 0

@@ -121,7 +121,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         if(f.adminPayment && !service.isAdmin(a)) { row("💰 К моим финансам",act("payment_cancel"));return structured("Права администратора изменились.\nЗакрой ввод перевода.") }
         when(f.kind) {
             "payment_from","payment_to" -> {
-                val p=service.financeBalances(a,f.page,exclude=if(f.kind=="payment_to") f.paymentFrom else null)
+                val p=service.financeBalances(a,f.page,playedOnly=true)
                 pages(p.index,p.pages,act("payment_page"));nav()
                 peopleTable(this,if(f.kind=="payment_from") "От кого" else "Кому\nОт кого: ${person(f.paymentFrom)}",p.items,if(f.kind=="payment_to") f.paymentFrom else 0) { id -> act("payment_pick").copy(user=id) }
             }

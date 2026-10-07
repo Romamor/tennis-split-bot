@@ -8,6 +8,7 @@
 #tennis-finance-proposal .fp-stable-keys .fp-row{height:48px}
 #tennis-finance-proposal .fp-stable-keys button{height:48px;min-height:48px;white-space:nowrap}
 #tennis-finance-proposal .fp-keys button[data-style="primary"]{background:light-dark(#1976c9,#285f91);color:#fff}#tennis-finance-proposal .fp-keys button[data-style="success"]{background:light-dark(#238548,#398c55);color:#fff}#tennis-finance-proposal .fp-keys button[data-style="danger"]{background:light-dark(#bd3944,#97404a);color:#fff}
+#tennis-finance-proposal .fp-notice{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--fp-line)}#tennis-finance-proposal .fp-notice button{width:100%}#tennis-finance-proposal .fp-notification{margin-top:18px}
 </style>
 <style>
 #tennis-finance-proposal .fp-composer{display:flex;gap:8px;align-items:center;padding:8px;margin-top:28px;border-radius:12px;background:var(--fp-surface)}
@@ -39,12 +40,14 @@
 const root=document.getElementById('tennis-finance-proposal'),screen=root.querySelector('#fp-screen');
 const names=['Алексей','Борис','Вера','Глеб','Денис','Елена','Ирина','Кирилл','Лена','Максим','Нина','Ольга','Павел','Рита','Сергей','Татьяна','Фёдор','Юлия','Яна','Антон','Вадим','Зоя'];
 const groups=[{id:1,title:'Теннис по субботам',members:names.map((_,i)=>i+1),admins:[2,3],balances:{1:-323,2:923,3:-150,4:650,5:-700,6:400,7:-450,8:200,9:-250,10:100,11:-400},played:Array.from({length:20},(_,i)=>i+1),payments:[]},{id:2,title:'Вечерний теннис',members:[1,2,3,4,5,6],admins:[3],balances:{1:200,2:-200},played:[1,2,4],payments:[]}];
-let sequence=0;const state={actor:1,group:1,view:'finance',page:0,draft:null,selected:null,error:'',historyScope:'mine'};
+let sequence=0;const state={actor:1,group:1,view:'finance',page:0,draft:null,selected:null,error:'',historyScope:'mine',noticeOpened:false};
 // Synthetic transfers between other participants make the administrator's history visible.
 for(let i=0;i<12;i++){
  const from=4+i%8,to=4+(i+3)%8;
  groups[0].payments.push({id:++sequence,from,to,amount:50+(i%4)*25,status:i%4===0?'PENDING':'COMPLETED',mode:'personal',author:from,time:Date.UTC(2026,9,6,12)-i*86400000});
 }
+// One synthetic incoming transfer makes the approved notification visible immediately.
+groups[0].payments.push({id:++sequence,from:2,to:1,amount:600,status:'PENDING',mode:'personal',author:2,time:Date.now(),notice:true});
 const peoplePageSize=15;
 const g=()=>groups.find(x=>x.id===state.group),admin=()=>g().admins.includes(state.actor),name=id=>names[id-1],money=n=>Math.abs(n).toLocaleString('ru-RU')+' ₽',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function decorateButton(markup){
@@ -191,6 +194,11 @@ function historyPayments(scope){
 function historyTab(label,scope){
  return key(label,'history-scope',scope).replace('data-style=""','data-style="'+(state.historyScope===scope?'primary':'')+'"').replace('type="button"','type="button" aria-pressed="'+(state.historyScope===scope)+'"');
 }
+function hasPaymentNotice(p){return p&&p.to===state.actor&&p.notice&&p.status==='PENDING'&&Date.now()-p.time<12*3600000}
+function paymentNotice(p){
+ if(!hasPaymentNotice(p))return '';
+ return '<div class="fp-notice"><h2>Новый перевод</h2><p>'+esc(name(p.from))+' отметил перевод тебе: <b>'+money(p.amount)+'</b>.<br>Подтверди получение, если деньги пришли.</p>'+key('📥 Подтвердить получение','notice-open',p.id).replace('data-style=""','data-style="primary"')+'</div>';
+}
 function receiveButton(count){return key('Принять платёж','nav','receive',count===0).replace('data-style=""','data-style="'+(count>0?'success':'')+'"')}
 const pendingIncoming=()=>g().payments.filter(x=>x.to===state.actor&&x.status==='PENDING');
 function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';root.querySelector('#fp-context').textContent='Личный чат · '+g().title;
@@ -199,7 +207,7 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
  else if(v==='groups'){body='<h2>Выбери группу</h2>';buttons=groups.map(x=>row(key(x.title,'group',x.id)));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='menu'){body='<h2>Что хочешь сделать?</h2>';buttons=[row(key('Мои финансы','nav','groups'))]}
  else if(v==='from'||v==='to'){
-  let b=totals(),list=byBalance(g().members.filter(id=>v==='from'||id!==d.from),b),chunk=pageOf(list,peoplePageSize);
+  let b=totals(),list=byBalance(g().members.filter(id=>g().played.includes(id)),b),chunk=pageOf(list,peoplePageSize);
   body='<h2>'+(v==='from'?'От кого перевод':'Кому перевод')+'</h2>';
   if(v==='to')body+=`<p class="fp-small">От кого: ${esc(name(d.from))}</p>`;
   body+=v==='from'?'<p class="fp-small">Нажми на имя для профиля, на баланс — чтобы выбрать отправителя.</p>':peopleHint();
@@ -278,9 +286,12 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
   body='<h2>Перевод отменён</h2>'+detail(p)+'<p>Запись сохранена в истории.</p>';
   buttons=[row(key('К моим финансам','nav','finance'))];
  }
- screen.innerHTML=`<div class="fp-message">${body}${state.error&&v!=='review'?`<p class="fp-warning" role="alert">${esc(state.error)}</p>`:''}</div><div class="fp-keys${v==='review'?' fp-stable-keys':''}">${buttons.join('')}</div>${composer}`;
+ const incomingNotice=g().payments.filter(hasPaymentNotice).slice(-1)[0];
+ const menuMarkup=`<div class="fp-message">${body}${state.error&&v!=='review'?`<p class="fp-warning" role="alert">${esc(state.error)}</p>`:''}</div><div class="fp-keys${v==='review'?' fp-stable-keys':''}">${buttons.join('')}</div>${composer}`;
+ const noticeMarkup=incomingNotice?'<div class="fp-message fp-notification">'+paymentNotice(incomingNotice)+'</div>':'';
+ screen.innerHTML=state.noticeOpened?noticeMarkup+menuMarkup:menuMarkup+noticeMarkup;
 }
-function save(){let d=state.draft;if(d.mode==='admin'&&!admin())throw Error('Запись доступна администратору этой группы');if(d.mode!=='admin'&&d.from!==state.actor)throw Error('Можно записать только свою отправку');if(d.from===d.to||!g().members.includes(d.to)||!g().members.includes(d.from))throw Error('Выбери двух разных участников этой группы');if(!Number.isSafeInteger(d.amount)||d.amount<=0)throw Error('Укажи положительную сумму в целых рублях');let p={...d,id:++sequence,status:d.mode==='admin'?'COMPLETED':'PENDING',author:state.actor,time:Date.now()};g().payments.push(p);state.selected=p.id;state.draft=null;go('saved')}
+function save(){let d=state.draft;if(d.mode==='admin'&&!admin())throw Error('Запись доступна администратору этой группы');if(d.mode!=='admin'&&d.from!==state.actor)throw Error('Можно записать только свою отправку');if(d.from===d.to||!g().members.includes(d.to)||!g().members.includes(d.from))throw Error('Выбери двух разных участников этой группы');if(!Number.isSafeInteger(d.amount)||d.amount<=0)throw Error('Укажи положительную сумму в целых рублях');let p={...d,id:++sequence,status:d.mode==='admin'?'COMPLETED':'PENDING',author:state.actor,time:Date.now(),notice:d.mode!=='admin'};g().payments.push(p);state.selected=p.id;state.draft=null;go('saved')}
 root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;if(el.tagName==='A')e.preventDefault();let a=el.dataset.action,v=el.dataset.value;state.error='';try{
  if(a==='amount-next')readAmount();
  else if(a==='nav'){state.draft=null;if(v==='history')state.historyScope='mine';go(v)}
@@ -337,6 +348,7 @@ root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(
  else if(a==='save'){if(state.draft.mode!=='admin'&&duplicate())go('duplicate');else save()}
  else if(a==='save-duplicate')save();
  else if(a==='suggestion'){const x=available().find(x=>x.to===+v);if(!x)throw Error('Перевод больше недоступен');state.draft={...x,amount:x.amount,calculatedAmount:x.amount,roundingAvailable:true,mode:'personal',source:'suggestion',sendPage:state.page};go('review')}
+ else if(a==='notice-open'){const p=g().payments.find(x=>x.id===+v);if(!p||p.to!==state.actor||p.status!=='PENDING')throw Error('Перевод недоступен для подтверждения');state.noticeOpened=true;state.selected=p.id;go('receive-review')}
  else if(a==='receive'){state.selected=+v;go('receive-review')}
  else if(a==='accept'){const p=g().payments.find(x=>x.id===state.selected);if(p.to!==state.actor||p.status!=='PENDING')throw Error('Перевод недоступен для подтверждения');p.status='COMPLETED';go('received')}
  else if(a==='edit-payment-amount'){
@@ -378,6 +390,10 @@ root.addEventListener('input',e=>{if(e.target.id==='fp-amount'){
  prompt.textContent='Напиши сумму в рублях.';prompt.classList.remove('fp-invisible');prompt.setAttribute('aria-hidden','false');
 }});
 root.addEventListener('keydown',e=>{if(e.target.id==='fp-amount'&&e.key==='Enter'){e.preventDefault();readAmount()}});
+setInterval(()=>{
+ const expired=g().payments.filter(p=>p.notice&&p.to===state.actor&&p.status==='PENDING'&&Date.now()-p.time>=12*3600000);
+ if(expired.length){expired.forEach(p=>p.notice=false);render()}
+},60000);
 root.querySelector('#fp-role').addEventListener('change',e=>{state.actor=+e.target.value;state.draft=null;go('finance')});render();
 })();
 </script>

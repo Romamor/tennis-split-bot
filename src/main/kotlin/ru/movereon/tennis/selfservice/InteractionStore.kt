@@ -35,6 +35,7 @@ import java.util.UUID
 @Serializable data class PrivatePollView(val message:Long,val screen:ScreenAction,val revision:String)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
+internal data class PaymentNoticeWork(val group:Long,val transfer:String,val through:Long,val created:Boolean)
 
 class InteractionStore(val database: Database, private val clock: Clock = Clock.systemUTC()) {
     val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
@@ -165,7 +166,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('CLOSED','CANCELLED'))""")
     }
     fun pendingUnpins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL ORDER BY status='RETRY' DESC LIMIT 100") {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,it.getString("status"))
         }
@@ -196,7 +197,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         }
     }
     fun button(token: String): ButtonRecord? = database.read { c ->
-        sqlQuery(c, "SELECT * FROM bot_buttons WHERE token=? AND (active=1 OR permanent=1 OR expires_at>?)", token, clock.instant().epochSecond) {
+        sqlQuery(c, "SELECT * FROM bot_buttons WHERE token=? AND ((active=1 AND scope NOT LIKE 'payment-notice:%') OR permanent=1 OR expires_at>?)", token, clock.instant().epochSecond) {
             ButtonRecord(json.decodeFromString(it.getString("action_json")), it.getString("owner_id")?.toLong(), it.getString("scope"), it.getBoolean("permanent"))
         }.singleOrNull()
     }
@@ -267,6 +268,58 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND needs_delivery=1 AND delivered_at IS NULL GROUP BY group_id,training_id ORDER BY MAX(id) LIMIT 20""") {
             Triple(it.getLong(1), it.getString(2), it.getLong(3))
         }
+    }
+    internal fun pendingPaymentNotices():List<PaymentNoticeWork> = database.read { c ->
+        sqlQuery(c,"""SELECT group_id,transfer_id,MAX(id),MAX(kind IN ('SendPayment','SendOtherPayment'))
+            FROM actions WHERE transfer_id IS NOT NULL AND needs_delivery=1 AND delivered_at IS NULL
+            GROUP BY group_id,transfer_id ORDER BY MAX(id) LIMIT 20""") {
+            PaymentNoticeWork(it.getLong(1),it.getString(2),it.getLong(3),it.getBoolean(4))
+        }
+    }
+    internal fun hasPendingPaymentNotices()=database.read { c ->
+        sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM actions WHERE transfer_id IS NOT NULL AND needs_delivery=1 AND delivered_at IS NULL)") { it.getBoolean(1) }.single()
+    }
+    internal fun paymentNoticeDelivered(work:PaymentNoticeWork)=database.write { c ->
+        sqlUpdate(c,"UPDATE actions SET delivered_at=? WHERE group_id=? AND transfer_id=? AND id<=? AND needs_delivery=1 AND delivered_at IS NULL",
+            clock.instant().toString(),work.group,work.transfer,work.through)
+    }
+    internal fun knowsPrivateChat(user:Long)=database.read { c ->
+        sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM bot_sessions WHERE user_id=? AND chat_id=?)",user,user) { it.getBoolean(1) }.single()
+    }
+    /** Terminal source marker and deletion queue are committed together, so a restart never resends a consumed notice. */
+    internal fun removePaymentNotice(key:String,message:Long?=null)=database.write { c ->
+        val delivery=sqlQuery(c,"SELECT chat_id,user_id,message_id FROM bot_deliveries WHERE delivery_key=?",key) {
+            Triple(it.getLong(1),it.getLong(2),it.getString(3)?.toLong())
+        }.singleOrNull() ?: return@write
+        val id=message ?: delivery.third
+        if(id!=null) sqlUpdate(c,"""INSERT INTO bot_deliveries(delivery_key,chat_id,user_id,message_id,status)
+            VALUES(?,?,?,?,'RETRY') ON CONFLICT(delivery_key) DO UPDATE SET status='RETRY'""",
+            "notice-remove:${delivery.first}:$id",delivery.first,delivery.second,id)
+        sqlUpdate(c,"UPDATE bot_deliveries SET status='BLOCKED',message_id=? WHERE delivery_key=?",id,key)
+        sqlUpdate(c,"UPDATE bot_buttons SET active=0,expires_at=? WHERE scope=? AND permanent=0 AND active=1",clock.instant().epochSecond+120,key)
+    }
+    internal fun startPaymentNoticeLifetime(key:String)=database.write { c ->
+        sqlUpdate(c,"UPDATE bot_buttons SET expires_at=? WHERE scope=? AND active=1 AND permanent=0",clock.instant().epochSecond+43200,key)
+    }
+    internal fun observePaymentNotice(key:String,user:Long,message:Long)=database.write { c ->
+        sqlUpdate(c,"UPDATE bot_deliveries SET status='SENT',message_id=? WHERE delivery_key=? AND chat_id=? AND status='UNKNOWN' AND message_id IS NULL",message,key,user)
+    }
+    internal fun lastPaymentNoticeMessage(user:Long)=database.read { c ->
+        sqlQuery(c,"SELECT MAX(message_id) FROM bot_deliveries WHERE chat_id=? AND delivery_key LIKE 'payment-notice:%' AND status='SENT'",user) { it.getString(1)?.toLong() }.single()
+    }
+    internal fun expiredPaymentNotices()=database.read { c ->
+        sqlQuery(c,"""SELECT DISTINCT d.delivery_key FROM bot_deliveries d JOIN bot_buttons b ON b.scope=d.delivery_key
+            WHERE d.delivery_key LIKE 'payment-notice:%' AND d.status IN ('SENT','UNKNOWN','RETRY')
+            AND b.active=1 AND b.expires_at<=? LIMIT 20""",clock.instant().epochSecond) { it.getString(1) }
+    }
+    internal fun pendingNoticeRemovals()=database.read { c ->
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE delivery_key LIKE 'notice-remove:%' AND status IN ('RETRY','BLOCKED') AND message_id IS NOT NULL ORDER BY status='RETRY' DESC LIMIT 100") {
+            Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
+        }
+    }
+    internal fun noticeRemoved(delivery:Delivery)=database.write { c ->
+        sqlUpdate(c,"UPDATE bot_deliveries SET message_id=NULL WHERE delivery_key LIKE 'payment-notice:%' AND chat_id=? AND message_id=? AND status='BLOCKED'",delivery.chat,delivery.message)
+        sqlUpdate(c,"DELETE FROM bot_deliveries WHERE delivery_key=?",delivery.key)
     }
     fun cardDelivered(group: Long, training: String, through: Long) = database.write { c ->
         sqlUpdate(c, "UPDATE actions SET delivered_at=? WHERE group_id=? AND training_id=? AND id<=? AND needs_delivery=1 AND delivered_at IS NULL",

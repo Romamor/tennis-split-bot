@@ -65,6 +65,10 @@ class FinanceFlowTest {
         run(SettlementCommand.ChangeAttendance(id,1,AttendanceChange.SET_PAID,paid))
         run(SettlementCommand.FinishTraining(id,bot.service.training(Access(-1,1),id).version))
     }
+    private fun seedRoster(ids:List<Long> = listOf(1,2)) {
+        run(SettlementCommand.CreateTraining("roster","Без оплаты","2026-10-07","18:30"))
+        run(SettlementCommand.AddPlayers("roster",1,ids))
+    }
     @Test fun `approved main menu calculated send and receipt confirmation never double post`() {
         setup();seedBalance();open(2)
         assertEquals("Мои финансы:\n−150 ₽ — оплачено за тебя другими участниками группы",latest(2).text)
@@ -143,7 +147,7 @@ class FinanceFlowTest {
         assertFalse(rows(4).flatten().any { it.contains("Игрок") });click(4,"Дальше ›")
         assertEquals(6,Regex("<tr>").findAll(html(4)).count())
         click(4,"⬅️ Назад");click(4,"Перевести");click(4,"Записать свой перевод")
-        assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertFalse(html(4).contains("tg://user?id=4\""))
+        assertEquals(16,Regex("<tr>").findAll(html(4)).count());assertTrue(html(4).contains("tg://user?id=4\""))
         click(4,"Назад");assertTrue(latest(4).text!!.startsWith("Перевести"))
         click(4,"Записать свой перевод");inline(4,1);assertEquals(0,bot.state.form(4,4)!!.amount)
         click(4,"➕ 100 ₽");assertNotNull(latest(4).keyboard!!.rows.flatten().single { it.text=="🔢 Округлить" }.disabled)
@@ -175,7 +179,7 @@ class FinanceFlowTest {
         assertEquals(PaymentStatus.REVIEW,bot.service.transfer(Access(-1,2),"p").status)
     }
     @Test fun `duplicate confirmation stale forms and foreign group callbacks cannot create unintended transfers`() {
-        setup();open(2);own(2,1,"125");val old=latest(2);click(2,"➕ 50 ₽");click(2,"Перевод отправлен",old)
+        setup();seedRoster();open(2);own(2,1,"125");val old=latest(2);click(2,"➕ 50 ₽");click(2,"Перевод отправлен",old)
         assertTrue(alerts.last().contains("Ввод изменился"));assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
         click(2,"Перевод отправлен");click(2,"К моим финансам");own(2,1,"175");click(2,"Перевод отправлен")
         assertTrue(latest(2).text!!.contains("Это ещё один перевод"));assertEquals(1,bot.service.pendingPaymentCount(Access(-1,1)))
@@ -210,7 +214,7 @@ class FinanceFlowTest {
         }
     }
     @Test fun `typed amount stays above buttons and input cleanup retries without deleting the card`() {
-        setup();open(2);own(2,1,"267")
+        setup();seedRoster();open(2);own(2,1,"267")
         val card=latest(2);val pending=bot.state.retiredPrivateMenus(2).single { it.key.startsWith("input:") }
         assertTrue(html(2).contains("<h1>267 ₽</h1>"));assertFalse(html(2).contains("<aside>"));assertNotEquals(card.id,pending.message)
         assertFalse(fake.deleted.any { it.first==2L && it.second==pending.message })
@@ -261,14 +265,34 @@ class FinanceFlowTest {
         click(1,"К моим финансам");assertNotNull(receiveButton(1).disabled)
         assertTrue(bot.service.balances(Access(-1,1)).isNotEmpty())
     }
-    @Test fun `group balance hides chat members without a training while recipient selection remains available`() {
+    @Test fun `group balance and own recipient table have identical played participants and pages`() {
         setup();seedBalance();open(4);click(4,"Баланс группы")
         assertEquals(3,Regex("<tr>").findAll(html(4)).count())
         assertFalse(html(4).contains("tg://user?id=3\""))
         assertEquals(0,bot.service.financeBalances(Access(-2,4),playedOnly=true).total)
         assertTrue(html(4).contains("tg://user?id=1\""));assertTrue(html(4).contains("tg://user?id=2\""))
         click(4,"⬅️ Назад");click(4,"Перевести");click(4,"Записать свой перевод")
-        assertTrue(html(4).contains("tg://user?id=3\""))
+        assertFalse(html(4).contains("tg://user?id=3\""))
+        assertEquals(3,Regex("<tr>").findAll(html(4)).count())
+        assertTrue(html(4).contains("tg://user?id=1\""));assertTrue(html(4).contains("tg://user?id=2\""))
+
+        seedRoster((1L..19L).toList())
+        fun profiles()=Regex("tg://user\\?id=(\\d+)").findAll(html(2)).map { it.groupValues[1].toLong() }.distinct().toList()
+        open(2);click(2,"Баланс группы");val first=profiles()
+        val next=latest(2).keyboard!!.rows.flatten().first { bot.state.button(it.callbackData?.removePrefix("n:") ?: "")?.action?.page==1 }
+        callback(2,latest(2),requireNotNull(next.callbackData));val second=profiles()
+        assertEquals(15,first.size);assertEquals(4,second.size)
+        assertEquals(19,(first+second).distinct().size);assertFalse(20L in first+second)
+        open(2);click(2,"Перевести");click(2,"Записать свой перевод")
+        assertEquals(first,profiles())
+        assertFalse(Regex("data=\"([^\"]+)\"").findAll(html(2)).any {
+            bot.state.button(it.groupValues[1].removePrefix("n:"))?.action?.let { a->a.kind=="payment_pick" && a.user==2L }==true
+        },"Sender remains visible but cannot select themselves")
+        val recipientNext=latest(2).keyboard!!.rows.flatten().first { bot.state.button(it.callbackData?.removePrefix("n:") ?: "")?.action?.page==1 }
+        callback(2,latest(2),requireNotNull(recipientNext.callbackData));assertEquals(second,profiles())
+        open(2,"Группа 2");click(2,"Перевести");click(2,"Записать свой перевод")
+        assertEquals(0,Regex("<tr>").findAll(html(2)).count(),"Other group's players never leak into selection")
+        assertTrue(latest(2).text!!.contains("Список пуст"))
     }
     @Test fun `my training table shows only personal playing time without guests`() {
         setup();seedBalance();run(SettlementCommand.CreateTraining("guest","Гость","2026-10-07","18:30"))
