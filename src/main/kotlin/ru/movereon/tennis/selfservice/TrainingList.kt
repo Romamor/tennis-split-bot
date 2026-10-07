@@ -7,10 +7,10 @@ import ru.movereon.tennis.telegram.TgButton
 /** A compact table whose training titles open the existing card via inline callbacks. */
 internal object TrainingList {
     fun render(header:String,trainings:List<TrainingRecord>,personalUser:Long?=null,open:(TrainingRecord)->TgButton):ScreenContent {
-        fun played(t:TrainingRecord)=t.players.firstOrNull { it.userId==personalUser && it.playing }?.let { Screens.hours(t.rules.minutes(it)) } ?: "—"
+        fun played(t:TrainingRecord)=if(t.phase==TrainingPhase.CANCELLED) "" else t.players.firstOrNull { it.userId==personalUser && it.playing }?.let { Screens.hours(t.rules.minutes(it)) } ?: "—"
         val text=buildString {
             append(header)
-            trainings.forEach { append("\n${Screens.date(it.date)} · ${Screens.clean(it.title,34)} · ${Screens.phase(it.phase)}${if(personalUser!=null) " · Играл: ${played(it)}" else ""}") }
+            trainings.forEach { append("\n${Screens.date(it.date)} · ${Screens.clean(it.title,34)} · ${Screens.phase(it.phase)}${if(personalUser!=null && it.phase!=TrainingPhase.CANCELLED) " · Играл: ${played(it)}" else ""}") }
         }
         val html=buildString {
             append("<p>${TrainingCard.escape(header).replace("\n","<br>")}</p>")

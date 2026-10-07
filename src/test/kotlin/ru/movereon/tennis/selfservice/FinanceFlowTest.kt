@@ -190,5 +190,10 @@ class FinanceFlowTest {
         run(SettlementCommand.ChangeAttendance("guest",2,AttendanceChange.ADJUST_GUESTS,1))
         message(2,"/start");click(2,"Мои тренировки")
         assertTrue(html(2).contains("<th>Играл</th>"));assertTrue(html(2).contains("<td>1,5 ч</td>"));assertFalse(html(2).contains("<td>3 ч</td>"))
+        run(SettlementCommand.CancelTraining("guest",bot.service.training(Access(-1,1),"guest").version))
+        message(2,"/start");click(2,"Мои тренировки")
+        assertTrue(html(2).contains("<td></td>"));assertFalse(html(2).contains("<td>1,5 ч</td>"))
+        assertEquals(90,bot.service.training(Access(-1,2),"guest").players.single().minutes)
+
     }
 }
