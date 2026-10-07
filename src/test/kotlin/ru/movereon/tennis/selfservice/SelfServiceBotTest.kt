@@ -651,7 +651,7 @@ class SelfServiceBotTest {
         val sent=click(2,"Перевод отправлен");bot.handle(sent)
         assertEquals(mapOf(1L to 150L,2L to -150L),bot.service.balances(a))
         assertTrue(latest(2).text!!.contains("Ожидает подтверждения"))
-        open(1);click(1,"Мои финансы");click(1,"Принять платёж")
+        open(1);click(1,"Мои финансы");click(1,"Проверить поступления")
         click(1,"User 2");val received=click(1,"Да, получил");bot.handle(received)
         assertTrue(bot.service.balances(a).values.all { it==0L })
         assertEquals(1,bot.service.history(a).items.count { it.kind=="ReceivePayment" })
@@ -1112,9 +1112,9 @@ class SelfServiceBotTest {
         setup();bot.service.rememberMembership(-2,2,false);open(2)
         assertEquals(listOf("🏓 Мои тренировки","💰 Мои финансы","➕ Создать тренировку","⚙️ Настройки"),latest(2).keyboard!!.rows.flatten().map { it.text })
         click(2,"Мои финансы");click(2,"Первая")
-        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
+        assertEquals(listOf(listOf("💸 Перевести","📥 Проверить поступления"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),latest(2).keyboard!!.rows.map { row->row.map { it.text } })
         click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
-        click(2,"Назад");assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="💰 Принять платёж" }.disabled)
+        click(2,"Назад");assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="📥 Проверить поступления" }.disabled)
     }
 
     @Test fun `back warns on unsaved selection and continues or discards without writing history`() {

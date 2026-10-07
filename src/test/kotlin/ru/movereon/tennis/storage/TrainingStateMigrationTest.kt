@@ -50,6 +50,7 @@ class TrainingStateMigrationTest {
             sqlUpdate(c,"UPDATE actions SET after_json=? WHERE group_id=-1 AND kind='ChangeAttendance'",oldJson)
         }
         val old=Database(file,readOnly=true)
+        assertTrue(old.verify().contains("финансовая сверка"))
         val oldActions=old.read { sqlQuery(it,"SELECT id,after_json FROM actions ORDER BY id") { r->r.getLong(1) to r.getString(2) } }
         val oldEntries=old.read { sqlQuery(it,"SELECT action_id,entry_index,amount FROM balance_entries ORDER BY action_id,entry_index") { r->Triple(r.getLong(1),r.getInt(2),r.getLong(3)) } }
         val oldSecond=s.balances(Access(-2,1,true))

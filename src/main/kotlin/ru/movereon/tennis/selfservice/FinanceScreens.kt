@@ -22,7 +22,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         when(action.kind) {
             "finance" -> {
                 val summary=service.financeSummary(a)
-                rows+=listOf(button("💸 Перевести",next("finance_send")),control("💰 Принять платёж",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
+                rows+=listOf(button("💸 Перевести",next("finance_send")),control("📥 Проверить поступления",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
                 row("💰 Баланс группы",next("finance_balances"));row("📜 История переводов",next("finance_history"))
                 if(service.isAdmin(a)) row("📝 Записать перевод за участников",next("payment_new",option="admin"))
                 row("⬅️ Назад",ScreenAction("menu",0))
@@ -47,14 +47,16 @@ internal class FinanceScreens(private val service:SettlementService) {
                 val p=service.financePayments(a,action.page,incomingOnly=true)
                 p.items.forEach { personRow(it.from,"${person(it.from)} · ${it.amount} ₽ · ${date(it.date)}",next("finance_receive_confirm",id=it.id).copy(back=action.copy(page=p.index))) }
                 pages(p.index,p.pages);footer()
-                structured(if(p.total==0) "Нет переводов для подтверждения" else "Принять платёж")
+                structured(if(p.total==0) "Нет переводов для подтверждения" else "Проверь поступление\nВыбери перевод, который уже получил.")
             }
             "finance_receive_confirm" -> {
                 val t=service.transfer(a,action.id)
                 checkAccounting(t.to==a.userId && t.status==PaymentStatus.REVIEW,ErrorCode.INVALID_STATE,"Этот перевод недоступен для принятия")
                 rows+=listOf(control("✅ Да, получил",next("finance_receive_save",version=t.version),style="primary"))
                 row("⬅️ Назад",action.back ?: next("finance_receive"))
-                val data=details(t,service.balances(a));ScreenContent("Деньги пришли?\n"+data.text,"<h3>Деньги пришли?</h3>"+data.html)
+                val sender=account(t.from)
+                ScreenContent("Деньги пришли?\nОт: ${person(t.from)}\n${t.amount} ₽ · ${date(t.date)}",
+                    "<h3>Деньги пришли?</h3><p>От: ${TrainingCard.profileLink(t.from,person(t.from),sender.username)}<br><b>${t.amount} ₽</b> · ${date(t.date)}</p>")
             }
             "finance_received" -> { row("💰 К моим финансам",ScreenAction("finance",a.groupId));structured("Перевод учтён.\nБаланс обновлён.") }
             "finance_balances" -> {

@@ -741,7 +741,7 @@
         <mxCell id="screen-finance-button0-0" value="💸 Перевести" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0.0" y="291" width="212.5" height="43" />
         </mxCell>
-        <mxCell id="screen-finance-button0-1" value="💰 Принять платёж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-button0-1" value="📥 Проверить поступления" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="217.5" y="291" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance-button1-0" value="💰 Баланс группы" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
@@ -858,7 +858,7 @@
         <mxCell id="screen-finance_receive-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Принять платёж&lt;/div&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
+        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Проверь поступление&lt;/div&gt;&lt;p&gt;Выбери перевод, который уже получил.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive-button0-0" value="📥 Глеб · 150 ₽ · 12.09.2026" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
@@ -924,7 +924,7 @@
         <mxCell id="screen-finance_receive_confirm-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От кого: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+200 ₽&lt;/span&gt;)&lt;br&gt;Кому: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;)&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
+        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive_confirm-button0-0" value="✅ Да, получил" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
@@ -7048,7 +7048,7 @@
         <mxCell id="screen-finance-button0-0" value="💸 Перевести" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0.0" y="291" width="212.5" height="43" />
         </mxCell>
-        <mxCell id="screen-finance-button0-1" value="💰 Принять платёж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-button0-1" value="📥 Проверить поступления" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="217.5" y="291" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance-button1-0" value="💰 Баланс группы" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
@@ -7168,7 +7168,7 @@
         <mxCell id="screen-finance_receive-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Принять платёж&lt;/div&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
+        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Проверь поступление&lt;/div&gt;&lt;p&gt;Выбери перевод, который уже получил.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive-button0-0" value="📥 Глеб · 150 ₽ · 12.09.2026" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
@@ -7234,7 +7234,7 @@
         <mxCell id="screen-finance_receive_confirm-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От кого: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+200 ₽&lt;/span&gt;)&lt;br&gt;Кому: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;)&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
+        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive_confirm-button0-0" value="✅ Да, получил" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
@@ -14820,7 +14820,7 @@
         <mxCell id="screen-finance-button0-0" value="💸 Перевести" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="0.0" y="291" width="212.5" height="43" />
         </mxCell>
-        <mxCell id="screen-finance-button0-1" value="💰 Принять платёж" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
+        <mxCell id="screen-finance-button0-1" value="📥 Проверить поступления" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
           <mxGeometry as="geometry" x="217.5" y="291" width="212.5" height="43" />
         </mxCell>
         <mxCell id="screen-finance-button1-0" value="💰 Баланс группы" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance">
@@ -14940,7 +14940,7 @@
         <mxCell id="screen-finance_receive-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Принять платёж&lt;/div&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
+        <mxCell id="screen-finance_receive-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Проверь поступление&lt;/div&gt;&lt;p&gt;Выбери перевод, который уже получил.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive-button0-0" value="📥 Глеб · 150 ₽ · 12.09.2026" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive">
@@ -15006,7 +15006,7 @@
         <mxCell id="screen-finance_receive_confirm-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
         </mxCell>
-        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От кого: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+200 ₽&lt;/span&gt;)&lt;br&gt;Кому: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt; (&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;)&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
+        <mxCell id="screen-finance_receive_confirm-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Деньги пришли?&lt;/div&gt;&lt;p&gt;От: &lt;span style=&quot;color:#a6d8fc&quot;&gt;Глеб&lt;/span&gt;&lt;br&gt;&lt;b&gt;150 ₽&lt;/b&gt; · 12.09.2026&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">
           <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
         </mxCell>
         <mxCell id="screen-finance_receive_confirm-button0-0" value="✅ Да, получил" style="rounded=1;arcSize=10;fillColor=#2479c4;strokeColor=#2479c4;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-finance_receive_confirm">

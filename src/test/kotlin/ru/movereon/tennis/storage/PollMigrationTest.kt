@@ -20,7 +20,8 @@ class PollMigrationTest {
             stmt.execute("INSERT INTO users(id,first_name,training_time) VALUES(1,'Игрок','19:30'),(2,'Второй','18:30')")
             stmt.execute("INSERT INTO groups VALUES(-1,'Группа','Europe/Moscow')")
             stmt.execute("INSERT INTO group_users(group_id,user_id,present) VALUES(-1,1,1),(-1,2,1)")
-            stmt.execute("INSERT INTO actions(group_id,request_id,actor_id,kind,payload_json,after_json,result_version,occurred_at,needs_delivery) VALUES(-1,'old',1,'fixture','{}','{}',1,'2026-09-13T10:00:00Z',0)")
+            stmt.execute("INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,status,version,created_by,created_at) VALUES(-1,'old',1,2,150,'2026-09-13','ACTIVE',1,1,'2026-09-13T10:00:00Z')")
+            stmt.execute("INSERT INTO actions(group_id,request_id,actor_id,kind,transfer_id,payload_json,after_json,result_version,occurred_at,needs_delivery) VALUES(-1,'old',1,'RecordAdminPayment','old','{}','{}',1,'2026-09-13T10:00:00Z',0)")
             stmt.execute("INSERT INTO balance_entries VALUES(1,-1,0,1,150),(1,-1,1,2,-150)")
         } }
         repeat(2) {

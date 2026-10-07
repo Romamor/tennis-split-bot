@@ -55,7 +55,7 @@ class FinanceFlowTest {
         callback(u,latest(u),tokens[index])
     }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"Мои финансы");click(u,group) }
-    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.endsWith("Принять платёж") }) }
+    private fun receive(u:Long) { click(u,rows(u).flatten().single { it.endsWith("Проверить поступления") }) }
     private fun own(u:Long,to:Long,amount:String) {
         click(u,"Перевести");click(u,"Записать свой перевод");inline(u,to);click(u,"Ввести сумму сообщением");message(u,amount)
     }
@@ -73,7 +73,7 @@ class FinanceFlowTest {
         val balanceBefore=bot.service.balances(Access(-1,2));val current=latest(2).id
         inline(2,0);assertEquals(current,latest(2).id);assertEquals(balanceBefore,bot.service.balances(Access(-1,2)))
 
-        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
+        assertEquals(listOf(listOf("💸 Перевести","📥 Проверить поступления"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
         click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
         assertTrue(html(2).startsWith("<h3>Отправка перевода</h3>"));assertTrue(html(2).contains("<aside><b>150 ₽</b></aside>"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
         assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Предлагается ботом 150 ₽" }.disabled)
@@ -83,8 +83,13 @@ class FinanceFlowTest {
         open(2);click(2,"Перевести");assertTrue(latest(2).text!!.contains("готовых переводов нет"))
         assertTrue(rows(2).flatten().contains("✍️ Записать свой перевод"))
         open(1);assertTrue(html(1).contains("type=\"callback_data\" style=\"success\""))
-        receive(1);click(1,"Игрок 2 · 150 ₽ · 07.10.2026")
-        assertTrue(latest(1).text!!.contains("Игрок 2 (−150 ₽)"));assertEquals("primary",latest(1).keyboard!!.rows.first().single().style)
+        receive(1)
+        assertTrue(latest(1).text!!.startsWith("Проверь поступление"))
+        click(1,"Игрок 2 · 150 ₽ · 07.10.2026")
+        assertEquals("Деньги пришли?\nОт: Игрок 2\n150 ₽ · 07.10.2026",latest(1).text)
+        assertTrue(html(1).contains(TrainingCard.profileLink(2,"Игрок 2")))
+        assertFalse(html(1).contains("Кому:"));assertFalse(html(1).contains("−150"))
+        assertEquals("primary",latest(1).keyboard!!.rows.first().single().style)
         val accepted=click(1,"Да, получил");bot.handle(accepted)
         assertTrue(bot.service.balances(Access(-1,1)).values.all { it==0L })
         assertEquals(1,bot.service.financePayments(Access(-1,1)).total)
@@ -244,13 +249,13 @@ class FinanceFlowTest {
     }
     @Test fun `receive button has no counter is disabled when empty and green when receipts wait`() {
         setup();open(1)
-        fun receiveButton(u:Long)=latest(u).keyboard!!.rows.flatten().single { it.text=="💰 Принять платёж" }
+        fun receiveButton(u:Long)=latest(u).keyboard!!.rows.flatten().single { it.text=="📥 Проверить поступления" }
         val empty=receiveButton(1)
         assertNotNull(empty.disabled);assertNull(empty.callbackData);assertNull(empty.style)
         run(SettlementCommand.SendOtherPayment("incoming",1,125),Access(-1,2))
         open(1);val waiting=receiveButton(1)
         assertNull(waiting.disabled);assertNotNull(waiting.callbackData);assertEquals("success",waiting.style)
-        assertEquals("💰 Принять платёж",waiting.text)
+        assertEquals("📥 Проверить поступления",waiting.text)
         open(1,"Группа 2");assertNotNull(receiveButton(1).disabled)
         open(1);receive(1);click(1,"Игрок 2 · 125 ₽ · 07.10.2026");click(1,"Да, получил")
         click(1,"К моим финансам");assertNotNull(receiveButton(1).disabled)

@@ -18,7 +18,7 @@ assert.ok(!receiveMarkup[0].includes('data-style="success"'));
 for(const markup of receiveMarkup.slice(1)) {
  assert.ok(!markup.includes(' disabled'));
  assert.ok(markup.includes('data-style="success"'));
- assert.ok(markup.includes('Принять платёж</button>'));
+ assert.ok(markup.includes('Проверить поступления</button>'));
 }
 const context=vm.createContext({assert});
 vm.runInContext(`

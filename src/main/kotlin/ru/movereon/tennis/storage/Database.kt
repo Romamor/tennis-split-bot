@@ -100,12 +100,10 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
     fun verify():String = read { c ->
         check(sqlQuery(c,"PRAGMA integrity_check") { it.getString(1) }==listOf("ok")) { "Повреждена SQLite" }
         check(sqlQuery(c,"PRAGMA foreign_key_check") { it.getString(1) }.isEmpty()) { "Нарушены связи" }
-        val totals=mutableMapOf<Long,BigInteger>()
-        sqlEach(c,"SELECT action_id,amount FROM balance_entries") { r -> val id=r.getLong(1);totals[id]=(totals[id]?:BigInteger.ZERO)+r.getLong(2).toBigInteger() }
-        check(totals.values.all { it==BigInteger.ZERO }) { "Несбалансированная операция" }
+        val reconciliation=verifyFinancialLedger(c)
         val groups=sqlQuery(c,"SELECT id FROM groups") { it.getLong(1) }
         groups.forEach { validateBalances(balances(c,it).mapKeys { (id,_)->ParticipantId(id.toString()) }) }
-        "Схема ${sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single()} (новая модель): ${groups.size} групп, ${totals.size} денежных операций; целостность в порядке"
+        "Схема ${sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single()} (новая модель): ${groups.size} групп, ${reconciliation.operations} денежных операций; целостность в порядке; финансовая сверка: ${reconciliation.trainings} тренировок, ${reconciliation.transfers} переводов"
     }
     /** SQLite Online Backup includes committed WAL pages without migrating or changing the source. */
     fun backup(destination:Path):Path {
@@ -121,7 +119,11 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             Database(temporary,readOnly=true).verify()
             Files.move(temporary,target)
             return target
-        } finally { Files.deleteIfExists(temporary) }
+        } finally {
+            Files.deleteIfExists(temporary)
+            Files.deleteIfExists(Path.of("$temporary-wal"))
+            Files.deleteIfExists(Path.of("$temporary-shm"))
+        }
     }
     companion object { const val APPLICATION_ID=0x54534e32 }
 }
