@@ -788,7 +788,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         plan.callback?.let { runCatching { api.answer(it) } }
     }
     private fun retirePrivateMenus(user:Long?=null) {
-        removePaymentNotices(user)
         state.retiredPrivateMenus(user).forEach { old ->
             try {
                 try { api.delete(old.chat,requireNotNull(old.message)) }
@@ -808,8 +807,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    private fun removePaymentNotices(user:Long?=null) {
-        state.pendingNoticeRemovals().filter { (user==null || it.user==user) && (user!=null || (noticeDeletionRetries[it.key] ?: 0)<=clock.millis()) }.take(2).forEach { old ->
+    private fun removePaymentNotices() {
+        state.pendingNoticeRemovals().filter { (noticeDeletionRetries[it.key] ?: 0)<=clock.millis() }.take(2).forEach { old ->
             try {
                 try { api.delete(old.chat,requireNotNull(old.message)) }
                 catch(f:TelegramFailure) {

@@ -21,7 +21,14 @@ class PaymentNotificationsTest {
     private var sendFailure:TelegramFailure?=null
     private var editFailure:TelegramFailure?=null
     private var attempts=0
+    private var watchedNotice:Long?=null
+    private var handling=false
+    private val notificationDeletionPhases=mutableListOf<Boolean>()
     private val api=object:TelegramApi by fake {
+        override fun delete(chatId:Long,messageId:Long) {
+            if(chatId==2L && messageId==watchedNotice) notificationDeletionPhases+=handling
+            fake.delete(chatId,messageId)
+        }
         override fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?):TgMessage {
             if(text.startsWith("Новый перевод")) { attempts++;sendFailure?.let { throw it } }
             return fake.sendRich(chatId,text,html,keyboard,photoId)
@@ -55,6 +62,24 @@ class PaymentNotificationsTest {
         bot.handle(TgUpdate(sequence++,callback=TgCallback("click-${sequence++}",TgUser(user,firstName=names.getValue(user)),message,button.callbackData)))
     }
     private fun mainMenu()=fake.messages.getValue(2L to bot.state.delivery("personal:2:2")!!.message!!)
+
+    @Test fun `queued notice deletion never runs inside a button or message handler`() {
+        setup();send();bot.maintain();val notification=notice();watchedNotice=notification.id
+        run(SettlementCommand.CancelPayment("p",1))
+        bot.state.removePaymentNotice("payment-notice:-1:p")
+        handling=true
+        try {
+            bot.handle(TgUpdate(sequence++,TgMessage(sequence++,TgChat(2,"private"),TgUser(2,firstName="Лена"),"/start")))
+        } finally { handling=false }
+        assertTrue(notificationDeletionPhases.isEmpty(),"Slow notice deletion must not delay foreground processing")
+        assertTrue(bot.state.pendingNoticeRemovals().isNotEmpty())
+        assertTrue(fake.messages.containsKey(2L to notification.id))
+        bot.maintain()
+        assertEquals(listOf(false),notificationDeletionPhases)
+        assertTrue(bot.state.pendingNoticeRemovals().isEmpty())
+        assertFalse(fake.messages.containsKey(2L to notification.id))
+        assertEquals(PaymentStatus.CANCELLED,bot.service.transfer(Access(-1,2),"p").status)
+    }
 
     @Test fun `one separate recipient notice does not replace menu or draft and opening never confirms money`() {
         setup();val menu=mainMenu();val form=InputForm("title",0,title="Черновик")
