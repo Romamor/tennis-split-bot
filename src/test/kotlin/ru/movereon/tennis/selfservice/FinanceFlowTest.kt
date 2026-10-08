@@ -77,7 +77,7 @@ class FinanceFlowTest {
         val balanceBefore=bot.service.balances(Access(-1,2));val current=latest(2).id
         inline(2,0);assertEquals(current,latest(2).id);assertEquals(balanceBefore,bot.service.balances(Access(-1,2)))
 
-        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("💰 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
+        assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("📊 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
         click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
         assertTrue(html(2).startsWith("<h3>Отправка перевода</h3>"));assertTrue(html(2).contains("<h1>150 ₽</h1>"));assertTrue(latest(2).text!!.contains("Игрок 1 (+150 ₽)"))
         assertNotNull(latest(2).keyboard!!.rows.flatten().single { it.text=="🧮 Предлагается ботом 150 ₽" }.disabled)
@@ -251,18 +251,31 @@ class FinanceFlowTest {
         assertFalse(rows(2).flatten().any { it.contains("Изменить сумму") })
         assertFalse(rows(2).flatten().any { it.contains("Отменить перевод") })
     }
-    @Test fun `receive button has no counter is disabled when empty and green when receipts wait`() {
+    @Test fun `receive button opens an alert when empty and is green when receipts wait`() {
         setup();open(1)
         fun receiveButton(u:Long)=latest(u).keyboard!!.rows.flatten().single { it.text=="💰 Принять платёж" }
         val empty=receiveButton(1)
-        assertNotNull(empty.disabled);assertNull(empty.callbackData);assertNull(empty.style)
+        assertNull(empty.disabled);assertNotNull(empty.callbackData);assertNull(empty.style)
+        val unchanged=latest(1);receive(1)
+        assertEquals("Нет переводов для подтверждения",alerts.last());assertEquals(unchanged,latest(1))
+        val draft=InputForm("payment_ready",-1,paymentFrom=1,user=2,amount=100)
+        bot.state.session(1,1,-1,draft);receive(1)
+        assertEquals(draft,bot.state.form(1,1));assertEquals(unchanged,latest(1))
+        bot.state.session(1,1,-1,null)
         run(SettlementCommand.SendOtherPayment("incoming",1,125),Access(-1,2))
         open(1);val waiting=receiveButton(1)
         assertNull(waiting.disabled);assertNotNull(waiting.callbackData);assertEquals("success",waiting.style)
         assertEquals("💰 Принять платёж",waiting.text)
-        open(1,"Группа 2");assertNotNull(receiveButton(1).disabled)
+        val oldIncomingMenu=latest(1)
+        open(1,"Группа 2");assertNull(receiveButton(1).disabled)
+        val otherGroupMenu=latest(1);receive(1)
+        assertEquals("Нет переводов для подтверждения",alerts.last());assertEquals(otherGroupMenu,latest(1))
         open(1);receive(1);click(1,"Игрок 2 · 125 ₽ · 07.10.2026");click(1,"Да, получил")
-        click(1,"К моим финансам");assertNotNull(receiveButton(1).disabled)
+        click(1,"К моим финансам");assertNull(receiveButton(1).disabled)
+        val confirmed=latest(1);receive(1)
+        assertEquals("Нет переводов для подтверждения",alerts.last());assertEquals(confirmed,latest(1))
+        click(1,"Принять платёж",oldIncomingMenu)
+        assertEquals("Нет переводов для подтверждения",alerts.last());assertEquals(confirmed,latest(1))
         assertTrue(bot.service.balances(Access(-1,1)).isNotEmpty())
     }
     @Test fun `group balance and own recipient table have identical played participants and pages`() {

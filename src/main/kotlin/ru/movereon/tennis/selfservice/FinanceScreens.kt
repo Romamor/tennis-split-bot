@@ -22,8 +22,8 @@ internal class FinanceScreens(private val service:SettlementService) {
         when(action.kind) {
             "finance" -> {
                 val summary=service.financeSummary(a)
-                rows+=listOf(button("💸 Перевести",next("finance_send")),control("💰 Принять платёж",next("finance_receive"),summary.pendingReceiveCount>0,style="success"))
-                row("💰 Баланс группы",next("finance_balances"));row("📜 История переводов",next("finance_history"))
+                rows+=listOf(button("💸 Перевести",next("finance_send")),control("💰 Принять платёж",next("finance_receive"),style=if(summary.pendingReceiveCount>0) "success" else null))
+                row("📊 Баланс группы",next("finance_balances"));row("📜 История переводов",next("finance_history"))
                 if(service.isAdmin(a)) row("📝 Записать перевод за участников",next("payment_new",option="admin"))
                 row("⬅️ Назад",ScreenAction("menu",0))
                 val caption=when { summary.balance>0 -> " — оплачено тобой за других участников группы";summary.balance<0 -> " — оплачено за тебя другими участниками группы";else -> "" }

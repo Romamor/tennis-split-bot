@@ -363,6 +363,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         val a = if (action.group < 0 && action.kind!="close_panel") access(action.group, user.id) else null
+        if(callback!=null && action.kind=="finance_receive" && service.pendingPaymentCount(requireNotNull(a))==0) {
+            answer(callback,"Нет переводов для подтверждения")
+            return null
+        }
         if(action.kind in setOf("poll_settings","poll_setting_save","group_rule_save"))
             checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
         if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard")) {

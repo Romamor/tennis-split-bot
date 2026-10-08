@@ -31,8 +31,9 @@ class ExportBotScreens {
   catch(ru.movereon.tennis.core.AccountingException failure){text=failure.getMessage();}
   popup(key,text,back);
  }
- static void popup(String key,String text,String back){
-  if(out.length()>1)out.append(',');out.append("{\"role\":").append(user).append(",\"key\":").append(q(key)).append(",\"group\":true,\"text\":").append(q(text)).append(",\"html\":null,\"rows\":[[{\"text\":\"ОК\",\"target\":{\"kind\":\"alert_back\",\"option\":").append(q(back)).append("}}]]}");
+ static void popup(String key,String text,String back){popup(key,text,back,true);}
+ static void popup(String key,String text,String back,boolean group){
+  if(out.length()>1)out.append(',');out.append("{\"role\":").append(user).append(",\"key\":").append(q(key)).append(",\"group\":").append(group).append(",\"text\":").append(q(text)).append(",\"html\":null,\"rows\":[[{\"text\":\"ОК\",\"target\":{\"kind\":\"alert_back\",\"option\":").append(q(back)).append("}}]]}");
  }
  static void cap(String key,String kind,String id)throws Exception{capture(key,kind,id,"",null,false,null);}
  static void phase(String id,String phase)throws Exception{sql("UPDATE trainings SET status=? WHERE id=?",phase,id);}
@@ -65,7 +66,7 @@ class ExportBotScreens {
   cap("finance_receive","finance_receive","");cap("finance_history","finance_history","");
   capture("finance_receive_confirm","finance_receive_confirm","pending-in","\"back\":{\"kind\":\"finance_receive\",\"group\":-1}",null,false,null);
   run(auth,new SettlementCommand.SendPayment("pending-out",4,350));cap("finance_send_empty","finance_send","");
-  run(auth,new SettlementCommand.ReceivePayment("pending-in",null));cap("finance_receive_empty","finance_receive","");
+  run(auth,new SettlementCommand.ReceivePayment("pending-in",null));popup("finance_receive_empty","Нет переводов для подтверждения","finance",false);
   cap("finance_received","finance_received","");
   for(String kind:List.of("payment_to","payment_amount","payment_ready"))
    capture(kind,"form","","",form(kind.equals("payment_amount")?"payment_ready":kind,"","\"waitingForAmount\":"+kind.equals("payment_amount")+",\"paymentFrom\":"+user+",\"user\":4,\"amount\":75"),false,null);

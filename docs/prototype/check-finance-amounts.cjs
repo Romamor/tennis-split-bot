@@ -13,7 +13,10 @@ const receiveMarkup=vm.runInNewContext(`
  ${between('function receiveButton(', 'const pendingIncoming=')}
  [receiveButton(0),receiveButton(1),receiveButton(7)]
 `);
-assert.ok(receiveMarkup[0].includes(' disabled'));
+assert.ok(!receiveMarkup[0].includes(' disabled'));
+assert.ok(script.includes("window.alert('Нет переводов для подтверждения')"));
+assert.ok(receiveMarkup[0].includes('Принять платёж</button>'));
+assert.ok(script.includes("label.startsWith('Баланс группы')?'📊'"));
 assert.ok(!receiveMarkup[0].includes('data-style="success"'));
 for(const markup of receiveMarkup.slice(1)) {
  assert.ok(!markup.includes(' disabled'));
