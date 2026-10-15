@@ -1,6 +1,7 @@
 package ru.movereon.tennis.selfservice
 
 import kotlinx.serialization.json.*
+import java.math.BigInteger
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.core.*
 import ru.movereon.tennis.selfservice.Screens.Companion.clean
@@ -32,9 +33,10 @@ internal class FinanceScreens(private val service:SettlementService) {
                     if(summary.pendingReceiveCount>0) append("\nТебе подтвердить получение: ${summary.pendingReceiveCount} · ${summary.pendingReceiveAmount} ₽")
                     if(summary.pendingSentCount>0 || summary.pendingReceiveCount>0) append("\nОжидающие переводы пока не меняют баланс.")
                 }
-                val highlighted=if(summary.balance==0L) "<b>0 ₽</b>" else inline(signed(summary.balance),ScreenAction("finance",a.groupId),if(summary.balance>0) "success" else "danger")
+                val highlighted=inline(signed(summary.balance),ScreenAction("finance_balance_history",a.groupId),if(summary.balance>0) "success" else if(summary.balance<0) "danger" else "link")
                 ScreenContent("Мои финансы:\n${signed(summary.balance)}$caption$pending","<h3>Мои финансы</h3><p>${highlighted}${TrainingCard.escape(caption+pending).replace("\n","<br>")}</p>")
             }
+            "finance_balance_history" -> renderBalanceHistory(layout,a,service.balanceHistory(a,action.page),service.group(a.groupId).timeZone,::person)
             "finance_send" -> {
                 val p=service.paymentSuggestions(a,page=action.page)
                 p.items.forEach { personRow(it.to.value.toLong(),"${person(it.to.value.toLong())} · ${it.amount} ₽",next("finance_send_confirm",target=it.to.value.toLong(),value=it.amount).copy(back=action.copy(page=p.index))) }
@@ -177,10 +179,11 @@ internal class FinanceScreens(private val service:SettlementService) {
     }
     private fun paymentStatus(t:MoneyTransfer)=when(t.status) { PaymentStatus.ACTIVE->"Выполнен";PaymentStatus.REVIEW->"В процессе";PaymentStatus.CANCELLED->"Отменён" }
     companion object {
-        fun signed(amount:Long)="${if(amount>0) "+" else if(amount<0) "−" else ""}${amount.toBigInteger().abs()} ₽"
+        fun signed(amount:Long)=signed(amount.toBigInteger())
+        fun signed(amount:BigInteger)="${if(amount.signum()>0) "+" else if(amount.signum()<0) "−" else ""}${amount.abs()} ₽"
         // Rich HTML supports semantic button colors, not arbitrary CSS text colors.
         fun balanceHtml(amount:Long)=if(amount==0L) signed(amount) else "<tg-button type=\"disabled\" style=\"${if(amount>0) "success" else "danger"}\">${signed(amount)}</tg-button>"
-        val kinds=setOf("finance","finance_send","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history","finance_payment_cancel_confirm")
+        val kinds=setOf("finance","finance_balance_history","finance_send","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history","finance_payment_cancel_confirm")
         val mutationActions=setOf("finance_payment_cancel_save","finance_payment_edit")
         val retiredActions=setOf("finance_debtors","debts","balances","settled","transfers","transfer","transfer_people","transfer_direction","transfer_amount","suggested_transfer","save_transfer","transfer_date","transfer_note","edit_transfer_amount","save_transfer_amount","review_transfer","confirm_transfer","cancel_transfer","transfer_history")
         fun retiredForm(form:InputForm?)=form?.kind?.let { it.startsWith("transfer_") || it.startsWith("edit_transfer_") }==true

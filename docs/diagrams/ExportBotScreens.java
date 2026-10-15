@@ -139,6 +139,14 @@ class ExportBotScreens {
   capture("simple_public","public","simple","",null,true,null);
   capture("simple_personal","participation","simple","",null,true,null);
   if(user>=2)cap("rules_settings","poll_settings","");
+  run(auth,new SettlementCommand.CreateTraining("history-training","Теннис","2026-09-12","18:30"));
+  run(auth,new SettlementCommand.AddPlayers("history-training",1,List.of(user,4L)));
+  run(auth,new SettlementCommand.ChangeAttendance("history-training",user,AttendanceChange.SET_PAID,300));
+  run(auth,new SettlementCommand.FinishTraining("history-training",svc.training(auth,"history-training").getVersion()));
+  cap("finance_balance_history","finance_balance_history","");
+  capture("balance_history_training","my_training","history-training","\"back\":{\"kind\":\"finance_balance_history\",\"group\":-1}",null,false,null);
+  capture("balance_history_payment","finance_payment",pay,"\"back\":{\"kind\":\"finance_balance_history\",\"group\":-1}",null,false,null);
+
 
  }
  Files.writeString(Path.of(args[0]+".json"),out.append(']').toString());System.out.println("Screens exported: "+args[0]+".json");

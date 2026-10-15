@@ -511,6 +511,11 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }
         FinanceSummary(balance,sentCount,sentAmount,receivedCount,receivedAmount)
     }
+    /** The caller's posted changes only; no draft or pending-transfer amounts. */
+    fun balanceHistory(a:Access,page:Int=0):BalanceHistory = database.read { c ->
+        known(c,a.groupId,a.userId)
+        readBalanceHistory(c,a,page)
+    }
     fun pendingPaymentCount(a:Access):Int = database.read { c ->
         known(c,a.groupId,a.userId)
         count(c,"SELECT COUNT(*) FROM transfers WHERE group_id=? AND to_user=? AND status='REVIEW'",a.groupId,a.userId)

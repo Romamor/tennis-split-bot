@@ -134,3 +134,24 @@ assert.ok(notices[0].includes('Подтвердить получение'));
 assert.ok(notices[0].includes('600 ₽'));
 assert.ok(notices[0].includes('data-action="notice-open"'));
 for(const markup of notices.slice(1))assert.equal(markup,'','No stale, чужое, confirmed, cancelled or expired notification');
+
+const balanceTimeline=vm.runInNewContext(`
+ const state={actor:1};
+ const group={balances:{1:-150,2:150},payments:[
+  {id:1,from:1,to:2,amount:100,status:'CANCELLED',postedAmount:150,postedAt:1,audit:[
+   {kind:'amount',previousStatus:'COMPLETED',before:150,after:100,time:2},
+   {kind:'cancel',previousStatus:'COMPLETED',before:100,time:3},
+   {kind:'amount',previousStatus:'CANCELLED',before:100,after:500,time:4}]},
+  {id:2,from:2,to:1,amount:999,status:'PENDING',audit:[]}
+ ]};
+ const g=()=>group,money=n=>Math.abs(n)+' ₽';
+ ${between('function ownBalance(', 'function balance(')}
+ const own=balanceChanges();state.actor=2;const counterpart=balanceChanges();state.actor=3;const empty=balanceChanges();
+ [own,counterpart,empty,ownBalance(0)]
+`);
+assert.equal(balanceTimeline[0].reduce((sum,e)=>sum+e.amount,0),-150);
+assert.deepEqual(Array.from(balanceTimeline[0].filter(e=>!e.training),e=>e.amount),[-100,-50,150]);
+assert.equal(balanceTimeline[1].reduce((sum,e)=>sum+e.amount,0),150);
+assert.equal(balanceTimeline[2].length,0);
+assert.ok(balanceTimeline[3].includes('data-value="balance-history"'),'Zero balance remains linked to history');
+console.log('Balance history checks passed: own posted changes, amendments, cancellation and pending exclusion.');

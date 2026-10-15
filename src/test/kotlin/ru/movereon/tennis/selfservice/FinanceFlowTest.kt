@@ -24,8 +24,8 @@ class FinanceFlowTest {
     }
     private lateinit var bot:SelfServiceBot
     private var seq=1L
-    private fun setup() {
-        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite"),queries::add),fake.bot,Clock.fixed(Instant.parse("2026-10-07T12:00:00Z"),ZoneOffset.UTC))
+    private fun setup(at:Instant=Instant.parse("2026-10-07T12:00:00Z")) {
+        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite"),queries::add),fake.bot,Clock.fixed(at,ZoneOffset.UTC))
         for(g in -2L..-1L) {
             bot.service.register(SettlementGroup(g,"Группа ${-g}","Europe/Moscow"))
             for(u in 1L..20L) { bot.service.remember(Account(u,"Игрок $u"));bot.service.rememberMembership(g,u,true);fake.members[g to u]=TgMember("member") }
@@ -54,6 +54,12 @@ class FinanceFlowTest {
             .filter { bot.state.button(it.removePrefix("n:"))?.action?.kind=="finance_payment" }.distinct().toList()
         callback(u,latest(u),tokens[index])
     }
+    private fun follow(u:Long,kind:String,id:String?=null) {
+        val token=Regex("data=\"([^\"]+)\"").findAll(html(u)).map { it.groupValues[1] }.distinct().first { data ->
+            bot.state.button(data.removePrefix("n:"))?.action?.let { it.kind==kind && (id==null || it.id==id) }==true
+        }
+        callback(u,latest(u),token)
+    }
     private fun open(u:Long,group:String="Группа 1") { message(u,"/start");click(u,"Мои финансы");click(u,group) }
     private fun receive(u:Long) { click(u,rows(u).flatten().single { it.endsWith("Принять платёж") }) }
     private fun own(u:Long,to:Long,amount:String) {
@@ -76,6 +82,7 @@ class FinanceFlowTest {
         assertTrue(html(2).contains("type=\"callback_data\" style=\"danger\""))
         val balanceBefore=bot.service.balances(Access(-1,2));val current=latest(2).id
         inline(2,0);assertEquals(current,latest(2).id);assertEquals(balanceBefore,bot.service.balances(Access(-1,2)))
+        assertTrue(latest(2).text!!.startsWith("История баланса"));click(2,"Назад")
 
         assertEquals(listOf(listOf("💸 Перевести","💰 Принять платёж"),listOf("📊 Баланс группы"),listOf("📜 История переводов"),listOf("⬅️ Назад")),rows(2))
         click(2,"Перевести");click(2,"Игрок 1 · 150 ₽")
@@ -306,6 +313,36 @@ class FinanceFlowTest {
         open(2,"Группа 2");click(2,"Перевести");click(2,"Записать свой перевод")
         assertEquals(0,Regex("<tr>").findAll(html(2)).count(),"Other group's players never leak into selection")
         assertTrue(latest(2).text!!.contains("Список пуст"))
+    }
+    @Test fun `balance history links to training and transfer cards and returns to the same page`() {
+        setup(Instant.parse("2026-10-07T22:30:00Z"));seedBalance()
+        for(i in 0..10) run(SettlementCommand.RecordAdminPayment("p$i",1,2,i+1L),Access(-1,1,true))
+        val before=bot.service.balances(Access(-1,2))
+        open(2);val menu=latest(2).id;follow(2,"finance_balance_history")
+        assertEquals(menu,latest(2).id);assertTrue(latest(2).text!!.startsWith("История баланса\nСейчас: −216 ₽"))
+        assertTrue(html(2).contains("<td>08.10.2026</td>"));assertFalse(html(2).contains("<td>07.10.2026</td>"))
+        assertEquals(11,Regex("<tr>").findAll(html(2)).count())
+        follow(2,"finance_payment")
+        assertTrue(latest(2).text!!.startsWith("Перевод учтён"));assertFalse(rows(2).flatten().any { it.contains("Изменить сумму") })
+        click(2,"Назад");assertTrue(latest(2).text!!.startsWith("История баланса"))
+        click(2,"Дальше ›");val second=latest(2).text
+        assertTrue(rows(2).flatten().contains("2 / 2"));assertEquals(3,Regex("<tr>").findAll(html(2)).count())
+        follow(2,"my_training","t")
+        assertTrue(latest(2).text!!.contains("Теннис"));assertFalse(rows(2).flatten().any { it.contains("Редактировать") })
+        click(2,"Назад");assertEquals(second,latest(2).text);assertTrue(rows(2).flatten().contains("2 / 2"))
+        assertEquals(before,bot.service.balances(Access(-1,2)))
+        assertTrue(bot.service.database.verify().contains("целостность в порядке"))
+    }
+    @Test fun `zero balance opens offsetting history and history never accepts another target user`() {
+        setup();seedBalance();run(SettlementCommand.SendOtherPayment("paid",1,150),Access(-1,2));run(SettlementCommand.ReceivePayment("paid"))
+        open(2);follow(2,"finance_balance_history")
+        assertTrue(latest(2).text!!.startsWith("История баланса\nСейчас: 0 ₽"))
+        assertEquals(3,Regex("<tr>").findAll(html(2)).count());assertFalse(latest(2).text!!.contains("Баланс ещё не менялся"))
+        open(3)
+        val token=bot.state.button(ScreenAction("finance_balance_history",-1,user=1),3,"personal:3:3")
+        callback(3,latest(3),"n:$token")
+        assertTrue(latest(3).text!!.contains("Баланс ещё не менялся"));assertFalse(html(3).contains("<table"))
+        assertEquals(0,bot.service.balanceHistory(Access(-2,2)).page.total)
     }
     @Test fun `my training table shows only personal playing time without guests`() {
         setup();seedBalance();run(SettlementCommand.CreateTraining("guest","Гость","2026-10-07","18:30"))
