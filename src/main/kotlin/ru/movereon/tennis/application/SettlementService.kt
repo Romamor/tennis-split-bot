@@ -109,7 +109,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }
         // Groups settle separately: a credit in one group cannot cover a payment owed in another.
         val remaining=balances.values.filter { it.signum()<0 }.fold(java.math.BigInteger.ZERO) { sum,balance -> sum-balance }
-        val size=8
+        val size=15
         val index=page.coerceIn(0,maxOf(0,(total-1)/size))
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT ? OFFSET ?",user,user,size,index*size) { it.getLong(1) to it.getString(2) }
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid-trainingEffect,remaining,completedCount)
@@ -481,9 +481,10 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND ((t.created_by=? AND t.status='OPEN') OR EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0)))" else "") + (if (unfinished) " AND t.status='OPEN'" else "")
         val args = if (mine) arrayOf<Any>(a.groupId, a.userId, a.userId) else arrayOf<Any>(a.groupId)
         val total = count(c, "SELECT COUNT(*) $condition", *args)
-        val index = pageIndex(page, total)
-        val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT 8 OFFSET ?", *args, index * 8) { it.getString(1) }
-        Page(ids.map { readTraining(c, a.groupId, it) }, total, index)
+        val size=15
+        val index=page.coerceIn(0,maxOf(0,(total-1)/size))
+        val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT ? OFFSET ?", *args, size, index * size) { it.getString(1) }
+        Page(ids.map { readTraining(c, a.groupId, it) }, total, index,size)
     }
     private fun recentSimilar(c:Connection,group:Long,from:Long,to:Long,amount:Long,exclude:String=""):List<String> =
         sqlQuery(c,"""SELECT id FROM transfers WHERE group_id=? AND from_user=? AND to_user=? AND amount=?

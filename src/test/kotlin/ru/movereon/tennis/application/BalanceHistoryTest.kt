@@ -77,17 +77,17 @@ class BalanceHistoryTest {
     }
     @Test fun `history pages are isolated by group and caller and do not load unrelated audit payloads`() {
         setup()
-        for(i in 0..24) run(SettlementCommand.RecordAdminPayment("p$i",1,2,i+1L))
+        for(i in 0..30) run(SettlementCommand.RecordAdminPayment("p$i",1,2,i+1L))
         run(SettlementCommand.RecordAdminPayment("p0",1,2,9999),Access(-2,1,true))
         queries.clear()
         val pages=(0..2).map { service.balanceHistory(owner,it) }
         assertTrue(queries.none { "after_json" in it || "before_json" in it || "payload_json" in it })
         assertTrue(queries.count { it.startsWith("SELECT") }<=12,"No SQL request per displayed row")
-        assertEquals(listOf(10,10,5),pages.map { it.page.items.size })
-        assertTrue(pages.all { it.page.total==25 && it.balance==325L })
+        assertEquals(listOf(15,15,1),pages.map { it.page.items.size })
+        assertTrue(pages.all { it.page.total==31 && it.balance==496L })
         val entries=pages.flatMap { it.page.items }
-        assertEquals(25,entries.map { it.actionId }.distinct().size)
-        assertEquals((24 downTo 0).map { "p$it" },entries.map { it.transferId })
+        assertEquals(31,entries.map { it.actionId }.distinct().size)
+        assertEquals((30 downTo 0).map { "p$it" },entries.map { it.transferId })
         assertEquals(pages[2],service.balanceHistory(owner,999))
         assertEquals(pages[0],service.balanceHistory(owner,-1))
         assertEquals(9999,service.balanceHistory(Access(-2,1)).balance)

@@ -21,7 +21,7 @@ internal fun readBalanceHistory(c:Connection,a:Access,page:Int):BalanceHistory {
     val balance=changes.values.fold(BigInteger.ZERO,BigInteger::add).toAmount()
     val amounts=changes.filterValues { it.signum()!=0 }.mapKeys { latest.getValue(it.key) }
     val ids=amounts.keys.toList()
-    val size=10
+    val size=15
     val index=page.coerceIn(0,maxOf(0,(ids.size-1)/size))
     val selected=ids.drop(index*size).take(size)
     val items=if(selected.isEmpty()) emptyList() else sqlQuery(c,"""SELECT a.id,a.kind,a.occurred_at,

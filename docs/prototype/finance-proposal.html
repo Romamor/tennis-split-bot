@@ -224,7 +224,7 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
  if(d&&['review','duplicate'].includes(v))refreshPaymentProposal(d);
  if(v==='finance'){let b=totals()[state.actor]||0,amount=ownBalance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':''),sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>'+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие переводы пока не меняют баланс.':'')+'</p>';buttons=[row(key('Перевести','nav','send'),receiveButton(incoming.length)),row(key('Баланс группы','nav','balances')),row(key('История переводов','nav','history'))];if(admin())buttons.push(row(key('Записать перевод за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='balance-history'){
-  const list=balanceChanges(),chunk=pageOf(list,10);
+  const list=balanceChanges(),chunk=pageOf(list,15);
   body='<h2>История баланса</h2><p>Сейчас: <b>'+esc(((totals()[state.actor]||0)>0?'+':(totals()[state.actor]||0)<0?'−':'')+money(totals()[state.actor]||0))+'</b></p>';
   if(!list.length)body+='<p>Нет операций, влияющих на баланс.</p>';
   else body+='<table class="fp-balance-history"><thead><tr><th>Операция</th><th>Сумма</th></tr></thead><tbody>'+chunk.map(e=>{
@@ -232,7 +232,7 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
    const link=text=>'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
    return '<tr><td>'+link(esc(label))+'<br><span class="fp-small">'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</span></td><td>'+link(balance(e.amount))+'</td></tr>';
   }).join('')+'</tbody></table><p class="fp-small">У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
-  buttons=[pages(list,10),row(key('Назад','nav','finance'))];
+  buttons=[pages(list,15),row(key('Назад','nav','finance'))];
  }
  else if(v==='balance-training'){
   body='<h2>🏓 Теннис · 06.10.2026 · 18:30</h2><p>Учтена</p><p class="fp-small">Искусственная тренировка объясняет исходные балансы участников в этом макете. В боте здесь открывается полная карточка выбранной тренировки.</p>';
