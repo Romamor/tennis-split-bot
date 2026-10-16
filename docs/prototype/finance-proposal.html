@@ -9,6 +9,8 @@
 #tennis-finance-proposal .fp-stable-keys button{height:48px;min-height:48px;white-space:nowrap}
 #tennis-finance-proposal .fp-keys button[data-style="primary"]{background:light-dark(#1976c9,#285f91);color:#fff}#tennis-finance-proposal .fp-keys button[data-style="success"]{background:light-dark(#238548,#398c55);color:#fff}#tennis-finance-proposal .fp-keys button[data-style="danger"]{background:light-dark(#bd3944,#97404a);color:#fff}
 #tennis-finance-proposal .fp-notice{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--fp-line)}#tennis-finance-proposal .fp-notice button{width:100%}#tennis-finance-proposal .fp-notification{margin-top:18px}
+#tennis-finance-proposal .fp-balance-history td{vertical-align:top}
+#tennis-finance-proposal .fp-balance-history td:last-child{white-space:nowrap;width:1%}
 </style>
 <style>
 #tennis-finance-proposal .fp-composer{display:flex;gap:8px;align-items:center;padding:8px;margin-top:28px;border-radius:12px;background:var(--fp-surface)}
@@ -146,6 +148,7 @@ function pageOf(list,size=6){state.page=Math.max(0,Math.min(state.page,Math.ceil
 function pages(list,size=6){return list.length>size?row(key('‹','page',-1,state.page===0),key(`${state.page+1} / ${Math.ceil(list.length/size)}`,'noop'),key('›','page',1,(state.page+1)*size>=list.length)):''}
 function byBalance(list,b){return list.slice().sort((a,c)=>Number(!(b[a]||0))-Number(!(b[c]||0))||(b[c]||0)-(b[a]||0)||name(a).localeCompare(name(c),'ru'))}
 function ownBalance(value){return `<button class="fp-balance fp-balance-main ${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}" data-action="nav" data-value="balance-history" aria-label="История баланса">${value>0?'+':value<0?'−':''}${money(value)}</button>`}
+function balanceSourceName(value){const chars=Array.from(String(value).replace(/[\r\n\t]/g,' '));return chars.length<=18?chars.join(''):chars.slice(0,17).join('')+'…'}
 function balanceChanges(){
  const list=[],add=e=>{if(e.amount)list.push({...e,order:list.length})};
  add({training:true,amount:g().balances[state.actor]||0,time:Date.UTC(2026,9,6,18)});
@@ -224,10 +227,10 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
   const list=balanceChanges(),chunk=pageOf(list,10);
   body='<h2>История баланса</h2><p>Сейчас: <b>'+esc(((totals()[state.actor]||0)>0?'+':(totals()[state.actor]||0)<0?'−':'')+money(totals()[state.actor]||0))+'</b></p>';
   if(!list.length)body+='<p>Нет операций, влияющих на баланс.</p>';
-  else body+='<table><thead><tr><th>Дата</th><th>Операция</th><th>Изменение</th></tr></thead><tbody>'+chunk.map(e=>{
-   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===state.actor?'💸 Перевод → '+name(p.to):'💰 Перевод ← '+name(p.from);
+  else body+='<table class="fp-balance-history"><thead><tr><th>Операция</th><th>Сумма</th></tr></thead><tbody>'+chunk.map(e=>{
+   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===state.actor?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
    const link=text=>'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
-   return '<tr><td>'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</td><td>'+link(esc(label))+'</td><td>'+link(balance(e.amount))+'</td></tr>';
+   return '<tr><td>'+link(esc(label))+'<br><span class="fp-small">'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</span></td><td>'+link(balance(e.amount))+'</td></tr>';
   }).join('')+'</tbody></table><p class="fp-small">Дата — последнее изменение операции. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
   buttons=[pages(list,10),row(key('Назад','nav','finance'))];
  }

@@ -15,15 +15,19 @@ internal fun renderBalanceHistory(layout:ScreenLayout,a:Access,history:BalanceHi
     pages(p.index,p.pages,back);row("⬅️ Назад",ScreenAction("finance",a.groupId))
     val lines=mutableListOf<String>()
     val table=if(p.items.isEmpty()) "<p>Нет операций, влияющих на баланс.</p>" else RichTable.OPEN+
-        "<tr><th>Дата</th><th>Операция</th><th>Изменение</th></tr>"+p.items.joinToString("") { e ->
+        "<tr><th>Операция</th><th align=\"right\">Сумма</th></tr>"+p.items.joinToString("") { e ->
             val training=e.trainingId!=null
             val target=ScreenAction(if(training) "my_training" else "finance_payment",a.groupId,
                 requireNotNull(e.trainingId ?: e.transferId),back=back)
-            val name=if(training) "🏓 ${clean(requireNotNull(e.trainingTitle),30)}" else
-                if(e.from==a.userId) "💸 Перевод → ${person(requireNotNull(e.to))}" else "💰 Перевод ← ${person(requireNotNull(e.from))}"
+            fun shortName(value:String):String {
+                val name=clean(value,Int.MAX_VALUE)
+                return if(name.codePointCount(0,name.length)<=18) name else name.substring(0,name.offsetByCodePoints(0,17))+"…"
+            }
+            val name=if(training) "🏓 ${shortName(requireNotNull(e.trainingTitle))}" else
+                if(e.from==a.userId) "💸 → ${shortName(person(requireNotNull(e.to)))}" else "💰 ← ${shortName(person(requireNotNull(e.from)))}"
             val day=date(Instant.parse(e.occurredAt).atZone(zone).toLocalDate().toString())
             lines+="$day · $name · ${signed(e.amount)}"
-            "<tr><td>$day</td><td>${inline(name,target)}</td>"+
+            "<tr><td>${inline(name,target)}<br>$day</td>"+
                 "<td align=\"right\">${inline(signed(e.amount),target,if(e.amount.signum()>0) "success" else "danger")}</td></tr>"
         }+"</table>"
     val hint="Дата — последнее изменение операции. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку."

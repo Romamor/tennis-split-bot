@@ -320,10 +320,12 @@ class FinanceFlowTest {
         val before=bot.service.balances(Access(-1,2))
         open(2);val menu=latest(2).id;follow(2,"finance_balance_history")
         assertEquals(menu,latest(2).id);assertTrue(latest(2).text!!.startsWith("История баланса\nСейчас: −216 ₽"))
-        assertTrue(html(2).contains("<td>08.10.2026</td>"));assertFalse(html(2).contains("<td>07.10.2026</td>"))
+        assertTrue(html(2).contains("<br>08.10.2026</td>"));assertFalse(html(2).contains("<br>07.10.2026</td>"))
         assertEquals(11,Regex("<tr>").findAll(html(2)).count())
         assertFalse(latest(2).text!!.contains("Учт",ignoreCase=true))
-        assertFalse(html(2).contains("<br>"),"No status subline in balance history")
+        assertTrue(html(2).contains("<th>Операция</th><th align=\"right\">Сумма</th>"))
+        assertFalse(html(2).contains("<th>Дата</th>"))
+        assertEquals(20,Regex("<td(?: [^>]*)?>").findAll(html(2)).count(),"Two cells per operation, including its date")
         follow(2,"finance_payment")
         assertTrue(latest(2).text!!.startsWith("Перевод учтён"));assertFalse(rows(2).flatten().any { it.contains("Изменить сумму") })
         click(2,"Назад");assertTrue(latest(2).text!!.startsWith("История баланса"))
@@ -334,6 +336,22 @@ class FinanceFlowTest {
         click(2,"Назад");assertEquals(second,latest(2).text);assertTrue(rows(2).flatten().contains("2 / 2"))
         assertEquals(before,bot.service.balances(Access(-1,2)))
         assertTrue(bot.service.database.verify().contains("целостность в порядке"))
+    }
+    @Test fun `balance history bounds long labels without cutting emoji and keeps full source cards`() {
+        setup();seedBalance()
+        val name="Очень длинное имя участника 👨‍💻 для проверки"
+        bot.service.remember(Account(1,name))
+        val title="🏓".repeat(25)
+        run(SettlementCommand.ReopenTraining("t",bot.service.training(Access(-1,1),"t").version),Access(-1,1,true))
+        run(SettlementCommand.EditTraining("t",bot.service.training(Access(-1,1),"t").version,title,"2026-10-07","18:30"),Access(-1,1,true))
+        run(SettlementCommand.FinishTraining("t",bot.service.training(Access(-1,1),"t").version),Access(-1,1,true))
+        run(SettlementCommand.RecordAdminPayment("long",1,2,75),Access(-1,1,true))
+        open(2);follow(2,"finance_balance_history")
+        assertTrue(html(2).contains("Очень длинное имя…"))
+        assertTrue(html(2).contains("🏓 "+"🏓".repeat(17)+"…"))
+        assertFalse(html(2).contains("Перевод ←"));assertFalse(html(2).contains(name))
+        follow(2,"my_training","t")
+        assertTrue(latest(2).text!!.contains(title),"The source card retains the complete title")
     }
     @Test fun `zero balance opens offsetting history and history never accepts another target user`() {
         setup();seedBalance();run(SettlementCommand.SendOtherPayment("paid",1,150),Access(-1,2));run(SettlementCommand.ReceivePayment("paid"))
