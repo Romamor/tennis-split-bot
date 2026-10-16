@@ -59,6 +59,7 @@ class BalanceHistoryTest {
         run(SettlementCommand.FinishTraining("t",version()))
         assertEquals(listOf(200L.toBigInteger()),service.balanceHistory(owner).page.items.map { it.amount })
         assertEquals("Теннис",service.balanceHistory(owner).page.items.single().trainingTitle)
+        assertEquals("2026-10-15",service.balanceHistory(owner).page.items.single().trainingDate)
         assertEquals(200,service.balanceHistory(owner).balance)
         run(SettlementCommand.ReopenTraining("t",version()))
         run(SettlementCommand.CancelTraining("t",version()))

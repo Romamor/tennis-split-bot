@@ -231,7 +231,7 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
    const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===state.actor?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
    const link=text=>'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
    return '<tr><td>'+link(esc(label))+'<br><span class="fp-small">'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</span></td><td>'+link(balance(e.amount))+'</td></tr>';
-  }).join('')+'</tbody></table><p class="fp-small">Дата — последнее изменение операции. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
+  }).join('')+'</tbody></table><p class="fp-small">У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
   buttons=[pages(list,10),row(key('Назад','nav','finance'))];
  }
  else if(v==='balance-training'){

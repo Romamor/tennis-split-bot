@@ -25,12 +25,12 @@ internal fun renderBalanceHistory(layout:ScreenLayout,a:Access,history:BalanceHi
             }
             val name=if(training) "🏓 ${shortName(requireNotNull(e.trainingTitle))}" else
                 if(e.from==a.userId) "💸 → ${shortName(person(requireNotNull(e.to)))}" else "💰 ← ${shortName(person(requireNotNull(e.from)))}"
-            val day=date(Instant.parse(e.occurredAt).atZone(zone).toLocalDate().toString())
+            val day=date(if(training) requireNotNull(e.trainingDate) else Instant.parse(e.occurredAt).atZone(zone).toLocalDate().toString())
             lines+="$day · $name · ${signed(e.amount)}"
             "<tr><td>${inline(name,target)}<br>$day</td>"+
                 "<td align=\"right\">${inline(signed(e.amount),target,if(e.amount.signum()>0) "success" else "danger")}</td></tr>"
         }+"</table>"
-    val hint="Дата — последнее изменение операции. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку."
+    val hint="У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку."
     val title="История баланса\nСейчас: ${signed(history.balance)}"
     ScreenContent(title+"\n"+if(lines.isEmpty()) "Нет операций, влияющих на баланс." else lines.joinToString("\n")+"\n"+hint,
         "<h3>История баланса</h3><p>Сейчас: <b>${signed(history.balance)}</b></p>"+table+if(p.items.isEmpty()) "" else "<p>$hint</p>")

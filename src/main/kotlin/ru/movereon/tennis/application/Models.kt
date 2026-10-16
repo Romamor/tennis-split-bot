@@ -21,7 +21,7 @@ data class MyTrainingPage(val page:Page<TrainingRecord>,val minutes:Long,val par
 data class FinanceSummary(val balance:Long,val pendingSentCount:Int,val pendingSentAmount:BigInteger,
     val pendingReceiveCount:Int,val pendingReceiveAmount:BigInteger)
 data class BalanceHistoryEntry(val actionId:Long,val kind:String,val occurredAt:String,val amount:BigInteger,
-    val trainingId:String?,val trainingTitle:String?,val transferId:String?,val from:Long?,val to:Long?)
+    val trainingId:String?,val trainingTitle:String?,val transferId:String?,val from:Long?,val to:Long?,val trainingDate:String?)
 data class BalanceHistory(val balance:Long,val page:Page<BalanceHistoryEntry>)
 data class PaymentDraftContext(val balances:Map<Long,Long>,val recommendation:Long?)
 data class PaymentDetails(val transfer:MoneyTransfer,val administrative:Boolean,val edits:List<AuditAction>)
