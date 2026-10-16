@@ -322,6 +322,8 @@ class FinanceFlowTest {
         assertEquals(menu,latest(2).id);assertTrue(latest(2).text!!.startsWith("История баланса\nСейчас: −216 ₽"))
         assertTrue(html(2).contains("<td>08.10.2026</td>"));assertFalse(html(2).contains("<td>07.10.2026</td>"))
         assertEquals(11,Regex("<tr>").findAll(html(2)).count())
+        assertFalse(latest(2).text!!.contains("Учт",ignoreCase=true))
+        assertFalse(html(2).contains("<br>"),"No status subline in balance history")
         follow(2,"finance_payment")
         assertTrue(latest(2).text!!.startsWith("Перевод учтён"));assertFalse(rows(2).flatten().any { it.contains("Изменить сумму") })
         click(2,"Назад");assertTrue(latest(2).text!!.startsWith("История баланса"))
@@ -337,11 +339,11 @@ class FinanceFlowTest {
         setup();seedBalance();run(SettlementCommand.SendOtherPayment("paid",1,150),Access(-1,2));run(SettlementCommand.ReceivePayment("paid"))
         open(2);follow(2,"finance_balance_history")
         assertTrue(latest(2).text!!.startsWith("История баланса\nСейчас: 0 ₽"))
-        assertEquals(3,Regex("<tr>").findAll(html(2)).count());assertFalse(latest(2).text!!.contains("Баланс ещё не менялся"))
+        assertEquals(3,Regex("<tr>").findAll(html(2)).count());assertFalse(latest(2).text!!.contains("Нет операций, влияющих на баланс"))
         open(3)
         val token=bot.state.button(ScreenAction("finance_balance_history",-1,user=1),3,"personal:3:3")
         callback(3,latest(3),"n:$token")
-        assertTrue(latest(3).text!!.contains("Баланс ещё не менялся"));assertFalse(html(3).contains("<table"))
+        assertTrue(latest(3).text!!.contains("Нет операций, влияющих на баланс"));assertFalse(html(3).contains("<table"))
         assertEquals(0,bot.service.balanceHistory(Access(-2,2)).page.total)
     }
     @Test fun `my training table shows only personal playing time without guests`() {

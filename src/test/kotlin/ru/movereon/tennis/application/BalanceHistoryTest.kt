@@ -22,7 +22,17 @@ class BalanceHistoryTest {
             for(u in 1L..3L) { service.remember(Account(u,"Игрок $u"));service.rememberMembership(g,u,true) }
         }
     }
-    private fun run(command:SettlementCommand,a:Access=owner)=service.execute(a,"history-${sequence++}",command)
+    private fun run(command:SettlementCommand,a:Access=owner) {
+        service.execute(a,"history-${sequence++}",command)
+        for(user in 1L..3L) {
+            val access=Access(a.groupId,user)
+            val first=service.balanceHistory(access)
+            val entries=(0 until first.page.pages).flatMap { service.balanceHistory(access,it).page.items }
+            assertEquals(first.balance.toBigInteger(),entries.fold(BigInteger.ZERO) { sum,e->sum+e.amount })
+            assertEquals(service.balances(access)[user] ?: 0L,first.balance)
+            assertTrue(entries.none { it.amount.signum()==0 })
+        }
+    }
     private fun version(id:String="t")=service.training(owner,id).version
     private fun training() {
         run(SettlementCommand.CreateTraining("t","Теннис","2026-10-15","18:30"))
@@ -31,22 +41,31 @@ class BalanceHistoryTest {
         run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,300))
         run(SettlementCommand.FinishTraining("t",version()))
     }
-    @Test fun `posted training and transfer changes include corrections and reversals and explain current balance`() {
+    @Test fun `source contributions include corrections but disappear after full reversal`() {
         setup();training()
         run(SettlementCommand.SendOtherPayment("p",1,75),Access(-1,2))
         assertEquals(1,service.balanceHistory(owner).page.total)
         run(SettlementCommand.ReceivePayment("p"))
         run(SettlementCommand.EditPaymentAmount("p",service.transfer(owner,"p").version,100))
+        val corrected=service.balanceHistory(owner)
+        assertEquals(listOf(-100L,150L).map(Long::toBigInteger),corrected.page.items.map { it.amount })
+        assertEquals(50,corrected.balance)
+        assertTrue(corrected.page.items.any { it.transferId=="p" && it.from==2L && it.to==1L })
         run(SettlementCommand.CancelPayment("p",service.transfer(owner,"p").version))
+        assertEquals(listOf(150L.toBigInteger()),service.balanceHistory(owner).page.items.map { it.amount })
         run(SettlementCommand.ReopenTraining("t",version()))
+        assertEquals(0,service.balanceHistory(owner).page.total)
         run(SettlementCommand.ChangeAttendance("t",1,AttendanceChange.SET_PAID,400))
         run(SettlementCommand.FinishTraining("t",version()))
+        assertEquals(listOf(200L.toBigInteger()),service.balanceHistory(owner).page.items.map { it.amount })
+        assertEquals("Теннис",service.balanceHistory(owner).page.items.single().trainingTitle)
+        assertEquals(200,service.balanceHistory(owner).balance)
         run(SettlementCommand.ReopenTraining("t",version()))
         run(SettlementCommand.CancelTraining("t",version()))
         run(SettlementCommand.SendOtherPayment("waiting",1,999),Access(-1,3))
         val result=service.balanceHistory(owner)
-        assertEquals(listOf(-200L,200L,-150L,100L,-25L,-75L,150L).map(Long::toBigInteger),result.page.items.map { it.amount })
-        assertEquals(7,result.page.total);assertEquals(0,result.balance)
+        assertTrue(result.page.items.isEmpty())
+        assertEquals(0,result.page.total);assertEquals(0,result.balance)
         assertEquals(BigInteger.ZERO,result.page.items.fold(BigInteger.ZERO) { sum,e->sum+e.amount })
         assertEquals(service.balances(owner)[1],result.balance)
         assertEquals(result.page.items.map { -it.amount },service.balanceHistory(Access(-1,2)).page.items.map { it.amount })
@@ -75,6 +94,17 @@ class BalanceHistoryTest {
         service.remember(Account(4,"Другой"));service.rememberMembership(-2,4,true)
         assertFailsWith<AccountingException> { service.balanceHistory(Access(-1,4,true)) }
     }
+    @Test fun `training and transfer with the same identifier remain separate even when balance is zero`() {
+        setup();training()
+        run(SettlementCommand.RecordAdminPayment("t",2,1,150))
+        val history=service.balanceHistory(owner)
+        assertEquals(0,history.balance)
+        assertEquals(2,history.page.total)
+        assertEquals(listOf(-150L,150L).map(Long::toBigInteger),history.page.items.map { it.amount })
+        assertEquals(1,history.page.items.count { it.trainingId=="t" })
+        assertEquals(1,history.page.items.count { it.transferId=="t" })
+        assertTrue(service.database.verify().contains("целостность в порядке"))
+    }
     @Test fun `large posted amounts are summed without intermediate long or SQLite overflow`() {
         setup()
         run(SettlementCommand.RecordAdminPayment("p1",2,1,Long.MAX_VALUE))
@@ -95,8 +125,8 @@ class BalanceHistoryTest {
         run(SettlementCommand.ChangeAttendance("zero",1,AttendanceChange.SET_PAID,100))
         run(SettlementCommand.FinishTraining("zero",version("zero")))
         val history=service.balanceHistory(owner)
-        assertEquals(2,history.page.total);assertEquals(125,history.balance)
-        assertEquals(listOf(25L,100L).map(Long::toBigInteger),history.page.items.map { it.amount })
+        assertEquals(1,history.page.total);assertEquals(125,history.balance)
+        assertEquals(listOf(125L.toBigInteger()),history.page.items.map { it.amount })
         assertTrue(service.database.verify().contains("целостность в порядке"))
     }
 }
