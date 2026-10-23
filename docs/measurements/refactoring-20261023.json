@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-23",
+  "baseline": "ae7667b",
+  "code": "ac619a9",
+  "synthetic_only": true,
+  "tests": {
+    "total": 388,
+    "failures": 0
+  },
+  "screen_descriptions": {
+    "total": 324,
+    "different": 0
+  },
+  "replay": [
+    {
+      "step": "create",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 10,
+      "sql_after": 10
+    },
+    {
+      "step": "join",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 14
+    },
+    {
+      "step": "time",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 13,
+      "sql_after": 13
+    },
+    {
+      "step": "paid",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 13,
+      "sql_after": 13
+    },
+    {
+      "step": "add",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 15,
+      "sql_after": 15
+    },
+    {
+      "step": "save draft",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 13,
+      "sql_after": 13
+    },
+    {
+      "step": "finish",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 17,
+      "sql_after": 17
+    },
+    {
+      "step": "deny closed change",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 4,
+      "sql_after": 4
+    },
+    {
+      "step": "deny reopen",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 6,
+      "sql_after": 6
+    },
+    {
+      "step": "reopen",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 21,
+      "sql_after": 21
+    },
+    {
+      "step": "leave",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 14
+    },
+    {
+      "step": "join again",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 14
+    },
+    {
+      "step": "save draft removal",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 14
+    },
+    {
+      "step": "add again",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 15,
+      "sql_after": 15
+    },
+    {
+      "step": "finish again",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 18,
+      "sql_after": 18
+    },
+    {
+      "step": "pending",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 12,
+      "sql_after": 12
+    },
+    {
+      "step": "edit pending",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 12,
+      "sql_after": 12
+    },
+    {
+      "step": "deny other edit",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 5,
+      "sql_after": 5
+    },
+    {
+      "step": "confirm",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 11,
+      "sql_after": 11
+    },
+    {
+      "step": "admin edit",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 15,
+      "sql_after": 15
+    },
+    {
+      "step": "admin cancel",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 13,
+      "sql_after": 13
+    },
+    {
+      "step": "admin record",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 16,
+      "sql_after": 15
+    },
+    {
+      "step": "legacy record",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 13
+    },
+    {
+      "step": "legacy edit",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 14,
+      "sql_after": 14
+    },
+    {
+      "step": "calculated send",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 11,
+      "sql_after": 11
+    },
+    {
+      "step": "cancel pending",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 12,
+      "sql_after": 12
+    },
+    {
+      "step": "isolate group",
+      "same_result": true,
+      "same_snapshot": true,
+      "sql_before": 4,
+      "sql_after": 4
+    }
+  ],
+  "poll_list": {
+    "polls": 100,
+    "before": {
+      "sql": 21,
+      "read_transactions": 2,
+      "write_transactions": 1,
+      "rows": 7
+    },
+    "after": {
+      "sql": 21,
+      "read_transactions": 2,
+      "write_transactions": 1,
+      "rows": 7
+    }
+  },
+  "size": {
+    "source_lines_before": 4986,
+    "source_lines_after": 5064,
+    "jar_bytes_before": 887514,
+    "jar_bytes_after": 904823
+  },
+  "limits": [
+    "No measurements of network latency, server RAM, or rendering in real Telegram clients."
+  ]
+}
