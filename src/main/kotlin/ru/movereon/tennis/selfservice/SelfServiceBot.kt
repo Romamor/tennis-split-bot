@@ -20,6 +20,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val pollWorkflow=PollWorkflow(polls,state,api)
     val screens = Screens(service, state, requireNotNull(identity.username))
     private val paymentInput=PaymentInput(service,state)
+    private val inputRecovery=InputRecovery(service,::access)
     private val paymentNotifications=PaymentNotifications(service,state,clock) { key,group,user,out ->
         sendOrdinary(key,group,user,user,out,key,recreateMissing=state.delivery(key)?.message==null)
     }
@@ -47,7 +48,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun access(group: Long, user: Long): Access {
         require(group < 0)
         checkedMembership[group to user]?.let { return it }
-        val member = api.member(group, user)
+        val member = try { api.member(group, user) } catch(f:TelegramFailure) {
+            if(f.kind!=FailureKind.REJECTED || f.code !in setOf(400,403)) throw f
+            navigationMembership.invalidate(group)
+            throw AccountingException(ErrorCode.FORBIDDEN,"Группа недоступна. Выбери другую группу или вернись в меню.")
+        }
         navigationMembership.remember(group,user,member)
         service.observeMembership(group, user, member.present)
         checkAccounting(member.present, ErrorCode.FORBIDDEN, "Доступ только участникам этой Telegram-группы")
@@ -153,9 +158,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val saved = state.plan(update.id)?.let { previous ->
                 if(FinanceScreens.retiredCommand(previous.command) || previous.screen.kind in FinanceScreens.retiredActions || FinanceScreens.retiredForm(previous.form)) previous.copy(command=null,form=null,screen=ScreenAction("finance",previous.screen.group),notice="Меню переводов обновилось. Используй «Перевести» или «Принять перевод».")
                 else previous
-            }
+            }?.let(inputRecovery::resolve)
             val plan = saved ?: prepare(update, message, user)
                 ?.let(::skipSingleGroup)
+                ?.let(inputRecovery::resolve)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { state.complete(update.id); return }
@@ -217,6 +223,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             if (effective.clearDraft) {
                 val draftGroup=effective.clearDraftGroup ?: plan.screen.group
+                if(effective.nextDraft!=null && plan.screen.group!=draftGroup) {
+                    val replacement=state.attendanceDraft(plan.user,plan.screen.group)
+                    if(replacement!=null && replacement!=effective.nextDraft) {
+                        state.complete(update.id)
+                        return
+                    }
+                }
                 val currentDraft=state.attendanceDraft(plan.user,draftGroup)
                 if (currentDraft!=null && currentDraft!=effective.draft) {
                     state.complete(update.id)
@@ -224,6 +237,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
                 if (currentDraft==effective.draft)
                     state.attendanceDraft(plan.user,draftGroup,null)
+                effective.nextDraft?.let { state.attendanceDraft(plan.user,plan.screen.group,it) }
             }
             else effective.draft?.let { state.attendanceDraft(plan.user,plan.screen.group,it) }
             state.session(plan.user, plan.chat, plan.screen.group, effective.form)
@@ -248,10 +262,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val target = ScreenAction(if (form?.kind=="add_players") "add_players" else if (form != null) "form" else "menu", group ?: 0,form?.training.orEmpty(),page=form?.page ?: 0)
                 val a = group?.let { runCatching { access(it, user.id) }.getOrNull() }
                 val safeForm=form.takeIf { it?.group==0L || a!=null && (it?.kind !in setOf("add_players","pick_players") || canEdit(a,it!!.training)) }
-                val errorPlan = positionAfterInput(EventPlan(user.id, message.chat.id,
+                val errorPlan = positionAfterInput(inputRecovery.resolve(EventPlan(user.id, message.chat.id,
                     if (group != null && a == null) ScreenAction("groups", 0)
                     else if(form!=null && safeForm==null) ScreenAction("menu",group ?: 0) else target,
-                    form = safeForm, notice = explanation), true)
+                    form = safeForm, notice = explanation)), true)
                 state.plan(update.id, errorPlan)
                 state.session(user.id,message.chat.id,errorPlan.screen.group,errorPlan.form)
                 deliver(update.id, errorPlan, a)
@@ -259,13 +273,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             state.complete(update.id)
         }
     }
-    private fun prepare(update: TgUpdate, message: TgMessage, user: TgUser): EventPlan? {
+    private fun prepare(update: TgUpdate, message: TgMessage, user: TgUser, destination:ScreenAction?=null,
+        discardForm:Boolean=false,discardDraftGroup:Long?=null): EventPlan? {
         val callback = update.callback
         val chat = message.chat.id
-        val savedForm = state.form(user.id, chat)
+        val savedForm = if(discardForm) null else state.form(user.id, chat)
         var action: ScreenAction
         var openedNotice=false
-        if (callback != null) {
+        if(destination!=null) action=destination
+        else if (callback != null) {
             val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
             val button = token?.let(state::button)
             val incomingNotice=chat==user.id && button?.owner==user.id && button.scope.startsWith("payment-notice:") && state.delivery(button.scope)?.status!="BLOCKED"
@@ -362,6 +378,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             action=ScreenAction("finance",requireNotNull(savedForm).group)
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
+        if(chat>0 && action.kind=="form") action=savedForm?.let { ScreenAction("form",it.group,it.training,back=it.origin) } ?: ScreenAction("menu",0)
         val a = if (action.group < 0 && action.kind!="close_panel") access(action.group, user.id) else null
         if(callback!=null && action.kind=="finance_receive" && service.pendingPaymentCount(requireNotNull(a))==0) {
             answer(callback,"Нет переводов для подтверждения")
@@ -399,11 +416,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         fun trainingScreen() = action.back?.takeIf { it.kind=="training" && it.id==action.id } ?: action.copy(kind = "training", page = 0, user = 0, option = "")
         fun formPlan(form: InputForm) = plan(ScreenAction("form", form.group, form.training,back=form.origin ?: action.back),
             form = form.copy(origin=form.origin ?: action.back))
-        val exits=FinanceScreens.kinds+setOf("poll_list","poll_detail","poll_settings","my_trainings","my_training","training_settings","settings","menu","groups","groups_back","trainings","training","roster","history","administrators","admin_candidates","close_panel")
-        val inputGroup=savedForm?.group ?: state.selectedGroup(user.id,chat) ?: action.group
-        val exiting=action.kind in exits
-        val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
-        val signature=if(exiting || action.kind in setOf("exit_discard","exit_continue"))
+        val inputGroup=savedForm?.group ?: (if(discardForm) null else state.selectedGroup(user.id,chat)) ?: action.group
+        val exiting=action.kind in InputNavigation.screens
+        val checksInput=exiting || action.kind in InputNavigation.entries || action.kind in setOf("exit_discard","exit_continue")
+        val activeDraft=if(checksInput && inputGroup!=discardDraftGroup) state.attendanceDraft(user.id,inputGroup) else null
+        val replacing=action.kind in InputNavigation.entries && !InputNavigation.continues(action,savedForm,activeDraft,inputGroup)
+        val signature=if(checksInput)
             state.formSignature(InputForm("exit_guard",inputGroup,attendance=activeDraft,baseline=savedForm?.let(state::formSignature))) else ""
         val unsaved=(!FinanceScreens.retiredForm(savedForm) && formDirty(savedForm)) || draftDirty(activeDraft)
         fun confirmExit(destination:ScreenAction):EventPlan {
@@ -418,9 +436,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if(action.option!=signature && unsaved)
                 return confirmExit(destination).copy(notice="Ввод обновился. Проверь текущие изменения.")
             if(action.option==signature && action.kind=="exit_continue") return plan(requireNotNull(action.resume),form=savedForm)
-            return plan(destination).copy(clearDraft=activeDraft!=null,draft=activeDraft,clearDraftGroup=inputGroup)
+            val next=prepare(update,message,user,destination,discardForm=true,discardDraftGroup=inputGroup) ?: return null
+            return if(activeDraft==null) next else next.copy(clearDraft=true,draft=activeDraft,clearDraftGroup=inputGroup,nextDraft=next.draft)
         }
-        if(exiting && unsaved) return confirmExit(action)
+        if((exiting || replacing) && unsaved) return confirmExit(action)
         val result = when (action.kind) {
             in PaymentInput.actions -> paymentInput.prepare(user.id,chat,requireNotNull(a),action,savedForm).copy(callback=callback?.id)
             "finance_payment_cancel_save" -> plan(action.back ?: ScreenAction("finance_payment",action.group,action.id),SettlementCommand.CancelPayment(action.id,action.version))
@@ -458,7 +477,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "add_players", "toggle_player", "save_players", "pick_players" -> {
                 val auth=requireNotNull(a)
                 checkAccounting(canEdit(auth,action.id),ErrorCode.FORBIDDEN,"Добавлять может создатель тренировки или администратор этой группы")
-                checkAccounting(state.attendanceDraft(user.id,action.group)==null,ErrorCode.INVALID_STATE,"Сначала заверши открытый ввод игрока кнопкой «Всё правильно»")
+                checkAccounting(action.group==discardDraftGroup || state.attendanceDraft(user.id,action.group)==null,ErrorCode.INVALID_STATE,"Сначала заверши открытый ввод игрока кнопкой «Всё правильно»")
                 val t=service.training(auth,action.id)
                 checkAccounting(t.phase == TrainingPhase.OPEN,ErrorCode.INVALID_STATE,"Тренировка уже учтена")
                 val previous=savedForm?.takeIf { it.kind in setOf("add_players","pick_players") && it.group==action.group && it.training==action.id }
@@ -596,7 +615,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val target=action.user.takeIf { it>0 } ?: user.id
                 val auth=requireNotNull(a)
                 checkAccounting(target==user.id || canEdit(auth,action.id),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
-                val existing=state.attendanceDraft(user.id,action.group)
+                val existing=if(action.group==discardDraftGroup) null else state.attendanceDraft(user.id,action.group)
                 var draft=if (action.kind=="reload_attendance") newAttendanceDraft(auth,action.id,target).copy(returnPage=existing?.returnPage,origin=existing?.origin)
                     else existing ?: newAttendanceDraft(auth,action.id,target)
                         .copy(returnPage=action.page.takeIf { action.option=="roster" },origin=action.back)
@@ -637,7 +656,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             else -> plan()
         }
-        return if(exiting && activeDraft!=null) result.copy(clearDraft=true,draft=activeDraft,clearDraftGroup=inputGroup) else result
+        val writes=result.command!=null || result.defaultUpdate!=null || result.clearDraft || result.draft!=null || result.screen.kind in InputNavigation.effects
+        val priorDraft=activeDraft ?: if(writes && !checksInput && inputGroup!=discardDraftGroup) state.attendanceDraft(user.id,inputGroup) else null
+        val sameDraft=priorDraft==null || result.draft?.let { it.training==priorDraft.training && it.user==priorDraft.user }==true
+        val currentDraftAction=action.kind in InputNavigation.draftActions && inputGroup==action.group && sameDraft &&
+            (savedForm==null || savedForm.kind in setOf("paid","attendance") && savedForm.group==action.group && savedForm.training==action.id)
+        checkAccounting(!(unsaved || draftDirty(priorDraft)) || !writes || action.kind in InputNavigation.submissions || currentDraftAction,
+            ErrorCode.INVALID_STATE,"Сначала заверши или отмени текущий ввод.")
+        return if((exiting || replacing) && activeDraft!=null) result.copy(clearDraft=true,draft=activeDraft,clearDraftGroup=inputGroup,nextDraft=result.draft) else result
     }
     private fun canEdit(a:Access,training:String)=service.canEdit(a,service.training(a,training))
     private fun newAttendanceDraft(a: Access, training: String, target: Long): AttendanceDraft {
