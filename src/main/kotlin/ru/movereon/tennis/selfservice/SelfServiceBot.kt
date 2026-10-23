@@ -94,7 +94,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             return plan.copy(screen=next)
         }
         val form=plan.form
-        if(form?.kind=="group" && form.group==0L && form.training.isEmpty()) {
+        if(screen.kind=="form" && form?.kind=="group" && form.group==0L && form.training.isEmpty()) {
             val only=publicationChoices(plan.user,form).singleOrNull() ?: return plan
             requirePublication(only.group.id,plan.user)
             return plan.copy(form=form.copy(kind="ready",publishGroup=only.group.id))
@@ -405,18 +405,22 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val activeDraft=if(exiting || action.kind in setOf("exit_discard","exit_continue")) state.attendanceDraft(user.id,inputGroup) else null
         val signature=if(exiting || action.kind in setOf("exit_discard","exit_continue"))
             state.formSignature(InputForm("exit_guard",inputGroup,attendance=activeDraft,baseline=savedForm?.let(state::formSignature))) else ""
-        if(action.kind in setOf("exit_discard","exit_continue")) {
-            checkAccounting(action.option==signature,ErrorCode.STALE_VERSION,"Ввод изменился. Открой текущую форму")
-            if(action.kind=="exit_continue") return plan(requireNotNull(action.resume),form=savedForm)
-            return plan(requireNotNull(action.back)).copy(clearDraft=activeDraft!=null,draft=activeDraft,clearDraftGroup=inputGroup)
-        }
-        if(exiting && ((!FinanceScreens.retiredForm(savedForm) && formDirty(savedForm)) || draftDirty(activeDraft))) {
+        val unsaved=(!FinanceScreens.retiredForm(savedForm) && formDirty(savedForm)) || draftDirty(activeDraft)
+        fun confirmExit(destination:ScreenAction):EventPlan {
             val resume=if(savedForm?.kind=="paid" || savedForm!=null && savedForm.kind !in setOf("attendance","add_players"))
                 ScreenAction("form",inputGroup,savedForm.training,back=savedForm.origin)
                 else if(activeDraft!=null) ScreenAction("player",inputGroup,activeDraft.training,user=activeDraft.user,back=activeDraft.origin)
                 else ScreenAction("add_players",inputGroup,requireNotNull(savedForm).training,page=savedForm.page,back=savedForm.origin)
-            return plan(ScreenAction("exit_confirm",inputGroup,option=signature,back=action,resume=resume),form=savedForm)
+            return plan(ScreenAction("exit_confirm",inputGroup,option=signature,back=destination,resume=resume),form=savedForm)
         }
+        if(action.kind in setOf("exit_discard","exit_continue")) {
+            val destination=action.back ?: ScreenAction("menu",0)
+            if(action.option!=signature && unsaved)
+                return confirmExit(destination).copy(notice="Ввод обновился. Проверь текущие изменения.")
+            if(action.option==signature && action.kind=="exit_continue") return plan(requireNotNull(action.resume),form=savedForm)
+            return plan(destination).copy(clearDraft=activeDraft!=null,draft=activeDraft,clearDraftGroup=inputGroup)
+        }
+        if(exiting && unsaved) return confirmExit(action)
         val result = when (action.kind) {
             in PaymentInput.actions -> paymentInput.prepare(user.id,chat,requireNotNull(a),action,savedForm).copy(callback=callback?.id)
             "finance_payment_cancel_save" -> plan(action.back ?: ScreenAction("finance_payment",action.group,action.id),SettlementCommand.CancelPayment(action.id,action.version))

@@ -1144,7 +1144,7 @@ class SelfServiceBotTest {
 
     @Test fun `back from history returns to training and original training list page`() {
         setup()
-        repeat(20) { bot.service.execute(Access(-1,1,true),"new:$it",SettlementCommand.CreateTraining("t$it","Тренировка $it","2026-09-09","19:00")) }
+        repeat(35) { bot.service.execute(Access(-1,1,true),"new:$it",SettlementCommand.CreateTraining("t$it","Тренировка $it","2026-09-09","19:00")) }
         open(1);click(1,"Управление тренировками");click(1,"Дальше");click(1,"Дальше")
         val list=latest(1)
         click(1,"Тренировка")

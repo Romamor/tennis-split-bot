@@ -46,6 +46,49 @@ class PersonalFlowTest {
         click("Продолжить · 13.09.2026");click("Продолжить · 18:30")
     }
 
+    @Test fun `exit confirmation preserves the group step when only one publication group remains`() {
+        setup()
+        api.members[-2L to api.bot.id]=TgMember("administrator",user=api.bot)
+        message("/start");click("➕ Создать тренировку");message("Спарринг")
+        click("Продолжить · 13.09.2026");click("Продолжить · 18:30")
+        click("Группа 1");click("Назад")
+        val input=bot.state.form(1,1)!!
+        assertEquals("group",input.kind);assertEquals(-1L,input.publishGroup)
+        api.members[-2L to api.bot.id]=TgMember("member",user=api.bot)
+        clock.now=clock.now.plusSeconds(600)
+        message("/start")
+        assertTrue(latest().text!!.contains("несохранённые"))
+        assertEquals(input,bot.state.form(1,1),"The warning must not advance the form behind its own buttons")
+        click("Продолжить ввод")
+        assertEquals("ready",bot.state.form(1,1)!!.kind)
+        assertEquals(listOf(listOf("✅ Опубликовать"),listOf("Назад","Отмена")),rows())
+        message("/start");click("Сбросить и выйти")
+        assertNull(bot.state.form(1,1));assertEquals("Что хочешь сделать?",latest().text)
+        assertEquals(0,bot.service.myTrainings(1).page.total)
+    }
+
+    @Test fun `stale exit buttons refresh confirmation without discarding newer input and survive restart`() {
+        setup();toGroupStep();message("/start")
+        val original=bot.state.form(1,1)!!
+        val updated=original.copy(title="Новый ввод")
+        bot.state.session(1,1,0,updated)
+        click("Продолжить ввод")
+        assertEquals(updated,bot.state.form(1,1))
+        assertTrue(latest().text!!.contains("несохранённые"))
+        val newest=updated.copy(title="Последний ввод")
+        bot.state.session(1,1,0,newest)
+        click("Сбросить и выйти")
+        assertEquals(newest,bot.state.form(1,1),"An old discard button must not erase a newer form")
+        click("Продолжить ввод")
+        assertTrue(latest().text!!.contains("Последний ввод"))
+        message("/start")
+        clock.now=clock.now.plusSeconds(7*86400)
+        bot=SelfServiceBot(api,bot.service.database,api.bot,clock)
+        click("Сбросить и выйти")
+        assertNull(bot.state.form(1,1));assertEquals("Что хочешь сделать?",latest().text)
+        assertEquals(0,bot.service.myTrainings(1).page.total)
+    }
+
     @Test fun `creation is groupless preserves fields on back and cancels directly to the main menu`() {
         setup();message("/start");click("➕ Создать тренировку")
         assertEquals("Напиши название тренировки.",latest().text)
