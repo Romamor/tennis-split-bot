@@ -110,7 +110,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         // Groups settle separately: a credit in one group cannot cover a payment owed in another.
         val remaining=balances.values.filter { it.signum()<0 }.fold(java.math.BigInteger.ZERO) { sum,balance -> sum-balance }
         val size=15
-        val index=page.coerceIn(0,maxOf(0,(total-1)/size))
+        val index=pageIndex(page,total,size)
         val ids=sqlQuery(c,"SELECT t.group_id,t.id $condition ORDER BY t.created_at DESC,t.id DESC,t.group_id LIMIT ? OFFSET ?",user,user,size,index*size) { it.getLong(1) to it.getString(2) }
         MyTrainingPage(Page(ids.map { readTraining(c,it.first,it.second) },total,index,size),minutes.toAmount(),paid-trainingEffect,remaining,completedCount)
     }
@@ -135,8 +135,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             GroupRoleEntry(account,when { account.id in telegramAdmins -> GroupRole.SUPERADMIN;it.getString("appointed")!=null -> GroupRole.ADMIN;else -> GroupRole.MEMBER })
         }.filter { if (candidates) it.role==GroupRole.MEMBER else it.role!=GroupRole.MEMBER }
             .sortedWith(compareBy<GroupRoleEntry> { it.role.ordinal }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
-        val index=pageIndex(page,rows.size)
-        Page(rows.drop(index*8).take(8),rows.size,index)
+        rows.page(page)
     }
     private fun admin(c: Connection, a: Access) = isGroupAdmin(c,a)
     private fun requireAdmin(c: Connection, a: Access) = allowed(admin(c, a), "Это действие доступно администратору этой группы")
@@ -178,10 +177,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 val available=availablePayments(c,database,a.groupId).firstOrNull { it.from.value==a.userId.toString() && it.to.value==command.to.toString() }
                 state(available!=null && available.amount==command.amount,"Платёж больше недоступен или сумма изменилась. Обнови список платежей")
                 transferId=command.id
-                sqlUpdate(c,"""INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,note,status,version,reviewer,review_party,created_by,created_at)
-                    VALUES(?,?,?,?,?,?,'','REVIEW',1,?,?,?,?)""",a.groupId,transferId,a.userId,command.to,command.amount,
-                    LocalDate.now(clock.withZone(ZoneId.of(sqlQuery(c,"SELECT time_zone FROM groups WHERE id=?",a.groupId) { it.getString(1) }.single()))).toString(),a.userId,a.userId,a.userId,clock.instant().toString())
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                after=json.encodeToString(insertTransfer(c,a.groupId,transferId,a.userId,command.to,command.amount,
+                    paymentDate(c,a.groupId),a.userId,clock.instant().toString(),PaymentStatus.REVIEW,reviewer=a.userId,reviewParty=a.userId))
             }
             is SettlementCommand.SendOtherPayment -> {
                 allowed(present(c,a),"Отправлять платёж может текущий участник группы")
@@ -190,25 +187,22 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 val similar=recentSimilar(c,a.groupId,a.userId,command.to,command.amount)
                 if(similar.isNotEmpty() && !command.allowSimilar) throw DuplicateTransfer(similar)
                 transferId=command.id
-                sqlUpdate(c,"""INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,note,status,version,reviewer,review_party,created_by,created_at)
-                    VALUES(?,?,?,?,?,?,'','REVIEW',1,?,?,?,?)""",a.groupId,transferId,a.userId,command.to,command.amount,
-                    paymentDate(c,a.groupId),a.userId,a.userId,a.userId,clock.instant().toString())
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                after=json.encodeToString(insertTransfer(c,a.groupId,transferId,a.userId,command.to,command.amount,
+                    paymentDate(c,a.groupId),a.userId,clock.instant().toString(),PaymentStatus.REVIEW,reviewer=a.userId,reviewParty=a.userId))
             }
             is SettlementCommand.RecordAdminPayment -> {
                 allowed(present(c,a),"Записывать платёж может текущий администратор группы");requireAdmin(c,a)
                 known(c,a.groupId,command.from);known(c,a.groupId,command.to);checkId(command.id)
                 require(command.amount>0 && command.from!=command.to) { "Укажи положительную сумму и разных участников" }
                 transferId=command.id
-                sqlUpdate(c,"""INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,note,status,version,created_by,created_at)
-                    VALUES(?,?,?,?,?,?,'','ACTIVE',1,?,?)""",a.groupId,transferId,command.from,command.to,command.amount,
-                    paymentDate(c,a.groupId),a.userId,clock.instant().toString())
-                entries=transferEntries(transfer(c,a.groupId,transferId))
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                val created=insertTransfer(c,a.groupId,transferId,command.from,command.to,command.amount,
+                    paymentDate(c,a.groupId),a.userId,clock.instant().toString(),PaymentStatus.ACTIVE)
+                entries=transferEntries(created)
+                after=json.encodeToString(created)
             }
             is SettlementCommand.ReceivePayment -> {
                 transferId=command.id
-                val old=transfer(c,a.groupId,transferId)
+                val old=readTransfer(c,a.groupId,transferId)
                 allowed(present(c,a) && a.userId==old.to,"Принять платёж может только его получатель")
                 if(old.status==PaymentStatus.ACTIVE) return@write ActionReceipt(0,old.version)
                 command.version?.let { stale(old.version,it) }
@@ -216,11 +210,11 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 before=json.encodeToString(old);version=Math.addExact(old.version,1)
                 sqlUpdate(c,"UPDATE transfers SET status='ACTIVE',version=?,reviewer=NULL,review_party=NULL WHERE group_id=? AND id=?",version,a.groupId,transferId)
                 entries=transferEntries(old)
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                after=json.encodeToString(readTransfer(c,a.groupId,transferId))
             }
             is SettlementCommand.CancelPayment -> {
                 transferId=command.id
-                val old=transfer(c,a.groupId,transferId)
+                val old=readTransfer(c,a.groupId,transferId)
                 allowed(present(c,a) && (admin(c,a) || old.from==a.userId && old.status==PaymentStatus.REVIEW),
                     "Отменить подтверждённый или чужой перевод может только администратор группы")
                 stale(old.version,command.version)
@@ -228,12 +222,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 before=json.encodeToString(old);version=Math.addExact(old.version,1)
                 sqlUpdate(c,"UPDATE transfers SET status='CANCELLED',version=?,reviewer=NULL,review_party=NULL WHERE group_id=? AND id=?",version,a.groupId,transferId)
                 if(old.status==PaymentStatus.ACTIVE) entries=transferEntries(old).map { it.copy(amount=-it.amount) }
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                after=json.encodeToString(readTransfer(c,a.groupId,transferId))
             }
             is SettlementCommand.EditPaymentAmount -> {
                 allowed(present(c,a),"Доступ только участникам этой группы")
                 transferId=command.id
-                val old=transfer(c,a.groupId,transferId)
+                val old=readTransfer(c,a.groupId,transferId)
                 allowed(canEditPayment(a,old,admin(c,a)),"Изменить сумму может отправитель до подтверждения или администратор группы")
                 stale(old.version,command.version)
                 require(command.amount>0) { "Укажи положительную сумму" }
@@ -241,7 +235,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 before=json.encodeToString(old);version=Math.addExact(old.version,1)
                 sqlUpdate(c,"UPDATE transfers SET amount=?,version=? WHERE group_id=? AND id=?",command.amount,version,a.groupId,transferId)
                 if(old.status==PaymentStatus.ACTIVE) entries=transferEntries(old).map { it.copy(amount=-it.amount) }+transferEntries(old.copy(amount=command.amount))
-                after=json.encodeToString(transfer(c,a.groupId,transferId))
+                after=json.encodeToString(readTransfer(c,a.groupId,transferId))
             }
             is SettlementCommand.RecordTransfer -> {
                 transferId = command.id
@@ -254,14 +248,14 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 val similar = recentSimilar(c,a.groupId,command.from,command.to,command.amount)
                 if (similar.isNotEmpty() && !command.allowSimilar) throw DuplicateTransfer(similar)
                 require(count(c, "SELECT COUNT(*) FROM transfers WHERE group_id=? AND id=?", a.groupId, transferId) == 0) { "Перевод уже записан" }
-                sqlUpdate(c, """INSERT INTO transfers(group_id,id,from_user,to_user,amount,occurred_on,note,status,version,created_by,created_at)
-                    VALUES(?,?,?,?,?,?,?,'ACTIVE',1,?,?)""", a.groupId, transferId, command.from, command.to, command.amount, command.date, command.note, a.userId, clock.instant().toString())
-                entries = transferEntries(transfer(c, a.groupId, transferId))
-                after = json.encodeToString(transfer(c, a.groupId, transferId))
+                val created=insertTransfer(c,a.groupId,transferId,command.from,command.to,command.amount,
+                    command.date,a.userId,clock.instant().toString(),PaymentStatus.ACTIVE,note=command.note)
+                entries=transferEntries(created)
+                after=json.encodeToString(created)
             }
             is SettlementCommand.EditTransferAmount -> {
                 transferId=command.id
-                val old=transfer(c,a.groupId,transferId)
+                val old=readTransfer(c,a.groupId,transferId)
                 state(count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('SendPayment','SendOtherPayment','RecordAdminPayment')",a.groupId,transferId)==0,"Используй новое меню «Мои финансы»")
                 transferParty(c,a,setOf(old.from,old.to),null,null)
                 stale(old.version,command.version)
@@ -273,14 +267,14 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 before=json.encodeToString(old)
                 version=Math.addExact(old.version,1)
                 sqlUpdate(c,"UPDATE transfers SET amount=?,version=? WHERE group_id=? AND id=?",command.amount,version,a.groupId,old.id)
-                val changed=transfer(c,a.groupId,old.id)
+                val changed=readTransfer(c,a.groupId,old.id)
                 if(old.status==PaymentStatus.ACTIVE)
                     entries=transferEntries(old).map { it.copy(amount=-it.amount) }+transferEntries(changed)
                 after=json.encodeToString(changed)
             }
             is SettlementCommand.ChangeTransfer -> {
                 transferId = command.id
-                val old = transfer(c, a.groupId, transferId)
+                val old = readTransfer(c, a.groupId, transferId)
                 state(count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('SendPayment','SendOtherPayment','RecordAdminPayment')",a.groupId,transferId)==0,"Используй новое меню «Мои финансы»")
                 before = json.encodeToString(old)
                 stale(old.version, command.version)
@@ -303,7 +297,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                 version = Math.addExact(old.version, 1)
                 sqlUpdate(c, "UPDATE transfers SET status=?,version=?,reviewer=?,review_party=? WHERE group_id=? AND id=?", status.name, version,
                     a.userId.takeIf { status == PaymentStatus.REVIEW }, party.takeIf { status == PaymentStatus.REVIEW }, a.groupId, transferId)
-                after = json.encodeToString(transfer(c, a.groupId, transferId))
+                after = json.encodeToString(readTransfer(c, a.groupId, transferId))
             }
             else -> {
                 var refreshRoster=command !is SettlementCommand.CreateTraining && command !is SettlementCommand.EditTraining
@@ -334,7 +328,6 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                         allowed(canManageTraining(c,a,old), "Учесть тренировку может её создатель или администратор этой группы")
                     else if (command is SettlementCommand.EditTraining || command is SettlementCommand.AddPlayers || command is SettlementCommand.RemovePlayer || command is SettlementCommand.ReopenTraining || command is SettlementCommand.CancelTraining || command is SettlementCommand.RestoreTraining)
                         allowed(canManageTraining(c,a,old), "Редактировать тренировку может её создатель или администратор этой группы")
-                    else if (command !is SettlementCommand.ChangeAttendance && command !is SettlementCommand.SaveAttendance) requireAdmin(c, a)
                     when (command) {
                         is SettlementCommand.AddPlayers -> {
                             stale(old.version,command.version); editable(old)
@@ -371,12 +364,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                             val changed = old.rules.change(row, command)
                             refreshRoster=changed.playing!=row.playing
                             if (changed==row) return@write ActionReceipt(0,old.version)
-                            if(!changed.playing && changed.paid==0L)
-                                sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,changed.userId)
-                            else sqlUpdate(c, """INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
-                                VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
-                                a.groupId, trainingId, changed.userId, changed.playing, changed.minutes, changed.guestMinutes, changed.guestCount, changed.paid, changed.ordinal)
+                            saveAttendance(c,a.groupId,trainingId,changed)
                             validateTrainingDraft(readTraining(c, a.groupId, trainingId))
                         }
                         is SettlementCommand.SaveAttendance -> {
@@ -394,12 +382,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
                                 .copy(playing=input.playing,minutes=input.minutes,guestMinutes=if(input.guestCount>0) input.minutes else 0,guestCount=input.guestCount,paid=input.paid)
                             refreshRoster=row.playing!=(current?.playing ?: false)
                             if (row==current || current==null && !row.playing && row.paid==0L) return@write ActionReceipt(0,old.version)
-                            if(!row.playing && row.paid==0L)
-                                sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",a.groupId,trainingId,row.userId)
-                            else sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
-                                VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
-                                playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
-                                a.groupId,trainingId,row.userId,row.playing,row.minutes,row.guestMinutes,row.guestCount,row.paid,row.ordinal)
+                            saveAttendance(c,a.groupId,trainingId,row)
                             validateTrainingDraft(readTraining(c,a.groupId,trainingId))
                         }
                         is SettlementCommand.FinishTraining -> {
@@ -482,7 +465,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val args = if (mine) arrayOf<Any>(a.groupId, a.userId, a.userId) else arrayOf<Any>(a.groupId)
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val size=15
-        val index=page.coerceIn(0,maxOf(0,(total-1)/size))
+        val index=pageIndex(page,total,size)
         val ids = sqlQuery(c, "SELECT t.id $condition ORDER BY t.played_on DESC,t.starts_at DESC,t.id LIMIT ? OFFSET ?", *args, size, index * size) { it.getString(1) }
         Page(ids.map { readTraining(c, a.groupId, it) }, total, index,size)
     }
@@ -533,9 +516,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             AccountBalance(readAccount(it),balances[it.getLong("id")] ?: 0,it.getInt("attendance_count"),it.getBoolean("present"),it.getBoolean("has_played"))
         }.filter { (exclude==null || it.account.id!=exclude) && (it.present || it.hasPlayed || it.balance!=0L) && (!playedOnly || it.hasPlayed) }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
             .thenByDescending { it.balance }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
-        val size=15
-        val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))
-        Page(all.drop(index*size).take(size),all.size,index,size)
+        all.page(page,15)
     }
     fun rosterIds(a:Access,presentOnly:Boolean=false):List<Long> = database.read { c ->
         known(c,a.groupId,a.userId)
@@ -546,10 +527,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         known(c,a.groupId,a.userId)
         sqlQuery(c,"SELECT u.* FROM users u JOIN group_users gu ON gu.user_id=u.id WHERE gu.group_id=? AND u.is_bot=0",a.groupId,map=::readAccount)
     }
-    fun transfer(a: Access, id: String): MoneyTransfer = database.read { known(it, a.groupId, a.userId); transfer(it, a.groupId, id) }
-    private fun transfer(c: Connection, group: Long, id: String): MoneyTransfer = sqlQuery(c,"SELECT * FROM transfers WHERE group_id=? AND id=?",group,id,map=::readTransfer)
-        .singleOrNull() ?: invalid("Перевод не найден в этой группе")
-    private fun readTransfer(r:ResultSet)=MoneyTransfer(r.getLong("group_id"),r.getString("id"),r.getLong("from_user"),r.getLong("to_user"),r.getLong("amount"),r.getString("occurred_on"),r.getString("note"),PaymentStatus.valueOf(r.getString("status")),r.getLong("version"),r.getString("reviewer")?.toLong(),r.getString("review_party")?.toLong(),r.getLong("created_by"))
+    fun transfer(a: Access, id: String): MoneyTransfer = database.read { known(it, a.groupId, a.userId); readTransfer(it, a.groupId, id) }
     /** One read snapshot; recommendations always use pending reservations as well as the posted ledger. */
     fun paymentDraftContext(a:Access,from:Long,to:Long):PaymentDraftContext = database.read { c ->
         known(c,a.groupId,a.userId);known(c,a.groupId,from);known(c,a.groupId,to)
@@ -559,7 +537,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     }
     fun paymentDetails(a:Access,id:String):PaymentDetails = database.read { c ->
         known(c,a.groupId,a.userId)
-        val t=transfer(c,a.groupId,id)
+        val t=readTransfer(c,a.groupId,id)
         val administrative=count(c,"SELECT COUNT(*) FROM actions WHERE group_id=? AND transfer_id=? AND kind='RecordAdminPayment'",a.groupId,id)>0
         val edits=sqlQuery(c,"""SELECT * FROM actions WHERE group_id=? AND transfer_id=? AND kind IN ('EditPaymentAmount','EditPendingPaymentAmount','CancelPayment','AdminCancelPayment') ORDER BY id DESC LIMIT 5""",a.groupId,id) {
             AuditAction(it.getLong("id"),a.groupId,it.getLong("actor_id"),it.getString("kind"),null,id,it.getString("before_json"),it.getString("after_json"),it.getString("occurred_at"))
@@ -577,14 +555,13 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val index = pageIndex(page, total)
         val ids = sqlQuery(c, "SELECT id $condition ORDER BY occurred_on DESC,id LIMIT 8 OFFSET ?", *args, index * 8) { it.getString(1) }
-        Page(ids.map { transfer(c, a.groupId, it) }, total, index)
+        Page(ids.map { readTransfer(c, a.groupId, it) }, total, index)
     }
     fun paymentSuggestions(a:Access,incoming:Boolean=false,page:Int=0):Page<SuggestedTransfer> = database.read { c ->
         known(c,a.groupId,a.userId)
         val all=availablePayments(c,database,a.groupId).filter { if(incoming) it.to.value==a.userId.toString() else it.from.value==a.userId.toString() }
         val size=if(incoming) 5 else 3
-        val index=page.coerceIn(0,maxOf(0,(all.size-1)/size))
-        Page(all.drop(index*size).take(size),all.size,index,size)
+        all.page(page,size)
     }
     fun financePayments(a:Access,page:Int=0,incomingOnly:Boolean=false,allGroup:Boolean=false):Page<MoneyTransfer> = database.read { c ->
         known(c,a.groupId,a.userId)
@@ -603,8 +580,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             else -> arrayOf<Any>(a.groupId,a.userId,a.userId)
         }
         val total=count(c,"SELECT COUNT(*) $condition",*args);val size=if(incomingOnly) 3 else 10
-        val index=page.coerceIn(0,maxOf(0,(total-1)/size))
-        val items=sqlQuery(c,"SELECT * $condition ORDER BY occurred_on DESC,created_at DESC,id LIMIT ? OFFSET ?",*args,size,index*size,map=::readTransfer)
+        val index=pageIndex(page,total,size)
+        val items=sqlQuery(c,"SELECT * $condition ORDER BY occurred_on DESC,created_at DESC,id LIMIT ? OFFSET ?",*args,size,index*size,map=::transferRow)
         Page(items,total,index,size)
     }
     fun balances(a: Access): Map<Long, Long> = database.read { known(it, a.groupId, a.userId); database.balances(it, a.groupId) }
@@ -616,14 +593,13 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             ORDER BY attendance DESC,u.first_name COLLATE NOCASE,u.id""", a.groupId) {
             AccountBalance(readAccount(it), balances[it.getLong("id")] ?: 0, it.getInt("attendance"), it.getBoolean("present"),it.getBoolean("has_played"))
         }.filter { it.account.id !in exclude && (!playedBefore || it.attendance > 0) && (!balanceOnly || if (settled) it.balance == 0L && it.hasPlayed else it.balance != 0L) }
-        val index = pageIndex(page, rows.size)
-        Page(rows.drop(index * 8).take(8), rows.size, index)
+        rows.page(page)
     }
     fun history(a: Access, trainingId: String? = null, page: Int = 0, transferId:String?=null): Page<AuditAction> = database.read { c ->
         known(c, a.groupId, a.userId)
         require(trainingId==null || transferId==null)
         if(transferId!=null) {
-            val t=transfer(c,a.groupId,transferId)
+            val t=readTransfer(c,a.groupId,transferId)
             allowed(a.userId in setOf(t.from,t.to) || admin(c,a),"История перевода доступна его сторонам")
         }
         val condition = "FROM actions WHERE group_id=?" + if(trainingId!=null) " AND training_id=?" else if(transferId!=null) " AND transfer_id=?" else ""
@@ -636,7 +612,6 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         }, total, index)
     }
     private fun count(c: Connection, sql: String, vararg args: Any?) = sqlQuery(c, sql, *args) { it.getInt(1) }.single()
-    private fun pageIndex(page: Int, total: Int) = page.coerceIn(0, maxOf(0, (total - 1) / 8))
     private fun stale(actual: Long, expected: Long) = checkAccounting(actual == expected, ErrorCode.STALE_VERSION, "Данные изменились. Открой тренировку или перевод заново")
     private fun allowed(condition: Boolean, message: String) = checkAccounting(condition, ErrorCode.FORBIDDEN, message)
     private fun state(condition: Boolean, message: String) = checkAccounting(condition, ErrorCode.INVALID_STATE, message)

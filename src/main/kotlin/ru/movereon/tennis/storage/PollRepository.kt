@@ -15,7 +15,7 @@ internal fun readManagedPolls(c:Connection,a:Access,admin:Boolean,page:Int):Page
     val condition="FROM training_polls WHERE group_id=? AND status<>'CLOSED'"+if(admin) "" else " AND created_by=?"
     val parameters=if(admin) arrayOf<Any>(a.groupId) else arrayOf<Any>(a.groupId,a.userId)
     val total=sqlQuery(c,"SELECT COUNT(*) $condition",*parameters) { it.getInt(1) }.single()
-    val index=page.coerceIn(0,maxOf(0,(total-1)/5))
+    val index=pageIndex(page,total,5)
     val rows=sqlQuery(c,"SELECT * $condition ORDER BY created_at DESC,id LIMIT 5 OFFSET ?",*parameters,index*5,map=::readPollRow)
     return Page(rows,total,index,5)
 }

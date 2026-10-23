@@ -149,12 +149,13 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val t=service.training(requireNotNull(a),action.id)
                 checkAccounting(service.canEdit(a,t),ErrorCode.FORBIDDEN,"Редактировать тренировку может её создатель или администратор этой группы")
                 val players=t.players.filter { it.playing || it.paid>0 }.sortedBy { it.ordinal }
-                val index=action.page.coerceIn(0,maxOf(0,(players.size-1)/8))
-                players.drop(index*8).take(8).forEach { p ->
+                val page=players.page(action.page)
+                val index=page.index
+                page.items.forEach { p ->
                     personRow(p.userId,"${label(p.userId)} · ${if(p.playing) (if(t.rules.trackTime) hours(p.minutes) else "Играл") else "Не играл"}${if(p.guestCount>0) " · гостей: ${p.guestCount}" else ""} · ${p.paid} ₽",
                         next("player",page=index,target=p.userId,option="roster").copy(back=action.copy(page=index)))
                 }
-                pages(index,maxOf(1,(players.size+7)/8))
+                pages(index,page.pages)
                 row("Участники группы",next("add_players",option="").copy(back=action.copy(page=index)))
                 back(next("training",option=""))
                 "${clean(t.title,60)} · ${date(t.date)}\nВ составе: ${players.count { it.playing }} · гостей: ${players.sumOf { it.guestCount }}\nОплачено: ${players.sumOf { it.paid }} ₽\nВыбери игрока для правки или добавь людей через «Участники группы»."
@@ -165,8 +166,8 @@ class Screens(private val service: SettlementService, private val state: Interac
                 val f=requireNotNull(form)
                 val playing=t.players.filter { it.playing }.map { it.userId }.toSet()
                 val order=f.order ?: service.rosterIds(a).filter { it !in playing }
-                val index=action.page.coerceIn(0,maxOf(0,(order.size-1)/8))
-                val p=Page(order.drop(index*8).take(8).map { service.groupAccount(a,it) },order.size,index)
+                val selectedPage=order.page(action.page)
+                val p=Page(selectedPage.items.map { service.groupAccount(a,it) },order.size,selectedPage.index)
                 val selected=f.selectedUsers.filter { it !in playing }.toSet()
                 val signature=state.formSignature(f)
                 p.items.forEach { person ->
@@ -214,12 +215,11 @@ class Screens(private val service: SettlementService, private val state: Interac
                 require(input.players.isNotEmpty()) { "Укажи наигранное время хотя бы одного участника" }
                 require(input.payments.isNotEmpty()) { "Укажи оплату стола" }
                 val calc = calculateTraining(input)
-                val p = calc.entries
-                val index = action.page.coerceIn(0, maxOf(0, (p.size - 1) / 8))
-                pages(index, maxOf(1, (p.size + 7) / 8))
+                val p = calc.entries.page(action.page)
+                pages(p.index,p.pages)
                 row("✅ Подтвердить учёт", next("finish", version = t.version))
                 back(next("training"))
-                "Проверка расчёта · ${date(t.date)}\nВсего: ${calc.total} ₽\n\n" + p.drop(index * 8).take(8).joinToString("\n") {
+                "Проверка расчёта · ${date(t.date)}\nВсего: ${calc.total} ₽\n\n" + p.items.joinToString("\n") {
                     "${shortName(it.participant.value.toLong())}: ${signed(it.amount)} ₽"
                 } + "\n\nЭто результат этой тренировки. При применении правок он заменит прежний."
             }
@@ -263,9 +263,9 @@ class Screens(private val service: SettlementService, private val state: Interac
                     }
                     "group" -> {
                         val choices=GroupSelection.publication(groupOptions,f.pollId.isNotEmpty(),polls::enabled)
-                        val index=f.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
-                        choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),formAction("form_group_select").copy(value=it.group.id)) }
-                        pages(index,maxOf(1,(choices.size+7)/8),formAction("form_group_page"))
+                        val page=choices.page(f.page)
+                        page.items.forEach { row(clean(it.group.title,60),formAction("form_group_select").copy(value=it.group.id)) }
+                        pages(page.index,page.pages,formAction("form_group_page"))
                         "Выбери группу для тренировки."+if(choices.isEmpty()) "\nНужна группа, в которой состоишь ты и бот с правами администратора." else ""
                     }
                     "default_title" -> {

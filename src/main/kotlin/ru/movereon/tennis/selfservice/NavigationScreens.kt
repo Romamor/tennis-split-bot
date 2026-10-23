@@ -11,9 +11,9 @@ internal class NavigationScreens(private val service:SettlementService,private v
         when(action.kind) {
             "groups" -> {
                 val choices=GroupSelection.choices(groupOptions,action.option) { polls.hasActive(it.group.id,requireNotNull(user),it.admin) }
-                val index=action.page.coerceIn(0,maxOf(0,(choices.size-1)/8))
-                choices.drop(index*8).take(8).forEach { row(clean(it.group.title,60),ScreenAction("select_group",0,value=it.group.id,option=action.option)) }
-                pages(index,maxOf(1,(choices.size+7)/8),action.copy(group=0))
+                val page=choices.page(action.page)
+                page.items.forEach { row(clean(it.group.title,60),ScreenAction("select_group",0,value=it.group.id,option=action.option)) }
+                pages(page.index,page.pages,action.copy(group=0))
                 row("Назад",GroupSelection.parent(action.option))
                 "Выбери группу."+if(choices.isEmpty()) "\nНет доступных групп." else ""
             }

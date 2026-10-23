@@ -22,8 +22,8 @@ internal fun readBalanceHistory(c:Connection,a:Access,page:Int):BalanceHistory {
     val amounts=changes.filterValues { it.signum()!=0 }.mapKeys { latest.getValue(it.key) }
     val ids=amounts.keys.toList()
     val size=15
-    val index=page.coerceIn(0,maxOf(0,(ids.size-1)/size))
-    val selected=ids.drop(index*size).take(size)
+    val selectedPage=ids.page(page,size)
+    val selected=selectedPage.items
     val items=if(selected.isEmpty()) emptyList() else sqlQuery(c,"""SELECT a.id,a.kind,a.occurred_at,
         a.training_id,t.title,t.played_on,a.transfer_id,m.from_user,m.to_user
         FROM actions a LEFT JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
@@ -34,5 +34,5 @@ internal fun readBalanceHistory(c:Connection,a:Access,page:Int):BalanceHistory {
             r.getString("training_id"),r.getString("title"),r.getString("transfer_id"),
             r.getString("from_user")?.toLong(),r.getString("to_user")?.toLong(),r.getString("played_on"))
     }
-    return BalanceHistory(balance,Page(items,ids.size,index,size))
+    return BalanceHistory(balance,Page(items,ids.size,selectedPage.index,size))
 }

@@ -25,3 +25,13 @@ internal fun insertTraining(c:Connection,group:Long,id:String,title:String,date:
         VALUES(?,?,?,?,?,'OPEN',1,?,?,?,?)""",group,id,title,date,time,creator,createdAt,rules.guestsEnabled,rules.trackTime)
     return rules
 }
+
+/** One persisted row per player. Leaving with no payment removes the row in both input flows. */
+internal fun saveAttendance(c:Connection,group:Long,training:String,row:Attendance) {
+    if(!row.playing && row.paid==0L)
+        sqlUpdate(c,"DELETE FROM training_players WHERE group_id=? AND training_id=? AND user_id=?",group,training,row.userId)
+    else sqlUpdate(c,"""INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,guest_minutes,guest_count,paid,ordinal)
+        VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(group_id,training_id,user_id) DO UPDATE SET
+        playing=excluded.playing,minutes=excluded.minutes,guest_minutes=excluded.guest_minutes,guest_count=excluded.guest_count,paid=excluded.paid""",
+        group,training,row.userId,row.playing,row.minutes,row.guestMinutes,row.guestCount,row.paid,row.ordinal)
+}

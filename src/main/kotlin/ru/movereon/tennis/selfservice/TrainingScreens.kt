@@ -74,12 +74,13 @@ internal class TrainingScreens(private val service:SettlementService,private val
                 service.requireOpen(t)
                 val players=t.players.filter { it.playing || it.paid>0 }.map { it.userId }
                 val ids=if(action.kind=="add_player_list") service.rosterIds(a,presentOnly=true).filter { id -> t.players.none { it.userId==id && it.playing } } else players
-                val index=action.page.coerceIn(0,maxOf(0,(ids.size-1)/8))
-                ids.drop(index*8).take(8).forEach { id ->
+                val page=ids.page(action.page)
+                val index=page.index
+                page.items.forEach { id ->
                     val kind=when(action.kind) { "add_player_list"->"add_player";"exclude_player_list"->"remove_player";else->"participation" }
                     personRow(id,label(id),next(kind,target=id).copy(back=action.copy(page=index)))
                 }
-                pages(index,maxOf(1,(ids.size+7)/8))
+                pages(index,page.pages)
                 if(action.kind=="add_player_list") row("Добавить через Telegram",next("pick_add_player").copy(back=action.copy(page=index)))
                 back(next("training"))
                 when(action.kind) { "add_player_list"->"Кого добавить?";"exclude_player_list"->"Кого исключить?";else->"Выбери игрока." }+if(ids.isEmpty()) "\nСписок пуст." else ""

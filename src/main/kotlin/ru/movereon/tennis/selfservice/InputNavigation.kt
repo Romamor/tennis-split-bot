@@ -17,3 +17,13 @@ internal object InputNavigation {
         else -> false
     }
 }
+
+/** Compare entered content, not screen navigation or callback metadata. */
+internal fun InputForm.baselineValues()=listOf(title,date,time,amount.toString(),note,declineLabel,pollPhotoId.orEmpty()).joinToString("\u0000")
+internal fun InputForm?.hasChanges():Boolean=when {
+    this==null || kind in setOf("attendance","paid") -> false
+    kind in setOf("add_players","pick_players") -> selectedUsers.isNotEmpty()
+    kind=="ready" && training.isEmpty() -> true
+    baseline!=null -> baseline!=baselineValues()
+    else -> amount>0 || note.isNotBlank()
+}
