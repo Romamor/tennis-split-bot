@@ -17,18 +17,17 @@ class PanelVisibilityTest {
     private var nextPanel=100L
     private var seq=1L
     private var sends=0
-    private val placements=mutableListOf<Boolean>()
     private var deleteFailure:TelegramFailure?=null
     private var editFailure:TelegramFailure?=null
     private var failurePanel:Long?=null
     private val api=object:TelegramApi by fake {
-        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage {
-            sends++;placements+=replaceCallbackMessage
+        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage {
+            sends++
             val id=nextPanel++
             return TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=id)
                 .also { stored[id]=it;visible.add(id) }
         }
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean)=ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) {
             editFailure?.takeIf { failurePanel==null || failurePanel==ephemeralId }?.let { throw it }
             val old=stored[ephemeralId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
@@ -60,7 +59,6 @@ class PanelVisibilityTest {
         }
         assertEquals(4,ids.size)
         assertEquals(4,sends)
-        assertEquals(listOf(true,true,true,true),placements)
         val id=panel().ephemeralId
         press(panel(),"Присоединиться");assertEquals(id,panel().ephemeralId)
         press(panel(),"Время · 0 ч");assertEquals(id,panel().ephemeralId)
@@ -71,7 +69,7 @@ class PanelVisibilityTest {
         press(card,"Открыть");val original=panel()
         stored.clear();visible.clear()
         press(original,"Присоединиться")
-        assertEquals(listOf(true,false),placements)
+        assertEquals(2,sends)
         assertEquals(1,visible.size)
         assertTrue(bot.service.training(Access(-1,1,true),"t").players.single().playing)
     }

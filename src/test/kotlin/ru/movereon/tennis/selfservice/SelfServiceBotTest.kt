@@ -27,10 +27,10 @@ class SelfServiceBotTest {
         override fun instant() = now
     }
     private val api = object : TelegramApi by fake {
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean) = ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard) = ephemeral(chatId,userId,callbackId,text,keyboard)
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
 
-        override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard,replaceCallbackMessage:Boolean): TgMessage =
+        override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
             TgMessage(chat = TgChat(chatId, "supergroup"), from = fake.bot, text = text, keyboard = keyboard,
                 receiver = TgUser(userId, firstName = "User $userId"), ephemeralId = forcedNextEphemeral?.also { forcedNextEphemeral=null } ?: nextEphemeral++).also { ephemeralMessages[chatId to userId] = it }
         override fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {

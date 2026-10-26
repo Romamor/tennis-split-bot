@@ -34,7 +34,7 @@ class PerformanceAuditTest {
         private var nextEvent=1L
         val db=Database(path, trace={ statements+=it })
         private val delegate=object:TelegramApi by fake {
-            override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage =
+            override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage =
                 TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,
                     receiver=TgUser(userId),ephemeralId=nextPanel++).also { panels[chatId to userId]=it;visiblePanels[Triple(chatId,userId,requireNotNull(it.ephemeralId))]=it }
             override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) {

@@ -64,13 +64,13 @@ interface TelegramApi {
     fun openPrivate(callbackId:String,url:String) { throw TelegramFailure(FailureKind.REJECTED) }
     fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null):TgMessage = send(chatId,text,keyboard)
     fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null) = edit(chatId,messageId,text,keyboard)
-    fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean=false):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
+    fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
     fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
     fun pin(chatId:Long,messageId:Long,silent:Boolean=false) { throw TelegramFailure(FailureKind.REJECTED) }
     fun unpin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun delete(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun administrators(chatId: Long): List<TgMember> = emptyList()
-    fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard,replaceCallbackMessage:Boolean=false): TgMessage =
+    fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
         throw TelegramFailure(FailureKind.REJECTED)
     fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {
         throw TelegramFailure(FailureKind.REJECTED)
@@ -164,11 +164,11 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             put("reply_markup",json.encodeToJsonElement(keyboard))
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }
-    override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage =
+    override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage =
         json.decodeFromJsonElement<TgMessage>(call("sendRichMessage",buildJsonObject {
             put("chat_id",chatId);put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
             put("ephemeral_message_parameters",buildJsonObject {
-                put("receiver_user_id",userId);put("callback_query_id",callbackId);put("replace_callback_query_message",replaceCallbackMessage)
+                put("receiver_user_id",userId);put("callback_query_id",callbackId);put("replace_callback_query_message",false)
             });put("reply_markup",json.encodeToJsonElement(keyboard))
         })).also { if(it.receiver?.id!=userId || it.ephemeralId==null) throw TelegramFailure(FailureKind.UNCERTAIN) }
     override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) {
@@ -189,13 +189,13 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     }
 
     override fun administrators(chatId: Long): List<TgMember> = json.decodeFromJsonElement(call("getChatAdministrators", buildJsonObject { put("chat_id", chatId) }))
-    override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard,replaceCallbackMessage:Boolean): TgMessage =
+    override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
         json.decodeFromJsonElement<TgMessage>(call("sendMessage", buildJsonObject {
             put("chat_id", chatId); put("text", text)
             put("ephemeral_message_parameters", buildJsonObject {
                 put("receiver_user_id", userId); put("callback_query_id", callbackId)
-                // Only a callback from a shared message may place a new panel at that message.
-                put("replace_callback_query_message", replaceCallbackMessage)
+                // Keep personal controls separate from the shared card, which is updated after every change.
+                put("replace_callback_query_message", false)
             })
             put("reply_markup", json.encodeToJsonElement(keyboard))
         })).also { if (it.receiver?.id != userId || it.ephemeralId == null) throw TelegramFailure(FailureKind.UNCERTAIN) }
