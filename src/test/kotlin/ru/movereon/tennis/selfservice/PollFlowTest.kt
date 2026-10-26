@@ -26,9 +26,9 @@ class PollFlowTest {
             }
             fake.edit(chatId,messageId,text,keyboard)
         }
-        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
+        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage =
             TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=panelId++).also { panels[userId]=it }
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean)=ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) { panels[userId]=panels.getValue(userId).copy(text=text,keyboard=keyboard) }
         override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) {
@@ -226,7 +226,7 @@ class PollFlowTest {
         assertEquals(0,count("SELECT COUNT(*) FROM trainings"))
         click("Завершить сбор",2,public);val panel=panels.getValue(2)
         click("Завершить сбор",2,public)
-        assertEquals(panel.ephemeralId,panels.getValue(2).ephemeralId)
+        assertNotEquals(panel.ephemeralId,panels.getValue(2).ephemeralId)
         click("Завершить сбор",3,panel)
         assertTrue(alerts.last().contains("другого участника"))
         click("Завершить сбор",2,panels.getValue(2))

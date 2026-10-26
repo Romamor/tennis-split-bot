@@ -17,24 +17,25 @@ class PanelVisibilityTest {
     private var nextPanel=100L
     private var seq=1L
     private var sends=0
-    private var loseDeletionEvents=false
+    private val placements=mutableListOf<Boolean>()
+    private var deleteFailure:TelegramFailure?=null
     private var editFailure:TelegramFailure?=null
     private var failurePanel:Long?=null
     private val api=object:TelegramApi by fake {
-        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage {
-            sends++
+        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage {
+            sends++;placements+=replaceCallbackMessage
             val id=nextPanel++
             return TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=id)
                 .also { stored[id]=it;visible.add(id) }
         }
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean)=ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) {
             editFailure?.takeIf { failurePanel==null || failurePanel==ephemeralId }?.let { throw it }
             val old=stored[ephemeralId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
             stored[ephemeralId]=old.copy(text=text,keyboard=keyboard)
         }
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
-        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { if(!loseDeletionEvents) visible.remove(ephemeralId);stored.remove(ephemeralId) }
+        override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { deleteFailure?.let { throw it };visible.remove(ephemeralId);stored.remove(ephemeralId) }
     }
     private lateinit var bot:SelfServiceBot
     private fun setup() {
@@ -48,17 +49,59 @@ class PanelVisibilityTest {
         return TgUpdate(seq++,callback=TgCallback("cb$seq",TgUser(user,firstName="Игрок"),m,b.callbackData)).also(bot::handle)
     }
     private fun panel()=stored.getValue(visible.single())
-    @Test fun `four opens reuse one visible panel even when deletion events would be lost`() {
+    @Test fun `each shared card open replaces the panel and nested buttons keep the new panel`() {
         setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
         val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
-        loseDeletionEvents=true
-        repeat(4) { press(card,"Открыть") }
-        assertEquals(1,visible.size)
-        assertEquals(1,sends)
+        val ids=mutableSetOf<Long>()
+        repeat(4) {
+            press(card,"Открыть")
+            assertEquals(1,visible.size)
+            ids+=requireNotNull(panel().ephemeralId)
+        }
+        assertEquals(4,ids.size)
+        assertEquals(4,sends)
+        assertEquals(listOf(true,true,true,true),placements)
         val id=panel().ephemeralId
         press(panel(),"Присоединиться");assertEquals(id,panel().ephemeralId)
         press(panel(),"Время · 0 ч");assertEquals(id,panel().ephemeralId)
     }
+    @Test fun `missing panel on an internal callback is recreated without replacing the callback message`() {
+        setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
+        val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
+        press(card,"Открыть");val original=panel()
+        stored.clear();visible.clear()
+        press(original,"Присоединиться")
+        assertEquals(listOf(true,false),placements)
+        assertEquals(1,visible.size)
+        assertTrue(bot.service.training(Access(-1,1,true),"t").players.single().playing)
+    }
+
+    @Test fun `failed retirement never creates a second panel and retry opens a fresh one`() {
+        setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
+        val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
+        press(card,"Открыть");val old=panel()
+        deleteFailure=TelegramFailure(FailureKind.RETRY_LATER,429,1)
+        val button=card.keyboard!!.rows.single().single()
+        val update=TgUpdate(seq++,callback=TgCallback("retry",TgUser(1),card,button.callbackData))
+        assertFailsWith<TelegramFailure> { bot.handle(update) }
+        assertEquals(1,sends);assertEquals(setOf(old.ephemeralId),visible)
+        assertFalse(bot.state.completed(update.id));assertEquals(old.ephemeralId,bot.state.currentEphemeral(1,-1))
+        deleteFailure=null;bot.handle(update)
+        assertTrue(bot.state.completed(update.id));assertEquals(2,sends);assertEquals(1,visible.size)
+        assertNotEquals(old.ephemeralId,panel().ephemeralId)
+        assertTrue(bot.service.training(Access(-1,1,true),"t").players.isEmpty())
+    }
+
+    @Test fun `rejected retirement keeps one panel without posting another`() {
+        setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
+        val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
+        press(card,"Открыть");val old=panel()
+        deleteFailure=TelegramFailure(FailureKind.REJECTED,400)
+        press(card,"Открыть")
+        assertEquals(1,sends);assertEquals(setOf(old.ephemeralId),visible)
+        assertEquals(old.ephemeralId,bot.state.currentEphemeral(1,-1))
+    }
+
     @Test fun `finish poll replaces a panel only after Telegram reports it missing`() {
         setup();val a=Access(-1,1,true);bot.polls.setEnabled(a,true)
         val p=bot.polls.create(a,"p","Теннис","2026-09-14","18:30","Не приду")
@@ -95,12 +138,12 @@ class PanelVisibilityTest {
         press(card,"Открыть")
         for(kind in listOf(FailureKind.REJECTED,FailureKind.UNCERTAIN)) {
             editFailure=TelegramFailure(kind,400)
-            press(card,"Открыть")
+            press(panel(),"Присоединиться")
             assertEquals(1,sends);assertEquals(1,visible.size)
         }
     }
 
-    @Test fun `background rejection keeps the panel tracked and the next open reuses it`() {
+    @Test fun `background rejection keeps the panel tracked until a fresh shared card open`() {
         for(kind in listOf(FailureKind.REJECTED,FailureKind.UNCERTAIN)) {
             setup();bot.service.execute(Access(-1,1,true),"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
             val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
@@ -110,7 +153,7 @@ class PanelVisibilityTest {
             assertEquals(old.ephemeralId,bot.state.currentEphemeral(1,-1))
             assertEquals(old,stored[old.ephemeralId]);assertEquals(1,visible.size)
             editFailure=null;val before=sends;press(card,"Открыть")
-            assertEquals(before,sends);assertEquals(old.ephemeralId,panel().ephemeralId)
+            assertEquals(before+1,sends);assertNotEquals(old.ephemeralId,panel().ephemeralId)
             assertTrue(panel().text!!.contains("Игрок"))
             // Separate database for the second failure category.
             dir=Files.createDirectory(dir.resolve("next"));stored.clear();visible.clear();fake.messages.clear()

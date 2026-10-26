@@ -639,10 +639,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val oldTokens = state.activeTokens(scope)
             state.protect(out.tokens)
             try {
-                val current = state.currentEphemeral(plan.user, plan.chat) ?: plan.ephemeral
+                var current = state.currentEphemeral(plan.user, plan.chat) ?: plan.ephemeral
+                // A shared-card callback opens a fresh panel; callbacks inside a panel edit it.
+                // Successful sends persist their ID in the event plan, so a retry only edits.
+                if(plan.ephemeral==null && current!=null) {
+                    closePanel(plan.user,plan.chat,current,required=true)
+                    current=null
+                    state.protect(out.tokens)
+                }
                 var updated = false
-                // Reuse the known panel: Telegram may accept deletion without delivering it
-                // to the client, so delete-and-send can leave several visible copies.
                 if (current != null) {
                     try {
                         if(out.richHtml!=null) api.editEphemeralRich(plan.chat,plan.user,current,out.text,out.richHtml,out.keyboard)
@@ -654,8 +659,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
                 if (!updated) {
-                    val sent = if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,requireNotNull(plan.callback),out.text,out.richHtml,out.keyboard)
-                        else api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard)
+                    val sent = if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,requireNotNull(plan.callback),out.text,out.richHtml,out.keyboard,replaceCallbackMessage=plan.ephemeral==null)
+                        else api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard,replaceCallbackMessage=plan.ephemeral==null)
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId,event)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }

@@ -180,6 +180,22 @@ class HttpTelegramApiTest {
         assertEquals(other,BotConfig.load(env,mapOf("TELEGRAM_BOT_TOKEN" to other)).token)
     }
 
+    @Test fun `fresh shared card panels explicitly request placement at the callback message`() {
+        response={ 200 to """{"ok":true,"result":{"chat":{"id":-123,"type":"supergroup"},"receiver_user":{"id":22},"ephemeral_message_id":73}}""" }
+        val keyboard=TgKeyboard(emptyList())
+        for(replace in listOf(true,false)) {
+            api.ephemeral(-123,22,"shared-plain","Панель",keyboard,replaceCallbackMessage=replace)
+            api.ephemeralRich(-123,22,"shared-rich","Панель","<p>Панель</p>",keyboard,replaceCallbackMessage=replace)
+            for((_,body) in bodies.takeLast(2)) {
+                val parameters=body.getValue("ephemeral_message_parameters").jsonObject
+                assertEquals(replace,parameters.getValue("replace_callback_query_message").jsonPrimitive.boolean)
+                assertEquals(22,parameters.getValue("receiver_user_id").jsonPrimitive.long)
+                assertTrue(parameters.getValue("callback_query_id").jsonPrimitive.content.startsWith("shared-"))
+            }
+        }
+        assertEquals(listOf("sendMessage","sendRichMessage","sendMessage","sendRichMessage"),bodies.map { it.first })
+    }
+
     @Test fun `ephemeral messages use recipient parameters and verify the returned audience`() {
         response = { method -> 200 to if (method == "sendMessage")
             """{"ok":true,"result":{"chat":{"id":-100123,"type":"supergroup"},"receiver_user":{"id":4503599627370000},"ephemeral_message_id":73}}"""
@@ -191,7 +207,7 @@ class HttpTelegramApiTest {
         val parameters = bodies.last().second.getValue("ephemeral_message_parameters").jsonObject
         assertEquals(4503599627370000L, parameters.getValue("receiver_user_id").jsonPrimitive.long)
         assertFalse(parameters.getValue("replace_callback_query_message").jsonPrimitive.boolean,
-            "The shared card is edited after joining and must not host the personal panel")
+            "Replacing a callback message must be explicitly requested only for shared-card opens")
         api.editEphemeral(-100123,4503599627370000,73,"Обновлено",keyboard)
         assertEquals("editEphemeralMessageText", bodies.last().first)
         assertEquals(73L,bodies.last().second.getValue("ephemeral_message_id").jsonPrimitive.long)

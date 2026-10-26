@@ -17,9 +17,9 @@ class TrainingRulesTest {
     private val panels=mutableMapOf<Long,TgMessage>()
     private var panelId=9000L
     private val telegram=object:TelegramApi by api {
-        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
+        override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean):TgMessage =
             TgMessage(chat=TgChat(chatId,"supergroup"),from=api.bot,text=text,keyboard=keyboard,receiver=TgUser(userId),ephemeralId=panelId++).also { panels[userId]=it }
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard)=ephemeral(chatId,userId,callbackId,text,keyboard)
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard,replaceCallbackMessage:Boolean)=ephemeral(chatId,userId,callbackId,text,keyboard,replaceCallbackMessage)
         override fun editEphemeral(chatId:Long,userId:Long,ephemeralId:Long,text:String,keyboard:TgKeyboard) { panels[userId]=panels.getValue(userId).copy(text=text,keyboard=keyboard) }
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard)=editEphemeral(chatId,userId,ephemeralId,text,keyboard)
         override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { if(panels[userId]?.ephemeralId==ephemeralId) panels.remove(userId) }
