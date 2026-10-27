@@ -84,7 +84,7 @@ class FormTransitionAuditTest {
         assertEquals(before,bot.service.balances(admin));assertTrue(alerts.isEmpty(),alerts.toString())
     }
 
-    @ParameterizedTest @ValueSource(strings=["settings","training_settings","my_trainings","training_status","add_player_list","exclude_player_list","manage_players","participation","recover_confirm","finance","finance_balance_history","finance_send","finance_history","finance_payment","poll_detail","poll_close_confirm"])
+    @ParameterizedTest @ValueSource(strings=["settings","training_settings","my_trainings","training_status","add_player_list","exclude_player_list","manage_players","participation","recover_confirm","finance","finance_balance_history","finance_member_history","finance_balance_members","finance_send","finance_history","finance_payment","poll_detail","poll_close_confirm"])
     fun `navigation offers resume instead of silently clearing a dirty form`(kind:String) {
         setup();val original=dirtyCreation();current(original)
         invoke(target(kind))

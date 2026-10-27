@@ -130,4 +130,42 @@ class BalanceHistoryTest {
         assertEquals(listOf(125L.toBigInteger()),history.page.items.map { it.amount })
         assertTrue(service.database.verify().contains("целостность в порядке"))
     }
+    @Test fun `group administrators read the same reconciled history as the selected member`() {
+        setup();training()
+        run(SettlementCommand.SetAdministrator(3,true))
+        val appointed=Access(-1,3)
+        for(i in 0..15) run(SettlementCommand.RecordAdminPayment("admin-$i",2,1,i+1L))
+        run(SettlementCommand.SendOtherPayment("pending",1,700),Access(-1,2))
+        for(viewer in listOf(owner,appointed)) {
+            val pages=(0..1).map { page -> service.memberBalanceHistory(viewer,2,page) }
+            assertEquals((0..1).map { service.balanceHistory(Access(-1,2),it) },pages)
+            assertEquals(pages.first().balance.toBigInteger(),pages.flatMap { it.page.items }.fold(BigInteger.ZERO) { sum,e->sum+e.amount })
+            assertTrue(pages.flatMap { it.page.items }.none { it.transferId=="pending" })
+        }
+        run(SettlementCommand.CancelPayment("admin-0",1))
+        run(SettlementCommand.ReopenTraining("t",version()))
+        assertEquals(service.balanceHistory(Access(-1,2)),service.memberBalanceHistory(appointed,2))
+        assertEquals(0,service.memberBalanceHistory(owner,3).page.total)
+        assertTrue(service.database.verify().contains("целостность в порядке"))
+    }
+    @Test fun `member history requires a present administrator of the target group even after role revocation`() {
+        setup();training();run(SettlementCommand.SetAdministrator(3,true))
+        assertFailsWith<AccountingException> { service.memberBalanceHistory(Access(-1,2),1) }
+        assertFailsWith<AccountingException> { service.memberBalanceHistory(Access(-2,3),1) }
+        service.remember(Account(4,"Другая группа"));service.rememberMembership(-2,4,true)
+        assertFailsWith<AccountingException> { service.memberBalanceHistory(owner,4) }
+        run(SettlementCommand.SetAdministrator(3,false))
+        assertFailsWith<AccountingException> { service.memberBalanceHistory(Access(-1,3),2,1) }
+        service.rememberMembership(-1,1,false)
+        assertFailsWith<AccountingException> { service.memberBalanceHistory(owner,2) }
+    }
+    @Test fun `admin history pages retain bounded queries and do not load audit payloads`() {
+        setup();for(i in 0..15) run(SettlementCommand.RecordAdminPayment("p$i",1,2,i+1L))
+        queries.clear()
+        val history=service.memberBalanceHistory(Access(-1,3,true),2)
+        assertEquals(15,history.page.items.size)
+        assertTrue(queries.count { it.startsWith("SELECT") }<=6)
+        assertTrue(queries.none { "after_json" in it || "before_json" in it || "payload_json" in it })
+    }
+
 }

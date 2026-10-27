@@ -37,6 +37,7 @@ internal class FinanceScreens(private val service:SettlementService) {
                 ScreenContent("Мои финансы:\n${signed(summary.balance)}$caption$pending","<h3>Мои финансы</h3><p>${highlighted}${TrainingCard.escape(caption+pending).replace("\n","<br>")}</p>")
             }
             "finance_balance_history" -> renderBalanceHistory(layout,a,service.balanceHistory(a,action.page),service.group(a.groupId).timeZone,::person)
+            "finance_member_history" -> renderBalanceHistory(layout,a,service.memberBalanceHistory(a,action.user,action.page),service.group(a.groupId).timeZone,::person,action.user)
             "finance_send" -> {
                 val p=service.paymentSuggestions(a,page=action.page)
                 p.items.forEach { personRow(it.to.value.toLong(),"${person(it.to.value.toLong())} · ${it.amount} ₽",next("finance_send_confirm",target=it.to.value.toLong(),value=it.amount).copy(back=action.copy(page=p.index))) }
@@ -61,10 +62,21 @@ internal class FinanceScreens(private val service:SettlementService) {
                     "<h3>Деньги пришли?</h3><p>От: ${TrainingCard.profileLink(t.from,person(t.from),sender.username)}<br><b>${t.amount} ₽</b> · ${date(t.date)}</p>")
             }
             "finance_received" -> { row("💰 К моим финансам",ScreenAction("finance",a.groupId));structured("Перевод учтён.\nБаланс обновлён.") }
-            "finance_balances" -> {
+            "finance_balances","finance_balance_members" -> {
+                val historyMode=action.kind=="finance_balance_members"
+                val isAdmin=service.isAdmin(a)
+                checkAccounting(!historyMode || isAdmin,ErrorCode.FORBIDDEN,"История балансов участников доступна администратору этой группы")
                 val p=service.financeBalances(a,action.page,playedOnly=true)
-                pages(p.index,p.pages);footer()
-                peopleTable(this,"Баланс группы",p.items,a.userId) { id -> ScreenAction("payment_new",a.groupId,user=id,back=action.copy(page=p.index)) }
+                pages(p.index,p.pages)
+                if(historyMode) row("⬅️ Назад",ScreenAction("finance_balances",a.groupId,page=p.index))
+                else {
+                    if(isAdmin) row("📜 История балансов",ScreenAction("finance_balance_members",a.groupId,page=p.index))
+                    footer()
+                }
+                peopleTable(this,if(historyMode) "История балансов · выбери участника" else "Баланс группы",p.items,
+                    if(historyMode) 0 else a.userId,if(historyMode) "Нажми на имя для профиля, на баланс — для истории участника." else null) { id ->
+                    ScreenAction(if(historyMode) "finance_member_history" else "payment_new",a.groupId,user=id,back=action.copy(page=p.index))
+                }
             }
             "finance_payment","finance_payment_cancel_confirm" -> {
                 val data=service.paymentDetails(a,action.id);val t=data.transfer
@@ -167,15 +179,15 @@ internal class FinanceScreens(private val service:SettlementService) {
         val html="<h3>${TrainingCard.escape(lines.first())}</h3>"+if(lines.size>1) "<p>${TrainingCard.escape(lines.drop(1).joinToString("\n")).replace("\n","<br>")}</p>" else ""
         return ScreenContent(text,html)
     }
-    private fun peopleTable(layout:ScreenLayout,title:String,items:List<AccountBalance>,sender:Long,select:(Long)->ScreenAction):ScreenContent {
+    private fun peopleTable(layout:ScreenLayout,title:String,items:List<AccountBalance>,sender:Long,hint:String?=null,select:(Long)->ScreenAction):ScreenContent {
         val text=title+if(items.isEmpty()) "\nСписок пуст." else "\nУчастник | Баланс\n"+items.joinToString("\n") { "${clean(it.account.name,36)} | ${signed(it.balance)}" }
         val html=structured(title).html+if(items.isEmpty()) "<p>Список пуст.</p>" else RichTable.OPEN+"<tr><th>Участник</th><th>Баланс</th></tr>"+items.joinToString("") {
             val target=select(it.account.id)
             val balance=if(it.account.id==sender) balanceHtml(it.balance) else layout.inline(signed(it.balance),target,if(it.balance>0) "success" else if(it.balance<0) "danger" else "link")
             "<tr><td>${TrainingCard.profileLink(it.account.id,clean(it.account.name,36),it.account.username)}</td><td align=\"right\">$balance</td></tr>"
         }+"</table>"
-        val hint=if(sender==0L) "Нажми на имя для профиля, на баланс — чтобы выбрать отправителя." else "Нажми на имя для профиля, на баланс — для перевода."
-        return ScreenContent(text+"\n"+hint,html+"<p>${TrainingCard.escape(hint)}</p>")
+        val help=hint ?: if(sender==0L) "Нажми на имя для профиля, на баланс — чтобы выбрать отправителя." else "Нажми на имя для профиля, на баланс — для перевода."
+        return ScreenContent(text+"\n"+help,html+"<p>${TrainingCard.escape(help)}</p>")
     }
     private fun paymentStatus(t:MoneyTransfer)=when(t.status) { PaymentStatus.ACTIVE->"Выполнен";PaymentStatus.REVIEW->"В процессе";PaymentStatus.CANCELLED->"Отменён" }
     companion object {
@@ -183,7 +195,7 @@ internal class FinanceScreens(private val service:SettlementService) {
         fun signed(amount:BigInteger)="${if(amount.signum()>0) "+" else if(amount.signum()<0) "−" else ""}${amount.abs()} ₽"
         // Rich HTML supports semantic button colors, not arbitrary CSS text colors.
         fun balanceHtml(amount:Long)=if(amount==0L) signed(amount) else "<tg-button type=\"disabled\" style=\"${if(amount>0) "success" else "danger"}\">${signed(amount)}</tg-button>"
-        val kinds=setOf("finance","finance_balance_history","finance_send","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history","finance_payment_cancel_confirm")
+        val kinds=setOf("finance","finance_balance_history","finance_member_history","finance_balance_members","finance_send","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history","finance_payment_cancel_confirm")
         val mutationActions=setOf("finance_payment_cancel_save","finance_payment_edit")
         val retiredActions=setOf("finance_debtors","debts","balances","settled","transfers","transfer","transfer_people","transfer_direction","transfer_amount","suggested_transfer","save_transfer","transfer_date","transfer_note","edit_transfer_amount","save_transfer_amount","review_transfer","confirm_transfer","cancel_transfer","transfer_history")
         fun retiredForm(form:InputForm?)=form?.kind?.let { it.startsWith("transfer_") || it.startsWith("edit_transfer_") }==true

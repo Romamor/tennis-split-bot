@@ -6,13 +6,13 @@ import ru.movereon.tennis.core.toAmount
 import ru.movereon.tennis.storage.*
 
 /** Fold every posted entry into its source before filtering and paging; never discard money by status. */
-internal fun readBalanceHistory(c:Connection,a:Access,page:Int):BalanceHistory {
+internal fun readBalanceHistory(c:Connection,group:Long,user:Long,page:Int):BalanceHistory {
     data class Source(val trainingId:String?,val transferId:String?)
     val changes=linkedMapOf<Source,BigInteger>()
     val latest=mutableMapOf<Source,Long>()
     sqlEach(c,"""SELECT b.action_id,b.amount,a.training_id,a.transfer_id
         FROM balance_entries b JOIN actions a ON a.id=b.action_id AND a.group_id=b.group_id
-        WHERE b.group_id=? AND b.user_id=? ORDER BY b.action_id DESC,b.entry_index""",a.groupId,a.userId) { r ->
+        WHERE b.group_id=? AND b.user_id=? ORDER BY b.action_id DESC,b.entry_index""",group,user) { r ->
         val source=Source(r.getString("training_id"),r.getString("transfer_id"))
         check((source.trainingId!=null) xor (source.transferId!=null)) { "Balance entry must have exactly one source" }
         latest.putIfAbsent(source,r.getLong("action_id"))
@@ -29,7 +29,7 @@ internal fun readBalanceHistory(c:Connection,a:Access,page:Int):BalanceHistory {
         FROM actions a LEFT JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
         LEFT JOIN transfers m ON m.group_id=a.group_id AND m.id=a.transfer_id
         WHERE a.group_id=? AND a.id IN (${selected.joinToString(",") { "?" }}) ORDER BY a.id DESC""",
-        a.groupId,*selected.toTypedArray()) { r ->
+        group,*selected.toTypedArray()) { r ->
         BalanceHistoryEntry(r.getLong("id"),r.getString("kind"),r.getString("occurred_at"),amounts.getValue(r.getLong("id")),
             r.getString("training_id"),r.getString("title"),r.getString("transfer_id"),
             r.getString("from_user")?.toLong(),r.getString("to_user")?.toLong(),r.getString("played_on"))

@@ -379,4 +379,52 @@ class FinanceFlowTest {
         assertEquals(90,bot.service.training(Access(-1,2),"guest").players.single().minutes)
 
     }
+    @Test fun `appointed admin browses member history and returns through source cards without changing the actor`() {
+        setup();seedBalance();run(SettlementCommand.SetAdministrator(3,true),Access(-1,1,true))
+        for(i in 0..15) run(SettlementCommand.RecordAdminPayment("p$i",2,1,i+1L),Access(-1,1,true))
+        val balances=bot.service.balances(Access(-1,3));val actions=bot.service.history(Access(-1,3)).total
+        open(3);click(3,"Баланс группы")
+        inline(3,2);assertTrue(latest(3).text!!.contains("От кого: Игрок 3"))
+        click(3,"Отмена");click(3,"Баланс группы");click(3,"История балансов")
+        assertContains(latest(3).text!!,"выбери участника")
+        assertContains(html(3),"tg://user?id=2")
+        inline(3,2)
+        assertContains(latest(3).text!!,"История баланса · Игрок 2")
+        assertContains(latest(3).text!!,"💸 → Игрок 1")
+        assertEquals(16,Regex("<tr>").findAll(html(3)).count())
+        follow(3,"finance_payment");assertTrue(rows(3).flatten().any { it.contains("Изменить сумму") })
+        click(3,"⬅️ Назад");assertContains(latest(3).text!!,"История баланса · Игрок 2")
+        click(3,"Дальше ›");val page=latest(3).text
+        follow(3,"my_training","t");click(3,"⬅️ Назад");assertEquals(page,latest(3).text)
+        click(3,"⬅️ Назад");assertContains(latest(3).text!!,"История балансов · выбери участника")
+        click(3,"⬅️ Назад");assertTrue(latest(3).text!!.startsWith("Баланс группы"))
+        assertEquals(balances,bot.service.balances(Access(-1,3)));assertEquals(actions,bot.service.history(Access(-1,3)).total)
+        assertNull(bot.state.form(3,3))
+    }
+    @Test fun `member history has group scoped roles and old buttons stop working after revocation`() {
+        setup();seedBalance();run(SettlementCommand.SetAdministrator(3,true),Access(-1,1,true))
+        open(2);click(2,"Баланс группы");assertFalse(rows(2).flatten().any { it.contains("История балансов") })
+        for(kind in listOf("finance_balance_members","finance_member_history")) {
+            val source=latest(2);val token=bot.state.button(ScreenAction(kind,-1,user=1),2,"personal:2:2")
+            callback(2,source,"n:$token");assertEquals(source,latest(2));assertContains(alerts.last(),"администратор")
+        }
+        open(3,"Группа 2");click(3,"Баланс группы");assertFalse(rows(3).flatten().any { it.contains("История балансов") })
+        open(3);click(3,"Баланс группы");click(3,"История балансов");val selection=latest(3)
+        val target=bot.state.activeTokens("personal:3:3").single { bot.state.button(it)?.action?.let { a->a.kind=="finance_member_history" && a.user==2L }==true }
+        run(SettlementCommand.SetAdministrator(3,false),Access(-1,1,true))
+        callback(3,selection,"n:$target");assertEquals(selection,latest(3));assertContains(alerts.last(),"администратор")
+    }
+    @Test fun `administrator can inspect their own zero history and selection returns to its page`() {
+        setup();seedRoster((1L..20L).toList());fake.members[-1L to 3L]=TgMember("administrator")
+        open(3);click(3,"Баланс группы");click(3,"Дальше ›")
+        val normal=latest(3).text;click(3,"История балансов")
+        assertTrue(rows(3).flatten().contains("2 / 2"))
+        val subject=bot.state.activeTokens("personal:3:3").mapNotNull { bot.state.button(it)?.action }.first { it.kind=="finance_member_history" }.user
+        inline(3,subject);assertContains(latest(3).text!!,"Нет операций, влияющих на баланс")
+        click(3,"⬅️ Назад");assertTrue(rows(3).flatten().contains("2 / 2"));click(3,"⬅️ Назад");assertEquals(normal,latest(3).text)
+        click(3,"История балансов");click(3,"‹ Назад");inline(3,3)
+        assertContains(latest(3).text!!,"История баланса · Игрок 3")
+        assertContains(latest(3).text!!,"Сейчас: 0 ₽")
+    }
+
 }

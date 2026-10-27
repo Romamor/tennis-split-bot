@@ -144,6 +144,14 @@ class ExportBotScreens {
   run(auth,new SettlementCommand.ChangeAttendance("history-training",user,AttendanceChange.SET_PAID,300));
   run(auth,new SettlementCommand.FinishTraining("history-training",svc.training(auth,"history-training").getVersion()));
   cap("finance_balance_history","finance_balance_history","");
+  if(user>=2) {
+   cap("finance_balance_members","finance_balance_members","");
+   capture("finance_member_history","finance_member_history","","\"user\":4,\"back\":{\"kind\":\"finance_balance_members\",\"group\":-1}",null,false,null);
+   String memberBack="\"back\":{\"kind\":\"finance_member_history\",\"group\":-1,\"user\":4,\"back\":{\"kind\":\"finance_balance_members\",\"group\":-1}}";
+   capture("member_history_training","my_training","history-training",memberBack,null,false,null);
+   capture("member_history_payment","finance_payment","admin-payment",memberBack,null,false,null);
+  }
+
   capture("balance_history_training","my_training","history-training","\"back\":{\"kind\":\"finance_balance_history\",\"group\":-1}",null,false,null);
   capture("balance_history_payment","finance_payment",pay,"\"back\":{\"kind\":\"finance_balance_history\",\"group\":-1}",null,false,null);
 

@@ -148,12 +148,23 @@ const balanceTimeline=vm.runInNewContext(`
  ]};
  const g=()=>group,money=n=>Math.abs(n)+' ₽';
  ${between('function ownBalance(', 'function balance(')}
- const own=balanceChanges();state.actor=2;const counterpart=balanceChanges();state.actor=3;const empty=balanceChanges();
+ const own=balanceChanges();const selected=balanceChanges(2);assert.equal(state.actor,1);assert.equal(selected.reduce((sum,e)=>sum+e.amount,0),25);state.actor=2;const counterpart=balanceChanges();state.actor=3;const empty=balanceChanges();
  [own,counterpart,empty,ownBalance(0)]
-`);
+`,{assert});
 assert.equal(balanceTimeline[0].reduce((sum,e)=>sum+e.amount,0),-25);
 assert.deepEqual(Array.from(balanceTimeline[0].filter(e=>!e.training),e=>e.amount),[125]);
 assert.equal(balanceTimeline[1].reduce((sum,e)=>sum+e.amount,0),25);
 assert.equal(balanceTimeline[2].length,0);
 assert.ok(balanceTimeline[3].includes('data-value="balance-history"'),'Zero balance remains linked to history');
 console.log('Balance history checks passed: own posted changes, amendments, cancellation and pending exclusion.');
+
+const memberTables=vm.runInNewContext(`
+ const state={actor:1},esc=x=>String(x),name=id=>'Игрок '+id,money=n=>Math.abs(n)+' ₽';
+ ${between('function balance(', 'function peopleHint(')}
+ [peopleTable([1,2],{1:0,2:-150}),peopleTable([1,2],{1:0,2:-150},{history:true})]
+`);
+assert.equal((memberTables[0].match(/data-action="balance-transfer"/g)||[]).length,1);
+assert.equal((memberTables[1].match(/data-action="member-history"/g)||[]).length,2);
+assert.equal((memberTables[1].match(/data-action="profile"/g)||[]).length,2);
+assert.ok(!memberTables[1].includes('data-action="balance-transfer"'));
+console.log('Member history table checks passed: separate profile/history links including the administrator’s own zero balance.');

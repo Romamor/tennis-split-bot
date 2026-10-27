@@ -149,11 +149,11 @@ function pages(list,size=6){return list.length>size?row(key('‹','page',-1,stat
 function byBalance(list,b){return list.slice().sort((a,c)=>Number(!(b[a]||0))-Number(!(b[c]||0))||(b[c]||0)-(b[a]||0)||name(a).localeCompare(name(c),'ru'))}
 function ownBalance(value){return `<button class="fp-balance fp-balance-main ${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}" data-action="nav" data-value="balance-history" aria-label="История баланса">${value>0?'+':value<0?'−':''}${money(value)}</button>`}
 function balanceSourceName(value){const chars=Array.from(String(value).replace(/[\r\n\t]/g,' '));return chars.length<=18?chars.join(''):chars.slice(0,17).join('')+'…'}
-function balanceChanges(){
+function balanceChanges(subject=state.actor){
  const list=[],add=e=>{if(e.amount)list.push({...e,order:list.length})};
- add({training:true,amount:g().balances[state.actor]||0,time:Date.UTC(2026,9,6,18)});
+ add({training:true,amount:g().balances[subject]||0,time:Date.UTC(2026,9,6,18)});
  for(const p of g().payments){
-  const sign=p.from===state.actor?1:p.to===state.actor?-1:0;if(!sign||p.postedAmount==null)continue;
+  const sign=p.from===subject?1:p.to===subject?-1:0;if(!sign||p.postedAmount==null)continue;
   let amount=sign*p.postedAmount,time=p.postedAt;
   for(const edit of p.audit||[]){
    if(edit.previousStatus!=='COMPLETED')continue;
@@ -166,15 +166,15 @@ function balanceChanges(){
 
 function balance(value){return `<span class="fp-balance ${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}">${value>0?'+':value<0?'−':''}${money(value)}</span>`}
 function balanceLegend(){return '<p class="fp-small">+ — получить · − — осталось доплатить<br>Баланс участника во всей группе.</p>'}
-function peopleTable(ids,b,{sender=state.actor,chooseFrom=false}={}){
+function peopleTable(ids,b,{sender=state.actor,chooseFrom=false,history=false}={}){
  return '<table class="fp-people"><thead><tr><th>Участник</th><th>Баланс</th></tr></thead><tbody>'+ids.map(id=>{
-  const value=b[id]||0,label=(chooseFrom?'Выбрать отправителя':'Оформить перевод получателю')+' '+name(id);
-  const amount=balance(value),action=chooseFrom?'person':'balance-transfer';
-  const link=chooseFrom||id!==sender?`<a class="${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}" href="#${action}-${id}" data-action="${action}" data-value="${id}" aria-label="${esc(label)}" title="${esc(label)}">${amount}</a>`:amount;
+  const value=b[id]||0,label=(history?'История баланса':chooseFrom?'Выбрать отправителя':'Оформить перевод получателю')+' '+name(id);
+  const amount=balance(value),action=history?'member-history':chooseFrom?'person':'balance-transfer';
+  const link=history||chooseFrom||id!==sender?`<a class="${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}" href="#${action}-${id}" data-action="${action}" data-value="${id}" aria-label="${esc(label)}" title="${esc(label)}">${amount}</a>`:amount;
   return `<tr><td><a href="#profile-${id}" data-action="profile" data-value="${id}">${esc(name(id))}</a></td><td>${link}</td></tr>`;
  }).join('')+'</tbody></table>';
 }
-function peopleHint(){return '<p class="fp-small">Нажми на имя для профиля, на баланс — для перевода.</p>'}
+function peopleHint(history=false){return '<p class="fp-small">Нажми на имя для профиля, на баланс — '+(history?'для истории участника.':'для перевода.')+'</p>'}
 function paymentPeople(p,withBalances=false){
  const b=withBalances?totals():null;
  const editable=state.draft===p&&['review','duplicate'].includes(state.view);
@@ -223,16 +223,18 @@ const pendingIncoming=()=>g().payments.filter(x=>x.to===state.actor&&x.status===
 function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';root.querySelector('#fp-context').textContent='Личный чат · '+g().title;
  if(d&&['review','duplicate'].includes(v))refreshPaymentProposal(d);
  if(v==='finance'){let b=totals()[state.actor]||0,amount=ownBalance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':''),sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>'+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие переводы пока не меняют баланс.':'')+'</p>';buttons=[row(key('Перевести','nav','send'),receiveButton(incoming.length)),row(key('Баланс группы','nav','balances')),row(key('История переводов','nav','history'))];if(admin())buttons.push(row(key('Записать перевод за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
- else if(v==='balance-history'){
-  const list=balanceChanges(),chunk=pageOf(list,15);
-  body='<h2>История баланса</h2><p>Сейчас: <b>'+esc(((totals()[state.actor]||0)>0?'+':(totals()[state.actor]||0)<0?'−':'')+money(totals()[state.actor]||0))+'</b></p>';
+ else if(v==='balance-history'||v==='member-history'){
+  const member=v==='member-history',subject=member?state.historyUser:state.actor;
+  if(member&&(!admin()||!g().members.includes(subject)))throw Error('История доступна администратору этой группы');
+  const list=balanceChanges(subject),chunk=pageOf(list,15);
+  body='<h2>История баланса'+(member?' · '+esc(name(subject)):'')+'</h2><p>Сейчас: <b>'+esc(((totals()[subject]||0)>0?'+':(totals()[subject]||0)<0?'−':'')+money(totals()[subject]||0))+'</b></p>';
   if(!list.length)body+='<p>Нет операций, влияющих на баланс.</p>';
   else body+='<table class="fp-balance-history"><thead><tr><th>Операция</th><th>Сумма</th></tr></thead><tbody>'+chunk.map(e=>{
-   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===state.actor?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
+   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===subject?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
    const link=text=>'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
    return '<tr><td>'+link(esc(label))+'<br><span class="fp-small">'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</span></td><td>'+link(balance(e.amount))+'</td></tr>';
   }).join('')+'</tbody></table><p class="fp-small">У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
-  buttons=[pages(list,15),row(key('Назад','nav','finance'))];
+  buttons=[pages(list,15),row(member?key('Назад','member-list-back'):key('Назад','nav','finance'))];
  }
  else if(v==='balance-training'){
   body='<h2>🏓 Теннис · 06.10.2026 · 18:30</h2><p>Учтена</p><p class="fp-small">Искусственная тренировка объясняет исходные балансы участников в этом макете. В боте здесь открывается полная карточка выбранной тренировки.</p>';
@@ -266,11 +268,14 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
  }
  else if(v==='duplicate'){body='<h2>Это ещё один перевод?</h2>'+detail(d,true)+'<p>За последние сутки уже есть перевод с теми же участниками и суммой.</p>';buttons=[row(key('Да, это ещё один','save-duplicate')),row(key('Посмотреть предыдущий','previous')),nav()]}
  else if(v==='saved'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>'+(p.status==='PENDING'?'Ожидает подтверждения':'Перевод учтён')+'</h2>'+detail(p)+(p.status==='PENDING'?'<p>Получатель увидит его в «Принять платёж». Баланс пока не изменился.</p>':`<p>Записал администратор: ${esc(name(p.author))}.<br>Баланс обновлён.</p>`);buttons=[];if(canEditPayment(p))buttons.push(row(key('Изменить сумму','edit-payment-amount')));if(canCancelPayment(p))buttons.push(row(key('Отменить перевод','cancel-payment')));buttons.push(row(key('К моим финансам','nav','finance')))}
- else if(v==='balances'){
+ else if(v==='balances'||v==='balance-members'){
+  const history=v==='balance-members';if(history&&!admin())throw Error('История доступна администратору этой группы');
   let b=totals(),list=byBalance(g().members.filter(id=>g().played.includes(id)),b),chunk=pageOf(list,peoplePageSize);
-  body='<h2>Баланс группы</h2>'+peopleHint()+peopleTable(chunk,b)+balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
+  body='<h2>'+(history?'История балансов · выбери участника':'Баланс группы')+'</h2>'+peopleHint(history)+peopleTable(chunk,b,{history})+balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
   if(g().payments.some(p=>p.status==='PENDING'))body+='<p class="fp-small">Ожидающие подтверждения переводы пока не учтены.</p>';
-  buttons=[pages(list,peoplePageSize),row(key('Назад','nav','finance'))];
+  buttons=[pages(list,peoplePageSize)];
+  if(!history&&admin())buttons.push(row(key('История балансов','member-list')));
+  buttons.push(row(history?key('Назад','balances-back'):key('Назад','nav','finance')));
  }
  else if(v==='profile'){body='<h2>'+esc(name(state.profile))+'</h2><p>В боте эта ссылка открывает профиль участника в Telegram.</p><p class="fp-small">Здесь показан вымышленный участник.</p>';buttons=[row(key('Назад','profile-back'))]}
  else if(v==='send'){
@@ -401,8 +406,12 @@ root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(
  }
  else if(a==='profile'){state.profile=+v;state.profilePage=state.page;state.profileView=state.view;go('profile')}
  else if(a==='profile-back'){go(state.profileView);state.page=state.profilePage;render()}
- else if(a==='balance-training'){state.balanceHistoryPage=state.page;go('balance-training')}
- else if(a==='balance-training-back'){go('balance-history');state.page=state.balanceHistoryPage||0;render()}
+ else if(a==='member-list'){if(!admin())throw Error('Нужны права администратора');const page=state.page;go('balance-members');state.page=page;render()}
+ else if(a==='member-history'){if(!admin()||!g().members.includes(+v))throw Error('История недоступна');state.historyUser=+v;state.memberListPage=state.page;go('member-history')}
+ else if(a==='member-list-back'){go('balance-members');state.page=state.memberListPage||0;render()}
+ else if(a==='balances-back'){const page=state.page;go('balances');state.page=page;render()}
+ else if(a==='balance-training'){state.balanceHistoryView=state.view;state.balanceHistoryPage=state.page;go('balance-training')}
+ else if(a==='balance-training-back'){go(state.balanceHistoryView||'balance-history');state.page=state.balanceHistoryPage||0;render()}
  else if(a==='detail'){const p=g().payments.find(x=>x.id===+v);if(!p)throw Error('Перевод недоступен в этой группе');state.selected=+v;state.detailBack=state.view;state.detailPage=state.page;go('detail')}
  else if(a==='previous'){let d=state.draft;state.selected=g().payments.findLast(p=>p.status!=='CANCELLED'&&p.from===d.from&&p.to===d.to&&p.amount===d.amount).id;state.detailBack='duplicate';state.detailPage=0;go('detail')}
  else if(a==='detail-back'){go(state.detailBack);state.page=state.detailPage||0;render()}

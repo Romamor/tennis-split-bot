@@ -498,7 +498,15 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     /** The caller's posted changes only; no draft or pending-transfer amounts. */
     fun balanceHistory(a:Access,page:Int=0):BalanceHistory = database.read { c ->
         known(c,a.groupId,a.userId)
-        readBalanceHistory(c,a,page)
+        readBalanceHistory(c,a.groupId,a.userId,page)
+    }
+    /** The viewer retains their identity; only the subject of the read changes. */
+    fun memberBalanceHistory(a:Access,user:Long,page:Int=0):BalanceHistory = database.read { c ->
+        known(c,a.groupId,a.userId)
+        allowed(present(c,a),"Доступ только участникам этой группы")
+        requireAdmin(c,a)
+        known(c,a.groupId,user)
+        readBalanceHistory(c,a.groupId,user,page)
     }
     fun pendingPaymentCount(a:Access):Int = database.read { c ->
         known(c,a.groupId,a.userId)
