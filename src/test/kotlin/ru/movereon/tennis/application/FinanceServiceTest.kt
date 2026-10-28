@@ -203,6 +203,28 @@ class FinanceServiceTest {
         assertEquals(12,s.financeBalances(Access(-2,1)).items.size)
     }
 
+    @Test fun `former zero balances disappear but signed balances survive settlement and return`() {
+        setup()
+        run(SettlementCommand.CreateTraining("roster","Без оплаты","2026-09-14","18:30"))
+        run(SettlementCommand.AddPlayers("roster",1,listOf(3,4,5)))
+        run(SettlementCommand.RecordAdminPayment("signed",4,5,50),Access(-1,1,true))
+        // No training history for these accounts: nonzero money must still remain visible.
+        run(SettlementCommand.RecordAdminPayment("outside",6,7,25),Access(-1,1,true))
+        for(id in 3L..7L) s.rememberMembership(-1,id,false)
+        for(playedOnly in listOf(false,true)) {
+            val rows=s.financeBalances(recipient,playedOnly=playedOnly)
+            assertFalse(rows.items.any { it.account.id==3L })
+            assertEquals(listOf(150L,50L,25L,-25L,-50L,-150L),rows.items.map { it.balance }.filter { it!=0L })
+            assertTrue(rows.items.filter { it.account.id in 4L..7L }.all { !it.present })
+            assertFalse(s.financeBalances(recipient,exclude=4,playedOnly=playedOnly).items.any { it.account.id==4L })
+        }
+        run(SettlementCommand.RecordAdminPayment("settle",5,4,50),Access(-1,1,true))
+        assertTrue(s.financeBalances(recipient,playedOnly=true).items.none { it.account.id in 3L..5L })
+        s.rememberMembership(-1,3,true)
+        assertTrue(s.financeBalances(recipient,playedOnly=true).items.any { it.account.id==3L && it.balance==0L })
+        assertTrue(s.financeBalances(Access(-2,1),playedOnly=true).items.isEmpty())
+    }
+
     @Test fun `arbitrary pending overflow rolls back payment and history`() {
         setup();run(SettlementCommand.SendOtherPayment("large",4,Long.MAX_VALUE),Access(-1,3))
         val before=s.history(recipient).total

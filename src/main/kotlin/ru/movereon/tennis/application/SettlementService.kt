@@ -541,7 +541,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         val all=sqlQuery(c,"""SELECT u.*,gu.present,gu.attendance_count,gu.has_played FROM group_users gu
             JOIN users u ON u.id=gu.user_id WHERE gu.group_id=? AND u.is_bot=0""",a.groupId) {
             AccountBalance(readAccount(it),balances[it.getLong("id")] ?: 0,it.getInt("attendance_count"),it.getBoolean("present"),it.getBoolean("has_played"))
-        }.filter { (exclude==null || it.account.id!=exclude) && (it.present || it.hasPlayed || it.balance!=0L) && (!playedOnly || it.hasPlayed) }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
+        }.filter { (exclude==null || it.account.id!=exclude) && (it.balance!=0L || it.present && (!playedOnly || it.hasPlayed)) }.sortedWith(compareBy<AccountBalance> { it.balance==0L }
             .thenByDescending { it.balance }.thenBy { it.account.name.lowercase() }.thenBy { it.account.id })
         all.page(page,15)
     }

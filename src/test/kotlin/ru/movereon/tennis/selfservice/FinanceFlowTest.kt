@@ -314,6 +314,23 @@ class FinanceFlowTest {
         assertEquals(0,Regex("<tr>").findAll(html(2)).count(),"Other group's players never leak into selection")
         assertTrue(latest(2).text!!.contains("Список пуст"))
     }
+    @Test fun `former zero rows disappear from both balance and recipient tables without losing signed rows`() {
+        setup();seedBalance();seedRoster(listOf(3,4,5))
+        run(SettlementCommand.RecordAdminPayment("absent",4,5,50),Access(-1,1,true))
+        for(id in 3L..5L) {
+            bot.service.rememberMembership(-1,id,false);fake.members[-1L to id]=TgMember("left")
+        }
+        fun profiles()=Regex("tg://user\\?id=(\\d+)").findAll(html(2)).map { it.groupValues[1].toLong() }.distinct().toList()
+        open(2);click(2,"Баланс группы");val visible=profiles()
+        assertEquals(listOf(1L,4L,5L,2L),visible)
+        click(2,"⬅️ Назад");click(2,"Перевести");click(2,"Записать свой перевод")
+        assertEquals(visible,profiles())
+        run(SettlementCommand.RecordAdminPayment("settle-absent",5,4,50),Access(-1,1,true))
+        open(2);click(2,"Баланс группы");assertEquals(listOf(1L,2L),profiles())
+        click(2,"⬅️ Назад");click(2,"Перевести");click(2,"Записать свой перевод")
+        assertEquals(listOf(1L,2L),profiles())
+    }
+
     @Test fun `balance history links to training and transfer cards and returns to the same page`() {
         setup(Instant.parse("2026-10-07T22:30:00Z"));seedBalance()
         for(i in 0..15) run(SettlementCommand.RecordAdminPayment("p$i",1,2,i+1L),Access(-1,1,true))

@@ -168,3 +168,9 @@ assert.equal((memberTables[1].match(/data-action="member-history"/g)||[]).length
 assert.equal((memberTables[1].match(/data-action="profile"/g)||[]).length,2);
 assert.ok(!memberTables[1].includes('data-action="balance-transfer"'));
 console.log('Member history table checks passed: separate profile/history links including the administrator’s own zero balance.');
+
+const participants=vm.runInNewContext(`(${between('function balanceParticipants(', 'function peopleTable(').trim()})`);
+const groupMembers={members:[1,2,3,4,5,6],played:[1,2,3,4],departed:[2,3,5,6]};
+assert.deepEqual(Array.from(participants(groupMembers,{1:0,2:0,3:-50,4:0,5:25,6:0})),[1,3,4,5]);
+assert.deepEqual(Array.from(participants(groupMembers,{1:0,2:0,3:0,4:0,5:0,6:0})),[1,4]);
+console.log('Former members with zero balances are hidden; nonzero balances remain visible.');

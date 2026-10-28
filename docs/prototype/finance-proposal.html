@@ -166,6 +166,7 @@ function balanceChanges(subject=state.actor){
 
 function balance(value){return `<span class="fp-balance ${value>0?'fp-positive':value<0?'fp-negative':'fp-zero'}">${value>0?'+':value<0?'−':''}${money(value)}</span>`}
 function balanceLegend(){return '<p class="fp-small">+ — получить · − — осталось доплатить<br>Баланс участника во всей группе.</p>'}
+function balanceParticipants(group,balances){return group.members.filter(id=>(balances[id]||0)!==0||!group.departed?.includes(id)&&group.played.includes(id))}
 function peopleTable(ids,b,{sender=state.actor,chooseFrom=false,history=false}={}){
  return '<table class="fp-people"><thead><tr><th>Участник</th><th>Баланс</th></tr></thead><tbody>'+ids.map(id=>{
   const value=b[id]||0,label=(history?'История баланса':chooseFrom?'Выбрать отправителя':'Оформить перевод получателю')+' '+name(id);
@@ -245,7 +246,7 @@ function render(){if(state.former&&!['finance','balance-history','balance-traini
  else if(v==='groups'){body='<h2>Выбери группу</h2>';buttons=groups.map(x=>row(key(x.title,'group',x.id)));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='menu'){body='<h2>Что хочешь сделать?</h2>';buttons=[row(key('Мои финансы','nav','groups'))]}
  else if(v==='from'||v==='to'){
-  let b=totals(),list=byBalance(g().members.filter(id=>g().played.includes(id)),b),chunk=pageOf(list,peoplePageSize);
+  let b=totals(),list=byBalance(balanceParticipants(g(),b),b),chunk=pageOf(list,peoplePageSize);
   body='<h2>'+(v==='from'?'От кого перевод':'Кому перевод')+'</h2>';
   if(v==='to')body+=`<p class="fp-small">От кого: ${esc(name(d.from))}</p>`;
   body+=v==='from'?'<p class="fp-small">Нажми на имя для профиля, на баланс — чтобы выбрать отправителя.</p>':peopleHint();
@@ -272,7 +273,7 @@ function render(){if(state.former&&!['finance','balance-history','balance-traini
  else if(v==='saved'){let p=g().payments.find(x=>x.id===state.selected);body='<h2>'+(p.status==='PENDING'?'Ожидает подтверждения':'Перевод учтён')+'</h2>'+detail(p)+(p.status==='PENDING'?'<p>Получатель увидит его в «Принять платёж». Баланс пока не изменился.</p>':`<p>Записал администратор: ${esc(name(p.author))}.<br>Баланс обновлён.</p>`);buttons=[];if(canEditPayment(p))buttons.push(row(key('Изменить сумму','edit-payment-amount')));if(canCancelPayment(p))buttons.push(row(key('Отменить перевод','cancel-payment')));buttons.push(row(key('К моим финансам','nav','finance')))}
  else if(v==='balances'||v==='balance-members'){
   const history=v==='balance-members';if(history&&!admin())throw Error('История доступна администратору этой группы');
-  let b=totals(),list=byBalance(g().members.filter(id=>g().played.includes(id)),b),chunk=pageOf(list,peoplePageSize);
+  let b=totals(),list=byBalance(balanceParticipants(g(),b),b),chunk=pageOf(list,peoplePageSize);
   body='<h2>'+(history?'История балансов · выбери участника':'Баланс группы')+'</h2>'+peopleHint(history)+peopleTable(chunk,b,{history})+balanceLegend()+`<p class="fp-small">${state.page*peoplePageSize+1}–${state.page*peoplePageSize+chunk.length} из ${list.length}</p>`;
   if(g().payments.some(p=>p.status==='PENDING'))body+='<p class="fp-small">Ожидающие подтверждения переводы пока не учтены.</p>';
   buttons=[pages(list,peoplePageSize)];
