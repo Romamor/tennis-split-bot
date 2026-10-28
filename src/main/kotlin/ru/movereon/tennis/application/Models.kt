@@ -15,7 +15,7 @@ data class AbsentAccount(val groupId:Long,val userId:Long)
 @Serializable data class SettlementGroup(val id:Long,val title:String,val timeZone:String)
 @Serializable data class TrainingDefaults(val title:String="Теннис",val time:String="18:30")
 @Serializable data class DefaultTrainingUpdate(val field:String,val expected:String,val value:String)
-data class GroupOption(val group:SettlementGroup,val admin:Boolean,val superAdmin:Boolean,val canPublish:Boolean)
+data class GroupOption(val group:SettlementGroup,val admin:Boolean,val superAdmin:Boolean,val canPublish:Boolean,val present:Boolean=true)
 data class MyTrainingPage(val page:Page<TrainingRecord>,val minutes:Long,val participationCost:BigInteger,
     val remainingToPay:BigInteger,val completedCount:Int)
 data class FinanceSummary(val balance:Long,val pendingSentCount:Int,val pendingSentAmount:BigInteger,

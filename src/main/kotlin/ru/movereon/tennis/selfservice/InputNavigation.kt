@@ -2,7 +2,7 @@ package ru.movereon.tennis.selfservice
 
 /** All screens which leave input, plus explicit entry points which can replace it. */
 internal object InputNavigation {
-    val screens=NavigationScreens.kinds+TrainingScreens.kinds+PollScreens.kinds+FinanceScreens.kinds+
+    val screens=FormerMemberScreens.kinds+NavigationScreens.kinds+TrainingScreens.kinds+PollScreens.kinds+FinanceScreens.kinds+
         setOf("my_trainings","trainings","roster","history","administrators","admin_candidates","admin_person","preview_finish","cancel_confirm","recover_confirm","close_panel")
     val entries=setOf("new","new_poll","default_title","default_time","edit_details","finance_payment_edit",
         "payment_new","finance_send_confirm","pick_account","pick_add_player","add_players","player","ask_paid")

@@ -8,7 +8,7 @@ import ru.movereon.tennis.selfservice.Screens.Companion.clean
 import ru.movereon.tennis.selfservice.Screens.Companion.date
 
 /** Display posted changes; both source and amount lead to the existing read-only card. */
-internal fun renderBalanceHistory(layout:ScreenLayout,a:Access,history:BalanceHistory,timeZone:String,person:(Long)->String,subject:Long?=null):ScreenContent = with(layout) {
+internal fun renderBalanceHistory(layout:ScreenLayout,a:Access,history:BalanceHistory,timeZone:String,person:(Long)->String,subject:Long?=null,restricted:Boolean=false):ScreenContent = with(layout) {
     val p=history.page
     val zone=ZoneId.of(timeZone)
     val selected=subject ?: a.userId
@@ -27,14 +27,17 @@ internal fun renderBalanceHistory(layout:ScreenLayout,a:Access,history:BalanceHi
                 val name=clean(value,Int.MAX_VALUE)
                 return if(name.codePointCount(0,name.length)<=18) name else name.substring(0,name.offsetByCodePoints(0,17))+"…"
             }
-            val name=if(training) "🏓 ${shortName(requireNotNull(e.trainingTitle))}" else
+            val name=if(training) "🏓 ${shortName(requireNotNull(e.trainingTitle))}" else if(restricted)
+                (if(e.from==selected) "💸 Перевод отправлен" else "💰 Перевод получен") else
                 if(e.from==selected) "💸 → ${shortName(person(requireNotNull(e.to)))}" else "💰 ← ${shortName(person(requireNotNull(e.from)))}"
             val day=date(if(training) requireNotNull(e.trainingDate) else Instant.parse(e.occurredAt).atZone(zone).toLocalDate().toString())
             lines+="$day · $name · ${signed(e.amount)}"
-            "<tr><td>${inline(name,target)}<br>$day</td>"+
-                "<td align=\"right\">${inline(signed(e.amount),target,if(e.amount.signum()>0) "success" else "danger")}</td></tr>"
+            val link=training || !restricted
+            "<tr><td>${if(link) inline(name,target) else TrainingCard.escape(name)}<br>$day</td>"+
+                "<td align=\"right\">${if(link) inline(signed(e.amount),target,if(e.amount.signum()>0) "success" else "danger") else signed(e.amount)}</td></tr>"
         }+"</table>"
-    val hint="У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку."
+    val hint="У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. "+
+        if(restricted) "Можно открыть только свои тренировки; карточки переводов недоступны." else "Нажми на операцию, чтобы открыть её карточку."
     val heading="История баланса"+(subject?.let { " · ${person(it)}" } ?: "")
     val title="$heading\nСейчас: ${signed(history.balance)}"
     ScreenContent(title+"\n"+if(lines.isEmpty()) "Нет операций, влияющих на баланс." else lines.joinToString("\n")+"\n"+hint,

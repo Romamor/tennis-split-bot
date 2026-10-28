@@ -62,8 +62,8 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
             SettlementGroup(it.getLong("id"), it.getString("title"), it.getString("time_zone"))
         }, total, index)
     }
-    fun knownGroups(user:Long?=null):List<SettlementGroup> = database.read { c ->
-        sqlQuery(c,"SELECT id,title,time_zone FROM groups WHERE ? IS NULL OR EXISTS(SELECT 1 FROM group_users gu WHERE gu.group_id=groups.id AND gu.user_id=? AND gu.present=1) ORDER BY title,id",user,user) { SettlementGroup(it.getLong(1),it.getString(2),it.getString(3)) }
+    fun knownGroups(user:Long?=null,includeFormer:Boolean=false):List<SettlementGroup> = database.read { c ->
+        sqlQuery(c,"SELECT id,title,time_zone FROM groups WHERE ? IS NULL OR EXISTS(SELECT 1 FROM group_users gu WHERE gu.group_id=groups.id AND gu.user_id=? AND (? OR gu.present=1)) ORDER BY title,id",user,user,includeFormer) { SettlementGroup(it.getLong(1),it.getString(2),it.getString(3)) }
     }
     fun trainingDefaults(user:Long):TrainingDefaults = database.read { c ->
         account(c,user)
@@ -85,7 +85,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun myTrainings(user:Long,page:Int=0):MyTrainingPage = database.read { c ->
         account(c,user)
         val condition="""FROM trainings t LEFT JOIN training_players p ON p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=?
-            WHERE (t.created_by=? AND t.status='OPEN') OR p.playing=1 OR p.applied_playing=1 OR p.paid>0"""
+            WHERE (t.created_by=? AND t.status='OPEN' AND EXISTS(SELECT 1 FROM group_users gu WHERE gu.group_id=t.group_id AND gu.user_id=t.created_by AND gu.present=1)) OR p.playing=1 OR p.applied_playing=1 OR p.paid>0"""
         var total=0
         var completedCount=0
         var minutes=java.math.BigInteger.ZERO
@@ -124,6 +124,24 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun canEdit(a:Access,t:TrainingRecord):Boolean = database.read { canManageTraining(it,a,t) }
     fun requireOpen(t:TrainingRecord) = editable(t)
     private fun present(c:Connection,a:Access)=isPresentGroupMember(c,a)
+    fun isPresent(a:Access):Boolean=database.read { c -> known(c,a.groupId,a.userId);present(c,a) }
+    /** Only the caller's sum is read; no other participant's balance is returned. */
+    fun ownBalance(a:Access):Long=database.read { c ->
+        known(c,a.groupId,a.userId)
+        var total=java.math.BigInteger.ZERO
+        sqlEach(c,"SELECT amount FROM balance_entries WHERE group_id=? AND user_id=?",a.groupId,a.userId) { total+=it.getLong(1).toBigInteger() }
+        total.toAmount()
+    }
+    /** An archived card is reachable only through the viewer's own participation or posted changes. */
+    fun ownTraining(a:Access,id:String):TrainingRecord=database.read { c ->
+        known(c,a.groupId,a.userId)
+        val t=readTraining(c,a.groupId,id)
+        val participated=t.players.any { it.userId==a.userId && (it.playing || it.appliedPlaying || it.paid>0) }
+        val posted=count(c,"""SELECT COUNT(*) FROM balance_entries b JOIN actions x ON x.group_id=b.group_id AND x.id=b.action_id
+            WHERE b.group_id=? AND b.user_id=? AND x.training_id=?""",a.groupId,a.userId,id)>0
+        allowed(participated || posted,"Доступна только история своих тренировок")
+        t
+    }
     private fun canManageTraining(c:Connection,a:Access,t:TrainingRecord)=t.groupId==a.groupId && present(c,a) && (t.createdBy==a.userId || admin(c,a))
     fun administrators(a:Access,telegramAdmins:Set<Long>,candidates:Boolean=false,page:Int=0):Page<GroupRoleEntry> = database.read { c ->
         known(c,a.groupId,a.userId)
@@ -146,6 +164,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun execute(a: Access, requestId: String, command: SettlementCommand, absent: AbsentAccount? = null): ActionReceipt = database.write { c ->
         require(requestId.isNotBlank())
         known(c, a.groupId, a.userId)
+        allowed(present(c,a),"Изменять данные может только текущий участник группы")
         val payload = json.encodeToString(command)
         val previous = sqlQuery(c, "SELECT * FROM actions WHERE group_id=? AND request_id=?", a.groupId, requestId) {
             Triple(it.getLong("actor_id"), it.getString("payload_json"), ActionReceipt(it.getLong("id"), it.getLong("result_version")))
@@ -461,7 +480,7 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
     fun training(a: Access, id: String): TrainingRecord = database.read { known(it, a.groupId, a.userId); readTraining(it, a.groupId, id) }
     fun trainings(a: Access, page: Int = 0, mine: Boolean = false, unfinished: Boolean = false): Page<TrainingRecord> = database.read { c ->
         known(c, a.groupId, a.userId)
-        val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND ((t.created_by=? AND t.status='OPEN') OR EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0)))" else "") + (if (unfinished) " AND t.status='OPEN'" else "")
+        val condition = "FROM trainings t WHERE t.group_id=?" + (if (mine) " AND ((t.created_by=? AND t.status='OPEN' AND EXISTS(SELECT 1 FROM group_users gu WHERE gu.group_id=t.group_id AND gu.user_id=t.created_by AND gu.present=1)) OR EXISTS (SELECT 1 FROM training_players p WHERE p.group_id=t.group_id AND p.training_id=t.id AND p.user_id=? AND (p.playing=1 OR p.applied_playing=1 OR p.paid>0)))" else "") + (if (unfinished) " AND t.status='OPEN'" else "")
         val args = if (mine) arrayOf<Any>(a.groupId, a.userId, a.userId) else arrayOf<Any>(a.groupId)
         val total = count(c, "SELECT COUNT(*) $condition", *args)
         val size=15

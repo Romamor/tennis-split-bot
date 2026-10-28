@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" type="device" compressed="false">
   <diagram id="screens-1" name="Участник">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="23610">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="25055">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -47,6 +47,9 @@
         </mxCell>
         <mxCell id="section10" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="22497" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section11" value="После выхода из группы: только своя история" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="23510" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2441" width="430" height="344" />
@@ -2468,6 +2471,105 @@
         </mxCell>
         <mxCell id="screen-balance_history_payment-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-balance_history_payment">
           <mxGeometry as="geometry" x="0.0" y="291" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="23580" width="430" height="449" />
+        </mxCell>
+        <mxCell id="screen-former_finance-label" value="После выхода: свой баланс" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_finance-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Мои финансы&lt;/div&gt;&lt;p&gt;&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;&lt;br&gt;Оплачено за тебя другими участниками группы.&lt;/p&gt;&lt;p&gt;Ты больше не участник группы. Доступна только своя история, без изменения данных.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
+        </mxCell>
+        <mxCell id="screen-former_finance-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="193.5" y="164" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button0-0" value="📜 История баланса" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="291" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button1-0" value="🏓 Мои тренировки" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button2-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="23580" width="430" height="518" />
+        </mxCell>
+        <mxCell id="screen-former_history-label" value="После выхода: история баланса" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;История баланса&lt;/div&gt;&lt;p&gt;Сейчас: &lt;b&gt;−200 ₽&lt;/b&gt;&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Операция&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Сумма&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;🏓 Теннис&lt;/span&gt;&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+150 ₽&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−300 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💸 Перевод отправлен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Можно открыть только свои тренировки; карточки переводов недоступны.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="385" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0.0" y="456" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_trainings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="23580" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-label" value="После выхода: свои тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-body" value="&lt;p&gt;Мои тренировки · 3&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Дата&lt;/th&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Тренировка&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Играл&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline2" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="204" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="23580" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_training-label" value="Своя тренировка: личные данные" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="24298" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-label" value="Тренировка из своей истории" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Алексей&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -6399,6 +6501,136 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge423-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-inline0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="515" y="23759.0" />
+              <mxPoint x="515" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge424-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="23892.5" />
+              <mxPoint x="527" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge425-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button1-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="23940.5" />
+              <mxPoint x="539" y="23510" />
+              <mxPoint x="1155" y="23510" />
+              <mxPoint x="1155" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge426-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-choose_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="23988.5" />
+              <mxPoint x="551" y="5832" />
+              <mxPoint x="-37" y="5832" />
+              <mxPoint x="-37" y="5957" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge426-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="23988.5" />
+              <mxPoint x="551" y="2396" />
+              <mxPoint x="553" y="2396" />
+              <mxPoint x="553" y="2521" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge427-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline0" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="23739.0" />
+              <mxPoint x="1153" y="24138" />
+              <mxPoint x="35" y="24138" />
+              <mxPoint x="35" y="24378" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge428-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline1" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="23769.0" />
+              <mxPoint x="1165" y="24133" />
+              <mxPoint x="23" y="24133" />
+              <mxPoint x="23" y="24378" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge429-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1177" y="24057.5" />
+              <mxPoint x="1177" y="23520" />
+              <mxPoint x="11" y="23520" />
+              <mxPoint x="11" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge430-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline0" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="23739.0" />
+              <mxPoint x="1779" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge431-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline1" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="23769.0" />
+              <mxPoint x="1791" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge432-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline2" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="23799.0" />
+              <mxPoint x="1695" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge433-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_trainings-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1707" y="24010.5" />
+              <mxPoint x="1707" y="23530" />
+              <mxPoint x="-37" y="23530" />
+              <mxPoint x="-37" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge434-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_training-button0-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2309" y="23916.5" />
+              <mxPoint x="2309" y="23525" />
+              <mxPoint x="1215" y="23525" />
+              <mxPoint x="1215" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge435-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history_training-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="24634.5" />
+              <mxPoint x="551" y="23520" />
+              <mxPoint x="613" y="23520" />
+              <mxPoint x="613" y="23660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="guard-screen-new_title-button1-0" value="Есть несохранённый ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=block;strokeColor=#c29048;fontSize=12;" edge="1" parent="returns" source="screen-new_title-button1-0" target="screen-exit">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
@@ -6430,7 +6662,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-2" name="Администратор бота">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="28377">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="29822">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -6479,6 +6711,9 @@
         </mxCell>
         <mxCell id="section11" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="26496" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section12" value="После выхода из группы: только своя история" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="28277" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -9455,6 +9690,105 @@
         </mxCell>
         <mxCell id="screen-balance_history_payment-button2-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-balance_history_payment">
           <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="28347" width="430" height="449" />
+        </mxCell>
+        <mxCell id="screen-former_finance-label" value="После выхода: свой баланс" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_finance-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Мои финансы&lt;/div&gt;&lt;p&gt;&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;&lt;br&gt;Оплачено за тебя другими участниками группы.&lt;/p&gt;&lt;p&gt;Ты больше не участник группы. Доступна только своя история, без изменения данных.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
+        </mxCell>
+        <mxCell id="screen-former_finance-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="193.5" y="164" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button0-0" value="📜 История баланса" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="291" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button1-0" value="🏓 Мои тренировки" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button2-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="28347" width="430" height="518" />
+        </mxCell>
+        <mxCell id="screen-former_history-label" value="После выхода: история баланса" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;История баланса&lt;/div&gt;&lt;p&gt;Сейчас: &lt;b&gt;−200 ₽&lt;/b&gt;&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Операция&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Сумма&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;🏓 Теннис&lt;/span&gt;&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+150 ₽&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−300 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💸 Перевод отправлен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Можно открыть только свои тренировки; карточки переводов недоступны.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="385" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0.0" y="456" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_trainings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="28347" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-label" value="После выхода: свои тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-body" value="&lt;p&gt;Мои тренировки · 3&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Дата&lt;/th&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Тренировка&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Играл&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline2" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="204" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="28347" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_training-label" value="Своя тренировка: личные данные" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="29065" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-label" value="Тренировка из своей истории" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Борис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -14520,6 +14854,136 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="edge540-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-inline0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="515" y="28526.0" />
+              <mxPoint x="515" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge541-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="28659.5" />
+              <mxPoint x="527" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge542-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button1-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="28707.5" />
+              <mxPoint x="539" y="28292" />
+              <mxPoint x="1179" y="28292" />
+              <mxPoint x="1179" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge543-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-choose_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="28755.5" />
+              <mxPoint x="551" y="6105" />
+              <mxPoint x="-13" y="6105" />
+              <mxPoint x="-13" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge543-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="28755.5" />
+              <mxPoint x="551" y="2477" />
+              <mxPoint x="577" y="2477" />
+              <mxPoint x="577" y="2617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge544-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline0" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="28506.0" />
+              <mxPoint x="1153" y="28890" />
+              <mxPoint x="-25" y="28890" />
+              <mxPoint x="-25" y="29145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge545-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline1" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="28536.0" />
+              <mxPoint x="1165" y="28885" />
+              <mxPoint x="-37" y="28885" />
+              <mxPoint x="-37" y="29145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge546-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1177" y="28824.5" />
+              <mxPoint x="1177" y="28302" />
+              <mxPoint x="35" y="28302" />
+              <mxPoint x="35" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge547-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline0" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="28506.0" />
+              <mxPoint x="1779" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge548-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline1" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="28536.0" />
+              <mxPoint x="1791" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge549-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline2" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="28566.0" />
+              <mxPoint x="1695" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge550-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_trainings-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1707" y="28777.5" />
+              <mxPoint x="1707" y="28282" />
+              <mxPoint x="-13" y="28282" />
+              <mxPoint x="-13" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge551-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_training-button0-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2309" y="28683.5" />
+              <mxPoint x="2309" y="28277" />
+              <mxPoint x="1155" y="28277" />
+              <mxPoint x="1155" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge552-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history_training-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="551" y="29401.5" />
+              <mxPoint x="551" y="28302" />
+              <mxPoint x="553" y="28302" />
+              <mxPoint x="553" y="28427" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="guard-screen-new_title-button1-0" value="Есть несохранённый ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=block;strokeColor=#c29048;fontSize=12;" edge="1" parent="returns" source="screen-new_title-button1-0" target="screen-exit">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
@@ -14551,7 +15015,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="screens-3" name="Суперадминистратор группы">
-    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="29974">
+    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageScale="1" pageWidth="2420" pageHeight="31419">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" value="Экраны" />
@@ -14603,6 +15067,9 @@
         </mxCell>
         <mxCell id="section12" value="Правила группы: гости и время" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="40" y="28075" width="2340" height="48" />
+        </mxCell>
+        <mxCell id="section13" value="После выхода из группы: только своя история" style="fontSize=25;align=left;fillColor=#e5eef5;strokeColor=none;fontColor=#253f58;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="29874" width="2340" height="48" />
         </mxCell>
         <mxCell id="screen-groups" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="2537" width="430" height="344" />
@@ -17729,6 +18196,105 @@
         </mxCell>
         <mxCell id="screen-balance_history_payment-button2-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-balance_history_payment">
           <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="29944" width="430" height="449" />
+        </mxCell>
+        <mxCell id="screen-former_finance-label" value="После выхода: свой баланс" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_finance-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_finance-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Мои финансы&lt;/div&gt;&lt;p&gt;&lt;span style=&quot;color:#fff;background:#bd454c;border-radius:4px;padding:3px 7px&quot;&gt;−200 ₽&lt;/span&gt;&lt;br&gt;Оплачено за тебя другими участниками группы.&lt;/p&gt;&lt;p&gt;Ты больше не участник группы. Доступна только своя история, без изменения данных.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="220" />
+        </mxCell>
+        <mxCell id="screen-former_finance-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="193.5" y="164" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button0-0" value="📜 История баланса" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="291" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button1-0" value="🏓 Мои тренировки" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="339" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_finance-button2-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_finance">
+          <mxGeometry as="geometry" x="0.0" y="387" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="29944" width="430" height="518" />
+        </mxCell>
+        <mxCell id="screen-former_history-label" value="После выхода: история баланса" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;История баланса&lt;/div&gt;&lt;p&gt;Сейчас: &lt;b&gt;−200 ₽&lt;/b&gt;&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Операция&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Сумма&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;🏓 Теннис&lt;/span&gt;&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;+150 ₽&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💰 Перевод получен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;−300 ₽&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;💸 Перевод отправлен&lt;br&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+100 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Можно открыть только свои тренировки; карточки переводов недоступны.&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="385" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_history-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history">
+          <mxGeometry as="geometry" x="0.0" y="456" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_trainings" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1240" y="29944" width="430" height="471" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-label" value="После выхода: свои тренировки" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-body" value="&lt;p&gt;Мои тренировки · 3&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Дата&lt;/th&gt;&lt;th style=&quot;text-align:left;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Тренировка&lt;/th&gt;&lt;th align=&quot;right&quot;&gt;Играл&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#32814e;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;12.09.2026&lt;/td&gt;&lt;td style=&quot;text-align:left;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#fff;background:#2479c4;border-radius:4px;padding:3px 7px&quot;&gt;Теннис&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;1 ч&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="338" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline0" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="144" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline1" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="174" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-inline2" value="" style="fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="193.5" y="204" width="110" height="30" />
+        </mxCell>
+        <mxCell id="screen-former_trainings-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_trainings">
+          <mxGeometry as="geometry" x="0.0" y="409" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="29944" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_training-label" value="Своя тренировка: личные данные" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
+        </mxCell>
+        <mxCell id="screen-former_history_training" value="" style="group;fillColor=none;strokeColor=none;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="30662" width="430" height="377" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-label" value="Тренировка из своей истории" style="fontSize=17;fontStyle=1;align=left;fontColor=#314b65;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="0" width="430" height="36" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-context" value="Личный чат с ботом" style="fontSize=12;align=left;fontColor=#637d93;fillColor=none;strokeColor=none;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="38" width="430" height="24" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-body" value="&lt;div style=&quot;font-size:19px;margin-bottom:9px&quot;&gt;Теннис&lt;/div&gt;&lt;p&gt;12.09.2026 18:30&lt;br&gt;Статус: Учтена&lt;/p&gt;&lt;table style=&quot;border-collapse:collapse;width:100%;font-size:12px&quot;&gt;&lt;tr&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Участник&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Оплата&lt;/th&gt;&lt;th style=&quot;font-weight:normal;border-bottom:1px solid #52606c;padding:5px&quot;&gt;Баланс&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom:1px solid #52606c;padding:5px&quot;&gt;&lt;span style=&quot;color:#a6d8fc&quot;&gt;Вера&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;300 ₽&lt;/td&gt;&lt;td style=&quot;text-align:right;border-bottom:1px solid #52606c;padding:5px&quot;&gt;+150 ₽&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;На человека: 150 ₽&lt;/p&gt;" style="rounded=1;arcSize=8;fillColor=#2d3339;strokeColor=#2d3339;fontColor=#f2f6fb;fontSize=14;align=left;verticalAlign=top;spacing=14;overflow=hidden;html=1;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0" y="66" width="430" height="244" />
+        </mxCell>
+        <mxCell id="screen-former_history_training-button0-0" value="⬅️ Назад" style="rounded=1;arcSize=10;fillColor=#414b55;strokeColor=#414b55;fontColor=#ecf5ff;fontSize=14;align=center;verticalAlign=middle;spacing=6;html=0;whiteSpace=wrap;fontFamily=Arial;" vertex="1" parent="screen-former_history_training">
+          <mxGeometry as="geometry" x="0.0" y="315" width="430.0" height="43" />
         </mxCell>
         <mxCell id="edge0-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="cross" source="screen-groups-button0-0" target="screen-finance">
           <mxGeometry as="geometry" relative="1">
@@ -23025,6 +23591,136 @@
               <mxPoint x="599" y="6115" />
               <mxPoint x="1155" y="6115" />
               <mxPoint x="1155" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge566-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-inline0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="611" y="30123.0" />
+              <mxPoint x="611" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge567-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="515" y="30256.5" />
+              <mxPoint x="515" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge568-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_finance-button1-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="527" y="30304.5" />
+              <mxPoint x="527" y="29879" />
+              <mxPoint x="1203" y="29879" />
+              <mxPoint x="1203" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge569-0" value="Несколько доступных групп" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-choose_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="30352.5" />
+              <mxPoint x="539" y="6095" />
+              <mxPoint x="11" y="6095" />
+              <mxPoint x="11" y="6245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge569-1" value="Одна группа (Назад: 0–1)" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_finance-button2-0" target="screen-menu">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="30352.5" />
+              <mxPoint x="539" y="2467" />
+              <mxPoint x="601" y="2467" />
+              <mxPoint x="601" y="2617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge570-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline0" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1141" y="30103.0" />
+              <mxPoint x="1141" y="30507" />
+              <mxPoint x="-1" y="30507" />
+              <mxPoint x="-1" y="30742" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge571-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_history-inline1" target="screen-former_history_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1153" y="30133.0" />
+              <mxPoint x="1153" y="30502" />
+              <mxPoint x="-13" y="30502" />
+              <mxPoint x="-13" y="30742" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge572-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1165" y="30421.5" />
+              <mxPoint x="1165" y="29889" />
+              <mxPoint x="-25" y="29889" />
+              <mxPoint x="-25" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge573-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline0" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1767" y="30103.0" />
+              <mxPoint x="1767" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge574-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline1" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1779" y="30133.0" />
+              <mxPoint x="1779" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge575-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#557eaa;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="forward" source="screen-former_trainings-inline2" target="screen-former_training">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1791" y="30163.0" />
+              <mxPoint x="1791" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge576-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_trainings-button0-0" target="screen-former_finance">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1695" y="30374.5" />
+              <mxPoint x="1695" y="29899" />
+              <mxPoint x="11" y="29899" />
+              <mxPoint x="11" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge577-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_training-button0-0" target="screen-former_trainings">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2297" y="30280.5" />
+              <mxPoint x="2297" y="29894" />
+              <mxPoint x="1179" y="29894" />
+              <mxPoint x="1179" y="30024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge578-0" value="" style="edgeStyle=none;rounded=1;curved=1;arcSize=25;html=0;endArrow=block;endFill=1;strokeWidth=1.3;strokeColor=#a5adb5;dashed=1;exitX=1;exitY=0.5;exitPerimeter=1;entryX=0;entryY=0.1;" edge="1" parent="returns" source="screen-former_history_training-button0-0" target="screen-former_history">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="539" y="30998.5" />
+              <mxPoint x="539" y="29889" />
+              <mxPoint x="577" y="29889" />
+              <mxPoint x="577" y="30024" />
             </Array>
           </mxGeometry>
         </mxCell>

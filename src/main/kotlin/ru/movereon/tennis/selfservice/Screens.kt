@@ -28,6 +28,11 @@ class Screens(private val service: SettlementService, private val state: Interac
     private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>, groupOptions:List<GroupOption>):Output {
         return with(ScreenLayout(action,state,botName,scope,user,inGroup)) {
         val a = access
+        if(a!=null && action.kind in FormerMemberScreens.kinds && (!service.isPresent(a) || action.kind=="own_group_trainings")) {
+            checkAccounting(!inGroup && user==a.userId,ErrorCode.FORBIDDEN,"История доступна только в своём личном чате с ботом")
+            val content=FormerMemberScreens(service).render(this,a)
+            return@with finishScreen(this,content.text,content.html,notice,inGroup)
+        }
         if(action.kind in NavigationScreens.kinds || action.kind in PollScreens.kinds) a?.let(service::requireKnownGroupMember)
         if(action.kind in NavigationScreens.kinds) return@with finishScreen(this,navigationScreens.render(this,a,groupOptions),null,notice,inGroup)
         if(action.kind in PollScreens.kinds) return@with finishScreen(this,pollScreens.render(this,a),null,notice,inGroup)
@@ -326,7 +331,7 @@ class Screens(private val service: SettlementService, private val state: Interac
         Output(result, keyboard(), tokens,richHtml?.let { (notice?.let { n -> "<p>${TrainingCard.escape(clean(n,220))}</p>" } ?: "")+it },photoId)
     }
     companion object {
-        val privateActions = FinanceScreens.kinds + FinanceScreens.mutationActions + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "groups_back", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
+        val privateActions = FormerMemberScreens.kinds + FinanceScreens.kinds + FinanceScreens.mutationActions + PaymentInput.actions + setOf("group_rule_save","new_poll","poll_list","poll_settings","poll_setting_save","poll_retry","finance_send_save","finance_receive_save","training_status","set_training_status","add_player_list","exclude_player_list","manage_players","add_player","remove_player","pick_add_player","my_trainings","my_training","training_settings","default_title","save_default_title","settings","default_time","save_default_time","menu", "groups", "groups_back", "trainings", "new", "edit_details", "profile_preview", "ask_paid", "pick_account", "pick_players", "add_players", "toggle_player", "save_players", "roster", "administrators", "admin_candidates", "admin_person", "set_admin", "history")
         fun clean(text: String, length: Int) = text.replace(Regex("[\\r\\n\\t]"), " ").take(length)
         fun hours(minutes: Long) = "${minutes / 60}${if (minutes % 60 == 30L) ",5" else ""} ч"
         fun date(value: String) = LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))

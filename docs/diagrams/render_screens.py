@@ -30,10 +30,18 @@ titles.update({'menu_polls':'Меню с включёнными опросами
 categories.append(('Опросы перед тренировкой',['menu_polls']+poll_steps+['poll_photo','poll_ready_photo','choose_polls','poll_list','poll_detail','poll_close_confirm','poll_training','choose_poll_settings','poll_settings']))
 titles.update({'equal_public':'Без индивидуального времени · равные доли','equal_personal':'Без времени · гости разрешены','simple_public':'Без времени и гостей · карточка','simple_personal':'Без времени и гостей · участие','rules_settings':'Обратимые правила открытых тренировок'})
 categories.append(('Правила группы: гости и время',['rules_settings','equal_public','equal_personal','simple_public','simple_personal']))
+titles.update({'former_finance':'После выхода: свой баланс','former_history':'После выхода: история баланса','former_trainings':'После выхода: свои тренировки','former_training':'Своя тренировка: личные данные','former_history_training':'Тренировка из своей истории'})
+categories.append(('После выхода из группы: только своя история',['former_finance','former_history','former_trainings','former_training','former_history_training']))
 def resolve(key,b):
  a=b.get('target');label=b['text']
  if not a:return []
  k=a['kind'];opt=a.get('option','');id=a.get('id','')
+ if key.startswith('former_'):
+  if k=='finance':return ['former_finance']
+  if k=='finance_balance_history':return ['former_history']
+  if k=='own_group_trainings':return ['former_trainings']
+  if k=='my_training':return ['former_history_training' if key=='former_history' else 'former_training']
+
  if k=='group_rule_save':return [key]
  if k=='participation' and key in ('equal_public','simple_public'):return [key.replace('_public','_personal')]
  if k=='close_panel' and key in ('equal_personal','simple_personal'):return [key.replace('_personal','_public')]

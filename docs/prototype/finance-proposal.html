@@ -34,7 +34,7 @@
 #tennis-finance-proposal .fp-people .fp-transfer{min-width:36px;text-align:center;font-size:22px;line-height:24px;text-decoration:none}
 #tennis-finance-proposal .fp-people th:last-child,#tennis-finance-proposal .fp-people td:last-child{text-align:right;white-space:nowrap}
 </style>
-<div class="fp-tools"><label for="fp-role">Смотреть от имени</label><select id="fp-role"><option value="1">Алексей · участник</option><option value="2">Борис · администратор</option><option value="3">Вера · суперадминистратор</option></select></div>
+<div class="fp-tools"><label for="fp-role">Смотреть от имени</label><select id="fp-role"><option value="1">Алексей · участник</option><option value="2">Борис · администратор</option><option value="3">Вера · суперадминистратор</option></select><label><input id="fp-former" type="checkbox"> Вышел из выбранной группы</label></div>
 <div class="fp-window"><div class="fp-header"><span class="fp-avatar" aria-hidden="true">🏓</span><div>Бот расчётов<div class="fp-sub" id="fp-context"></div></div></div><div class="fp-thread" id="fp-screen" aria-live="polite"></div></div>
 <div class="fp-caption">Предложение интерфейса · 15 участников на странице · демонстрационные данные. Бот только записывает перевод; деньги не отправляются.</div>
 <script>
@@ -42,7 +42,7 @@
 const root=document.getElementById('tennis-finance-proposal'),screen=root.querySelector('#fp-screen');
 const names=['Алексей','Борис','Вера','Глеб','Денис','Елена','Ирина','Кирилл','Лена','Максим','Нина','Ольга','Павел','Рита','Сергей','Татьяна','Фёдор','Юлия','Яна','Антон','Вадим','Зоя'];
 const groups=[{id:1,title:'Теннис по субботам',members:names.map((_,i)=>i+1),admins:[2,3],balances:{1:-323,2:923,3:-150,4:650,5:-700,6:400,7:-450,8:200,9:-250,10:100,11:-400},played:Array.from({length:20},(_,i)=>i+1),payments:[]},{id:2,title:'Вечерний теннис',members:[1,2,3,4,5,6],admins:[3],balances:{1:200,2:-200},played:[1,2,4],payments:[]}];
-let sequence=0;const state={actor:1,group:1,view:'finance',page:0,draft:null,selected:null,error:'',historyScope:'mine',noticeOpened:false};
+let sequence=0;const state={actor:1,group:1,former:false,view:'finance',page:0,draft:null,selected:null,error:'',historyScope:'mine',noticeOpened:false};
 // Synthetic transfers between other participants make the administrator's history visible.
 for(let i=0;i<12;i++){
  const from=4+i%8,to=4+(i+3)%8;
@@ -52,7 +52,7 @@ for(let i=0;i<12;i++){
 groups[0].payments.push({id:++sequence,from:2,to:1,amount:600,status:'PENDING',mode:'personal',author:2,time:Date.now(),notice:true});
 groups.forEach(group=>group.payments.filter(p=>p.status==='COMPLETED').forEach(p=>{p.postedAmount=p.amount;p.postedAt=p.time}));
 const peoplePageSize=15;
-const g=()=>groups.find(x=>x.id===state.group),admin=()=>g().admins.includes(state.actor),name=id=>names[id-1],money=n=>Math.abs(n).toLocaleString('ru-RU')+' ₽',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const g=()=>groups.find(x=>x.id===state.group),admin=()=>!state.former&&g().admins.includes(state.actor),name=id=>names[id-1],money=n=>Math.abs(n).toLocaleString('ru-RU')+' ₽',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function decorateButton(markup){
  const action=(markup.match(/data-action="([^"]+)"/)||[])[1]||'',value=(markup.match(/data-value="([^"]*)"/)||[])[1]||'';
  return markup.replace(/(>)([^<>]*)(<\/button>)/,(all,open,label,close)=>{
@@ -220,9 +220,11 @@ function paymentNotice(p){
 }
 function receiveButton(count){return key('Принять платёж','nav','receive').replace('data-style=""','data-style="'+(count>0?'success':'')+'"')}
 const pendingIncoming=()=>g().payments.filter(x=>x.to===state.actor&&x.status==='PENDING');
-function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';root.querySelector('#fp-context').textContent='Личный чат · '+g().title;
+function render(){if(state.former&&!['finance','balance-history','balance-training','former-trainings','groups','menu'].includes(state.view))state.view='finance';let v=state.view,d=state.draft,body='',buttons=[],composer='';root.querySelector('#fp-context').textContent='Личный чат · '+g().title;
  if(d&&['review','duplicate'].includes(v))refreshPaymentProposal(d);
- if(v==='finance'){let b=totals()[state.actor]||0,amount=ownBalance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':''),sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>'+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие переводы пока не меняют баланс.':'')+'</p>';buttons=[row(key('Перевести','nav','send'),receiveButton(incoming.length)),row(key('Баланс группы','nav','balances')),row(key('История переводов','nav','history'))];if(admin())buttons.push(row(key('Записать перевод за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
+ if(v==='finance'&&state.former){const b=totals()[state.actor]||0;body='<h2>Мои финансы:</h2><p>'+ownBalance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':'')+'</p><p>Ты больше не участник группы. Доступна только своя история, без изменения данных.</p>';buttons=[row(key('История баланса','nav','balance-history')),row(key('Мои тренировки','nav','former-trainings')),row(key('Назад','nav','groups'))]}
+ else if(v==='former-trainings'){body='<h2>Мои тренировки</h2><p><a href="#training" data-action="balance-training">🏓 Теннис · 06.10.2026 · 1 ч</a></p>';buttons=[row(key('Назад','nav','finance'))]}
+ else if(v==='finance'){let b=totals()[state.actor]||0,amount=ownBalance(b)+(b>0?' — оплачено тобой за других участников группы':b<0?' — оплачено за тебя другими участниками группы':''),sent=g().payments.filter(x=>x.from===state.actor&&x.status==='PENDING'),incoming=pendingIncoming(),sum=xs=>xs.reduce((n,x)=>n+x.amount,0);body='<h2>Мои финансы:</h2><p>'+amount+(sent.length?'<br>Отправлено, ждёт подтверждения: '+sent.length+' · '+sum(sent)+' ₽':'')+(incoming.length?'<br>Тебе подтвердить получение: '+incoming.length+' · '+sum(incoming)+' ₽':'')+(sent.length||incoming.length?'<br>Ожидающие переводы пока не меняют баланс.':'')+'</p>';buttons=[row(key('Перевести','nav','send'),receiveButton(incoming.length)),row(key('Баланс группы','nav','balances')),row(key('История переводов','nav','history'))];if(admin())buttons.push(row(key('Записать перевод за участников','new','admin')));buttons.push(row(key('Назад','nav','menu')))}
  else if(v==='balance-history'||v==='member-history'){
   const member=v==='member-history',subject=member?state.historyUser:state.actor;
   if(member&&(!admin()||!g().members.includes(subject)))throw Error('История доступна администратору этой группы');
@@ -230,14 +232,14 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
   body='<h2>История баланса'+(member?' · '+esc(name(subject)):'')+'</h2><p>Сейчас: <b>'+esc(((totals()[subject]||0)>0?'+':(totals()[subject]||0)<0?'−':'')+money(totals()[subject]||0))+'</b></p>';
   if(!list.length)body+='<p>Нет операций, влияющих на баланс.</p>';
   else body+='<table class="fp-balance-history"><thead><tr><th>Операция</th><th>Сумма</th></tr></thead><tbody>'+chunk.map(e=>{
-   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':p.from===subject?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
-   const link=text=>'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
+   const p=e.training?null:g().payments.find(p=>p.id===e.id),label=e.training?'🏓 Теннис':state.former?(p.from===subject?'💸 Перевод отправлен':'💰 Перевод получен'):p.from===subject?'💸 → '+balanceSourceName(name(p.to)):'💰 ← '+balanceSourceName(name(p.from));
+   const link=text=>state.former&&!e.training?text:'<a href="#balance-source" data-action="'+(e.training?'balance-training':'detail')+'" data-value="'+(e.id||'')+'">'+text+'</a>';
    return '<tr><td>'+link(esc(label))+'<br><span class="fp-small">'+new Date(e.time).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})+'</span></td><td>'+link(balance(e.amount))+'</td></tr>';
-  }).join('')+'</tbody></table><p class="fp-small">У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. Нажми на операцию, чтобы открыть её карточку.</p>';
+  }).join('')+'</tbody></table><p class="fp-small">У тренировок — дата занятия, у переводов — последнего изменения. Сумма всех страниц равна текущему балансу. '+(state.former?'Можно открыть только свои тренировки; карточки переводов недоступны.':'Нажми на операцию, чтобы открыть её карточку.')+'</p>';
   buttons=[pages(list,15),row(member?key('Назад','member-list-back'):key('Назад','nav','finance'))];
  }
  else if(v==='balance-training'){
-  body='<h2>🏓 Теннис · 06.10.2026 · 18:30</h2><p>Учтена</p><p class="fp-small">Искусственная тренировка объясняет исходные балансы участников в этом макете. В боте здесь открывается полная карточка выбранной тренировки.</p>';
+  body=state.former?'<h2>🏓 Теннис · 06.10.2026 · 18:30</h2><p>Завершена</p><p>'+esc(name(state.actor))+' · Играл: 1 ч</p><p>Изменение своего баланса: '+balance(g().balances[state.actor]||0)+'</p>':'<h2>🏓 Теннис · 06.10.2026 · 18:30</h2><p>Учтена</p><p class="fp-small">Искусственная тренировка объясняет исходные балансы участников в этом макете. В боте здесь открывается полная карточка выбранной тренировки.</p>';
   buttons=[row(key('Назад','balance-training-back'))];
  }
  else if(v==='groups'){body='<h2>Выбери группу</h2>';buttons=groups.map(x=>row(key(x.title,'group',x.id)));buttons.push(row(key('Назад','nav','menu')))}
@@ -325,13 +327,14 @@ function render(){let v=state.view,d=state.draft,body='',buttons=[],composer='';
   body='<h2>Перевод отменён</h2>'+detail(p)+'<p>Запись сохранена в истории.</p>';
   buttons=[row(key('К моим финансам','nav','finance'))];
  }
- const incomingNotice=g().payments.filter(hasPaymentNotice).slice(-1)[0];
+ const incomingNotice=state.former?null:g().payments.filter(hasPaymentNotice).slice(-1)[0];
  const menuMarkup=`<div class="fp-message">${body}${state.error&&v!=='review'?`<p class="fp-warning" role="alert">${esc(state.error)}</p>`:''}</div><div class="fp-keys${v==='review'?' fp-stable-keys':''}">${buttons.join('')}</div>${composer}`;
  const noticeMarkup=incomingNotice?'<div class="fp-message fp-notification">'+paymentNotice(incomingNotice)+'</div>':'';
  screen.innerHTML=state.noticeOpened?noticeMarkup+menuMarkup:menuMarkup+noticeMarkup;
 }
 function save(){let d=state.draft;if(d.mode==='admin'&&!admin())throw Error('Запись доступна администратору этой группы');if(d.mode!=='admin'&&d.from!==state.actor)throw Error('Можно записать только свою отправку');if(d.from===d.to||!g().members.includes(d.to)||!g().members.includes(d.from))throw Error('Выбери двух разных участников этой группы');if(!Number.isSafeInteger(d.amount)||d.amount<=0)throw Error('Укажи положительную сумму в целых рублях');let p={...d,id:++sequence,status:d.mode==='admin'?'COMPLETED':'PENDING',author:state.actor,time:Date.now(),notice:d.mode!=='admin'};if(p.status==='COMPLETED'){p.postedAmount=p.amount;p.postedAt=p.time}g().payments.push(p);state.selected=p.id;state.draft=null;go('saved')}
 root.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;if(el.tagName==='A')e.preventDefault();let a=el.dataset.action,v=el.dataset.value;state.error='';try{
+ if(state.former&&!['nav','group','page','balance-training','balance-training-back'].includes(a))return;
  if(a==='amount-next')readAmount();
  else if(a==='nav'){if(v==='receive'&&pendingIncoming().length===0){window.alert('Нет переводов для подтверждения');return}state.draft=null;if(v==='history')state.historyScope='mine';go(v)}
  else if(a==='group'){state.group=+v;go('finance')}
@@ -439,6 +442,7 @@ setInterval(()=>{
  const expired=g().payments.filter(p=>p.notice&&p.to===state.actor&&p.status==='PENDING'&&Date.now()-p.time>=12*3600000);
  if(expired.length){expired.forEach(p=>p.notice=false);render()}
 },60000);
+root.querySelector('#fp-former').addEventListener('change',e=>{state.former=e.target.checked;state.draft=null;go('finance')});
 root.querySelector('#fp-role').addEventListener('change',e=>{state.actor=+e.target.value;state.draft=null;go('finance')});render();
 })();
 </script>

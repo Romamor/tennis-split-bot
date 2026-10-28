@@ -10,7 +10,8 @@ internal object TrainingCard {
     private val publicUsername=Regex("[A-Za-z0-9_]+")
     data class Row(val user:Long,val name:String,val minutes:Long,val paid:Long,val balance:Long?,val guest:Int=0)
     data class Content(val text:String,val html:String)
-    fun render(t:TrainingRecord,account:(Long)->Account):Content {
+    fun render(t:TrainingRecord,account:(Long)->Account):Content=render(t,account,onlyUser=null)
+    fun render(t:TrainingRecord,account:(Long)->Account,onlyUser:Long?):Content {
         val slots=t.calculation()
         val summary=averageCost(slots,t.rules.trackTime)
         val allocation=if(slots.players.isNotEmpty() && slots.payments.isNotEmpty()) calculateTraining(slots) else null
@@ -24,7 +25,7 @@ internal object TrainingCard {
                     val guestShare=if(t.rules.guestMinutes(p)>0) allocation?.slotShares?.get(slotIndex++) ?: 0 else 0
                     Row(p.userId,"$name гость $number",p.guestMinutes,0,if(known) -guestShare else null,number)
                 } else emptyList()
-        }
+        }.filter { onlyUser==null || it.user==onlyUser }
         val whenText="${Screens.date(t.date)} ${t.startTime}"
         val note=when {
             t.phase==TrainingPhase.OPEN -> null

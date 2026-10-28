@@ -7,13 +7,14 @@ import ru.movereon.tennis.core.checkAccounting
 /** Shared eligibility rules for the visible picker and automatic single-group navigation. */
 internal object GroupSelection {
     fun choices(options:List<GroupOption>,section:String,hasPolls:(GroupOption)->Boolean={ true })=options.filter {
-        when(section) {
+        (it.present || allowsFormer(section)) && when(section) {
             "manage","poll_settings" -> it.admin
             "administrators" -> it.superAdmin
             "polls" -> hasPolls(it)
             else -> true
         }
     }
+    fun allowsFormer(section:String)=section in setOf("","finance")
     fun publication(options:List<GroupOption>,poll:Boolean,enabled:(Long)->Boolean)=
         options.filter { it.canPublish && (!poll || enabled(it.group.id)) }
     fun parent(section:String)=ScreenAction(if(section in setOf("administrators","poll_settings")) "settings" else "menu",0)
