@@ -80,7 +80,8 @@ interface TelegramApi {
 }
 
 /** No redirects, URL logging or upstream exception causes: the request URL contains the token. */
-class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org"), private val backgroundBudgetMillis:Long=5000) : TelegramApi {
+class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org"), private val backgroundBudgetMillis:Long=5000,
+    private val diagnostics:UiDiagnostics=UiDiagnostics()) : TelegramApi {
     private var backgroundDeadline:Long?=null
     override fun background(block:()->Unit) {
         val previous=backgroundDeadline
@@ -113,10 +114,19 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }
     override fun me(): TgUser = json.decodeFromJsonElement(call("getMe", buildJsonObject {}))
-    override fun updates(offset: Long?, timeout: Int): List<TgUpdate> = json.decodeFromJsonElement(call("getUpdates", buildJsonObject {
+    override fun updates(offset: Long?, timeout: Int): List<TgUpdate> {
+        val payload=call("getUpdates", buildJsonObject {
         offset?.let { put("offset", it) }; put("timeout", timeout)
         put("allowed_updates", buildJsonArray { add("message"); add("callback_query"); add("chat_member"); add("my_chat_member"); add("poll_answer") })
-    }, timeout + 20))
+        }, timeout + 20)
+        if(diagnostics.enabled) payload.jsonArray.forEach { raw ->
+            val fields=raw.jsonObject
+            val kind=listOf("message","callback_query","chat_member","my_chat_member","poll_answer")
+                .firstOrNull { it in fields } ?: "other"
+            fields["update_id"]?.jsonPrimitive?.longOrNull?.let { diagnostics.update(it,"received",detail=kind) }
+        }
+        return json.decodeFromJsonElement(payload)
+    }
     override fun member(chatId: Long, userId: Long): TgMember = json.decodeFromJsonElement(call("getChatMember", buildJsonObject {
         put("chat_id", chatId); put("user_id", userId)
     }))
@@ -246,7 +256,10 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         val elapsedMs=(System.nanoTime()-started)/1_000_000
         if(method!="getUpdates" && elapsedMs>=2000) System.err.println("Telegram: $method; длительность=${elapsedMs}мс")
         val envelope = try { json.parseToJsonElement(response.body()).jsonObject } catch (_: Exception) { throw TelegramFailure(FailureKind.UNCERTAIN) }
-        if (envelope["ok"]?.jsonPrimitive?.booleanOrNull == true) return envelope["result"] ?: throw TelegramFailure(FailureKind.UNCERTAIN)
+        if (envelope["ok"]?.jsonPrimitive?.booleanOrNull == true) {
+            diagnostics.api(method,"accepted")
+            return envelope["result"] ?: throw TelegramFailure(FailureKind.UNCERTAIN)
+        }
         val code = envelope["error_code"]?.jsonPrimitive?.intOrNull ?: response.statusCode()
         val description = envelope["description"]?.jsonPrimitive?.contentOrNull.orEmpty().lowercase()
         val kind = when {
@@ -257,6 +270,7 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             else -> FailureKind.REJECTED
         }
         if(kind==FailureKind.REJECTED) System.err.println("Telegram: $method; отказ, код=$code")
+        diagnostics.api(method,"${kind.name}:$code")
         throw TelegramFailure(kind, code, envelope["parameters"]?.jsonObject?.get("retry_after")?.jsonPrimitive?.intOrNull)
     }
 }

@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption
 import java.time.ZoneId
 
 /** This class deliberately has no generated toString containing the secret. */
-class BotConfig(val token: String, val database: Path, val timeZone: String, val pollTimeout: Int) {
+class BotConfig(val token: String, val database: Path, val timeZone: String, val pollTimeout: Int, val uiDiagnostics:Boolean=false) {
     companion object {
         fun load(file: Path = Path.of(".env"), environment: Map<String,String> = System.getenv()): BotConfig {
             val settings = if(Files.exists(file)) Files.readAllLines(file).mapNotNull { line ->
@@ -28,7 +28,9 @@ class BotConfig(val token: String, val database: Path, val timeZone: String, val
             require(runCatching { ZoneId.of(zone) }.isSuccess) { "Проверь BOT_TIME_ZONE: ожидается название часового пояса" }
             val timeout=value("BOT_POLL_TIMEOUT","25").toIntOrNull()
             require(timeout != null && timeout in 1..50) { "BOT_POLL_TIMEOUT должен быть от 1 до 50" }
-            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/settlements.sqlite")),zone,timeout)
+            val diagnostics=value("BOT_UI_DIAGNOSTICS","false").toBooleanStrictOrNull()
+            require(diagnostics!=null) { "BOT_UI_DIAGNOSTICS должен быть true или false" }
+            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/settlements.sqlite")),zone,timeout,diagnostics)
         }
     }
 }
@@ -59,10 +61,11 @@ fun runBot() {
     FileChannel.open(path.resolveSibling("${path.fileName}.bot.lock"),StandardOpenOption.CREATE,StandardOpenOption.WRITE).use { channel ->
         val lock=channel.tryLock() ?: error("С этой базой уже работает другой процесс бота")
         lock.use {
-            val api=HttpTelegramApi(config.token)
+            val diagnostics=UiDiagnostics(config.uiDiagnostics)
+            val api=HttpTelegramApi(config.token,diagnostics=diagnostics)
             val database=Database(path)
             database.withConnectionReuse {
-                val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone)
+                val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone,diagnostics=diagnostics)
                 println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
                 var maintenanceDeferred=false
                 while(!Thread.currentThread().isInterrupted) {

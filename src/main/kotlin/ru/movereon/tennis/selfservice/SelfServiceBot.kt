@@ -9,7 +9,8 @@ import java.time.DateTimeException
 import java.util.UUID
 
 class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgUser,
-    private val clock: Clock = Clock.systemUTC(), private val zone: String = "Europe/Moscow") {
+    private val clock: Clock = Clock.systemUTC(), private val zone: String = "Europe/Moscow",
+    private val diagnostics:UiDiagnostics=UiDiagnostics()) {
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
     val polls=TrainingPolls(service,clock)
@@ -119,11 +120,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             "Для публикации бот должен быть администратором этой группы. Выбери другую группу или проверь права бота.")
     }
     fun handle(update: TgUpdate) {
-        if (state.completed(update.id)) return
+        if (state.completed(update.id)) { diagnostics.update(update.id,"duplicate");return }
         checkedMembership.clear()
         val callback = update.callback
         val message = update.message ?: callback?.message
         val user = callback?.from ?: update.message?.from
+        if(callback!=null) diagnostics.update(update.id,"callback",detail=when {
+            message==null -> "missing_message"
+            callback.data==null -> "missing_data"
+            else -> message.chat.type
+        })
         try {
             if(update.pollAnswer!=null) {
                 val vote=update.pollAnswer
@@ -152,7 +158,14 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
                 state.complete(update.id); return
             }
-            if (user == null || user.isBot || message == null) { state.complete(update.id); return }
+            if (user == null || user.isBot || message == null) {
+                diagnostics.update(update.id,"ignored",detail=when {
+                    user==null -> "missing_user"
+                    user.isBot -> "bot_user"
+                    else -> "missing_message"
+                })
+                state.complete(update.id); return
+            }
             remember(user)
             if (message.chat.id < 0) {
                 if(message.newMembers.isNotEmpty() || message.leftMember!=null) navigationMembership.invalidate(message.chat.id)
@@ -170,7 +183,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 ?.let(inputRecovery::resolve)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
                 ?.also { state.plan(update.id, it) }
-            if (plan == null) { state.complete(update.id); return }
+            if (plan == null) { diagnostics.update(update.id,"no_plan");state.complete(update.id);return }
+            diagnostics.update(update.id,"plan",plan.screen.kind)
             val closingOwnPanel=plan.chat<0 && plan.screen.kind=="close_panel" && plan.command==null
             val a = if (plan.screen.group < 0 && !closingOwnPanel) screenAccess(plan.screen,plan.user,plan.chat,mutating=plan.command!=null) else null
             var effective = plan
@@ -251,10 +265,12 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             effective.inputMessage?.let { state.retirePrivateMenu(effective.user,effective.chat,it,input=true) }
             state.complete(update.id)
         } catch (failure: TelegramFailure) {
+            diagnostics.update(update.id,"telegram_failure",detail=failure.kind.name)
             if (failure.kind in setOf(FailureKind.UNCERTAIN, FailureKind.RETRY_LATER)) throw failure
             answer(callback, "Не удалось выполнить действие. Проверь доступ бота к этой группе.")
             state.complete(update.id)
         } catch (failure: RuntimeException) {
+            diagnostics.update(update.id,"application_failure",detail=if(failure is AccountingException) failure.code.name else failure.javaClass.simpleName)
             if (failure !is IllegalArgumentException && failure !is DateTimeException) throw failure
             val explanation = if (failure is DateTimeException) "Проверь формат даты и времени: ДД.ММ.ГГГГ и ЧЧ:ММ."
             else if (failure is AccountingException) when (failure.code) {
@@ -290,6 +306,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         else if (callback != null) {
             val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
             val button = token?.let(state::button)
+            diagnostics.update(update.id,"button",button?.action?.kind,if(button==null) "missing" else "found")
             val incomingNotice=chat==user.id && button?.owner==user.id && button.scope.startsWith("payment-notice:") && state.delivery(button.scope)?.status!="BLOCKED"
             if(chat>0 && !incomingNotice && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
                 state.retirePrivateMenu(user.id,chat,message.id)
@@ -627,6 +644,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         return plan.copy(newPrivateMessage = true, previousPrivateMessage = old?.message)
     }
     private fun deliver(event: Long, plan: EventPlan, a: Access?) {
+        diagnostics.update(event,"render",plan.screen.kind)
         if (plan.screen.kind == "group_menu") {
             val token = state.button(ScreenAction("menu", plan.screen.group), null, "group-link:${plan.screen.group}", true)
             val out = Screens.Output("Открой личное меню бота для тренировок и расчётов.", ButtonAppearance.keyboard(listOf(listOf(TgButton("Открыть меню", url = "https://t.me/${identity.username}?start=n_$token")))), emptySet())
@@ -706,7 +724,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 state.retirePrivateMenu(plan.user,plan.chat,old.message)
                 state.forgetDelivery(key)
             }
-            if(delivery.send(key, plan.screen.group, plan.chat, plan.user, out, scope)) {
+            val delivered=delivery.send(key, plan.screen.group, plan.chat, plan.user, out, scope)
+            diagnostics.update(event,"private_delivery",plan.screen.kind,if(delivered) "accepted" else "uncertain")
+            if(delivered) {
                 val view=if(plan.screen.kind in setOf("poll_detail","poll_close_confirm"))
                     state.delivery(key)?.message?.let { PrivatePollView(it,plan.screen,privatePollRevision(plan.screen)) } else null
                 state.privatePollView(plan.user,plan.chat,view?.takeUnless { it.revision.startsWith("CLOSED:") })

@@ -34,6 +34,34 @@ class HttpTelegramApiTest {
     }
     @AfterEach fun stop() { server.stop(0) }
 
+    @Test fun `UI diagnostics retain event shape and API outcome without private payloads`() {
+        val log=mutableListOf<String>()
+        val traced=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),diagnostics=UiDiagnostics(true,log::add))
+        response={ 200 to """{"ok":true,"result":[{"update_id":71,"callback_query":{"id":"secret-callback","from":{"id":987654321,"first_name":"PrivateName"},"data":"private-button"}},{"update_id":72,"future_field":{"secret":"PrivateValue"}}]}""" }
+        assertEquals(2,traced.updates(null,1).size)
+        assertEquals(listOf("UI update=71 stage=received detail=callback_query","UI update=72 stage=received detail=other"),log)
+        response={ 400 to """{"ok":false,"error_code":400,"description":"Bad Request: message is not modified"}""" }
+        traced.edit(987654321,4,"PrivateText",null)
+        assertEquals("UI api=editMessageText outcome=NOT_MODIFIED:400",log.last())
+        response={ 200 to """{"ok":true,"result":true}""" }
+        traced.answer("secret-callback","PrivateAnswer",true)
+        assertEquals("UI api=answerCallbackQuery outcome=accepted",log.last())
+        val all=log.joinToString()
+        for(secret in listOf(token,"987654321","secret-callback","PrivateName","PrivateValue","private-button","PrivateText","PrivateAnswer"))
+            assertFalse(all.contains(secret))
+    }
+
+    @Test fun `UI diagnostics are disabled by default and a failing output cannot break bot requests`() {
+        val log=mutableListOf<String>()
+        UiDiagnostics(false,log::add).update(1,"received")
+        assertTrue(log.isEmpty())
+        val traced=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),diagnostics=UiDiagnostics(true) { error("broken output") })
+        traced.answer("test-callback")
+        val config=BotConfig.load(directory.resolve("absent.env"),mapOf("TELEGRAM_BOT_TOKEN" to token))
+        assertFalse(config.uiDiagnostics)
+        assertTrue(BotConfig.load(directory.resolve("absent.env"),mapOf("TELEGRAM_BOT_TOKEN" to token,"BOT_UI_DIAGNOSTICS" to "true")).uiDiagnostics)
+    }
+
     @Test fun `background budget defers unsent requests and does not constrain foreground requests`() {
         val limited=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),backgroundBudgetMillis=5)
         val failure=assertFailsWith<TelegramFailure> { limited.background { Thread.sleep(20);limited.me() } }

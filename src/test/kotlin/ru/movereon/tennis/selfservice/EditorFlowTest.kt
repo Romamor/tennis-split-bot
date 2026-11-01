@@ -20,8 +20,8 @@ class EditorFlowTest {
     private lateinit var bot:SelfServiceBot
     private var sequence=1L
     private val creator=Access(-1,1)
-    private fun setup() {
-        bot=SelfServiceBot(api,Database(dir.resolve("editor.sqlite")),fake.bot)
+    private fun setup(diagnostics:UiDiagnostics=UiDiagnostics()) {
+        bot=SelfServiceBot(api,Database(dir.resolve("editor.sqlite")),fake.bot,diagnostics=diagnostics)
         for(g in -2L..-1L) {
             bot.service.register(SettlementGroup(g,"Группа ${-g}","Europe/Moscow"))
             for(u in 1L..14L) {
@@ -60,6 +60,74 @@ class EditorFlowTest {
         click("Назад");assertEquals(listOf("🏓 Открыть","✏️ Редактировать","⬅️ Назад"),rows().flatten())
         openEditor(3);assertTrue(latest(3).text!!.contains("создатель"))
         openEditor(2);assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
+    }
+
+    @Test fun `Telegram administrator opens the editor from own training list in every status`() {
+        setup()
+        bot.service.execute(creator,"add-admin",SettlementCommand.AddPlayers("t",training().version,listOf(2)))
+        bot.service.execute(creator,"admin-time",SettlementCommand.ChangeAttendance("t",2,AttendanceChange.SET_MINUTES,60))
+        bot.service.execute(creator,"admin-paid",SettlementCommand.ChangeAttendance("t",2,AttendanceChange.SET_PAID,300))
+        for (phase in TrainingPhase.entries) {
+            when (phase) {
+                TrainingPhase.OPEN -> Unit
+                TrainingPhase.CLOSED -> bot.service.execute(creator,"finish-admin",SettlementCommand.FinishTraining("t",training().version))
+                TrainingPhase.CANCELLED -> {
+                    bot.service.execute(creator,"reopen-admin",SettlementCommand.ReopenTraining("t",training().version))
+                    bot.service.execute(creator,"cancel-admin",SettlementCommand.CancelTraining("t",training().version))
+                }
+            }
+            val before=training()
+            message("/start",2)
+            click("🏓 Мои тренировки",2)
+            click(fake.trainingLinks(latest(2)).single().text,2)
+            val card=latest(2)
+            val update=click("Редактировать",2)
+            assertTrue(bot.state.completed(update.id))
+            assertTrue(alerts.isEmpty(),alerts.joinToString())
+            assertEquals(card.id,latest(2).id,"The editor replaces the private card")
+            assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
+            assertTrue(rows(2).flatten().any { it.endsWith("Управление игроками") })
+            assertEquals(before,training(),"Opening the editor must not change training data")
+            click("Назад",2)
+            assertTrue(rows(2).flatten().any { it.endsWith("Редактировать") })
+        }
+    }
+
+    @Test fun `group management table opens editor directly for Telegram administrator without participation`() {
+        val log=mutableListOf<String>()
+        setup(UiDiagnostics(true,log::add))
+        bot.service.execute(creator,"cancel-for-list",SettlementCommand.CancelTraining("t",training().version))
+        message("/start",2)
+        click("📋 Управление тренировками",2)
+        click("Группа 1",2)
+        assertTrue(latest(2).text!!.startsWith("Тренировки группы"))
+        val update=click(fake.trainingLinks(latest(2)).single().text,2)
+        assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
+        assertTrue(rows(2).flatten().any { it.endsWith("Управление игроками") })
+        assertTrue(log.contains("UI update=${update.id} stage=button action=training detail=found"))
+        assertTrue(log.contains("UI update=${update.id} stage=private_delivery action=training detail=accepted"))
+        click("Изменить статус",2)
+        assertEquals(listOf("🔓 Открыта","⬅️ Назад"),rows(2).flatten())
+        assertEquals(TrainingPhase.CANCELLED,training().phase)
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test fun `diagnostics distinguish missing callbacks stale buttons and rejected access`() {
+        val log=mutableListOf<String>()
+        setup(UiDiagnostics(true,log::add))
+        val missing=sequence++
+        bot.handle(TgUpdate(missing,callback=TgCallback("private-callback",TgUser(2),message=null,data="private-data")))
+        assertTrue(log.contains("UI update=$missing stage=ignored detail=missing_message"))
+        val stale=sequence++
+        bot.handle(TgUpdate(stale,callback=TgCallback("stale",TgUser(1),latest(),"n:missing-private-token")))
+        assertTrue(log.contains("UI update=$stale stage=button detail=missing"))
+        assertTrue(log.contains("UI update=$stale stage=no_plan"))
+        val denied=sequence
+        openEditor(3)
+        assertTrue(log.contains("UI update=$denied stage=application_failure detail=FORBIDDEN"))
+        for(secret in listOf("private-callback","private-data","missing-private-token","Игрок","Группа"))
+            assertFalse(log.joinToString().contains(secret))
+        assertTrue(bot.state.completed(missing));assertTrue(bot.state.completed(stale))
     }
 
     @Test fun `adding excluding and managing players save immediately with the real editor in history`() {
