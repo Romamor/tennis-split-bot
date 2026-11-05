@@ -272,7 +272,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlUpdate(c, """UPDATE actions SET delivered_at=NULL WHERE id IN (
             SELECT MAX(a.id) FROM actions a JOIN trainings t ON t.group_id=a.group_id AND t.id=a.training_id
             JOIN bot_deliveries d ON d.delivery_key='training:' || t.group_id || ':' || t.id
-            WHERE t.status='OPEN' AND d.status='SENT' AND a.needs_delivery=1
+            WHERE t.status IN ('OPEN','CANCELLED') AND d.status='SENT' AND a.needs_delivery=1
             GROUP BY a.group_id,a.training_id)""")
     }
     fun pendingCards(): List<Triple<Long, String, Long>> = database.read { c ->

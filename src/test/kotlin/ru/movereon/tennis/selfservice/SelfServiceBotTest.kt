@@ -165,7 +165,7 @@ class SelfServiceBotTest {
         assertEquals(TrainingPhase.OPEN,bot.service.training(Access(-1,2),id).phase)
     }
 
-    @Test fun `accounted and cancelled cards are unpinned once without removing messages or other pins`() {
+    @Test fun `closed cards remain and cancelled cards disappear without touching other pins`() {
         setup();create();join(2,60);pay(2)
         val message=publicCard().id
         fake.pinned+=-1L to 999L;fake.pinned+=-2L to message
@@ -179,14 +179,14 @@ class SelfServiceBotTest {
         click(1,"Изменить статус");click(1,"Отменена");bot.maintain()
         assertEquals(1,fake.unpinned.size)
         click(1,"Изменить статус");click(1,"Открыта");bot.maintain()
-        assertEquals(3,fake.pinned.size,"Restoring does not notify or pin again")
+        assertEquals(4,fake.pinned.size,"Restoring publishes and pins a new card")
         click(1,"Изменить статус");click(1,"Отменена");bot.maintain()
         assertEquals(2,fake.unpinned.size)
     }
 
     @Test fun `old closed cards and interrupted unpin requests recover without repeating pins`() {
-        setup();create();val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
-        bot.service.execute(auth,"cancel-old",SettlementCommand.CancelTraining(t.id,t.version))
+        setup();create();join(2,60);pay(2);val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
+        bot.service.execute(auth,"close-old",SettlementCommand.FinishTraining(t.id,t.version))
         val key="training:-1:${t.id}";bot.state.pinStatus(key,"NONE")
         fake.unpinFailure=TelegramFailure(FailureKind.UNCERTAIN)
         assertFailsWith<TelegramFailure> { bot.maintain() };assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
@@ -197,7 +197,7 @@ class SelfServiceBotTest {
     }
 
     @Test fun `rejected unpin has an admin retry and cannot repin a cancelled card`() {
-        setup();create();fake.unpinFailure=TelegramFailure(FailureKind.REJECTED,403)
+        setup();create();fake.unpinFailure=TelegramFailure(FailureKind.REJECTED,403);fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,400)
         click(1,"Изменить статус");click(1,"Отменена");bot.maintain()
         val count=fake.unpinAttempts.size;bot.maintain();assertEquals(count,fake.unpinAttempts.size)
         open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
@@ -211,6 +211,43 @@ class SelfServiceBotTest {
         bot.state.pinStatus("training:-1:${t.id}","PENDING")
         bot.service.execute(Access(-1,1,true),"cancel-pending",SettlementCommand.CancelTraining(t.id,t.version));bot.maintain()
         assertEquals(1,fake.pinAttempts);assertEquals(1,fake.unpinned.size)
+    }
+
+    @Test fun `cancelled card deletion retries after a network failure and survives restart`() {
+        setup();create()
+        val card=publicCard()
+        val auth=Access(-1,1,true)
+        val t=bot.service.trainings(auth).items.single()
+        bot.service.execute(auth,"cancel-card",SettlementCommand.CancelTraining(t.id,t.version))
+        fake.deleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
+        bot.maintain()
+        assertNotNull(fake.messages[-1L to card.id])
+        val history=bot.service.history(auth).total
+        fake.deleteFailure=null
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        bot.maintain()
+        assertNull(fake.messages[-1L to card.id])
+        assertNull(bot.state.delivery("training:-1:${t.id}"))
+        assertEquals(history,bot.service.history(auth).total)
+        bot.maintain()
+        assertEquals(1,fake.sent.count { it.chat.id==-1L })
+    }
+
+    @Test fun `Telegram deletion refusal keeps cancelled card accurate without repeated requests`() {
+        setup();create()
+        val card=publicCard()
+        val auth=Access(-1,1,true)
+        val t=bot.service.trainings(auth).items.single()
+        bot.service.execute(auth,"cancel-old-card",SettlementCommand.CancelTraining(t.id,t.version))
+        fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,400)
+        bot.maintain()
+        assertTrue(fake.messages.getValue(-1L to card.id).text!!.contains("Отменена"))
+        assertEquals("BLOCKED",bot.state.delivery("training:-1:${t.id}")!!.status)
+        fake.deleteFailure=null
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
+        bot.maintain()
+        assertNotNull(fake.messages[-1L to card.id])
+        assertEquals(1,fake.sent.count { it.chat.id==-1L })
     }
 
     @Test fun `private menu cleanup survives restart and too old menus become short inactive messages`() {
@@ -283,7 +320,7 @@ class SelfServiceBotTest {
         assertTrue(fake.unpinAttempts.isEmpty());assertEquals(1,fake.pinAttempts)
         bot.service.execute(auth,"cancel-again",SettlementCommand.CancelTraining(t.id,bot.service.training(auth,t.id).version))
         fake.unpinFailure=TelegramFailure(FailureKind.MESSAGE_MISSING,400);bot.maintain()
-        assertEquals("UNPINNED",bot.state.pinStatus(key));bot.maintain();assertEquals(1,fake.unpinAttempts.size)
+        assertNull(bot.state.delivery(key));bot.maintain();assertEquals(1,fake.unpinAttempts.size)
     }
 
     @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
@@ -434,7 +471,7 @@ class SelfServiceBotTest {
     }
 
     private fun legacyEditCard():TgMessage {
-        val card=publicCard();val id=bot.service.trainings(Access(-1,1,true)).items.single().id
+        val card=fake.sent.first { it.chat.id==-1L };val id=bot.service.trainings(Access(-1,1,true)).items.single().id
         val token=bot.state.button(ScreenAction("edit_training",-1,id),null,"legacy-public-edit")
         return card.copy(keyboard=TgKeyboard(listOf(listOf(TgButton("Редактировать",callbackData="n:$token")))))
     }
@@ -451,7 +488,7 @@ class SelfServiceBotTest {
                 bot.service.execute(auth,"cancel-popup",SettlementCommand.CancelTraining(id,bot.service.training(auth,id).version))
             }
             bot.maintain()
-            assertEquals(listOf(listOf("🏓 Открыть")),publicCard().keyboard!!.rows.map { row->row.map { it.text } })
+            if(phase!=TrainingPhase.CANCELLED) assertEquals(listOf(listOf("🏓 Открыть")),publicCard().keyboard!!.rows.map { row->row.map { it.text } })
             val messages=fake.messages.toMap();val panels=ephemeralMessages.toMap();val before=bot.service.training(auth,id)
             val redirects=fake.privateRedirects.size;val history=bot.service.history(auth).total
             click(3,"Редактировать",legacyEditCard())
@@ -1272,7 +1309,7 @@ class SelfServiceBotTest {
         assertTrue(latest(1).text!!.contains("Учтена"))
     }
 
-    @Test fun `admin restores cancelled training from history and updates the same public card`() {
+    @Test fun `admin restores cancelled training from history and publishes a new public card`() {
         setup();create();join(2,60);pay(2);closeParticipation(2)
         click(1,"Изменить статус");click(1,"Завершена")
         val auth=Access(-1,1,true)
@@ -1280,7 +1317,7 @@ class SelfServiceBotTest {
         val publicId=publicCard().id
         click(1,"Изменить статус");click(1,"Открыта")
         click(1,"Изменить статус");click(1,"Отменена");bot.maintain()
-        assertTrue(publicCard().text!!.contains("Отменена"))
+        assertNull(fake.messages[-1L to publicId])
         open(2);click(2,"Мои тренировки");click(2,before.title)
         assertFalse(latest(2).keyboard!!.rows.flatten().any { it.text.contains("Восстановить тренировку") })
         open(1);click(1,"Управление тренировками");click(1,before.title)
@@ -1290,8 +1327,8 @@ class SelfServiceBotTest {
         assertTrue(latest(1).text!!.contains("Открыта"))
         assertEquals(TrainingPhase.OPEN,bot.service.training(auth,before.id).phase)
         assertTrue(bot.service.balances(auth).values.all { it==0L })
-        assertEquals(publicId,publicCard().id)
-        assertEquals(1,fake.sent.count { it.chat.id == -1L })
+        assertNotEquals(publicId,publicCard().id)
+        assertEquals(2,fake.sent.count { it.chat.id == -1L })
         assertTrue(publicCard().text!!.contains("Открыта"))
         click(1,"История изменений")
         assertTrue(latest(1).text!!.contains("Восстановил тренировку; расчёт ещё не учтён"))

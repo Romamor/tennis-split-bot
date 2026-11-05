@@ -918,8 +918,28 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val author = service.database.read { c -> sqlQuery(c, "SELECT created_by FROM trainings WHERE group_id=? AND id=?", group, training) { it.getLong(1) }.single() }
         // Public information for its original chat. No private context or privileges are used for background delivery.
         val scope = "training:$group:$training"
+        val record=service.training(Access(group,author),training)
+        if(record.phase==TrainingPhase.CANCELLED) {
+            val old=state.delivery(scope) ?: return true
+            val message=old.message ?: return true
+            if(old.status=="BLOCKED") return true
+            try { api.delete(group,message) }
+            catch(f:TelegramFailure) {
+                if(f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) {
+                    val cancelled=screens.render(ScreenAction("public",group,training),Access(group,author),scope,null)
+                    if(!delivery.send(scope,group,group,null,cancelled,scope,recreateMissing=false)) return false
+                    state.deliveryResult(scope,"BLOCKED")
+                    System.err.println("Telegram: не удалось удалить карточку отменённой тренировки; код=${f.code}")
+                    return true
+                }
+                if(f.kind!=FailureKind.MESSAGE_MISSING) throw f
+            }
+            state.forgetDelivery(scope)
+            state.replace(scope,emptySet())
+            return true
+        }
         val out = screens.render(ScreenAction("public", group, training), Access(group, author), scope, null)
-        val create=allowCreate ?: (service.training(Access(group,author),training).phase==TrainingPhase.OPEN)
+        val create=allowCreate ?: (record.phase==TrainingPhase.OPEN)
         return delivery.send(scope, group, group, null, out, scope,create)
     }
 }
