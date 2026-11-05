@@ -4,7 +4,7 @@ import ru.movereon.tennis.application.TrainingPhase
 import ru.movereon.tennis.application.TrainingRecord
 import ru.movereon.tennis.telegram.TgButton
 
-/** A compact table whose training titles open the existing card via inline callbacks. */
+/** Ordinary Telegram links stay navigable inside table cells. */
 internal object TrainingList {
     fun render(header:String,trainings:List<TrainingRecord>,personalUser:Long?=null,open:(TrainingRecord)->TgButton):ScreenContent {
         fun played(t:TrainingRecord)=if(t.phase==TrainingPhase.CANCELLED) "" else t.players.firstOrNull { it.userId==personalUser && it.playing }?.let { Screens.hours(t.rules.minutes(it)) } ?: "—"
@@ -20,15 +20,8 @@ internal object TrainingList {
                 trainings.forEach { t ->
                     val title=TrainingCard.escape(Screens.clean(t.title,34))
                     fun strike(value:String)=if(t.phase==TrainingPhase.CANCELLED) "<s>$value</s>" else value
-                    val style=when(t.phase) {
-                        TrainingPhase.OPEN -> "primary"
-                        TrainingPhase.CLOSED -> "success"
-                        TrainingPhase.CANCELLED -> "danger"
-                    }
                     val button=open(t)
-                    val action=button.callbackData?.let {
-                        "<tg-button type=\"callback_data\" style=\"$style\" data=\"${TrainingCard.escape(it)}\">$title</tg-button>"
-                    } ?: "<tg-button type=\"url\" style=\"$style\" url=\"${TrainingCard.escape(requireNotNull(button.url))}\">$title</tg-button>"
+                    val action="<a href=\"${TrainingCard.escape(requireNotNull(button.url))}\">$title</a>"
                     append("<tr><td align=\"left\">${strike(Screens.date(t.date))}</td><td align=\"left\">${strike(action)}</td>"+(if(personalUser!=null) "<td align=\"right\">${played(t)}</td>" else "")+"</tr>")
                 }
                 append("</table>")

@@ -22,6 +22,12 @@ internal class ScreenLayout(
     }
     fun control(label:String,next:ScreenAction,enabled:Boolean=true,style:String?=null):TgButton =
         if(enabled) button(label,next).copy(style=style) else TgButton(label,disabled=kotlinx.serialization.json.JsonObject(emptyMap()))
+    fun trainingLink(label:String,next:ScreenAction):TgButton {
+        require(!inGroup && user!=null && next.kind in setOf("training","my_training"))
+        val token=state.button(next,user,scope)
+        tokens+=token
+        return TgButton(label,url="https://t.me/$botName?start=l_$token")
+    }
     fun inline(label:String,next:ScreenAction,style:String="link"):String {
         val b=button(label,next)
         val kind=if(b.callbackData!=null) "callback_data" else "url"

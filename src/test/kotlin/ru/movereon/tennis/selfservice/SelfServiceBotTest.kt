@@ -89,7 +89,9 @@ class SelfServiceBotTest {
             return click(user,label)
         }
         val button = choices.firstOrNull { it.text.contains(label) } ?: error("Button $label not found: ${message.keyboard.rows.flatten().map { it.text }}")
-        val update = TgUpdate(updateId++, callback = TgCallback("cb:$updateId", TgUser(user, firstName = "User $user"), message, button.callbackData))
+        val update = if(button.url!=null)
+            TgUpdate(updateId++,message=TgMessage(updateId,TgChat(user,"private"),TgUser(user,firstName="User $user"),"/start "+button.url.substringAfter("start=")))
+        else TgUpdate(updateId++, callback = TgCallback("cb:$updateId", TgUser(user, firstName = "User $user"), message, button.callbackData))
         bot.handle(update)
         return update
     }
@@ -224,7 +226,8 @@ class SelfServiceBotTest {
         fake.deleteFailure=null;open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
         val id=latest(1).id
         repeat(3) { click(1,"Меню");click(1,"Управление тренировками");click(1,"09.09.2026") }
-        assertEquals(id,latest(1).id)
+        assertNotEquals(id,latest(1).id)
+        assertNull(fake.messages[1L to id])
     }
 
     @Test fun `date arrows clamp calendar boundaries and clock buttons wrap within the selected day`() {

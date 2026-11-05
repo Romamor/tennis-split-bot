@@ -55,6 +55,17 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             ?: sqlQuery(c, "SELECT MAX(update_id)+1 FROM bot_events") { it.getString(1)?.toLong() }.single()
     }
     fun completed(id: Long) = database.read { c -> sqlQuery(c, "SELECT completed FROM bot_events WHERE update_id=?", id) { it.getBoolean(1) }.singleOrNull() == true }
+    /** A failed list render can be opened again; it must not pin Telegram's polling offset forever. */
+    fun retireInterruptedTrainingViews() = database.write { c ->
+        sqlUpdate(c,"""UPDATE bot_events SET completed=1,plan_json=NULL WHERE completed=0
+            AND json_extract(plan_json,'$.screen.kind') IN ('my_trainings','trainings','my_training','training')
+            AND json_extract(plan_json,'$.command') IS NULL
+            AND json_extract(plan_json,'$.form') IS NULL
+            AND json_extract(plan_json,'$.draft') IS NULL
+            AND json_extract(plan_json,'$.nextDraft') IS NULL
+            AND json_extract(plan_json,'$.defaultUpdate') IS NULL
+            AND COALESCE(json_extract(plan_json,'$.clearDraft'),0)=0""")
+    }
     fun plan(id: Long): EventPlan? = database.read { c -> sqlQuery(c, "SELECT plan_json FROM bot_events WHERE update_id=?", id) { it.getString(1)?.let { text -> json.decodeFromString<EventPlan>(text) } }.singleOrNull() }
     fun plan(id: Long, plan: EventPlan) = database.write { c ->
         sqlUpdate(c, "INSERT INTO bot_events(update_id,user_id,group_id,plan_json) VALUES(?,?,?,?) ON CONFLICT(update_id) DO NOTHING",

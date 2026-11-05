@@ -39,7 +39,8 @@ class PersonalFlowTest {
     }
     private fun click(label:String,user:Long=1) {
         val m=latest(user);val choices=m.keyboard!!.rows.flatten()+api.trainingLinks(m);val b=choices.firstOrNull { it.text==label } ?: choices.single { it.text.endsWith(" $label") }
-        bot.handle(TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),m,b.callbackData)))
+        if(b.url!=null) message("/start "+b.url.substringAfter("start="),user)
+        else bot.handle(TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),m,b.callbackData)))
     }
     private fun toGroupStep() {
         message("/start");click("➕ Создать тренировку");click("Оставить «Теннис»")
@@ -177,7 +178,7 @@ class PersonalFlowTest {
         assertEquals(15,api.trainingLinks(latest()).size)
         val html=api.richMessages[latest().chat.id to latest().id]!!
         assertTrue(html.contains("<s>27.09.2026</s>"))
-        assertTrue(html.contains("Тренировка 3</tg-button></s>"))
+        assertTrue(html.contains("Тренировка 3</a></s>"))
         assertEquals(30,Regex("<td align=\"left\">").findAll(html).count())
         assertFalse(rows().flatten().any { it.contains("Тренировка ") })
         assertTrue(rows().flatten().contains("1 / 2"))

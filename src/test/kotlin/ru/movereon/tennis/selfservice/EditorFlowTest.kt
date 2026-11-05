@@ -41,7 +41,10 @@ class EditorFlowTest {
     }
     private fun click(text:String,user:Long=1,source:TgMessage=latest(user)):TgUpdate {
         val button=(source.keyboard!!.rows.flatten()+fake.trainingLinks(source)).single { it.text==text || it.text.endsWith(" $text") }
-        return TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),source,button.callbackData)).also(bot::handle)
+        val update=if(button.url!=null)
+            TgUpdate(sequence++,message=TgMessage(sequence,TgChat(user,"private"),TgUser(user,firstName="Игрок $user"),"/start "+button.url.substringAfter("start=")))
+        else TgUpdate(sequence++,callback=TgCallback("cb$sequence",TgUser(user,firstName="Игрок $user"),source,button.callbackData))
+        return update.also(bot::handle)
     }
     private fun openEditor(user:Long=1) {
         val token=bot.state.button(ScreenAction("edit_training",-1,"t"),null,"edit-link:-1:t",permanent=true)
@@ -104,12 +107,47 @@ class EditorFlowTest {
         val update=click(fake.trainingLinks(latest(2)).single().text,2)
         assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
         assertTrue(rows(2).flatten().any { it.endsWith("Управление игроками") })
-        assertTrue(log.contains("UI update=${update.id} stage=button action=training detail=found"))
+        assertTrue(log.contains("UI update=${update.id} stage=plan action=training"))
         assertTrue(log.contains("UI update=${update.id} stage=private_delivery action=training detail=accepted"))
         click("Изменить статус",2)
         assertEquals(listOf("🔓 Открыта","⬅️ Назад"),rows(2).flatten())
         assertEquals(TrainingPhase.CANCELLED,training().phase)
         assertTrue(alerts.isEmpty())
+    }
+
+    @Test fun `training URL belongs to its viewer and rechecks administrator rights`() {
+        setup()
+        message("/start",2);click("📋 Управление тренировками",2);click("Группа 1",2)
+        val html=fake.richMessages.getValue(2L to latest(2).id)
+        assertFalse(html.contains("tg-button"))
+        val link=fake.trainingLinks(latest(2)).single()
+        assertNull(link.callbackData)
+        val start="/start "+requireNotNull(link.url).substringAfter("start=")
+        message(start,3)
+        assertTrue(latest(3).text!!.contains("другого участника"))
+        fake.members[-1L to 2L]=TgMember("member")
+        message(start,2)
+        assertTrue(latest(2).text!!.contains("администратор"))
+        fake.members[-1L to 2L]=TgMember("administrator")
+        message(start,2)
+        assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
+    }
+
+    @Test fun `restart retires interrupted training views and preserves financial and input plans`() {
+        setup()
+        val state=bot.state
+        state.plan(100,EventPlan(1,1,ScreenAction("my_trainings",0)))
+        state.complete(101)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot)
+        assertTrue(state.completed(100));assertNull(state.plan(100))
+        assertEquals(102L,state.offset())
+        val screen=ScreenAction("training",-1,"t")
+        val money=EventPlan(1,1,screen,command=SettlementCommand.FinishTraining("t",training().version))
+        val input=EventPlan(1,1,screen,form=InputForm("title",-1,"t"))
+        state.plan(102,money);state.plan(103,input)
+        state.retireInterruptedTrainingViews()
+        assertEquals(money,state.plan(102));assertFalse(state.completed(102))
+        assertEquals(input,state.plan(103));assertFalse(state.completed(103))
     }
 
     @Test fun `diagnostics distinguish missing callbacks stale buttons and rejected access`() {

@@ -27,7 +27,7 @@ internal class FormerMemberScreens(private val service:SettlementService) {
             "own_group_trainings" -> {
                 val p=service.trainings(a,action.page,mine=true)
                 val content=TrainingList.render("Мои тренировки · ${p.total}",p.items,personalUser=a.userId) {
-                    button(Screens.clean(it.title,34),ScreenAction("my_training",a.groupId,it.id,back=action.copy(page=p.index)))
+                    trainingLink(Screens.clean(it.title,34),ScreenAction("my_training",a.groupId,it.id,back=action.copy(page=p.index)))
                 }
                 pages(p.index,p.pages)
                 row("⬅️ Назад",ScreenAction("finance",a.groupId))

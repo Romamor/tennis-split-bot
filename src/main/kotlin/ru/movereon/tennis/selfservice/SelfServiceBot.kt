@@ -33,6 +33,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val bound = database.read { c -> sqlQuery(c, "SELECT id FROM users WHERE is_bot=1") { it.getLong(1) }.singleOrNull() }
         require(bound == null || bound == identity.id) { "Эта база принадлежит другому боту" }
         service.remember(identity.account())
+        state.retireInterruptedTrainingViews()
         state.interruptedSends()
         polls.interrupted()
         service.synchronizeOpenTrainingRules()
@@ -351,9 +352,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (text.startsWith("/start") || text == "/menu" || text == "Меню" || text == "/cancel") {
                 val key = "personal:${user.id}:$chat"
                 if (state.delivery(key)?.status == "UNKNOWN" && state.delivery(key)?.message == null) state.forgetDelivery(key)
-                val link = text.substringAfter(' ', "").takeIf { it.startsWith("n_") }?.removePrefix("n_")?.let(state::button)
-                action = if (link?.permanent == true) link.action else ScreenAction("menu", 0)
-                if (link?.permanent == true) closePanel(user.id, link.action.group)
+                val parameter=text.substringAfter(' ', "")
+                val trainingLink=parameter.startsWith("l_")
+                val link=parameter.takeIf { it.startsWith("n_") || trainingLink }?.drop(2)?.let(state::button)
+                if(trainingLink) {
+                    checkAccounting(link!=null,ErrorCode.STALE_VERSION,"Список обновился. Открой тренировки заново через меню.")
+                    checkAccounting(link!!.owner==user.id && link.action.kind in setOf("training","my_training"),
+                        ErrorCode.FORBIDDEN,"Эта ссылка открыта для другого участника")
+                }
+                action=if(trainingLink || link?.permanent==true) requireNotNull(link).action else ScreenAction("menu",0)
+                if(link!=null && (trainingLink || link.permanent)) closePanel(user.id,link.action.group)
             } else if (message.usersShared != null && savedForm?.kind in setOf("pick_account","pick_players","pick_add_player")) {
                 requireNotNull(savedForm)
                 val a = access(savedForm.group, user.id)

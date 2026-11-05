@@ -67,6 +67,10 @@ class FormerMemberFlowTest {
     }
     private fun tokens()=Regex("data=\"([^\"]+)\"").findAll(html()).map { it.groupValues[1] }.distinct().toList()
     private fun follow(kind:String,id:String?=null) {
+        val link=fake.trainingLinks(latest()).firstOrNull { b ->
+            bot.state.button(b.url!!.substringAfter("start=l_"))!!.action.let { a -> a.kind==kind && (id==null || a.id==id) }
+        }
+        if(link!=null) { message("/start "+link.url!!.substringAfter("start="));return }
         callback(tokens().first { bot.state.button(it.removePrefix("n:"))!!.action.let { a -> a.kind==kind && (id==null || a.id==id) } })
     }
     private fun openFinance() { message("/start");click("Мои финансы");click("Группа 1") }
