@@ -46,10 +46,12 @@ internal fun awaitBotIdentity(api:TelegramApi,pause:(Long)->Unit={ Thread.sleep(
     }
 }
 
-internal fun runBotCycle(receive:()->List<TgUpdate>,handle:(TgUpdate)->Unit,finishDrain:()->Unit,maintain:()->Unit) {
-    val updates=receive()
-    updates.sortedBy { it.id }.forEach(handle)
-    if(updates.isEmpty()) finishDrain()
+/** A batch is acknowledged only after receipt is durable; local retries cannot pin polling. */
+internal fun runQueuedBotCycle(receive:()->List<TgUpdate>,accept:(List<TgUpdate>)->Unit,
+    process:()->Unit,finish:()->Unit,maintain:()->Unit) {
+    accept(receive())
+    process()
+    finish()
     maintain()
 }
 
@@ -70,9 +72,9 @@ fun runBot() {
                 var maintenanceDeferred=false
                 while(!Thread.currentThread().isInterrupted) {
                     try {
-                        runBotCycle(
-                            { api.updates(bot.state.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } },
-                            bot::handle,bot::finishPollsAfterDrain,{ api.background(bot::maintain) })
+                        runQueuedBotCycle(
+                            { api.updates(bot.inbox.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } },
+                            bot::acceptUpdates,{ bot.processPending() },bot::finishDrainedPolls,{ api.background(bot::maintain) })
                     } catch (failure: TelegramFailure) {
                         if(failure.backgroundDeferred) { maintenanceDeferred=true;continue }
                         if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")

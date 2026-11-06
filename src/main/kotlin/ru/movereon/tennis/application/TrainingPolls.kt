@@ -13,6 +13,9 @@ import java.time.format.DateTimeFormatter
 
 data class TrainingPoll(val group:Long,val id:String,val title:String,val date:String,val time:String,val decline:String,
     val creator:Long,val telegramId:String?,val message:Long?,val status:String,val stopped:Boolean,val closer:Long?,val training:String?,val photoId:String?=null) {
+    /** A failed close keeps its publication identity and sign-ups; it must never be republished or discarded. */
+    val awaitingCloseRecovery:Boolean get() = status=="FAILED" && closer!=null && telegramId!=null && message!=null
+    val acceptsVotes:Boolean get() = status in setOf("OPEN","CLOSING") || awaitingCloseRecovery
     fun options():List<String> {
         val start=LocalDateTime.of(LocalDate.parse(date),LocalTime.parse(time))
         return listOf(-30L,0L,30L).map { offset ->
@@ -78,11 +81,11 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
     /** No raw answer, negative choice or voter identity is retained in bot_events. */
     fun vote(event:Long,p:TrainingPoll,user:Long,option:Int?)=db.write { c ->
         if(sqlQuery(c,"SELECT completed FROM bot_events WHERE update_id=?",event) { it.getBoolean(1) }.singleOrNull()==true) return@write
-        if(get(c,p.group,p.id).status in setOf("OPEN","CLOSING")) {
+        if(get(c,p.group,p.id).acceptsVotes) {
             if(option in 0..2) sqlUpdate(c,"INSERT INTO poll_signups(group_id,poll_id,user_id) VALUES(?,?,?) ON CONFLICT(group_id,poll_id,user_id) DO NOTHING",p.group,p.id,user)
             else sqlUpdate(c,"DELETE FROM poll_signups WHERE group_id=? AND poll_id=? AND user_id=?",p.group,p.id,user)
         }
-        sqlUpdate(c,"INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1,plan_json=NULL,user_id=NULL,group_id=NULL",event)
+        sqlUpdate(c,"INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1,plan_json=NULL,user_id=NULL,group_id=NULL,update_json=NULL,ordering_key=NULL,next_attempt_at=0",event)
     }
     fun count(p:TrainingPoll)=db.read { c -> sqlQuery(c,"SELECT COUNT(*) FROM poll_signups WHERE group_id=? AND poll_id=?",p.group,p.id) { it.getInt(1) }.single() }
     fun beginClose(a:Access,id:String) {
@@ -90,9 +93,26 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
         checkAccounting(p.message!=null,ErrorCode.INVALID_STATE,"Опрос ещё не опубликован")
         db.write { c -> sqlUpdate(c,"UPDATE training_polls SET status='CLOSING',closed_by=? WHERE group_id=? AND id=? AND status='OPEN'",a.userId,a.groupId,id) }
     }
+    /** Permanent Telegram rejection pauses automatic stopping, without dropping votes queued before the failure. */
+    fun closeFailed(p:TrainingPoll,stopped:Boolean) = db.write { c ->
+        sqlUpdate(c,"UPDATE training_polls SET status='FAILED',stopped=? WHERE group_id=? AND id=? AND status='CLOSING' AND stopped=0",stopped,p.group,p.id)
+    }
+    fun retryClose(a:Access,id:String) {
+        val p=get(a.groupId,id);requireManager(a,p)
+        if(p.status in setOf("CLOSING","CLOSED")) return
+        checkAccounting(p.awaitingCloseRecovery && !p.stopped,ErrorCode.INVALID_STATE,"Открой актуальное состояние опроса")
+        db.write { c -> sqlUpdate(c,"UPDATE training_polls SET status='CLOSING',closed_by=? WHERE group_id=? AND id=? AND status='FAILED' AND stopped=0",a.userId,a.groupId,id) }
+    }
+    /** Explicit recovery only permits a confirmed stop/missing message; conversion still waits for the update drain. */
+    fun recoverClose(a:Access,id:String) {
+        val p=get(a.groupId,id);requireManager(a,p)
+        if(p.status in setOf("CLOSING","CLOSED")) return
+        checkAccounting(p.awaitingCloseRecovery && p.stopped,ErrorCode.INVALID_STATE,"Сначала восстанови доступ бота и повтори завершение опроса")
+        db.write { c -> sqlUpdate(c,"UPDATE training_polls SET status='CLOSING',closed_by=? WHERE group_id=? AND id=? AND status='FAILED' AND stopped=1",a.userId,a.groupId,id) }
+    }
     fun discard(a:Access,id:String) {
         val p=get(a.groupId,id);requireManager(a,p)
-        checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING"),ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
+        checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING") && !p.awaitingCloseRecovery,ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
         db.write { c ->
             sqlUpdate(c,"DELETE FROM training_polls WHERE group_id=? AND id=?",a.groupId,id)
             sqlUpdate(c,"DELETE FROM bot_buttons WHERE scope=?","poll:${a.groupId}:$id")

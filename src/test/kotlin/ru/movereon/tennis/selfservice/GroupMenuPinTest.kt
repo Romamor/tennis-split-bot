@@ -52,7 +52,8 @@ class GroupMenuPinTest {
             val version=bot.service.training(Access(-1,1,true),id).version
             if(cancel) run(SettlementCommand.CancelTraining(id,version)) else run(SettlementCommand.FinishTraining(id,version))
             bot.maintain()
-            assertTrue(api.unpinned.contains(-1L to trainingMessage))
+            if(cancel) assertTrue(api.deleted.contains(-1L to trainingMessage))
+            else assertTrue(api.unpinned.contains(-1L to trainingMessage))
             assertTrue(menus.none { it in api.unpinned })
             assertEquals("SENT",bot.state.pinStatus(key()));assertEquals("SENT",bot.state.pinStatus(key(-2)))
         }

@@ -24,8 +24,8 @@ class FinanceFlowTest {
     }
     private lateinit var bot:SelfServiceBot
     private var seq=1L
-    private fun setup(at:Instant=Instant.parse("2026-10-07T12:00:00Z")) {
-        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite"),queries::add),fake.bot,Clock.fixed(at,ZoneOffset.UTC))
+    private fun setup(at:Instant=Instant.parse("2026-10-07T12:00:00Z"),clock:Clock=Clock.fixed(at,ZoneOffset.UTC)) {
+        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite"),queries::add),fake.bot,clock)
         for(g in -2L..-1L) {
             bot.service.register(SettlementGroup(g,"Группа ${-g}","Europe/Moscow"))
             for(u in 1L..20L) { bot.service.remember(Account(u,"Игрок $u"));bot.service.rememberMembership(g,u,true);fake.members[g to u]=TgMember("member") }
@@ -221,16 +221,26 @@ class FinanceFlowTest {
         }
     }
     @Test fun `typed amount stays above buttons and input cleanup retries without deleting the card`() {
-        setup();seedRoster();open(2);own(2,1,"267")
+        var now=Instant.parse("2026-10-07T12:00:00Z")
+        val clock=object:Clock() {
+            override fun instant()=now
+            override fun getZone()=ZoneOffset.UTC
+            override fun withZone(zone:ZoneId)=Clock.fixed(now,zone)
+        }
+        setup(clock=clock);seedRoster();open(2);own(2,1,"267")
         val card=latest(2);val pending=bot.state.retiredPrivateMenus(2).single { it.key.startsWith("input:") }
         assertTrue(html(2).contains("<h1>267 ₽</h1>"));assertFalse(html(2).contains("<aside>"));assertNotEquals(card.id,pending.message)
         assertFalse(fake.deleted.any { it.first==2L && it.second==pending.message })
-        fake.deleteFailure=TelegramFailure(FailureKind.RETRY_LATER,429)
-        assertFailsWith<TelegramFailure> { bot.maintain() }
+        fake.deleteFailure=TelegramFailure(FailureKind.RETRY_LATER,429,retryAfter=7)
+        bot.maintain()
         assertEquals(267,bot.state.form(2,2)!!.amount);assertEquals(card.id,latest(2).id)
-        fake.deleteFailure=null;bot.maintain()
+        fake.deleteFailure=null;now=now.plusSeconds(6);bot.maintain()
+        assertFalse(fake.deleted.contains(2L to requireNotNull(pending.message)))
+        assertEquals(card,fake.messages[2L to card.id])
+        now=now.plusSeconds(1);bot.maintain()
         assertTrue(fake.deleted.contains(2L to requireNotNull(pending.message)))
         assertFalse(fake.deleted.contains(2L to card.id));assertTrue(bot.state.retiredPrivateMenus(2).isEmpty())
+        assertEquals(card,fake.messages[2L to card.id])
         assertEquals(0,bot.service.financePayments(Access(-1,2)).total)
     }
     @Test fun `balance chooses recipient without prefilled amount while calculated transfers still start with a sum`() {

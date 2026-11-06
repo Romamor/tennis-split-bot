@@ -13,6 +13,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val diagnostics:UiDiagnostics=UiDiagnostics()) {
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
+    val inbox = UpdateInbox(database,clock)
+    private val drainedPolls=mutableSetOf<Pair<Long,String>>()
     val polls=TrainingPolls(service,clock)
     private val pollWorkflow=PollWorkflow(polls,state,api)
     val screens = Screens(service, state, requireNotNull(identity.username))
@@ -27,13 +29,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val cardRetries=object:LinkedHashMap<Pair<Long,String>,Long>() {
         override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Pair<Long,String>,Long>?)=size>256
     }
+    private val unpinRetries=object:LinkedHashMap<String,Long>() {
+        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<String,Long>?)=size>256
+    }
     private val navigationMembership=NavigationMembershipCache(clock)
     private val checkedMembership = mutableMapOf<Pair<Long,Long>, Access>()
     init {
         val bound = database.read { c -> sqlQuery(c, "SELECT id FROM users WHERE is_bot=1") { it.getLong(1) }.singleOrNull() }
         require(bound == null || bound == identity.id) { "Эта база принадлежит другому боту" }
         service.remember(identity.account())
-        state.retireInterruptedTrainingViews()
         state.interruptedSends()
         polls.interrupted()
         service.synchronizeOpenTrainingRules()
@@ -120,6 +124,37 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         checkAccounting(api.member(group,identity.id).let { it.present && it.admin },ErrorCode.FORBIDDEN,
             "Для публикации бот должен быть администратором этой группы. Выбери другую группу или проверь права бота.")
     }
+    /** Receipt and business execution have separate durable progress. */
+    fun acceptUpdates(updates:List<TgUpdate>) {
+        inbox.accept(updates)
+        if(updates.isEmpty()) drainedPolls+=polls.closingPolls().map { it.group to it.id }
+    }
+    fun processPending(limit:Int=20) {
+        val attempted=mutableSetOf<Long>()
+        repeat(limit) {
+            val pending=inbox.pending(limit+attempted.size).firstOrNull { it.id !in attempted } ?: return
+            attempted+=pending.id
+            val update=pending.update ?: pending.plan?.let { plan ->
+                // Pre-inbox plans already have an account; preserve its real profile during replay.
+                val account=service.account(plan.user)
+                val user=TgUser(account.id,account.isBot,account.firstName,account.username,account.lastName)
+                val message=TgMessage(chat=TgChat(plan.chat,if(plan.chat<0) "supergroup" else "private"),from=user)
+                if(plan.callback!=null) TgUpdate(pending.id,callback=TgCallback(plan.callback,user,message))
+                else TgUpdate(pending.id,message=message)
+            }
+            if(update==null) {
+                System.err.println("Telegram: событие без сохранённого содержимого; требуется проверка очереди")
+                inbox.retry(pending.id,60_000);return@repeat
+            }
+            try { handle(update) }
+            catch(f:TelegramFailure) {
+                if(f.code in setOf(401,409)) throw f
+                inbox.retry(pending.id,(f.retryAfter ?: 3).coerceAtLeast(1)*1000L)
+                diagnostics.update(pending.id,"retry_scheduled",detail=f.kind.name)
+                if(f.kind==FailureKind.RETRY_LATER) throw f
+            }
+        }
+    }
     fun handle(update: TgUpdate) {
         if (state.completed(update.id)) { diagnostics.update(update.id,"duplicate");return }
         checkedMembership.clear()
@@ -136,7 +171,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val vote=update.pollAnswer
                 val p=polls.byTelegram(vote.pollId)
                 val voter=vote.user
-                if(p==null || voter==null || voter.isBot || p.status !in setOf("OPEN","CLOSING")) { state.complete(update.id);return }
+                if(p==null || voter==null || voter.isBot || !p.acceptsVotes) { state.complete(update.id);return }
                 val option=vote.optionIds.singleOrNull()
                 if(option in 0..2) {
                     remember(voter)
@@ -267,6 +302,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             state.complete(update.id)
         } catch (failure: TelegramFailure) {
             diagnostics.update(update.id,"telegram_failure",detail=failure.kind.name)
+            if(failure.code in setOf(401,409)) throw failure
             if (failure.kind in setOf(FailureKind.UNCERTAIN, FailureKind.RETRY_LATER)) throw failure
             answer(callback, "Не удалось выполнить действие. Проверь доступ бота к этой группе.")
             state.complete(update.id)
@@ -311,7 +347,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val incomingNotice=chat==user.id && button?.owner==user.id && button.scope.startsWith("payment-notice:") && state.delivery(button.scope)?.status!="BLOCKED"
             if(chat>0 && !incomingNotice && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
                 state.retirePrivateMenu(user.id,chat,message.id)
-                delivery.retirePrivateMenus(user.id)
             }
             if (button == null) {
                 if (chat<0 && message.ephemeralId != null && message.from?.id == identity.id &&
@@ -417,7 +452,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         if(action.kind in setOf("poll_settings","poll_setting_save","group_rule_save"))
             checkAccounting(service.isAdmin(requireNotNull(a)),ErrorCode.FORBIDDEN,"Настройка доступна администратору этой группы")
-        if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard")) {
+        if(action.kind in setOf("poll_close_confirm","poll_close","poll_retry","poll_detail","poll_discard_confirm","poll_discard","poll_close_retry","poll_close_recover_confirm","poll_close_recover")) {
             val p=polls.get(requireNotNull(a).groupId,action.id)
             polls.requireManager(a,p)
             if(chat<0 && p.telegramId==null && message.from?.id==identity.id && message.poll!=null && action.kind=="poll_close_confirm") {
@@ -738,12 +773,11 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val view=if(plan.screen.kind in setOf("poll_detail","poll_close_confirm"))
                     state.delivery(key)?.message?.let { PrivatePollView(it,plan.screen,privatePollRevision(plan.screen)) } else null
                 state.privatePollView(plan.user,plan.chat,view?.takeUnless { it.revision.startsWith("CLOSED:") })
-                delivery.retirePrivateMenus(plan.user)
             }
             if (plan.form?.kind in setOf("pick_account","pick_players","pick_add_player")) {
                 requireNotNull(plan.form)
                 val pickerKey = "picker:$event"
-                if (state.delivery(pickerKey) == null) {
+                if (state.delivery(pickerKey)?.status !in setOf("SENT","UNKNOWN")) {
                     state.sending(pickerKey, plan.screen.group, plan.chat, plan.user)
                     try {
                         val msg = api.requestUsers(plan.chat, "Выбери аккаунт Telegram для этой тренировки.", plan.form.request)
@@ -776,7 +810,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     fun hasClosingPolls()=polls.hasClosingPolls()
     /** Run after an empty getUpdates response, so votes queued before stopPoll are included. */
     fun finishPollsAfterDrain() {
-        polls.closingPolls().forEach { polls.finish(it) }
+        drainedPolls+=polls.closingPolls().map { it.group to it.id }
+        finishDrainedPolls()
+    }
+    fun finishDrainedPolls() {
+        polls.closingPolls().filter { (it.group to it.id) in drainedPolls }.forEach { p ->
+            if(!inbox.hasPendingVotes(requireNotNull(p.telegramId))) {
+                polls.finish(p);drainedPolls.remove(p.group to p.id)
+            }
+        }
     }
     fun maintain() {
         checkedMembership.clear()
@@ -789,11 +831,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
         state.reconcilePins()
-        unpinCards()
-        delivery.retirePrivateMenus()
-        state.pendingCards().filter { (group,training,_) ->
-            (cardRetries[group to training] ?: 0)<=clock.millis() && canRefreshCard(group,training)
-        }.take(2).forEach { (group,training,through) ->
+        state.pendingCards(cardRetries.filterValues { it>clock.millis() }.keys.map { (group,training) -> "training:$group:$training" }.toSet()).take(2).forEach { (group,training,through) ->
             try {
                 if(refreshCard(group,training)) { state.cardDelivered(group,training,through);cardRetries.remove(group to training) }
             } catch(f:TelegramFailure) {
@@ -807,11 +845,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
         pinCards()
         paymentNotifications.maintain()
+        unpinCards()
         delivery.removePaymentNotices()
+        delivery.retirePrivateMenus()
     }
     private fun privatePollRevision(screen:ScreenAction):String {
         val p=polls.get(screen.group,screen.id)
-        return "${p.status}:${polls.count(p)}:${service.groupTrainingRules(p.group).trackTime}"
+        return "${p.status}:${p.stopped}:${polls.count(p)}:${service.groupTrainingRules(p.group).trackTime}"
     }
     private fun refreshPrivatePollViews() {
         state.privatePollViews().forEach { (user,chat,view) ->
@@ -836,14 +876,22 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
     }
     private fun unpinCards() {
-        state.pendingUnpins().forEach { (key,delivery) ->
+        state.pendingUnpins(unpinRetries.filterValues { it>clock.millis() }.keys).take(2).forEach { (key,delivery) ->
             state.pinStatus(key,"UNPIN_SENDING")
-            try { api.unpin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"UNPINNED") }
-            catch(f:TelegramFailure) {
+            try {
+                api.unpin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"UNPINNED");unpinRetries.remove(key)
+            } catch(f:TelegramFailure) {
+                if(f.code in setOf(401,409) || f.backgroundDeferred) {
+                    state.pinStatus(key,"UNPIN_PENDING");throw f
+                }
                 when(f.kind) {
                     FailureKind.MESSAGE_MISSING,FailureKind.NOT_MODIFIED -> state.pinStatus(key,"UNPINNED")
-                    FailureKind.UNCERTAIN,FailureKind.RETRY_LATER -> { state.pinStatus(key,"UNPIN_PENDING");throw f }
-                    else -> { state.pinStatus(key,"UNPIN_FAILED");if(f.code in setOf(401,409)) throw f }
+                    FailureKind.UNCERTAIN,FailureKind.RETRY_LATER -> {
+                        state.pinStatus(key,"UNPIN_PENDING")
+                        unpinRetries[key]=clock.millis()+(f.retryAfter ?: 5).coerceAtLeast(1)*1000L
+                        if(f.kind==FailureKind.RETRY_LATER) throw f
+                    }
+                    else -> state.pinStatus(key,"UNPIN_FAILED")
                 }
             }
         }
@@ -903,8 +951,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         return delivery?.status!="FAILED" && (delivery?.status!="UNKNOWN" || delivery.message!=null)
     }
     fun nextPollTimeout(maximum:Int):Int {
-        if(hasClosingPolls()) return 0
-        var wait=state.panelRefreshDelay(maximum)
+        if(polls.closingPolls().any { (it.group to it.id) !in drainedPolls }) return 0
+        var wait=minOf(state.panelRefreshDelay(maximum),inbox.nextDelay(maximum))
         if(state.hasPendingPaymentNotices()) wait=minOf(wait,1)
         state.pendingCards().forEach { (group,training,_) ->
             if(canRefreshCard(group,training)) {

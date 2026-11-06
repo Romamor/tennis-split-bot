@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net" type="device" compressed="false">
   <diagram id="page-0" name="01 · Обзор">
-    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1960" pageHeight="1850" background="#f7fafc">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2430" pageHeight="1850" background="#f7fafc">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" value="База бота · 15 таблиц · схема 8" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=30;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="25" width="1860" height="50" />
+        <mxCell id="title" value="База бота · 16 таблиц · схема 10" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=30;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="25" width="2334" height="50" />
         </mxCell>
         <mxCell id="intro" value="Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–06." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=17;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="85" width="1860" height="42" />
+          <mxGeometry as="geometry" x="48" y="85" width="2334" height="42" />
         </mxCell>
         <mxCell id="lane-170" value="Аккаунты и группы" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=20;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="130" width="1800" height="30" />
@@ -137,14 +137,26 @@
         <mxCell id="bot_events-header" value="bot_events" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="420" height="40" />
         </mxCell>
-        <mxCell id="bot_events-desc" value="Входящие события и план обработки" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-desc" value="Очередь входящих событий и повторов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="0.0" y="40.0" width="420" height="34" />
         </mxCell>
         <mxCell id="bot_events-key" value="PK update_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="0.0" y="75.0" width="420" height="28" />
         </mxCell>
-        <mxCell id="bot_sessions" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+        <mxCell id="bot_polling" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="530" y="1110" width="420" height="112" />
+        </mxCell>
+        <mxCell id="bot_polling-header" value="bot_polling" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="0.0" y="0.0" width="420" height="40" />
+        </mxCell>
+        <mxCell id="bot_polling-desc" value="Сохранённый курсор получения событий" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="0.0" y="40.0" width="420" height="34" />
+        </mxCell>
+        <mxCell id="bot_polling-key" value="PK singleton" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="0.0" y="75.0" width="420" height="28" />
+        </mxCell>
+        <mxCell id="bot_sessions" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1000" y="1110" width="420" height="112" />
         </mxCell>
         <mxCell id="bot_sessions-header" value="bot_sessions" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_sessions">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="420" height="40" />
@@ -156,7 +168,7 @@
           <mxGeometry as="geometry" x="0.0" y="75.0" width="420" height="28" />
         </mxCell>
         <mxCell id="bot_buttons" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1000" y="1110" width="420" height="112" />
+          <mxGeometry as="geometry" x="1470" y="1110" width="420" height="112" />
         </mxCell>
         <mxCell id="bot_buttons-header" value="bot_buttons" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_buttons">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="420" height="40" />
@@ -168,7 +180,7 @@
           <mxGeometry as="geometry" x="0.0" y="75.0" width="420" height="28" />
         </mxCell>
         <mxCell id="bot_deliveries" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1470" y="1110" width="420" height="112" />
+          <mxGeometry as="geometry" x="1940" y="1110" width="420" height="112" />
         </mxCell>
         <mxCell id="bot_deliveries-header" value="bot_deliveries" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_deliveries">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="420" height="40" />
@@ -255,7 +267,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="financial-note" value="Баланс = сумма balance_entries по группе и аккаунту. Отдельной таблицы балансов нет.&#10;Доступные платежи вычисляются: фактический баланс + резерв ожидающих transfers (REVIEW).&#10;SendPayment создаёт transfers + actions. ReceivePayment обновляет transfers и добавляет actions + balance_entries.&#10;Участие и оплата стола хранятся в training_players; перевод между людьми — в transfers." style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=18;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1580" width="1840" height="150" />
+          <mxGeometry as="geometry" x="60" y="1580" width="2310" height="150" />
         </mxCell>
       </root>
     </mxGraphModel>
@@ -684,7 +696,7 @@
         <mxCell id="fk-row-4" value="R5 · group_admins (granted_by)&#10;→ users (id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="996" width="1195" height="61" />
         </mxCell>
-        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql · схема 10. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="1103" width="2470" height="70" />
         </mxCell>
       </root>
@@ -1104,7 +1116,7 @@
         <mxCell id="fk-row-4" value="R5 · training_players (group_id, training_id)&#10;→ trainings (group_id, id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="1318" width="935" height="61" />
         </mxCell>
-        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql · схема 10. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="1425" width="1950" height="70" />
         </mxCell>
       </root>
@@ -1753,22 +1765,22 @@
         <mxCell id="fk-row-14" value="R15 · balance_entries (group_id, action_id)&#10;→ actions (group_id, id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="1796" width="955" height="61" />
         </mxCell>
-        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql · схема 10. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="1903" width="1990" height="70" />
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram id="page-4" name="05 · Состояние бота">
-    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2560" pageHeight="1456" background="#f7fafc">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="3180" pageHeight="1482" background="#f7fafc">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="title" value="Состояние бота · таблицы и внешние ключи" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=28;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="20" width="2470" height="55" />
+          <mxGeometry as="geometry" x="48" y="20" width="3090" height="55" />
         </mxCell>
         <mxCell id="legend" value="PK — первичный ключ · FK — внешний ключ · UQ — уникальность · ? — допускается NULL · ★ — задел / не используется" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=16;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="80" width="2470" height="50" />
+          <mxGeometry as="geometry" x="48" y="80" width="3090" height="50" />
         </mxCell>
         <mxCell id="users" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="60" y="155" width="460" height="112" />
@@ -1795,12 +1807,12 @@
           <mxGeometry as="geometry" x="0.0" y="75.0" width="460" height="28" />
         </mxCell>
         <mxCell id="bot_events" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="430" width="570" height="287" />
+          <mxGeometry as="geometry" x="60" y="430" width="570" height="455" />
         </mxCell>
         <mxCell id="bot_events-header" value="bot_events" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
         </mxCell>
-        <mxCell id="bot_events-desc" value="Входящие события и план обработки" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-desc" value="Очередь входящих событий и повторов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="0.0" y="40.0" width="570" height="34" />
         </mxCell>
         <mxCell id="bot_events-field-update_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
@@ -1851,26 +1863,140 @@
         <mxCell id="bot_events-flags-plan_json" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="465.0" y="165.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="bot_events-field-completed" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-field-update_json" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="1.0" y="194.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="bot_events-name-completed" value="completed" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-name-update_json" value="update_json" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="4.0" y="194.0" width="260" height="29" />
         </mxCell>
-        <mxCell id="bot_events-type-completed" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-type-update_json" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="360.0" y="194.0" width="95" height="29" />
         </mxCell>
-        <mxCell id="bot_events-flags-completed" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
+        <mxCell id="bot_events-flags-update_json" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
           <mxGeometry as="geometry" x="465.0" y="194.0" width="100" height="29" />
         </mxCell>
-        <mxCell id="bot_events-note-0" value="PK (update_id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
-          <mxGeometry as="geometry" x="2.0" y="223.0" width="566" height="26" />
+        <mxCell id="bot_events-field-ordering_key" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="1.0" y="223.0" width="568" height="29" />
         </mxCell>
-        <mxCell id="bot_events-note-1" value="План завершённого события очищается; update_id остаётся" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
-          <mxGeometry as="geometry" x="2.0" y="249.0" width="566" height="26" />
+        <mxCell id="bot_events-name-ordering_key" value="ordering_key" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="4.0" y="223.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-type-ordering_key" value="TEXT" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="360.0" y="223.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-flags-ordering_key" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="465.0" y="223.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-field-received_order" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="1.0" y="252.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-name-received_order" value="received_order" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="4.0" y="252.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-type-received_order" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="360.0" y="252.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-flags-received_order" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="465.0" y="252.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-field-next_attempt_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="1.0" y="281.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-name-next_attempt_at" value="next_attempt_at" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="4.0" y="281.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-type-next_attempt_at" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="360.0" y="281.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-flags-next_attempt_at" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="465.0" y="281.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-field-completed" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="1.0" y="310.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-name-completed" value="completed" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="4.0" y="310.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-type-completed" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="360.0" y="310.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-flags-completed" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="465.0" y="310.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_events-note-0" value="PK (update_id)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="2.0" y="339.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_events-note-1" value="update_json / ordering_key очищаются после обработки" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="2.0" y="365.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_events-note-2" value="received_order — порядок; next_attempt_at — срок повтора" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="2.0" y="391.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_events-note-3" value="Завершённый update_id остаётся для защиты от повторов" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_events">
+          <mxGeometry as="geometry" x="2.0" y="417.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_polling" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="680" y="430" width="570" height="307" />
+        </mxCell>
+        <mxCell id="bot_polling-header" value="bot_polling" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
+        </mxCell>
+        <mxCell id="bot_polling-desc" value="Сохранённый курсор получения событий" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="0.0" y="40.0" width="570" height="34" />
+        </mxCell>
+        <mxCell id="bot_polling-field-singleton" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="1.0" y="78.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-name-singleton" value="singleton" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="4.0" y="78.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-type-singleton" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="360.0" y="78.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-flags-singleton" value="PK" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="465.0" y="78.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-field-next_update_id" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="1.0" y="107.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-name-next_update_id" value="next_update_id" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="4.0" y="107.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-type-next_update_id" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="360.0" y="107.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-flags-next_update_id" value="?" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="465.0" y="107.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-field-received_order" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f0f5f8;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="1.0" y="136.0" width="568" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-name-received_order" value="received_order" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="4.0" y="136.0" width="260" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-type-received_order" value="INTEGER" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="360.0" y="136.0" width="95" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-flags-received_order" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#9a5b12;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="465.0" y="136.0" width="100" height="29" />
+        </mxCell>
+        <mxCell id="bot_polling-note-0" value="PK (singleton)" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="2.0" y="165.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_polling-note-1" value="Одна служебная строка: singleton=1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="2.0" y="191.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_polling-note-2" value="next_update_id подтверждает сохранённый пакет" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="2.0" y="217.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_polling-note-3" value="received_order — общий номер получения события" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="2.0" y="243.0" width="566" height="26" />
+        </mxCell>
+        <mxCell id="bot_polling-note-4" value="Миграция 10 не меняет финансовые таблицы" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=12;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="bot_polling">
+          <mxGeometry as="geometry" x="2.0" y="269.0" width="566" height="26" />
         </mxCell>
         <mxCell id="bot_sessions" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="680" y="430" width="570" height="371" />
+          <mxGeometry as="geometry" x="1300" y="430" width="570" height="371" />
         </mxCell>
         <mxCell id="bot_sessions-header" value="bot_sessions" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_sessions">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -1972,7 +2098,7 @@
           <mxGeometry as="geometry" x="2.0" y="333.0" width="566" height="26" />
         </mxCell>
         <mxCell id="bot_buttons" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1300" y="430" width="570" height="429" />
+          <mxGeometry as="geometry" x="1920" y="430" width="570" height="429" />
         </mxCell>
         <mxCell id="bot_buttons-header" value="bot_buttons" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_buttons">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -2098,7 +2224,7 @@
           <mxGeometry as="geometry" x="2.0" y="391.0" width="566" height="26" />
         </mxCell>
         <mxCell id="bot_deliveries" value="" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1920" y="430" width="570" height="429" />
+          <mxGeometry as="geometry" x="2540" y="430" width="570" height="429" />
         </mxCell>
         <mxCell id="bot_deliveries-header" value="bot_deliveries" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#5b4b8a;strokeColor=#5b4b8a;fontColor=#ffffff;fontSize=19;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="bot_deliveries">
           <mxGeometry as="geometry" x="0.0" y="0.0" width="570" height="40" />
@@ -2242,7 +2368,7 @@
         <mxCell id="edge-3" value="R3" edge="1" parent="1" source="bot_sessions" target="groups" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="965.0" y="326" />
+              <mxPoint x="1585.0" y="326" />
               <mxPoint x="790.0" y="326" />
             </Array>
           </mxGeometry>
@@ -2250,7 +2376,7 @@
         <mxCell id="edge-4" value="R4" edge="1" parent="1" source="bot_sessions" target="users" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="965.0" y="339" />
+              <mxPoint x="1585.0" y="339" />
               <mxPoint x="290.0" y="339" />
             </Array>
           </mxGeometry>
@@ -2258,7 +2384,7 @@
         <mxCell id="edge-5" value="R5" edge="1" parent="1" source="bot_buttons" target="users" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1585.0" y="352" />
+              <mxPoint x="2205.0" y="352" />
               <mxPoint x="290.0" y="352" />
             </Array>
           </mxGeometry>
@@ -2266,7 +2392,7 @@
         <mxCell id="edge-6" value="R6" edge="1" parent="1" source="bot_buttons" target="groups" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1585.0" y="365" />
+              <mxPoint x="2205.0" y="365" />
               <mxPoint x="790.0" y="365" />
             </Array>
           </mxGeometry>
@@ -2274,7 +2400,7 @@
         <mxCell id="edge-7" value="R7" edge="1" parent="1" source="bot_deliveries" target="users" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2205.0" y="378" />
+              <mxPoint x="2825.0" y="378" />
               <mxPoint x="290.0" y="378" />
             </Array>
           </mxGeometry>
@@ -2282,43 +2408,43 @@
         <mxCell id="edge-8" value="R8" edge="1" parent="1" source="bot_deliveries" target="groups" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=open;endFill=0;strokeColor=#7b8fa3;strokeWidth=1.4;fontSize=11;labelBackgroundColor=#f7fafc;exitX=0.5;exitY=0;entryX=0.5;entryY=1;">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="2205.0" y="391" />
+              <mxPoint x="2825.0" y="391" />
               <mxPoint x="790.0" y="391" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="fk-title" value="Точные связи · строка слева ссылается на строку справа" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#172b3a;fontSize=20;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="954" width="2470" height="35" />
+          <mxGeometry as="geometry" x="48" y="980" width="3090" height="35" />
         </mxCell>
         <mxCell id="fk-hint" value="Одна линия может объединять несколько FK. В скобках: сколько дочерних записей → сколько родительских записей." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=15;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="998" width="2470" height="34" />
+          <mxGeometry as="geometry" x="48" y="1024" width="3090" height="34" />
         </mxCell>
         <mxCell id="fk-row-0" value="R1 · bot_events (group_id)&#10;→ groups (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1038" width="1195" height="61" />
+          <mxGeometry as="geometry" x="60" y="1064" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-1" value="R2 · bot_events (user_id)&#10;→ users (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1340" y="1038" width="1195" height="61" />
+          <mxGeometry as="geometry" x="1650" y="1064" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-2" value="R3 · bot_sessions (group_id)&#10;→ groups (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1105" width="1195" height="61" />
+          <mxGeometry as="geometry" x="60" y="1131" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-3" value="R4 · bot_sessions (user_id)&#10;→ users (id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1340" y="1105" width="1195" height="61" />
+          <mxGeometry as="geometry" x="1650" y="1131" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-4" value="R5 · bot_buttons (owner_id)&#10;→ users (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1172" width="1195" height="61" />
+          <mxGeometry as="geometry" x="60" y="1198" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-5" value="R6 · bot_buttons (group_id)&#10;→ groups (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1340" y="1172" width="1195" height="61" />
+          <mxGeometry as="geometry" x="1650" y="1198" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-6" value="R7 · bot_deliveries (user_id)&#10;→ users (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="60" y="1239" width="1195" height="61" />
+          <mxGeometry as="geometry" x="60" y="1265" width="1505" height="61" />
         </mxCell>
         <mxCell id="fk-row-7" value="R8 · bot_deliveries (group_id)&#10;→ groups (id)   [0..N → 0..1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1340" y="1239" width="1195" height="61" />
+          <mxGeometry as="geometry" x="1650" y="1265" width="1505" height="61" />
         </mxCell>
-        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="48" y="1346" width="2470" height="70" />
+        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql · схема 10. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="48" y="1372" width="3090" height="70" />
         </mxCell>
       </root>
     </mxGraphModel>
@@ -2712,7 +2838,7 @@
         <mxCell id="fk-row-5" value="R6 · poll_signups (group_id, poll_id)&#10;→ training_polls (group_id, id)   [0..N → 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#d7e1ea;fontColor=#172b3a;fontSize=13;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1100" y="1431" width="955" height="61" />
         </mxCell>
-        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
+        <mxCell id="source-note" value="Источник: src/main/resources/db/schema.sql · схема 10. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.&#10;Пунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы." style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;fontColor=#52677a;fontSize=14;fontFamily=Arial;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="48" y="1538" width="1990" height="70" />
         </mxCell>
       </root>

@@ -181,7 +181,7 @@ class SelfServiceBotTest {
         click(1,"Изменить статус");click(1,"Открыта");bot.maintain()
         assertEquals(4,fake.pinned.size,"Restoring publishes and pins a new card")
         click(1,"Изменить статус");click(1,"Отменена");bot.maintain()
-        assertEquals(2,fake.unpinned.size)
+        assertEquals(1,fake.unpinned.size,"Deleting a cancelled message removes its pin without a separate unpin request")
     }
 
     @Test fun `old closed cards and interrupted unpin requests recover without repeating pins`() {
@@ -189,7 +189,7 @@ class SelfServiceBotTest {
         bot.service.execute(auth,"close-old",SettlementCommand.FinishTraining(t.id,t.version))
         val key="training:-1:${t.id}";bot.state.pinStatus(key,"NONE")
         fake.unpinFailure=TelegramFailure(FailureKind.UNCERTAIN)
-        assertFailsWith<TelegramFailure> { bot.maintain() };assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
+        bot.maintain();assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
         bot.state.pinStatus(key,"UNPIN_SENDING")
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
         fake.unpinFailure=null;bot.maintain();bot.maintain()
@@ -210,7 +210,8 @@ class SelfServiceBotTest {
         setup();create();val t=bot.service.trainings(Access(-1,1)).items.single()
         bot.state.pinStatus("training:-1:${t.id}","PENDING")
         bot.service.execute(Access(-1,1,true),"cancel-pending",SettlementCommand.CancelTraining(t.id,t.version));bot.maintain()
-        assertEquals(1,fake.pinAttempts);assertEquals(1,fake.unpinned.size)
+        assertEquals(1,fake.pinAttempts);assertTrue(fake.unpinAttempts.isEmpty())
+        assertNull(bot.state.delivery("training:-1:${t.id}"))
     }
 
     @Test fun `cancelled card deletion retries after a network failure and survives restart`() {
@@ -255,6 +256,9 @@ class SelfServiceBotTest {
         fake.deleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
         message(1,"/start");val current=latest(1)
         assertNotEquals(old.id,current.id);assertNotNull(fake.messages[1L to old.id])
+        bot.maintain()
+        assertNotNull(bot.state.delivery("retired:1:${old.id}"))
+        assertEquals(current,fake.messages[1L to current.id])
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
         fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,400);bot.maintain()
         assertEquals("Меню обновлено. Используй последнее сообщение бота.",fake.messages[1L to old.id]!!.text)
@@ -262,7 +266,7 @@ class SelfServiceBotTest {
         assertEquals(current.id,latest(1).id);assertTrue(bot.state.retiredPrivateMenus().isEmpty())
         fake.deleteFailure=null;open(1);click(1,"Управление тренировками");click(1,"09.09.2026")
         val id=latest(1).id
-        repeat(3) { click(1,"Меню");click(1,"Управление тренировками");click(1,"09.09.2026") }
+        repeat(3) { click(1,"Меню");click(1,"Управление тренировками");click(1,"09.09.2026");bot.maintain() }
         assertNotEquals(id,latest(1).id)
         assertNull(fake.messages[1L to id])
     }
@@ -309,7 +313,11 @@ class SelfServiceBotTest {
         fake.messages[1L to old.id]=old
         clock.now=clock.now.plusSeconds(121);bot.state.cleanup()
         click(1,"Мои тренировки",old)
-        assertNull(fake.messages[1L to old.id]);assertNotNull(fake.messages[1L to current.id])
+        assertNotNull(fake.messages[1L to old.id])
+        val updated=assertNotNull(fake.messages[1L to current.id])
+        assertEquals(current.id,updated.id)
+        bot.maintain()
+        assertNull(fake.messages[1L to old.id]);assertEquals(updated,fake.messages[1L to current.id])
     }
 
     @Test fun `restore cancels a delayed unpin and missing messages finish cleanup`() {
@@ -320,7 +328,7 @@ class SelfServiceBotTest {
         assertTrue(fake.unpinAttempts.isEmpty());assertEquals(1,fake.pinAttempts)
         bot.service.execute(auth,"cancel-again",SettlementCommand.CancelTraining(t.id,bot.service.training(auth,t.id).version))
         fake.unpinFailure=TelegramFailure(FailureKind.MESSAGE_MISSING,400);bot.maintain()
-        assertNull(bot.state.delivery(key));bot.maintain();assertEquals(1,fake.unpinAttempts.size)
+        assertNull(bot.state.delivery(key));bot.maintain();assertTrue(fake.unpinAttempts.isEmpty())
     }
 
     @Test fun `personal controls follow the mockup with direct guests and compact submenu navigation`() {
@@ -767,7 +775,10 @@ class SelfServiceBotTest {
         message(1,"Вечерний теннис")
         val datePrompt = latest(1)
         assertNotEquals(titlePrompt.id,datePrompt.id)
-        assertNull(fake.messages[1L to titlePrompt.id],"The old menu must be removed after the new reply is delivered")
+        assertNotNull(fake.messages[1L to titlePrompt.id],"Foreground processing only queues the old menu for cleanup")
+        bot.maintain()
+        assertNull(fake.messages[1L to titlePrompt.id],"Background cleanup removes the old menu after the new reply is delivered")
+        assertEquals(datePrompt,fake.messages[1L to datePrompt.id])
         click(1,"09.09.2026")
         assertEquals(datePrompt.id,latest(1).id)
         message(1,"не время")
@@ -1371,7 +1382,7 @@ class SelfServiceBotTest {
         val history=bot.service.history(Access(-1,1)).items
         bot.state.cleanup()
         assertTrue(bot.state.completed(completed));assertNull(bot.state.plan(completed))
-        assertEquals(plan,bot.state.plan(pending));assertEquals(pending,bot.state.offset())
+        assertEquals(plan,bot.state.plan(pending));assertNull(bot.state.offset(),"Local plans cannot move the transport cursor")
         assertEquals(history,bot.service.history(Access(-1,1)).items)
         val count=bot.service.history(Access(-1,1)).total
         bot.handle(TgUpdate(completed,TgMessage(9,TgChat(1,"private"),TgUser(1,firstName="User 1"),"/start")))

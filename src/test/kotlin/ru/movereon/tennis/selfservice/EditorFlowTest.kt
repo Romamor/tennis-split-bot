@@ -133,19 +133,22 @@ class EditorFlowTest {
         assertTrue(rows(2).flatten().any { it.endsWith("Изменить статус") })
     }
 
-    @Test fun `restart retires interrupted training views and preserves financial and input plans`() {
+    @Test fun `restart replays interrupted training views locally and preserves financial and input plans`() {
         setup()
         val state=bot.state
         state.plan(100,EventPlan(1,1,ScreenAction("my_trainings",0)))
         state.complete(101)
         bot=SelfServiceBot(api,bot.service.database,fake.bot)
+        assertFalse(state.completed(100))
+        bot.acceptUpdates(listOf(TgUpdate(101)))
+        bot.processPending(1)
         assertTrue(state.completed(100));assertNull(state.plan(100))
         assertEquals(102L,state.offset())
         val screen=ScreenAction("training",-1,"t")
         val money=EventPlan(1,1,screen,command=SettlementCommand.FinishTraining("t",training().version))
         val input=EventPlan(1,1,screen,form=InputForm("title",-1,"t"))
         state.plan(102,money);state.plan(103,input)
-        state.retireInterruptedTrainingViews()
+        bot=SelfServiceBot(api,bot.service.database,fake.bot)
         assertEquals(money,state.plan(102));assertFalse(state.completed(102))
         assertEquals(input,state.plan(103));assertFalse(state.completed(103))
     }

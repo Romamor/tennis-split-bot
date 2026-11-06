@@ -437,6 +437,11 @@ class SettlementServiceTest {
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN display_page")
             sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN attendance_count")
             sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN has_played")
+            sqlUpdate(c,"DROP INDEX pending_events_order")
+            sqlUpdate(c,"DROP INDEX pending_events_due")
+            sqlUpdate(c,"DROP TABLE bot_polling")
+            for(column in listOf("update_json","ordering_key","received_order","next_attempt_at"))
+                sqlUpdate(c,"ALTER TABLE bot_events DROP COLUMN $column")
             c.createStatement().use { it.execute("PRAGMA user_version=1") }
         }
         val migrated=SettlementService(Database(s.database.path))

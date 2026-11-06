@@ -50,29 +50,16 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlUpdate(c,"""INSERT INTO bot_sessions(user_id,chat_id,group_id,input_json) VALUES(?,?,?,?)
             ON CONFLICT(user_id,chat_id) DO UPDATE SET input_json=excluded.input_json""",user,group,group,input)
     }
-    fun offset(): Long? = database.read { c ->
-        sqlQuery(c, "SELECT MIN(update_id) FROM bot_events WHERE completed=0") { it.getString(1)?.toLong() }.single()
-            ?: sqlQuery(c, "SELECT MAX(update_id)+1 FROM bot_events") { it.getString(1)?.toLong() }.single()
-    }
+    fun offset(): Long? = UpdateInbox(database,clock).offset()
     fun completed(id: Long) = database.read { c -> sqlQuery(c, "SELECT completed FROM bot_events WHERE update_id=?", id) { it.getBoolean(1) }.singleOrNull() == true }
-    /** A failed list render can be opened again; it must not pin Telegram's polling offset forever. */
-    fun retireInterruptedTrainingViews() = database.write { c ->
-        sqlUpdate(c,"""UPDATE bot_events SET completed=1,plan_json=NULL WHERE completed=0
-            AND json_extract(plan_json,'$.screen.kind') IN ('my_trainings','trainings','my_training','training')
-            AND json_extract(plan_json,'$.command') IS NULL
-            AND json_extract(plan_json,'$.form') IS NULL
-            AND json_extract(plan_json,'$.draft') IS NULL
-            AND json_extract(plan_json,'$.nextDraft') IS NULL
-            AND json_extract(plan_json,'$.defaultUpdate') IS NULL
-            AND COALESCE(json_extract(plan_json,'$.clearDraft'),0)=0""")
-    }
     fun plan(id: Long): EventPlan? = database.read { c -> sqlQuery(c, "SELECT plan_json FROM bot_events WHERE update_id=?", id) { it.getString(1)?.let { text -> json.decodeFromString<EventPlan>(text) } }.singleOrNull() }
     fun plan(id: Long, plan: EventPlan) = database.write { c ->
-        sqlUpdate(c, "INSERT INTO bot_events(update_id,user_id,group_id,plan_json) VALUES(?,?,?,?) ON CONFLICT(update_id) DO NOTHING",
+        sqlUpdate(c, """INSERT INTO bot_events(update_id,user_id,group_id,plan_json) VALUES(?,?,?,?) ON CONFLICT(update_id) DO UPDATE SET user_id=excluded.user_id,group_id=excluded.group_id,
+            plan_json=excluded.plan_json WHERE bot_events.completed=0 AND bot_events.plan_json IS NULL""",
             id, plan.user, plan.screen.group.takeIf { it < 0 }, json.encodeToString(plan))
     }
     fun complete(id: Long) = database.write { c ->
-        sqlUpdate(c, "INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1,plan_json=NULL", id)
+        sqlUpdate(c, "INSERT INTO bot_events(update_id,completed) VALUES(?,1) ON CONFLICT(update_id) DO UPDATE SET completed=1,plan_json=NULL,update_json=NULL,ordering_key=NULL,next_attempt_at=0", id)
     }
     fun form(user: Long, chat: Long): InputForm? = database.read { c ->
         sqlQuery(c, "SELECT input_json FROM bot_sessions WHERE user_id=? AND chat_id=?", user, chat) { it.getString(1)?.let { text -> json.decodeFromString<InputForm>(text) } }.singleOrNull()
@@ -177,8 +164,9 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN')
             AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('CLOSED','CANCELLED'))""")
     }
-    fun pendingUnpins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL ORDER BY status='RETRY' DESC LIMIT 100") {
+    fun pendingUnpins(excludeKeys:Set<String> = emptySet()):List<Pair<String,Delivery>> = database.read { c ->
+        val exclusion=if(excludeKeys.isEmpty()) "" else " AND delivery_key NOT IN (${excludeKeys.joinToString(",") { "?" }})"
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL$exclusion ORDER BY status='RETRY' DESC LIMIT 100",*excludeKeys.toTypedArray()) {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,it.getString("status"))
         }
@@ -244,12 +232,13 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             VALUES(?,?,?,?,'RETRY') ON CONFLICT(delivery_key) DO UPDATE SET status='RETRY'""",
             "${if(input) "input" else "retired"}:$chat:$message",chat,user,message)
     }
-    fun retiredPrivateMenus(user:Long?=null):List<Delivery> = database.read { c ->
+    fun retiredPrivateMenus(user:Long?=null,excludeKeys:Set<String> = emptySet()):List<Delivery> = database.read { c ->
+        val excluded=if(excludeKeys.isEmpty()) "" else " AND d.delivery_key NOT IN (${excludeKeys.joinToString(",") { "?" }})"
         sqlQuery(c,"""SELECT d.* FROM bot_deliveries d JOIN bot_deliveries live
             ON live.delivery_key='personal:' || d.user_id || ':' || d.chat_id
             WHERE (d.delivery_key LIKE 'retired:%' OR d.delivery_key LIKE 'input:%') AND d.status='RETRY' AND d.chat_id>0
             AND live.status='SENT' AND live.message_id IS NOT NULL AND d.message_id<>live.message_id
-            AND (? IS NULL OR d.user_id=?) LIMIT 20""",user,user) {
+            AND (? IS NULL OR d.user_id=?)$excluded LIMIT 20""",user,user,*excludeKeys.toTypedArray()) {
             Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
         }
     }
@@ -275,9 +264,14 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             WHERE t.status IN ('OPEN','CANCELLED') AND d.status='SENT' AND a.needs_delivery=1
             GROUP BY a.group_id,a.training_id)""")
     }
-    fun pendingCards(): List<Triple<Long, String, Long>> = database.read { c ->
-        sqlQuery(c, """SELECT group_id,training_id,MAX(id) FROM actions WHERE training_id IS NOT NULL
-            AND needs_delivery=1 AND delivered_at IS NULL GROUP BY group_id,training_id ORDER BY MAX(id) LIMIT 20""") {
+    fun pendingCards(excludeKeys:Set<String> = emptySet()): List<Triple<Long, String, Long>> = database.read { c ->
+        val exclusion=if(excludeKeys.isEmpty()) "" else " AND ('training:' || a.group_id || ':' || a.training_id) NOT IN (${excludeKeys.joinToString(",") { "?" }})"
+        sqlQuery(c, """SELECT a.group_id,a.training_id,MAX(a.id) FROM actions a
+            LEFT JOIN bot_deliveries d ON d.delivery_key='training:' || a.group_id || ':' || a.training_id
+            WHERE a.training_id IS NOT NULL AND a.needs_delivery=1 AND a.delivered_at IS NULL
+            AND (d.status IS NULL OR d.status<>'FAILED')
+            AND (d.status IS NULL OR d.status<>'UNKNOWN' OR d.message_id IS NOT NULL)$exclusion
+            GROUP BY a.group_id,a.training_id ORDER BY MAX(a.id) LIMIT 20""",*excludeKeys.toTypedArray()) {
             Triple(it.getLong(1), it.getString(2), it.getLong(3))
         }
     }
@@ -324,8 +318,9 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             WHERE d.delivery_key LIKE 'payment-notice:%' AND d.status IN ('SENT','UNKNOWN','RETRY')
             AND b.active=1 AND b.expires_at<=? LIMIT 20""",clock.instant().epochSecond) { it.getString(1) }
     }
-    internal fun pendingNoticeRemovals()=database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE delivery_key LIKE 'notice-remove:%' AND status IN ('RETRY','BLOCKED') AND message_id IS NOT NULL ORDER BY status='RETRY' DESC LIMIT 100") {
+    internal fun pendingNoticeRemovals(excludeKeys:Set<String> = emptySet())=database.read { c ->
+        val excluded=if(excludeKeys.isEmpty()) "" else " AND delivery_key NOT IN (${excludeKeys.joinToString(",") { "?" }})"
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE delivery_key LIKE 'notice-remove:%' AND status IN ('RETRY','BLOCKED') AND message_id IS NOT NULL$excluded ORDER BY status='RETRY' DESC LIMIT 100",*excludeKeys.toTypedArray()) {
             Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
         }
     }

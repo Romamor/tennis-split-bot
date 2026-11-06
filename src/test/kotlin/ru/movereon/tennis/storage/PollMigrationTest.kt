@@ -26,7 +26,7 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file);val service=SettlementService(db)
-            assertTrue(db.verify().contains("Схема 9"))
+            assertTrue(db.verify().contains("Схема 10"))
             assertFalse(TrainingPolls(service).enabled(-1))
             assertEquals("19:30",service.trainingDefaults(1).time)
             assertEquals(mapOf(1L to 150L,2L to -150L),service.balances(Access(-1,1)))
@@ -37,7 +37,7 @@ class PollMigrationTest {
     @Test fun `schema eight preserves existing polls while adding optional photo`() {
         val file=dir.resolve("v8.sqlite")
         DriverManager.getConnection("jdbc:sqlite:$file").use { c -> c.createStatement().use { stmt ->
-            val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
+            val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema-v9.sql")).bufferedReader().use { it.readText() }
                 .replace("    photo_file_id TEXT CHECK(photo_file_id IS NULL OR length(photo_file_id)>0),\n","")
             ddl.split(';').filter { it.isNotBlank() }.forEach(stmt::execute)
             stmt.execute("PRAGMA application_id=${Database.APPLICATION_ID}");stmt.execute("PRAGMA user_version=8")
@@ -48,7 +48,7 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file)
-            assertTrue(db.verify().contains("Схема 9"))
+            assertTrue(db.verify().contains("Схема 10"))
             val polls=TrainingPolls(SettlementService(db))
             assertNull(polls.get(-1,"old").photoId)
             assertEquals("OPEN",polls.get(-1,"old").status)

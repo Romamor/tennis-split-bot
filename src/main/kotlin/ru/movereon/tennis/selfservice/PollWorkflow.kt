@@ -21,9 +21,19 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
                 stop(polls.get(a.groupId,effective.screen.id))
                 effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
             }
+            if(effective.screen.kind=="poll_close_retry") {
+                polls.retryClose(requireNotNull(a),effective.screen.id)
+                stop(polls.get(a.groupId,effective.screen.id))
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
+            if(effective.screen.kind=="poll_close_recover") {
+                polls.recoverClose(requireNotNull(a),effective.screen.id)
+                effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
+            }
             if(effective.screen.kind=="poll_retry") {
                 val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
                 polls.requireManager(a,p);requirePublication(a.groupId,effective.user)
+                checkAccounting(!p.awaitingCloseRecovery,ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
                 if(p.status in setOf("PENDING","FAILED")) checkAccounting(polls.enabled(p.group),ErrorCode.FORBIDDEN,"Сбор через опрос выключен в этой группе")
                 publish(p)
                 effective=effective.copy(screen=effective.screen.copy(kind="poll_detail"))
@@ -31,7 +41,7 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
             if(effective.screen.kind=="poll_discard") {
                 val p=polls.get(requireNotNull(a).groupId,effective.screen.id)
                 polls.requireManager(a,p)
-                checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING"),ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
+                checkAccounting(p.status in setOf("UNKNOWN","FAILED","PENDING") && !p.awaitingCloseRecovery,ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
                 if(p.message!=null) {
                     api.stopPoll(p.group,p.message)
                     api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
@@ -44,7 +54,7 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
         return effective
     }
     fun publish(p:TrainingPoll) {
-        if(p.status !in setOf("PENDING","FAILED")) return
+        if(p.status !in setOf("PENDING","FAILED") || p.awaitingCloseRecovery) return
         val key="poll:${p.group}:${p.id}"
         val token=state.button(ScreenAction("poll_close_confirm",p.group,p.id),null,key,permanent=true)
         val keyboard=TgKeyboard(listOf(listOf(TgButton("🏁 Завершить сбор",callbackData="n:$token",style="primary"))))
@@ -67,9 +77,16 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
     }
     fun stop(p:TrainingPoll) {
         if(p.status!="CLOSING" || p.stopped) return
-        api.stopPoll(p.group,requireNotNull(p.message))
-        // stopPoll can succeed before a crash; both it and keyboard removal are retry-safe.
-        api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
-        polls.stopped(p)
+        var stopped=false
+        try {
+            api.stopPoll(p.group,requireNotNull(p.message))
+            stopped=true
+            // stopPoll can succeed before a crash; both it and keyboard removal are retry-safe.
+            api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
+            polls.stopped(p)
+        } catch(f:TelegramFailure) {
+            if(f.code in setOf(401,409) || f.kind !in setOf(FailureKind.REJECTED,FailureKind.MESSAGE_MISSING)) throw f
+            polls.closeFailed(p,stopped || f.kind==FailureKind.MESSAGE_MISSING)
+        }
     }
 }

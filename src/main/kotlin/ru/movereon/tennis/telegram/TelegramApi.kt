@@ -250,6 +250,8 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             client.send(request, HttpResponse.BodyHandlers.ofString())
         } catch (failure: IOException) {
             System.err.println("Telegram: $method; транспорт=${failure.javaClass.simpleName}")
+            if(remaining!=null && (failure is java.net.http.HttpTimeoutException || System.nanoTime()>=(backgroundDeadline ?: Long.MAX_VALUE)))
+                throw TelegramFailure(FailureKind.UNCERTAIN,backgroundDeferred=true)
             throw TelegramFailure(FailureKind.UNCERTAIN)
         }
         catch (_: InterruptedException) { Thread.currentThread().interrupt(); throw TelegramFailure(FailureKind.UNCERTAIN) }
@@ -266,6 +268,7 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
             code == 429 -> FailureKind.RETRY_LATER
             code >= 500 -> FailureKind.UNCERTAIN
             "message is not modified" in description || method=="stopPoll" && "poll has already been closed" in description || method=="unpinChatMessage" && "message is not pinned" in description -> FailureKind.NOT_MODIFIED
+            method=="stopPoll" && ("message to stop poll not found" in description || "message to stoppoll not found" in description || "poll not found" in description) -> FailureKind.MESSAGE_MISSING
             "message to edit not found" in description || "message to unpin not found" in description || "message to delete not found" in description -> FailureKind.MESSAGE_MISSING
             else -> FailureKind.REJECTED
         }

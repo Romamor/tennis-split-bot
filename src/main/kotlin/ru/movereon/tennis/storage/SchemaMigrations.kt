@@ -83,3 +83,17 @@ internal fun migratePollPhoto(c:Connection) {
         s.execute("PRAGMA user_version=9")
     }
 }
+
+/** Persist received updates before acknowledging Telegram; financial tables are untouched. */
+internal fun migrateUpdateInbox(c:Connection) {
+    c.createStatement().use { s ->
+        s.execute("ALTER TABLE bot_events ADD COLUMN update_json TEXT")
+        s.execute("ALTER TABLE bot_events ADD COLUMN ordering_key TEXT")
+        s.execute("ALTER TABLE bot_events ADD COLUMN received_order INTEGER NOT NULL DEFAULT 0")
+        s.execute("ALTER TABLE bot_events ADD COLUMN next_attempt_at INTEGER NOT NULL DEFAULT 0")
+        s.execute("CREATE INDEX pending_events_order ON bot_events(ordering_key,received_order,update_id) WHERE completed=0")
+        s.execute("CREATE INDEX pending_events_due ON bot_events(next_attempt_at,received_order,update_id) WHERE completed=0")
+        s.execute("CREATE TABLE bot_polling(singleton INTEGER PRIMARY KEY CHECK(singleton=1),next_update_id INTEGER,received_order INTEGER NOT NULL DEFAULT 0) STRICT")
+        s.execute("INSERT INTO bot_polling(singleton,next_update_id) SELECT 1,MAX(update_id)+1 FROM bot_events")
+    }
+}

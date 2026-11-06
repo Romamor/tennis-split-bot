@@ -140,8 +140,20 @@ CREATE TABLE bot_events (
     user_id INTEGER REFERENCES users(id),
     group_id INTEGER REFERENCES groups(id) ON UPDATE CASCADE,
     plan_json TEXT,
+    update_json TEXT,
+    ordering_key TEXT,
+    received_order INTEGER NOT NULL DEFAULT 0,
+    next_attempt_at INTEGER NOT NULL DEFAULT 0,
     completed INTEGER NOT NULL DEFAULT 0 CHECK(completed IN (0,1))
 ) STRICT;
+CREATE INDEX pending_events_order ON bot_events(ordering_key,received_order,update_id) WHERE completed=0;
+CREATE INDEX pending_events_due ON bot_events(next_attempt_at,received_order,update_id) WHERE completed=0;
+CREATE TABLE bot_polling (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+    next_update_id INTEGER,
+    received_order INTEGER NOT NULL DEFAULT 0
+) STRICT;
+INSERT INTO bot_polling(singleton) VALUES(1);
 CREATE TABLE bot_sessions (
     user_id INTEGER NOT NULL REFERENCES users(id),
     chat_id INTEGER NOT NULL,

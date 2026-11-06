@@ -18,24 +18,36 @@ internal class PollScreens(private val service:SettlementService,private val pol
                 row("Назад",ScreenAction("groups_back",0,option="polls"))
                 "Опросы · ${page.total}"
             }
-            "poll_detail", "poll_close_confirm", "poll_discard_confirm" -> {
+            "poll_detail", "poll_close_confirm", "poll_discard_confirm", "poll_close_recover_confirm" -> {
                 val p=polls.get(action.group,action.id)
                 polls.requireManager(requireNotNull(a),p)
                 if(action.kind=="poll_discard_confirm") {
+                    checkAccounting(!p.awaitingCloseRecovery,ErrorCode.INVALID_STATE,"Опубликованный опрос нужно завершить")
                     row("Отменить опрос",next("poll_discard"))
                     row("Назад",next("poll_detail"))
                     "Отменить неудавшуюся публикацию? Тренировка создана не будет. Затем можно создать новый опрос. Если сообщение появилось в группе, но бот не получил его адрес, удали его вручную."
+                } else if(action.kind=="poll_close_recover_confirm" && p.awaitingCloseRecovery && p.stopped) {
+                    row("🏁 Создать тренировку",next("poll_close_recover"))
+                    row("Назад",next("poll_detail"))
+                    "Голосование остановлено или сообщение опроса удалено. Создать тренировку по сохранённым голосам?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nСейчас записались: ${polls.count(p)}. Последние полученные голоса будут обработаны перед созданием тренировки."
                 } else if(action.kind=="poll_close_confirm" && p.status=="OPEN") {
                     row("🏁 Завершить сбор",next("poll_close"))
                     if(!inGroup) row("Назад",next("poll_detail"))
                     "Завершить сбор и перейти к учёту игры?\n${clean(p.title,100)} · ${date(p.date)} · ${p.time}\nЗаписались: ${polls.count(p)}.\n${if(service.groupTrainingRules(p.group).trackTime) "Они будут добавлены с 0 ч игры и 0 ₽. Время и оплату можно исправить в тренировке." else "Они будут добавлены с 0 ₽. Стоимость делится поровну; ввод времени не нужен."}"
                 } else {
                     if(p.status=="OPEN") row("🏁 Завершить сбор",next("poll_close_confirm"))
-                    if(p.status in setOf("FAILED","PENDING")) row("📤 Повторить публикацию",next("poll_retry"))
-                    if(p.status in setOf("UNKNOWN","FAILED","PENDING")) row("Отменить опрос",next("poll_discard_confirm"))
+                    if(p.awaitingCloseRecovery) {
+                        if(p.stopped) row("🏁 Создать тренировку",next("poll_close_recover_confirm"))
+                        else row("Повторить завершение",next("poll_close_retry"))
+                    }
+                    if(p.status in setOf("FAILED","PENDING") && !p.awaitingCloseRecovery) row("📤 Повторить публикацию",next("poll_retry"))
+                    if(p.status in setOf("UNKNOWN","FAILED","PENDING") && !p.awaitingCloseRecovery) row("Отменить опрос",next("poll_discard_confirm"))
                     if(p.status=="CLOSED") row("🏓 Открыть тренировку",ScreenAction("training",p.group,requireNotNull(p.training)))
                     if(!inGroup) { row("Назад",next("poll_list"));menu() }
-                    "${clean(p.title,100)} · ${date(p.date)} · ${p.time}\n"+when(p.status) {
+                    "${clean(p.title,100)} · ${date(p.date)} · ${p.time}\n"+if(p.awaitingCloseRecovery) {
+                        if(p.stopped) "Не удалось обновить сообщение опроса. Голосование остановлено или сообщение удалено. Сохранённые голоса не потеряны; можно создать тренировку после подтверждения."
+                        else "Не удалось остановить опрос. Сохранённые голоса не потеряны. Восстанови доступ бота к группе и повтори завершение. До подтверждённой остановки тренировка не создаётся."
+                    } else when(p.status) {
                         "OPEN" -> "Сбор открыт. Записались: ${polls.count(p)}."
                         "CLOSING" -> "Завершаем сбор. Тренировка появится в группе после обработки последних голосов. Если она не появляется, проверь права бота в группе."
                         "CLOSED" -> "Сбор завершён. Тренировка создана."
@@ -47,5 +59,5 @@ internal class PollScreens(private val service:SettlementService,private val pol
             else -> error("Not a poll screen: ${action.kind}")
         }
     }
-    companion object { val kinds=setOf("poll_list","poll_detail","poll_close_confirm","poll_discard_confirm") }
+    companion object { val kinds=setOf("poll_list","poll_detail","poll_close_confirm","poll_discard_confirm","poll_close_recover_confirm") }
 }

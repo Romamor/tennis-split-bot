@@ -2,6 +2,7 @@
 import argparse
 import html
 import json
+import re
 import sqlite3
 import xml.etree.ElementTree as E
 from pathlib import Path
@@ -13,6 +14,8 @@ p.add_argument('--preview-dir', type=Path, default=ROOT/'build/database-erd')
 args = p.parse_args()
 c = sqlite3.connect(':memory:')
 c.executescript((ROOT/'src/main/resources/db/schema.sql').read_text())
+schema_versions = re.findall(r'PRAGMA user_version=(\d+)', (ROOT/'src/main/kotlin/ru/movereon/tennis/storage/Database.kt').read_text())
+schema_version = max(map(int, schema_versions))
 tables = [r[0] for r in c.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid")]
 info = {t: list(c.execute(f'PRAGMA table_info({t})')) for t in tables}
 fks = {}
@@ -35,7 +38,8 @@ DESC = {
  'group_users':'Аккаунт в конкретной группе', 'group_admins':'Назначения администраторов бота',
  'trainings':'Тренировка: детали, статус, версия', 'training_players':'Участие, время, гости и оплата стола',
  'transfers':'Отмеченные переводы между людьми', 'actions':'Команды, история и защита от повторов',
- 'balance_entries':'Денежное влияние действия на аккаунт', 'bot_events':'Входящие события и план обработки',
+ 'balance_entries':'Денежное влияние действия на аккаунт', 'bot_events':'Очередь входящих событий и повторов',
+ 'bot_polling':'Сохранённый курсор получения событий',
  'bot_sessions':'Текущее меню и ввод пользователя', 'bot_buttons':'Токены кнопок и постоянных ссылок',
  'bot_deliveries':'Доставка, закрепление и удаление сообщений'}
 NOTES = {
@@ -50,16 +54,24 @@ NOTES = {
  'transfers':['REVIEW — в процессе; ACTIVE — выполнен', 'CANCELLED — архив прежнего интерфейса', 'Получатель определяется to_user; это право приёма', 'reviewer / review_party — прежние служебные поля'],
  'actions':['training_id и transfer_id не заполнены одновременно', 'SendPayment: история без денежных проводок', 'ReceivePayment: история и проводки одной транзакцией'],
  'balance_entries':['SUM(amount) по группе и user_id — фактический баланс', 'SUM(amount) внутри действия = 0 — проверяет код'],
- 'bot_events':['План завершённого события очищается; update_id остаётся'],
+ 'bot_events':['update_json / ordering_key очищаются после обработки', 'received_order — порядок; next_attempt_at — срок повтора', 'Завершённый update_id остаётся для защиты от повторов'],
+ 'bot_polling':['Одна служебная строка: singleton=1', 'next_update_id подтверждает сохранённый пакет', 'received_order — общий номер получения события', 'Миграция 10 не меняет финансовые таблицы'],
  'bot_sessions':['group_id=NULL — общее меню / личные настройки', 'chat_id и message_id — идентификаторы Telegram, не FK'],
  'bot_buttons':['Актуальные кнопки не истекают через семь дней', 'Заменённые очищаются после короткой задержки'],
  'bot_deliveries':['display_page не используется после отмены страниц', 'delivery_key связывает сообщения логически, без FK к actions']}
-COLORS = {t:('#155e75' if t in tables[:4] else '#047857' if t in tables[4:6] else '#9a5b12' if t in tables[6:9] else '#5b4b8a') for t in tables}
-PAGES = [('01 · Обзор',tables,[]),('02 · Аккаунты и группы',tables[:4],[]),
- ('03 · Тренировки',tables[4:6],['users','groups','group_users']),
- ('04 · Финансы',tables[6:9],['users','groups','group_users','trainings']),
- ('05 · Состояние бота',tables[9:13],['users','groups']),
- ('06 · Опросы',tables[13:],['users','groups','group_users','trainings'])]
+ACCOUNTS = ['users','groups','group_users','group_admins']
+TRAININGS = ['trainings','training_players']
+FINANCE = ['transfers','actions','balance_entries']
+BOT = ['bot_events','bot_polling','bot_sessions','bot_buttons','bot_deliveries']
+POLLS = ['training_polls','poll_signups']
+COLORS = {t:color for names,color in [(ACCOUNTS,'#155e75'),(TRAININGS,'#047857'),(FINANCE,'#9a5b12'),(BOT+POLLS,'#5b4b8a')] for t in names}
+PAGES = [('01 · Обзор',tables,[]),('02 · Аккаунты и группы',ACCOUNTS,[]),
+ ('03 · Тренировки',TRAININGS,['users','groups','group_users']),
+ ('04 · Финансы',FINANCE,['users','groups','group_users','trainings']),
+ ('05 · Состояние бота',BOT,['users','groups']),
+ ('06 · Опросы',POLLS,['users','groups','group_users','trainings'])]
+owned_tables = [t for _,owned,_ in PAGES[1:] for t in owned]
+assert len(owned_tables)==len(set(owned_tables)) and set(owned_tables)==set(tables)
 mx=E.Element('mxfile',host='app.diagrams.net',type='device',compressed='false')
 args.preview_dir.mkdir(parents=True,exist_ok=True)
 report=[]
@@ -133,10 +145,11 @@ class Page:
 
 for idx,(title,owned,refs) in enumerate(PAGES,1):
  if idx==1:
-  page=Page(title,1960,1850)
-  page.text('title',48,25,1860,50,'База бота · 15 таблиц · схема 8',30,'#172b3a',True)
-  page.text('intro',48,85,1860,42,'Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–06.',17)
-  lanes=[('Аккаунты и группы',tables[:4],170),('Тренировки',tables[4:6],460),('Финансы и история',tables[6:9],750),('Состояние общения с Telegram',tables[9:13],1110),('Опросы до создания тренировки',tables[13:],1370)]
+  width=max(1960,80+470*max(len(owned) for _,owned,_ in PAGES[1:]))
+  page=Page(title,width,1850)
+  page.text('title',48,25,width-96,50,f'База бота · {len(tables)} таблиц · схема {schema_version}',30,'#172b3a',True)
+  page.text('intro',48,85,width-96,42,'Обзор хранения. Стрелки показывают главные зависимости; все внешние ключи и поля — на вкладках 02–06.',17)
+  lanes=[('Аккаунты и группы',ACCOUNTS,170),('Тренировки',TRAININGS,460),('Финансы и история',FINANCE,750),('Состояние общения с Telegram',BOT,1110),('Опросы до создания тренировки',POLLS,1370)]
   for label,names,yy in lanes:
    page.text('lane-'+str(yy),48,yy-40,1800,30,label,20,'#172b3a',True)
    for j,t in enumerate(names):page.card(t,60+j*470,yy,420,compact=True)
@@ -145,7 +158,7 @@ for idx,(title,owned,refs) in enumerate(PAGES,1):
   page.edge('training_players','trainings','строки участия → тренировка',610)
   page.edge('actions','transfers','действие → платёж (если применимо)',920)
   page.edge('balance_entries','actions','проводка → действие',955)
-  page.box('financial-note',60,1580,1840,150,'Баланс = сумма balance_entries по группе и аккаунту. Отдельной таблицы балансов нет.\nДоступные платежи вычисляются: фактический баланс + резерв ожидающих transfers (REVIEW).\nSendPayment создаёт transfers + actions. ReceivePayment обновляет transfers и добавляет actions + balance_entries.\nУчастие и оплата стола хранятся в training_players; перевод между людьми — в transfers.',size=18,round=True)
+  page.box('financial-note',60,1580,width-120,150,'Баланс = сумма balance_entries по группе и аккаунту. Отдельной таблицы балансов нет.\nДоступные платежи вычисляются: фактический баланс + резерв ожидающих transfers (REVIEW).\nSendPayment создаёт transfers + actions. ReceivePayment обновляет transfers и добавляет actions + balance_entries.\nУчастие и оплата стола хранятся в training_players; перевод между людьми — в transfers.',size=18,round=True)
  else:
   width=max(2040,len(owned)*620+80,len(refs)*500+80)
   page=Page(title,width,2200)
@@ -179,7 +192,7 @@ for idx,(title,owned,refs) in enumerate(PAGES,1):
    col=i%2;row=i//2
    page.box('fk-row-'+str(i),60+col*(width//2),y+row*67,width//2-85,61,line1+'\n'+line2,fill='#ffffff',size=13,round=True)
   end=y+((len(fkrows)+1)//2)*67+40
-  page.text('source-note',48,end,width-90,70,'Источник: src/main/resources/db/schema.sql. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.\nПунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы.',14)
+  page.text('source-note',48,end,width-90,70,f'Источник: src/main/resources/db/schema.sql · схема {schema_version}. Показаны все столбцы и объявленные FK; CHECK и DEFAULT полностью описаны в SQL.\nПунктирные / предполагаемые FK не добавляются: chat_id, message_id, JSON и delivery_key сами по себе не ссылки базы.',14)
   page.height=end+110
   page.diagram.find('mxGraphModel').set('pageHeight',str(page.height))
  page.save(idx)
@@ -187,4 +200,4 @@ for idx,(title,owned,refs) in enumerate(PAGES,1):
 assert set(t for _,owned,_ in PAGES[1:] for t in owned)==set(tables)
 E.indent(mx);args.output.parent.mkdir(parents=True,exist_ok=True);E.ElementTree(mx).write(args.output,encoding='utf-8',xml_declaration=True)
 (args.preview_dir/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
-print(json.dumps({'tables':len(tables),'fields':sum(map(len,info.values())),'foreign_keys':sum(map(len,fks.values())),'pages':len(PAGES)},ensure_ascii=False))
+print(json.dumps({'schema_version':schema_version,'tables':len(tables),'fields':sum(map(len,info.values())),'foreign_keys':sum(map(len,fks.values())),'pages':len(PAGES)},ensure_ascii=False))

@@ -41,7 +41,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
             read { c ->
                 require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
-                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..9) { "Неизвестный формат базы бота" }
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..10) { "Неизвестный формат базы бота" }
             }
         } else {
             Files.createDirectories(this.path.parent)
@@ -51,9 +51,9 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                 if(version==0) {
                     require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                     val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=9") }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=10") }
                 } else {
-                    require(app==APPLICATION_ID && version in 1..9) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    require(app==APPLICATION_ID && version in 1..10) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
                     if(version<=7) migrateTrainingRules(c)
                     if(version==1) {
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
@@ -67,7 +67,8 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                     if(version<=5) migratePersonalDefaults(c)
                     if(version<=6) migratePolls(c)
                     if(version in 7..8) migratePollPhoto(c)
-                    c.createStatement().use { it.execute("PRAGMA user_version=9") }
+                    if(version<=9) migrateUpdateInbox(c)
+                    c.createStatement().use { it.execute("PRAGMA user_version=10") }
                 }
             }
             connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
