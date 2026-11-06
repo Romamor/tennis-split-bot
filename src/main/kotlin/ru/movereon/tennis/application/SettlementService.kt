@@ -90,10 +90,12 @@ class SettlementService(val database: Database, private val clock: Clock = Clock
         var completedCount=0
         var minutes=java.math.BigInteger.ZERO
         var paid=java.math.BigInteger.ZERO
-        sqlEach(c,"SELECT t.status,CASE WHEN p.playing=1 THEN p.minutes ELSE 0 END,COALESCE(p.paid,0) $condition",user,user) {
+        sqlEach(c,"SELECT t.status,p.playing,p.minutes,COALESCE(p.paid,0),t.track_time $condition",user,user) {
             total++
             if(it.getString(1)=="CLOSED") {
-                completedCount++;minutes+=it.getLong(2).toBigInteger();paid+=it.getLong(3).toBigInteger()
+                completedCount++
+                if(it.getBoolean(2)) minutes+=TrainingRules(trackTime=it.getBoolean(5)).minutes(it.getLong(3)).toBigInteger()
+                paid+=it.getLong(4).toBigInteger()
             }
         }
         var trainingEffect=java.math.BigInteger.ZERO

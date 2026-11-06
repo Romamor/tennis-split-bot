@@ -5,9 +5,10 @@ import ru.movereon.tennis.core.*
 
 /** Live rules for open trainings; accounted/cancelled trainings retain their last rules. */
 @Serializable data class TrainingRules(val guestsEnabled:Boolean=true,val trackTime:Boolean=true) {
-    val initialMinutes:Long get()=if(trackTime) 0 else 60
-    fun minutes(row:Attendance):Long=if(trackTime) row.minutes else 60
-    fun guestMinutes(row:Attendance):Long=if(trackTime) row.guestMinutes else 60
+    val initialMinutes:Long get()=minutes(0)
+    fun minutes(savedMinutes:Long):Long=if(trackTime) savedMinutes else 60
+    fun minutes(row:Attendance):Long=minutes(row.minutes)
+    fun guestMinutes(row:Attendance):Long=minutes(row.guestMinutes)
     fun requireChange(change:AttendanceChange) {
         if(change in setOf(AttendanceChange.ADJUST_MINUTES,AttendanceChange.SET_MINUTES))
             checkAccounting(trackTime,ErrorCode.INVALID_STATE,"В этой тренировке индивидуальный учёт времени выключен")
