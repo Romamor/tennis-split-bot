@@ -41,7 +41,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             require(Files.isRegularFile(this.path)) { "Файл базы не найден" }
             read { c ->
                 require(sqlQuery(c,"PRAGMA application_id") { it.getInt(1) }.single()==APPLICATION_ID &&
-                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..10) { "Неизвестный формат базы бота" }
+                    sqlQuery(c,"PRAGMA user_version") { it.getInt(1) }.single() in 1..SCHEMA_VERSION) { "Неизвестный формат базы бота" }
             }
         } else {
             Files.createDirectories(this.path.parent)
@@ -51,9 +51,9 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                 if(version==0) {
                     require(app==0 && sqlQuery(c,"SELECT COUNT(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") { it.getInt(1) }.single()==0) { "Файл занят другой базой" }
                     val ddl=requireNotNull(javaClass.getResourceAsStream("/db/schema.sql")).bufferedReader().use { it.readText() }
-                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=10") }
+                    c.createStatement().use { s -> ddl.split(';').filter { it.isNotBlank() }.forEach { s.execute(it) };s.execute("PRAGMA application_id=$APPLICATION_ID");s.execute("PRAGMA user_version=$SCHEMA_VERSION") }
                 } else {
-                    require(app==APPLICATION_ID && version in 1..10) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
+                    require(app==APPLICATION_ID && version in 1..SCHEMA_VERSION) { "Нужен отдельный файл новой базы. Старая тестовая база не изменена." }
                     if(version<=7) migrateTrainingRules(c)
                     if(version==1) {
                         c.createStatement().use { it.execute("ALTER TABLE group_users ADD COLUMN attendance_count INTEGER NOT NULL DEFAULT 0 CHECK(attendance_count>=0)") }
@@ -68,10 +68,16 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
                     if(version<=6) migratePolls(c)
                     if(version in 7..8) migratePollPhoto(c)
                     if(version<=9) migrateUpdateInbox(c)
-                    c.createStatement().use { it.execute("PRAGMA user_version=10") }
+                    if(version<=10) migrateDeliveryRetries(c)
+                    c.createStatement().use { it.execute("PRAGMA user_version=$SCHEMA_VERSION") }
                 }
             }
-            connect().use { c -> c.createStatement().use { s -> s.executeQuery("PRAGMA journal_mode=WAL").close() } }
+            connect().use { c -> c.createStatement().use { s ->
+                s.executeQuery("PRAGMA journal_mode=WAL").close()
+                // Refresh useful statistics once at startup, with bounded sampling, never in a worker loop.
+                s.execute("PRAGMA analysis_limit=1000")
+                s.execute("PRAGMA optimize=0x10002")
+            } }
         }
     }
     private fun connect(): Connection = DriverManager.getConnection(if(readOnly) "jdbc:sqlite:${path.toUri()}?mode=ro" else "jdbc:sqlite:$path").also { c ->
@@ -126,7 +132,7 @@ class Database(path: Path, private val trace:((String)->Unit)?=null, private val
             Files.deleteIfExists(Path.of("$temporary-shm"))
         }
     }
-    companion object { const val APPLICATION_ID=0x54534e32 }
+    companion object { const val APPLICATION_ID=0x54534e32;const val SCHEMA_VERSION=11 }
 }
 
 internal fun refreshAttendance(c:Connection,group:Long?=null) {

@@ -91,7 +91,10 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
     fun beginClose(a:Access,id:String) {
         val p=get(a.groupId,id);requireManager(a,p)
         checkAccounting(p.message!=null,ErrorCode.INVALID_STATE,"Опрос ещё не опубликован")
-        db.write { c -> sqlUpdate(c,"UPDATE training_polls SET status='CLOSING',closed_by=? WHERE group_id=? AND id=? AND status='OPEN'",a.userId,a.groupId,id) }
+        db.write { c ->
+            validateTrainingCapacity(sqlQuery(c,"SELECT COUNT(*) FROM poll_signups WHERE group_id=? AND poll_id=?",a.groupId,id) { it.getLong(1) }.single())
+            sqlUpdate(c,"UPDATE training_polls SET status='CLOSING',closed_by=? WHERE group_id=? AND id=? AND status='OPEN'",a.userId,a.groupId,id)
+        }
     }
     /** Permanent Telegram rejection pauses automatic stopping, without dropping votes queued before the failure. */
     fun closeFailed(p:TrainingPoll,stopped:Boolean) = db.write { c ->
@@ -120,13 +123,18 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
     }
     fun stopped(p:TrainingPoll)=db.write { c -> sqlUpdate(c,"UPDATE training_polls SET stopped=1 WHERE group_id=? AND id=? AND status='CLOSING'",p.group,p.id) }
     /** Called only after Telegram's update queue is drained following stopPoll. One transaction, one training. */
-    fun finish(p:TrainingPoll)=db.write { c ->
+    fun finish(p:TrainingPoll):Boolean=db.write { c ->
         val current=get(c,p.group,p.id)
-        if(current.status=="CLOSED") return@write
+        if(current.status=="CLOSED") return@write true
         checkAccounting(current.status=="CLOSING" && current.stopped,ErrorCode.INVALID_STATE,"Сначала останови голосование")
         val actor=requireNotNull(current.closer)
-        val rules=insertTraining(c,p.group,p.id,p.title,p.date,p.time,p.creator,clock.instant().toString())
         val players=sqlQuery(c,"SELECT user_id FROM poll_signups WHERE group_id=? AND poll_id=? ORDER BY user_id",p.group,p.id) { it.getLong(1) }
+        if(players.size>MAX_TRAINING_PARTICIPANTS) {
+            // Keep every answer and stop automatic retries; no partial training may be created.
+            sqlUpdate(c,"UPDATE training_polls SET status='FAILED' WHERE group_id=? AND id=?",p.group,p.id)
+            return@write false
+        }
+        val rules=insertTraining(c,p.group,p.id,p.title,p.date,p.time,p.creator,clock.instant().toString())
         players.forEachIndexed { index,user -> sqlUpdate(c,"INSERT INTO training_players(group_id,training_id,user_id,playing,minutes,paid,ordinal) VALUES(?,?,?,1,?,0,?)",p.group,p.id,user,rules.initialMinutes,index) }
         refreshAttendance(c,p.group)
         val after=Json.encodeToString(readTraining(c,p.group,p.id))
@@ -136,5 +144,6 @@ class TrainingPolls(private val service:SettlementService,private val clock:Cloc
         sqlUpdate(c,"DELETE FROM poll_signups WHERE group_id=? AND poll_id=?",p.group,p.id)
         sqlUpdate(c,"DELETE FROM bot_buttons WHERE scope=?","poll:${p.group}:${p.id}")
         sqlUpdate(c,"UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE delivery_key=?","poll:${p.group}:${p.id}")
+        true
     }
 }

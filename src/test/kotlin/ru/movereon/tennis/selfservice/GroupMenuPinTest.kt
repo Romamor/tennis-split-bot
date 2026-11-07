@@ -6,6 +6,7 @@ import ru.movereon.tennis.application.*
 import ru.movereon.tennis.storage.Database
 import ru.movereon.tennis.telegram.*
 import java.nio.file.Path
+import java.time.*
 import kotlin.test.*
 
 class GroupMenuPinTest {
@@ -13,8 +14,14 @@ class GroupMenuPinTest {
     private val api=FakeTelegramApi()
     private lateinit var bot:SelfServiceBot
     private var seq=1L
+    private val clock=object:Clock() {
+        var now=Instant.parse("2026-11-07T10:00:00Z")
+        override fun instant()=now
+        override fun getZone()=ZoneOffset.UTC
+        override fun withZone(zone:ZoneId)=fixed(now,zone)
+    }
     private fun setup() {
-        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite")),api.bot)
+        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite")),api.bot,clock)
         for(group in listOf(-1L,-2L)) {
             api.members[group to 1L]=TgMember("administrator",user=TgUser(1,firstName="Игрок"))
             api.members[group to api.bot.id]=TgMember("administrator",user=api.bot)
@@ -69,11 +76,13 @@ class GroupMenuPinTest {
 
     @Test fun `uncertain and interrupted silent menu pins resume after restart`() {
         setup();start();val id=menu();api.pinFailure=TelegramFailure(FailureKind.UNCERTAIN)
-        assertFailsWith<TelegramFailure> { bot.maintain() }
+        bot.maintain()
         assertEquals("PENDING",bot.state.pinStatus(key()))
         bot.state.pinStatus(key(),"SENDING")
-        bot=SelfServiceBot(api,bot.service.database,api.bot)
+        bot=SelfServiceBot(api,bot.service.database,api.bot,clock)
         assertEquals("PENDING",bot.state.pinStatus(key()))
+        bot.maintain();assertEquals(1,api.pinAttempts)
+        clock.now=clock.now.plusSeconds(5)
         api.pinFailure=null;bot.maintain();bot.maintain()
         assertEquals(listOf(-1L to id),api.silentPins);assertEquals(1,api.sent.size)
     }

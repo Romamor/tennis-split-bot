@@ -14,8 +14,8 @@ p.add_argument('--preview-dir', type=Path, default=ROOT/'build/database-erd')
 args = p.parse_args()
 c = sqlite3.connect(':memory:')
 c.executescript((ROOT/'src/main/resources/db/schema.sql').read_text())
-schema_versions = re.findall(r'PRAGMA user_version=(\d+)', (ROOT/'src/main/kotlin/ru/movereon/tennis/storage/Database.kt').read_text())
-schema_version = max(map(int, schema_versions))
+schema_version = int(re.search(r'const val SCHEMA_VERSION\s*=\s*(\d+)',
+    (ROOT/'src/main/kotlin/ru/movereon/tennis/storage/Database.kt').read_text()).group(1))
 tables = [r[0] for r in c.execute("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid")]
 info = {t: list(c.execute(f'PRAGMA table_info({t})')) for t in tables}
 fks = {}
@@ -55,10 +55,10 @@ NOTES = {
  'actions':['training_id и transfer_id не заполнены одновременно', 'SendPayment: история без денежных проводок', 'ReceivePayment: история и проводки одной транзакцией'],
  'balance_entries':['SUM(amount) по группе и user_id — фактический баланс', 'SUM(amount) внутри действия = 0 — проверяет код'],
  'bot_events':['update_json / ordering_key очищаются после обработки', 'received_order — порядок; next_attempt_at — срок повтора', 'Завершённый update_id остаётся для защиты от повторов'],
- 'bot_polling':['Одна служебная строка: singleton=1', 'next_update_id подтверждает сохранённый пакет', 'received_order — общий номер получения события', 'Миграция 10 не меняет финансовые таблицы'],
+ 'bot_polling':['Одна служебная строка: singleton=1', 'next_update_id подтверждает сохранённый пакет', 'received_order — общий номер получения события', 'retry_at — срок следующего getUpdates, мс Unix', '0 — без отсрочки; перезапуск сохраняет срок'],
  'bot_sessions':['group_id=NULL — общее меню / личные настройки', 'chat_id и message_id — идентификаторы Telegram, не FK'],
  'bot_buttons':['Актуальные кнопки не истекают через семь дней', 'Заменённые очищаются после короткой задержки'],
- 'bot_deliveries':['display_page не используется после отмены страниц', 'delivery_key связывает сообщения логически, без FK к actions']}
+ 'bot_deliveries':['retry_at / pin_retry_at — независимые сроки, мс Unix', '0 — без отсрочки; перезапуск сохраняет сроки', 'display_page не используется после отмены страниц', 'delivery_key связывает сообщения логически, без FK к actions']}
 ACCOUNTS = ['users','groups','group_users','group_admins']
 TRAININGS = ['trainings','training_players']
 FINANCE = ['transfers','actions','balance_entries']

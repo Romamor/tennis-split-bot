@@ -107,7 +107,7 @@ internal class PaymentInput(private val service:SettlementService,private val st
             return amount
         }
         fun roundHundred(amount:Long):Long=(amount.toBigInteger()+java.math.BigInteger.valueOf(50)).divide(java.math.BigInteger.valueOf(100)).multiply(java.math.BigInteger.valueOf(100)).toAmount()
-        val actions=setOf("payment_new","finance_send_confirm","payment_pick","payment_page","payment_back","payment_cancel","payment_save","payment_previous","payment_adjust","payment_balance","payment_recommend","payment_round","payment_type")
+        val actions=ActionRegistry.kinds(ActionRoute.PAYMENT_INPUT)
         val forms=setOf("payment_from","payment_to","payment_amount","payment_ready","payment_duplicate","payment_edit")
         fun isForm(f:InputForm?)=f?.kind in forms
     }

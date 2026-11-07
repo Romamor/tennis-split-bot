@@ -37,7 +37,12 @@ class PollFlowTest {
         }
         override fun answer(callbackId:String,text:String?,alert:Boolean) { if(alert && text!=null) alerts+=text }
     }
-    private val clock=Clock.fixed(Instant.parse("2026-09-14T12:00:00Z"),ZoneOffset.UTC)
+    private val clock=object:Clock() {
+        var now=Instant.parse("2026-09-14T12:00:00Z")
+        override fun instant()=now
+        override fun getZone()=ZoneOffset.UTC
+        override fun withZone(zone:ZoneId)=fixed(now,zone)
+    }
     private lateinit var bot:SelfServiceBot
     private var n=1L
     private fun setup() {
@@ -157,7 +162,7 @@ class PollFlowTest {
         val card=bot.state.delivery("training:-1:${p.id}")!!
         assertTrue(fake.pinned.contains(-1L to card.message!!))
         vote(p,3,1);assertEquals(0,count("SELECT COUNT(*) FROM poll_signups"))
-        assertTrue(bot.service.database.verify().contains("Схема 10"))
+        assertTrue(bot.service.database.verify().contains("Схема 11"))
     }
     @Test fun `different user and cross group admin cannot finish and disabled group still permits existing close`() {
         setup();val p=publish()
@@ -255,6 +260,8 @@ class PollFlowTest {
         val other=fake.messages.getValue(-2L to bot.state.delivery("training:-2:${p.id}")!!.message!!)
         click("Открыть",3,other);val untouched=panels.getValue(3)
         bot.maintain()
+        assertTrue(panels.containsKey(1),"A failed deletion retains its retry deadline")
+        clock.now=clock.now.plusSeconds(30);bot.maintain()
         assertFalse(panels.containsKey(1));assertNull(bot.state.currentEphemeral(1,-1))
         assertEquals(untouched,panels.getValue(3));assertEquals("CLOSED",bot.polls.get(-1,p.id).status)
     }
@@ -284,8 +291,10 @@ class PollFlowTest {
         // Simulate the old release: a delivered card with active buttons but no stored view.
         bot.state.privatePollView(2,2,null);vote(p,3,1)
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
-        failPrivateEdit=true;assertFailsWith<TelegramFailure> { bot.maintain() }
+        failPrivateEdit=true;bot.maintain()
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        assertFalse(latest().text!!.contains("Записались: 1"))
+        clock.now=clock.now.plusSeconds(5);bot.maintain()
         assertEquals(id,latest().id);assertTrue(latest().text!!.contains("Записались: 1"))
         click("Меню");val menu=latest()
         vote(p,4,1);bot.maintain();assertEquals(menu,latest())

@@ -195,9 +195,8 @@ internal class FinanceScreens(private val service:SettlementService) {
         fun signed(amount:BigInteger)="${if(amount.signum()>0) "+" else if(amount.signum()<0) "−" else ""}${amount.abs()} ₽"
         // Rich HTML supports semantic button colors, not arbitrary CSS text colors.
         fun balanceHtml(amount:Long)=if(amount==0L) signed(amount) else "<tg-button type=\"disabled\" style=\"${if(amount>0) "success" else "danger"}\">${signed(amount)}</tg-button>"
-        val kinds=setOf("finance","finance_balance_history","finance_member_history","finance_balance_members","finance_send","finance_receive","finance_receive_confirm","finance_received","finance_balances","finance_payment","finance_history","finance_group_history","finance_payment_cancel_confirm")
-        val mutationActions=setOf("finance_payment_cancel_save","finance_payment_edit")
-        val retiredActions=setOf("finance_debtors","debts","balances","settled","transfers","transfer","transfer_people","transfer_direction","transfer_amount","suggested_transfer","save_transfer","transfer_date","transfer_note","edit_transfer_amount","save_transfer_amount","review_transfer","confirm_transfer","cancel_transfer","transfer_history")
+        val kinds=ActionRegistry.kinds(ActionRoute.FINANCE_SCREEN)
+        val retiredActions=ActionRegistry.kinds(ActionRoute.RETIRED_FINANCE)
         fun retiredForm(form:InputForm?)=form?.kind?.let { it.startsWith("transfer_") || it.startsWith("edit_transfer_") }==true
         fun retiredCommand(command:SettlementCommand?)=command is SettlementCommand.RecordTransfer || command is SettlementCommand.ChangeTransfer || command is SettlementCommand.EditTransferAmount
     }

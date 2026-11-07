@@ -433,6 +433,8 @@ class SettlementServiceTest {
             sqlUpdate(c,"ALTER TABLE users DROP COLUMN training_title")
             sqlUpdate(c,"ALTER TABLE users DROP COLUMN training_time")
             sqlUpdate(c,"ALTER TABLE bot_sessions DROP COLUMN panel_json")
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN retry_at")
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_retry_at")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_status")
             sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN display_page")
             sqlUpdate(c,"ALTER TABLE group_users DROP COLUMN attendance_count")

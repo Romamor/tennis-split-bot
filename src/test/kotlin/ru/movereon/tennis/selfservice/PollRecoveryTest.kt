@@ -10,6 +10,7 @@ import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.time.ZoneId
 import kotlin.test.*
 
 class PollRecoveryTest {
@@ -24,7 +25,12 @@ class PollRecoveryTest {
             fake.editKeyboard(chatId,messageId,keyboard)
         }
     }
-    private val clock=Clock.fixed(Instant.parse("2026-11-06T12:00:00Z"),ZoneOffset.UTC)
+    private var now=Instant.parse("2026-11-06T12:00:00Z")
+    private val clock=object:Clock() {
+        override fun instant()=now
+        override fun getZone():ZoneId=ZoneOffset.UTC
+        override fun withZone(zone:ZoneId):Clock=Clock.fixed(now,zone)
+    }
     private lateinit var bot:SelfServiceBot
     private var event=1L
     private val creator=Access(-1,2)
@@ -148,7 +154,15 @@ class PollRecoveryTest {
             assertSame(failure,assertFailsWith<TelegramFailure> { execute("poll_close",id) })
             assertEquals("CLOSING",bot.polls.get(-1,id).status)
             assertFalse(bot.polls.get(-1,id).awaitingCloseRecovery)
+            val attempts=stopCalls
+            val remaining=bot.state.deliveryDelay("poll:-1:$id")
+            assertTrue(remaining>0)
             restart();fake.stopFailure=null;bot.maintain()
+            assertEquals(attempts,stopCalls);assertFalse(bot.polls.get(-1,id).stopped)
+            now=now.plusMillis(remaining-1);bot.maintain()
+            assertEquals(attempts,stopCalls);assertFalse(bot.polls.get(-1,id).stopped)
+            now=now.plusMillis(1);bot.maintain()
+            assertEquals(attempts+1,stopCalls);assertTrue(bot.polls.get(-1,id).stopped)
             vote(p,2,null);vote(p,4,1)
             assertEquals(0,countTrainings(id))
             bot.finishPollsAfterDrain()

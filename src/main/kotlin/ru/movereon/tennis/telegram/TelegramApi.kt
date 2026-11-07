@@ -46,12 +46,14 @@ import java.time.Duration
     val absent: Boolean get() = status in setOf("left", "kicked")
 }
 
-enum class FailureKind { REJECTED, RETRY_LATER, UNCERTAIN, NOT_MODIFIED, MESSAGE_MISSING }
+enum class FailureKind { REJECTED, RETRY_LATER, UNCERTAIN, NOT_MODIFIED, MESSAGE_MISSING, CALLBACK_EXPIRED }
 class TelegramFailure(val kind: FailureKind, val code: Int? = null, val retryAfter: Int? = null, val backgroundDeferred:Boolean=false) :
     IOException("Telegram request failed: $kind${code?.let { " ($it)" } ?: ""}")
 
 interface TelegramApi {
     fun background(block:()->Unit) = block()
+    /** A shared remaining budget for opening a new panel in response to a callback. */
+    fun <T> callbackWindow(remainingMillis:Long,block:()->T):T = block()
     fun sendPoll(chatId:Long,question:String,options:List<String>,keyboard:TgKeyboard,photoId:String?=null):TgMessage = throw TelegramFailure(FailureKind.REJECTED)
     fun stopPoll(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) { throw TelegramFailure(FailureKind.REJECTED) }
@@ -65,12 +67,16 @@ interface TelegramApi {
     fun sendRich(chatId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null):TgMessage = send(chatId,text,keyboard)
     fun editRich(chatId:Long,messageId:Long,text:String,html:String,keyboard:TgKeyboard,photoId:String?=null) = edit(chatId,messageId,text,keyboard)
     fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeral(chatId,userId,callbackId,text,keyboard)
+    fun ephemeralRichAsAdmin(chatId:Long,userId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage = ephemeralAsAdmin(chatId,userId,text,keyboard)
     fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) = editEphemeral(chatId,userId,ephemeralId,text,keyboard)
     fun pin(chatId:Long,messageId:Long,silent:Boolean=false) { throw TelegramFailure(FailureKind.REJECTED) }
     fun unpin(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun delete(chatId:Long,messageId:Long) { throw TelegramFailure(FailureKind.REJECTED) }
     fun administrators(chatId: Long): List<TgMember> = emptyList()
     fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
+        throw TelegramFailure(FailureKind.REJECTED)
+    /** Caller must freshly verify that the bot is an administrator and the receiver is still a member. */
+    fun ephemeralAsAdmin(chatId:Long,userId:Long,text:String,keyboard:TgKeyboard):TgMessage =
         throw TelegramFailure(FailureKind.REJECTED)
     fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {
         throw TelegramFailure(FailureKind.REJECTED)
@@ -83,6 +89,13 @@ interface TelegramApi {
 class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org"), private val backgroundBudgetMillis:Long=5000,
     private val diagnostics:UiDiagnostics=UiDiagnostics()) : TelegramApi {
     private var backgroundDeadline:Long?=null
+    private val callbackDeadline=ThreadLocal<Long>()
+    override fun <T> callbackWindow(remainingMillis:Long,block:()->T):T {
+        val previous=callbackDeadline.get()
+        val deadline=System.nanoTime()+remainingMillis.coerceIn(0,15_000)*1_000_000
+        callbackDeadline.set(minOf(previous ?: deadline,deadline))
+        try { return block() } finally { if(previous==null) callbackDeadline.remove() else callbackDeadline.set(previous) }
+    }
     override fun background(block:()->Unit) {
         val previous=backgroundDeadline
         backgroundDeadline=System.nanoTime()+backgroundBudgetMillis*1_000_000
@@ -175,11 +188,20 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }
     override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage =
-        json.decodeFromJsonElement<TgMessage>(call("sendRichMessage",buildJsonObject {
-            put("chat_id",chatId);put("rich_message",buildJsonObject { put("html",html);put("skip_entity_detection",true) })
+        sendEphemeral(chatId,userId,callbackId,text,html,keyboard)
+    override fun ephemeralRichAsAdmin(chatId:Long,userId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage =
+        sendEphemeral(chatId,userId,null,text,html,keyboard)
+    private fun sendEphemeral(chatId:Long,userId:Long,callbackId:String?,text:String,html:String?,keyboard:TgKeyboard):TgMessage =
+        json.decodeFromJsonElement<TgMessage>(call(if(html==null) "sendMessage" else "sendRichMessage",buildJsonObject {
+            put("chat_id",chatId)
+            if(html==null) put("text",text) else put("rich_message",richMessage(html,null))
             put("ephemeral_message_parameters",buildJsonObject {
-                put("receiver_user_id",userId);put("callback_query_id",callbackId);put("replace_callback_query_message",false)
-            });put("reply_markup",json.encodeToJsonElement(keyboard))
+                put("receiver_user_id",userId)
+                if(callbackId!=null) put("callback_query_id",callbackId)
+                // Keep personal controls separate from the shared card, which changes after each action.
+                put("replace_callback_query_message",false)
+            })
+            put("reply_markup",json.encodeToJsonElement(keyboard))
         })).also { if(it.receiver?.id!=userId || it.ephemeralId==null) throw TelegramFailure(FailureKind.UNCERTAIN) }
     override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) {
         try { call("editEphemeralMessageText",buildJsonObject {
@@ -199,16 +221,10 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
     }
 
     override fun administrators(chatId: Long): List<TgMember> = json.decodeFromJsonElement(call("getChatAdministrators", buildJsonObject { put("chat_id", chatId) }))
-    override fun ephemeral(chatId: Long, userId: Long, callbackId: String, text: String, keyboard: TgKeyboard): TgMessage =
-        json.decodeFromJsonElement<TgMessage>(call("sendMessage", buildJsonObject {
-            put("chat_id", chatId); put("text", text)
-            put("ephemeral_message_parameters", buildJsonObject {
-                put("receiver_user_id", userId); put("callback_query_id", callbackId)
-                // Keep personal controls separate from the shared card, which is updated after every change.
-                put("replace_callback_query_message", false)
-            })
-            put("reply_markup", json.encodeToJsonElement(keyboard))
-        })).also { if (it.receiver?.id != userId || it.ephemeralId == null) throw TelegramFailure(FailureKind.UNCERTAIN) }
+    override fun ephemeral(chatId:Long,userId:Long,callbackId:String,text:String,keyboard:TgKeyboard):TgMessage =
+        sendEphemeral(chatId,userId,callbackId,text,null,keyboard)
+    override fun ephemeralAsAdmin(chatId:Long,userId:Long,text:String,keyboard:TgKeyboard):TgMessage =
+        sendEphemeral(chatId,userId,null,text,null,keyboard)
     override fun editEphemeral(chatId: Long, userId: Long, ephemeralId: Long, text: String, keyboard: TgKeyboard) {
         try {
             call("editEphemeralMessageText", buildJsonObject {
@@ -240,9 +256,14 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
 
     private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement {
         val started=System.nanoTime()
+        val callbackSend=method in setOf("sendMessage","sendRichMessage") &&
+            body["ephemeral_message_parameters"]?.jsonObject?.get("callback_query_id")!=null
+        val callbackRemaining=if(callbackSend) callbackDeadline.get()?.minus(started) else null
+        // This rejection is safe to retry as administrator: no HTTP request has been sent yet.
+        if(callbackRemaining!=null && callbackRemaining<=0) throw TelegramFailure(FailureKind.CALLBACK_EXPIRED)
         val remaining=backgroundDeadline?.minus(started)
         if(remaining!=null && remaining<=0) throw TelegramFailure(FailureKind.RETRY_LATER,retryAfter=1,backgroundDeferred=true)
-        val requestTimeout=Duration.ofNanos(minOf(Duration.ofSeconds(timeout.toLong()).toNanos(),remaining ?: Long.MAX_VALUE))
+        val requestTimeout=Duration.ofNanos(minOf(Duration.ofSeconds(timeout.toLong()).toNanos(),remaining ?: Long.MAX_VALUE,callbackRemaining ?: Long.MAX_VALUE))
         val response = try {
             val request = HttpRequest.newBuilder(URI("${endpoint.toString().trimEnd('/')}/bot$token/$method"))
                 .timeout(requestTimeout).header("Content-Type", "application/json")
@@ -267,6 +288,9 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         val kind = when {
             code == 429 -> FailureKind.RETRY_LATER
             code >= 500 -> FailureKind.UNCERTAIN
+            code == 400 && callbackSend && ("query_id_invalid" in description || "query id is invalid" in description ||
+                "query is too old" in description || "callback_query_id is invalid" in description ||
+                ("callback" in description && "expired" in description)) -> FailureKind.CALLBACK_EXPIRED
             "message is not modified" in description || method=="stopPoll" && "poll has already been closed" in description || method=="unpinChatMessage" && "message is not pinned" in description -> FailureKind.NOT_MODIFIED
             method=="stopPoll" && ("message to stop poll not found" in description || "message to stoppoll not found" in description || "poll not found" in description) -> FailureKind.MESSAGE_MISSING
             "message to edit not found" in description || "message to unpin not found" in description || "message to delete not found" in description -> FailureKind.MESSAGE_MISSING

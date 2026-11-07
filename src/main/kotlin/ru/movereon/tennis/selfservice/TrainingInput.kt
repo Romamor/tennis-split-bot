@@ -128,9 +128,7 @@ internal class TrainingInput(
         }
     }
     companion object {
-        val actions=setOf("default_time","default_title","save_default_title","form_back","form_cancel","form_group_page",
-            "form_group_select","form_date_adjust","form_time_adjust","save_default_time","new","new_poll","edit_details",
-            "form_next","form_restart","form_photo","form_photo_remove","save_training","save_poll")
+        val actions=ActionRegistry.kinds(ActionRoute.TRAINING_INPUT)
         private fun advance(f:InputForm)=f.copy(kind=when(f.kind) {
             "title" -> "date"
             "date" -> "time"

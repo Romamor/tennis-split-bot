@@ -1,7 +1,8 @@
 package ru.movereon.tennis.selfservice
 
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
+import ru.movereon.tennis.telegram.IncomingContent
 import ru.movereon.tennis.storage.Database
 import ru.movereon.tennis.storage.sqlQuery
 import ru.movereon.tennis.storage.sqlUpdate
@@ -11,13 +12,17 @@ import java.time.Clock
 data class PendingUpdate(val id:Long,val update:TgUpdate?,val plan:EventPlan?)
 
 /** Telegram acknowledges durable receipt; local retries retain each author's event order. */
-class UpdateInbox(private val database:Database,private val clock:Clock=Clock.systemUTC()) {
+class UpdateInbox(private val database:Database,private val clock:Clock=Clock.systemUTC(),private val botUsername:String?=null) {
     private val json=Json { encodeDefaults=true;ignoreUnknownKeys=true }
 
     fun accept(updates:List<TgUpdate>) {
         if(updates.isEmpty()) return
         // Encode before the transaction: an unencodable response must never advance its cursor.
-        val received=updates.sortedBy { it.id }.map { Triple(it,json.encodeToString(it),orderingKey(it)) }
+        val received=updates.sortedBy { it.id }.map { raw ->
+            val update=IncomingContent.minimize(raw,botUsername)
+            val payload=JsonObject(json.encodeToJsonElement(update).jsonObject+mapOf("accepted_at" to JsonPrimitive(clock.millis())))
+            Triple(update,payload.toString(),orderingKey(update))
+        }
         val next=Math.addExact(received.last().first.id,1L)
         database.write { c ->
             val previous=sqlQuery(c,"SELECT next_update_id,received_order FROM bot_polling WHERE singleton=1") {
@@ -37,8 +42,20 @@ class UpdateInbox(private val database:Database,private val clock:Clock=Clock.sy
         }
     }
 
+    fun acceptedAt(id:Long):Long?=database.read { c ->
+        sqlQuery(c,"SELECT json_extract(update_json,'$.accepted_at') FROM bot_events WHERE update_id=?",id) { it.getString(1)?.toLong() }.singleOrNull()
+    }
+
     fun offset():Long?=database.read { c ->
         sqlQuery(c,"SELECT next_update_id FROM bot_polling WHERE singleton=1") { it.getString(1)?.toLong() }.single()
+    }
+
+    fun pollRetryAt():Long=database.read { c ->
+        sqlQuery(c,"SELECT retry_at FROM bot_polling WHERE singleton=1") { it.getLong(1) }.single()
+    }
+    fun pollRetryAt(value:Long)=database.write { c ->
+        sqlUpdate(c,"UPDATE bot_polling SET retry_at=? WHERE singleton=1",value)
+        Unit
     }
 
     fun pending(limit:Int=20):List<PendingUpdate> {

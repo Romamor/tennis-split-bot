@@ -11,6 +11,8 @@ services:
     security_opt: [no-new-privileges:true]
     mem_limit: 256m
     memswap_limit: 384m
+    # Relative CPU priority under contention; cgroup v2 cpu.weight is 1000.
+    cpu_shares: 26214
     pids_limit: 128
     stop_grace_period: 30s
     environment:

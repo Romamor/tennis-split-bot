@@ -14,7 +14,7 @@ internal fun applyRulesToOpenTrainings(c:Connection,group:Long,actor:Long?,reque
     ids.forEach { id ->
         val old=readTraining(c,group,id)
         val updated=old.copy(rules=rules,version=Math.addExact(old.version,1))
-        validateTrainingDraft(updated)
+        validateTrainingDraft(updated,old)
         sqlUpdate(c,"UPDATE trainings SET guests_enabled=?,track_time=?,version=? WHERE group_id=? AND id=?",rules.guestsEnabled,rules.trackTime,updated.version,group,id)
         sqlUpdate(c,"""INSERT INTO actions(group_id,request_id,actor_id,kind,training_id,payload_json,before_json,after_json,result_version,occurred_at,needs_delivery)
             VALUES(?,?,?,?,?,'{}',?,?,?,?,1)""",group,"rules:$request:$id",actor ?: old.createdBy,

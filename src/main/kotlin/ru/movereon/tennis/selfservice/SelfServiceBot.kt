@@ -13,7 +13,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private val diagnostics:UiDiagnostics=UiDiagnostics()) {
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
-    val inbox = UpdateInbox(database,clock)
+    val inbox = UpdateInbox(database,clock,identity.username)
     private val drainedPolls=mutableSetOf<Pair<Long,String>>()
     val polls=TrainingPolls(service,clock)
     private val pollWorkflow=PollWorkflow(polls,state,api)
@@ -26,12 +26,6 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         delivery.send(key,group,user,user,out,key,recreateMissing=state.delivery(key)?.message==null)
     }
     private var lastCleanup = Long.MIN_VALUE
-    private val cardRetries=object:LinkedHashMap<Pair<Long,String>,Long>() {
-        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Pair<Long,String>,Long>?)=size>256
-    }
-    private val unpinRetries=object:LinkedHashMap<String,Long>() {
-        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<String,Long>?)=size>256
-    }
     private val navigationMembership=NavigationMembershipCache(clock)
     private val checkedMembership = mutableMapOf<Pair<Long,Long>, Access>()
     init {
@@ -149,9 +143,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             try { handle(update) }
             catch(f:TelegramFailure) {
                 if(f.code in setOf(401,409)) throw f
-                inbox.retry(pending.id,(f.retryAfter ?: 3).coerceAtLeast(1)*1000L)
+                inbox.retry(pending.id,RetryPolicy.delayMillis(f,3))
                 diagnostics.update(pending.id,"retry_scheduled",detail=f.kind.name)
-                if(f.kind==FailureKind.RETRY_LATER) throw f
+                if(f.backgroundDeferred) throw f
             }
         }
     }
@@ -218,8 +212,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 ?.let(::skipSingleGroup)
                 ?.let(inputRecovery::resolve)
                 ?.let { positionAfterInput(it, callback == null && message.chat.type == "private") }
+                ?.let { if(callback!=null) it.copy(callbackStartedAt=inbox.acceptedAt(update.id) ?: clock.millis()) else it }
                 ?.also { state.plan(update.id, it) }
             if (plan == null) { diagnostics.update(update.id,"no_plan");state.complete(update.id);return }
+            ActionRegistry.requireKnown(plan.screen.kind)
             diagnostics.update(update.id,"plan",plan.screen.kind)
             val closingOwnPanel=plan.chat<0 && plan.screen.kind=="close_panel" && plan.command==null
             val a = if (plan.screen.group < 0 && !closingOwnPanel) screenAccess(plan.screen,plan.user,plan.chat,mutating=plan.command!=null) else null
@@ -379,7 +375,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         } else {
             val text = message.text.orEmpty().trim()
             if (chat < 0) {
-                if (text.substringBefore(' ').substringBefore('@') !in setOf("/start", "/menu")) return null
+                if (IncomingContent.groupCommand(text,identity.username)==null) return null
                 access(chat, user.id)
                 api.administrators(chat).mapNotNull { it.user }.filterNot { it.isBot }.forEach { remember(it); service.rememberMembership(chat, it.id, true) }
                 return EventPlan(user.id, chat, ScreenAction("group_menu", chat))
@@ -445,6 +441,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(action.kind in FinanceScreens.retiredActions) action=ScreenAction("finance",action.group)
         if (action.kind=="roster" && action.option=="admins") action=action.copy(kind="administrators",option="")
         if(chat>0 && action.kind=="form") action=savedForm?.let { ScreenAction("form",it.group,it.training,back=it.origin) } ?: ScreenAction("menu",0)
+        ActionRegistry.requireKnown(action.kind)
         val a = if (action.group < 0 && action.kind!="close_panel") screenAccess(action,user.id,chat) else null
         if(callback!=null && action.kind=="finance_receive" && service.pendingPaymentCount(requireNotNull(a))==0) {
             answer(callback,"Нет переводов для подтверждения")
@@ -740,8 +737,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     }
                 }
                 if (!updated) {
-                    val sent = if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,requireNotNull(plan.callback),out.text,out.richHtml,out.keyboard)
-                        else api.ephemeral(plan.chat, plan.user, requireNotNull(plan.callback), out.text, out.keyboard)
+                    val sent = sendPersonalPanel(event,plan,out)
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId,event)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
@@ -788,6 +784,31 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
         plan.callback?.let { runCatching { api.answer(it) } }
     }
+    /** Only a definite expiry permits another send; a transport timeout may already have opened the panel. */
+    private fun sendPersonalPanel(event:Long,plan:EventPlan,out:Screens.Output):TgMessage {
+        val started=plan.callbackStartedAt ?: inbox.acceptedAt(event)
+        val age=started?.let { clock.millis()-it }
+        // Leave a margin below Telegram's 15-second callback window, including work before rendering.
+        val remaining=if(age!=null && age in 0L..<12_000L) 12_000L-age else 0L
+        if(plan.callback!=null && remaining>0) {
+            try {
+                return api.callbackWindow(remaining) {
+                    if(out.richHtml!=null) api.ephemeralRich(plan.chat,plan.user,plan.callback,out.text,out.richHtml,out.keyboard)
+                    else api.ephemeral(plan.chat,plan.user,plan.callback,out.text,out.keyboard)
+                }
+            } catch(failure:TelegramFailure) {
+                if(failure.kind!=FailureKind.CALLBACK_EXPIRED) throw failure
+            }
+        }
+        // Administrator delivery is allowed only with fresh checks, never cached navigation membership.
+        if(!api.member(plan.chat,identity.id).admin) throw TelegramFailure(FailureKind.REJECTED,403)
+        val receiver=api.member(plan.chat,plan.user)
+        navigationMembership.remember(plan.chat,plan.user,receiver)
+        service.observeMembership(plan.chat,plan.user,receiver.present)
+        if(!receiver.present || receiver.user?.isBot==true) throw TelegramFailure(FailureKind.REJECTED,403)
+        return if(out.richHtml!=null) api.ephemeralRichAsAdmin(plan.chat,plan.user,out.text,out.richHtml,out.keyboard)
+            else api.ephemeralAsAdmin(plan.chat,plan.user,out.text,out.keyboard)
+    }
     private fun deletePanel(user: Long, chat: Long, id: Long, required:Boolean=false): Boolean {
         try { api.deleteEphemeral(chat, user, id); return true }
         catch (failure: TelegramFailure) {
@@ -827,22 +848,29 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         polls.maintenancePolls().forEach { p ->
             if(p.status=="OPEN" && p.message!=null) pollWorkflow.recordDelivery(p)
             if(p.status=="CLOSING") try { pollWorkflow.stop(p) } catch(f:TelegramFailure) {
-                if(f.kind!=FailureKind.REJECTED || f.code in setOf(401,409)) throw f
+                if(f.code in setOf(401,409) || f.backgroundDeferred) throw f
             }
         }
         state.reconcilePins()
-        state.pendingCards(cardRetries.filterValues { it>clock.millis() }.keys.map { (group,training) -> "training:$group:$training" }.toSet()).take(2).forEach { (group,training,through) ->
+        state.pendingCards().take(2).forEach { (group,training,through) ->
             try {
-                if(refreshCard(group,training)) { state.cardDelivered(group,training,through);cardRetries.remove(group to training) }
+                if(refreshCard(group,training)) { state.cardDelivered(group,training,through);state.clearDeliveryRetry("training:$group:$training") }
             } catch(f:TelegramFailure) {
                 if(f.code in setOf(401,409)) throw f
-                cardRetries[group to training]=clock.millis()+(f.retryAfter ?: 5).coerceIn(1,60)*1000L
-                if(f.kind==FailureKind.RETRY_LATER) throw f
+                state.retryDelivery("training:$group:$training",f)
+                if(f.backgroundDeferred) throw f
             }
         }
         refreshPendingPanels()
         refreshPrivatePollViews()
-        state.completedPollPanels().forEach { (user,group,id) -> closePanel(user,group,id) }
+        state.completedPollPanels().forEach { (user,group,id) ->
+            try { closePanel(user,group,id,required=true) }
+            catch(f:TelegramFailure) {
+                if(f.code in setOf(401,409)) throw f
+                state.retryPanel(user,group,id,RetryPolicy.delayMillis(f,30))
+                if(f.backgroundDeferred) throw f
+            }
+        }
         pinCards()
         paymentNotifications.maintain()
         unpinCards()
@@ -856,6 +884,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun refreshPrivatePollViews() {
         state.privatePollViews().forEach { (user,chat,view) ->
             val key="personal:$user:$chat"
+            if(state.deliveryDelay(key)>0) return@forEach
             if(state.delivery(key)?.message!=view.message) {
                 state.privatePollView(user,chat,null);return@forEach
             }
@@ -870,16 +899,17 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 if(f.code!=ErrorCode.FORBIDDEN && f.code!=ErrorCode.INVALID_INPUT) throw f
                 state.privatePollView(user,chat,null)
             } catch(f:TelegramFailure) {
+                if(f.code in setOf(401,409) || f.backgroundDeferred) throw f
                 if(f.kind==FailureKind.REJECTED && f.code in setOf(400,403)) state.privatePollView(user,chat,null)
-                else throw f
+                else state.retryDelivery(key,f)
             }
         }
     }
     private fun unpinCards() {
-        state.pendingUnpins(unpinRetries.filterValues { it>clock.millis() }.keys).take(2).forEach { (key,delivery) ->
+        state.pendingUnpins().take(2).forEach { (key,delivery) ->
             state.pinStatus(key,"UNPIN_SENDING")
             try {
-                api.unpin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"UNPINNED");unpinRetries.remove(key)
+                api.unpin(delivery.chat,requireNotNull(delivery.message));state.pinStatus(key,"UNPINNED");state.clearDeliveryRetry(key,pin=true)
             } catch(f:TelegramFailure) {
                 if(f.code in setOf(401,409) || f.backgroundDeferred) {
                     state.pinStatus(key,"UNPIN_PENDING");throw f
@@ -888,8 +918,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     FailureKind.MESSAGE_MISSING,FailureKind.NOT_MODIFIED -> state.pinStatus(key,"UNPINNED")
                     FailureKind.UNCERTAIN,FailureKind.RETRY_LATER -> {
                         state.pinStatus(key,"UNPIN_PENDING")
-                        unpinRetries[key]=clock.millis()+(f.retryAfter ?: 5).coerceAtLeast(1)*1000L
-                        if(f.kind==FailureKind.RETRY_LATER) throw f
+                        state.retryDelivery(key,f,pin=true)
+                        if(f.backgroundDeferred) throw f
                     }
                     else -> state.pinStatus(key,"UNPIN_FAILED")
                 }
@@ -900,12 +930,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         state.pendingPins().forEach { (key,delivery) ->
             val groupMenu=key=="group-menu:${delivery.chat}"
             state.pinStatus(key,"SENDING")
-            try { api.pin(delivery.chat,requireNotNull(delivery.message),silent=groupMenu);state.pinStatus(key,"SENT") }
+            try { api.pin(delivery.chat,requireNotNull(delivery.message),silent=groupMenu);state.pinStatus(key,"SENT");state.clearDeliveryRetry(key,pin=true) }
             catch(f:TelegramFailure) {
                 // Menu pins are silent, so uncertain requests can be retried without repeated notifications.
                 val retry=f.kind==FailureKind.RETRY_LATER || groupMenu && f.kind==FailureKind.UNCERTAIN
                 state.pinStatus(key,when { retry -> "PENDING";f.kind==FailureKind.UNCERTAIN -> "UNKNOWN";else -> "FAILED" })
-                if(retry || f.code in setOf(401,409)) throw f
+                if(retry) state.retryDelivery(key,f,pin=true)
+                if(f.code in setOf(401,409) || f.backgroundDeferred) throw f
             }
         }
     }
@@ -939,8 +970,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     state.rememberEphemeral(user,group,null);state.replace(scope,emptySet())
                 } else {
                     if(f.kind==FailureKind.REJECTED) state.replace(scope,oldTokens)
-                    state.retryPanel(panel,if(f.kind==FailureKind.RETRY_LATER) (f.retryAfter ?: 3).coerceIn(1,60)*1000L else if(f.kind==FailureKind.REJECTED) 30_000 else 5_000)
-                    if(f.kind==FailureKind.RETRY_LATER) throw f
+                    state.retryPanel(panel,if(f.kind==FailureKind.RETRY_LATER) RetryPolicy.delayMillis(f,3) else if(f.kind==FailureKind.REJECTED) 30_000 else 5_000)
+                    if(f.backgroundDeferred) throw f
                 }
             }
         }
@@ -954,12 +985,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if(polls.closingPolls().any { (it.group to it.id) !in drainedPolls }) return 0
         var wait=minOf(state.panelRefreshDelay(maximum),inbox.nextDelay(maximum))
         if(state.hasPendingPaymentNotices()) wait=minOf(wait,1)
-        state.pendingCards().forEach { (group,training,_) ->
-            if(canRefreshCard(group,training)) {
-                val due=cardRetries[group to training] ?: 0
-                wait=minOf(wait,((due-clock.millis()).coerceAtLeast(0)/1000+1).coerceAtMost(maximum.toLong()).toInt())
-            }
-        }
+        if(state.pendingCards().isNotEmpty() || state.pendingPins().isNotEmpty() || state.pendingUnpins().isNotEmpty()) wait=minOf(wait,1)
         return wait
     }
     private fun refreshCard(group: Long, training: String, allowCreate:Boolean?=null): Boolean {

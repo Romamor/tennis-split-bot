@@ -12,7 +12,7 @@ internal class ScreenLayout(
     private val actions=mutableMapOf<TgButton,ScreenAction>()
     fun keyboard()=ButtonAppearance.keyboard(rows,actions)
     fun button(label: String, next: ScreenAction): TgButton {
-        if (inGroup && next.kind in Screens.privateActions) {
+        if (ActionRegistry.requireKnown(next.kind).privateOnly && inGroup) {
             val token = state.button(next, null, "private-link:${next.group}:${next.id}", permanent = true)
             return TgButton(label, url = "https://t.me/$botName?start=n_$token").also { actions[it]=next }
         }

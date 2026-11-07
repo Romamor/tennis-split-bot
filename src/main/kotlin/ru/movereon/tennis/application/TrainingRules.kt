@@ -3,6 +3,14 @@ package ru.movereon.tennis.application
 import kotlinx.serialization.Serializable
 import ru.movereon.tennis.core.*
 
+const val MAX_TRAINING_PARTICIPANTS=50
+
+/** Count sign-ups even before their played time is entered; guests occupy the same capacity. */
+internal fun validateTrainingCapacity(participants:Long) = checkAccounting(
+    participants<=MAX_TRAINING_PARTICIPANTS,ErrorCode.INVALID_INPUT,
+    "В тренировке может быть не больше $MAX_TRAINING_PARTICIPANTS участников, включая гостей",
+)
+
 /** Live rules for open trainings; accounted/cancelled trainings retain their last rules. */
 @Serializable data class TrainingRules(val guestsEnabled:Boolean=true,val trackTime:Boolean=true) {
     val initialMinutes:Long get()=minutes(0)
@@ -37,7 +45,10 @@ import ru.movereon.tennis.core.*
 }
 
 /** Both projections remain valid so turning individual time back on is always possible. */
-internal fun validateTrainingDraft(training:TrainingRecord) {
+internal fun validateTrainingDraft(training:TrainingRecord,previous:TrainingRecord?=null) {
+    // Existing oversized records remain editable, but their attendance can never grow.
+    if(previous==null || training.participantCount>previous.participantCount)
+        validateTrainingCapacity(training.participantCount)
     validateDraftTraining(training.calculation())
     if(!training.rules.trackTime)
         validateDraftTraining(training.copy(rules=training.rules.copy(trackTime=true)).calculation())

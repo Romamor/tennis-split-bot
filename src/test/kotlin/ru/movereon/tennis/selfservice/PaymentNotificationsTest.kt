@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import ru.movereon.tennis.application.*
 import ru.movereon.tennis.storage.Database
+import ru.movereon.tennis.storage.sqlQuery
 import ru.movereon.tennis.telegram.*
 import kotlin.test.*
 
@@ -62,6 +63,9 @@ class PaymentNotificationsTest {
         bot.handle(TgUpdate(sequence++,callback=TgCallback("click-${sequence++}",TgUser(user,firstName=names.getValue(user)),message,button.callbackData)))
     }
     private fun mainMenu()=fake.messages.getValue(2L to bot.state.delivery("personal:2:2")!!.message!!)
+    private fun retryAt(key:String)=bot.service.database.read { c ->
+        sqlQuery(c,"SELECT retry_at FROM bot_deliveries WHERE delivery_key=?",key) { it.getLong(1) }.single()
+    }
 
     @Test fun `queued notice deletion never runs inside a button or message handler`() {
         setup();send();bot.maintain();val notification=notice();watchedNotice=notification.id
@@ -156,11 +160,19 @@ class PaymentNotificationsTest {
     }
     @Test fun `rate limited delivery retries outside money transaction and preserves queue`() {
         setup();send();sendFailure=TelegramFailure(FailureKind.RETRY_LATER,429,1)
-        assertFailsWith<TelegramFailure> { bot.maintain() }
+        val balances=bot.service.database.balances(-1)
+        bot.maintain()
         assertEquals("RETRY",bot.state.delivery("payment-notice:-1:p")!!.status)
-        assertEquals(1,bot.state.pendingPaymentNotices().size)
-        sendFailure=null;bot.maintain();assertEquals(1,attempts)
-        now=now.plusSeconds(1);bot.maintain();assertEquals(2,attempts);assertEquals("SENT",bot.state.delivery("payment-notice:-1:p")!!.status)
+        assertEquals(clock.millis()+1000,retryAt("payment-notice:-1:p"))
+        assertTrue(bot.state.pendingPaymentNotices().isEmpty())
+        bot.service.database.read { c ->
+            assertEquals(1,sqlQuery(c,"SELECT COUNT(*) FROM actions WHERE group_id=-1 AND transfer_id='p' AND needs_delivery=1 AND delivered_at IS NULL") { it.getInt(1) }.single())
+        }
+        sendFailure=null;bot=SelfServiceBot(api,Database(bot.service.database.path),fake.bot,clock)
+        bot.maintain();assertEquals(1,attempts);assertTrue(bot.state.pendingPaymentNotices().isEmpty())
+        now=now.plusMillis(999);bot.maintain();assertEquals(1,attempts)
+        now=now.plusMillis(1);bot.maintain();assertEquals(2,attempts);assertEquals("SENT",bot.state.delivery("payment-notice:-1:p")!!.status)
+        assertEquals(0L,retryAt("payment-notice:-1:p"));assertEquals(balances,bot.service.database.balances(-1))
         assertEquals(PaymentStatus.REVIEW,bot.service.transfer(Access(-1,2),"p").status)
     }
     @Test fun `unchanged edit keeps live confirmation button and deleted notice is not recreated`() {
@@ -197,10 +209,17 @@ class PaymentNotificationsTest {
         setup();send();bot.maintain();val first=notice()
         fake.deleteFailure=TelegramFailure(FailureKind.UNCERTAIN)
         run(SettlementCommand.CancelPayment("p",1));bot.maintain()
-        assertTrue(bot.state.pendingNoticeRemovals().isNotEmpty())
+        val removal="notice-remove:2:${first.id}"
+        assertEquals("RETRY",bot.state.delivery(removal)?.status)
+        assertEquals(clock.millis()+60_000,retryAt(removal))
+        assertTrue(bot.state.pendingNoticeRemovals().isEmpty())
         bot.state.forgetDelivery("personal:2:2")
-        fake.deleteFailure=null;bot=SelfServiceBot(api,bot.service.database,fake.bot,clock);bot.maintain()
+        fake.deleteFailure=null;bot=SelfServiceBot(api,Database(bot.service.database.path),fake.bot,clock);bot.maintain()
+        assertTrue(fake.messages.containsKey(2L to first.id));assertNotNull(bot.state.delivery(removal))
+        now=now.plusSeconds(59);bot.maintain();assertTrue(fake.messages.containsKey(2L to first.id))
+        now=now.plusSeconds(1);bot.maintain()
         assertFalse(fake.messages.containsKey(2L to first.id));assertTrue(bot.state.pendingNoticeRemovals().isEmpty())
+        assertNull(bot.state.delivery(removal))
         assertEquals(1,attempts)
     }
     @Test fun `accepted uncertain notice can be removed on click without respawning`() {
@@ -216,7 +235,9 @@ class PaymentNotificationsTest {
         setup();send();bot.maintain();val first=notice()
         fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,403)
         run(SettlementCommand.CancelPayment("p",1));bot.maintain()
-        assertEquals("BLOCKED",bot.state.pendingNoticeRemovals().single().status)
+        val removal="notice-remove:2:${first.id}"
+        assertEquals("BLOCKED",bot.state.delivery(removal)?.status)
+        assertEquals(clock.millis()+60_000,retryAt(removal));assertTrue(bot.state.pendingNoticeRemovals().isEmpty())
         fake.deleteFailure=null;now=now.plusSeconds(60);bot.maintain()
         assertFalse(fake.messages.containsKey(2L to first.id));assertTrue(bot.state.pendingNoticeRemovals().isEmpty())
         assertEquals(1,attempts)

@@ -26,7 +26,7 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file);val service=SettlementService(db)
-            assertTrue(db.verify().contains("Схема 10"))
+            assertTrue(db.verify().contains("Схема 11"))
             assertFalse(TrainingPolls(service).enabled(-1))
             assertEquals("19:30",service.trainingDefaults(1).time)
             assertEquals(mapOf(1L to 150L,2L to -150L),service.balances(Access(-1,1)))
@@ -48,7 +48,7 @@ class PollMigrationTest {
         } }
         repeat(2) {
             val db=Database(file)
-            assertTrue(db.verify().contains("Схема 10"))
+            assertTrue(db.verify().contains("Схема 11"))
             val polls=TrainingPolls(SettlementService(db))
             assertNull(polls.get(-1,"old").photoId)
             assertEquals("OPEN",polls.get(-1,"old").status)

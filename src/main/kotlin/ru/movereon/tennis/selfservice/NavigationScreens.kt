@@ -55,5 +55,5 @@ internal class NavigationScreens(private val service:SettlementService,private v
             else -> error("Not a navigation screen: ${action.kind}")
         }
     }
-    companion object { val kinds=setOf("groups","menu","settings","poll_settings","training_settings") }
+    companion object { val kinds=ActionRegistry.kinds(ActionRoute.NAVIGATION_SCREEN) }
 }

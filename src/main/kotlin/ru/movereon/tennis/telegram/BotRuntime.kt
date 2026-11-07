@@ -41,18 +41,42 @@ internal fun awaitBotIdentity(api:TelegramApi,pause:(Long)->Unit={ Thread.sleep(
         catch(f:TelegramFailure) {
             if(f.kind !in setOf(FailureKind.UNCERTAIN,FailureKind.RETRY_LATER) || f.code in setOf(401,409)) throw f
             System.err.println("Telegram временно недоступен при запуске; повторим getMe без перезапуска JVM.")
-            pause((f.retryAfter ?: 3).coerceIn(1,60)*1000L)
+            pause(RetryPolicy.delayMillis(f,3))
         }
     }
 }
 
 /** A batch is acknowledged only after receipt is durable; local retries cannot pin polling. */
-internal fun runQueuedBotCycle(receive:()->List<TgUpdate>,accept:(List<TgUpdate>)->Unit,
+internal fun runQueuedBotCycle(receive:()->List<TgUpdate>?,accept:(List<TgUpdate>)->Unit,
     process:()->Unit,finish:()->Unit,maintain:()->Unit) {
-    accept(receive())
+    // null means no Telegram response: in particular, it must not mark closing polls as drained.
+    receive()?.let(accept)
     process()
     finish()
     maintain()
+}
+
+/** The persisted wall-clock deadline survives restart; already saved work remains runnable. */
+internal class UpdatePollingSchedule(private val loadDeadline:()->Long={ 0L },private val saveDeadline:(Long)->Unit={},
+    private val nowMillis:()->Long=System::currentTimeMillis) {
+    private var nextAttemptAt=loadDeadline()
+    private fun deadline(value:Long) {
+        if(value==nextAttemptAt) return
+        saveDeadline(value)
+        nextAttemptAt=value
+    }
+    fun receive(request:()->List<TgUpdate>):List<TgUpdate>? {
+        if(nextAttemptAt>nowMillis()) return null
+        return try { request().also { deadline(0) } }
+        catch(f:TelegramFailure) {
+            if(f.backgroundDeferred || f.code in setOf(401,409)) throw f
+            deadline(RetryPolicy.deadline(nowMillis(),f,3))
+            System.err.println("Telegram временно недоступен; повторим получение обновлений. Сохранённые задания продолжают выполняться.")
+            null
+        }
+    }
+    /** Recheck local work once a second; this does not shorten the polling retry deadline. */
+    fun waitMillis():Long=(nextAttemptAt-nowMillis()).coerceIn(0L,1000L)
 }
 
 /** No webhook or public HTTP listener. A file lock prevents two local pollers sharing this database. */
@@ -70,18 +94,24 @@ fun runBot() {
                 val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone,diagnostics=diagnostics)
                 println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
                 var maintenanceDeferred=false
+                val polling=UpdatePollingSchedule(loadDeadline={ bot.inbox.pollRetryAt() },saveDeadline={ bot.inbox.pollRetryAt(it) })
                 while(!Thread.currentThread().isInterrupted) {
                     try {
                         runQueuedBotCycle(
-                            { api.updates(bot.inbox.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } },
+                            { polling.receive { api.updates(bot.inbox.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } } },
                             bot::acceptUpdates,{ bot.processPending() },bot::finishDrainedPolls,{ api.background(bot::maintain) })
                     } catch (failure: TelegramFailure) {
-                        if(failure.backgroundDeferred) { maintenanceDeferred=true;continue }
-                        if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
-                        System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")
-                        try { Thread.sleep((failure.retryAfter ?: 3).coerceIn(1,60)*1000L) }
-                        catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+                        if(failure.backgroundDeferred) maintenanceDeferred=true
+                        else {
+                            if(failure.code in setOf(401,409)) error("Telegram отклонил подключение. Проверь токен, отсутствие другого процесса и ранее установленного webhook.")
+                            System.err.println("Telegram временно недоступен; повторим запрос. Токен и сообщения в журнал не записываются.")
+                            try { Thread.sleep(RetryPolicy.delayMillis(failure,3)) }
+                            catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+                        }
                     }
+                    val wait=polling.waitMillis()
+                    if(wait>0) try { Thread.sleep(wait) }
+                    catch (_: InterruptedException) { Thread.currentThread().interrupt() }
                 }
             }
         }

@@ -22,6 +22,8 @@ class UpdateInboxMigrationTest {
         state.complete(101)
         val balances=service.database.balances(-1)
         service.database.write { c ->
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN retry_at")
+            sqlUpdate(c,"ALTER TABLE bot_deliveries DROP COLUMN pin_retry_at")
             sqlUpdate(c,"DROP INDEX pending_events_order");sqlUpdate(c,"DROP INDEX pending_events_due")
             sqlUpdate(c,"DROP TABLE bot_polling")
             for(column in listOf("update_json","ordering_key","received_order","next_attempt_at"))
@@ -31,7 +33,7 @@ class UpdateInboxMigrationTest {
         repeat(2) {
             val db=Database(path)
             assertEquals(balances,db.balances(-1))
-            assertTrue(db.verify().contains("Схема 10"))
+            assertTrue(db.verify().contains("Схема 11"))
             assertEquals(102L,UpdateInbox(db).offset())
             assertNotNull(InteractionStore(db).plan(100))
             assertTrue(db.read { c -> sqlQuery(c,"PRAGMA foreign_key_check") { it.getString(1) }.isEmpty() })

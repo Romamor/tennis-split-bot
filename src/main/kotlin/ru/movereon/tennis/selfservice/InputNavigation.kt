@@ -2,19 +2,17 @@ package ru.movereon.tennis.selfservice
 
 /** All screens which leave input, plus explicit entry points which can replace it. */
 internal object InputNavigation {
-    val screens=FormerMemberScreens.kinds+NavigationScreens.kinds+TrainingScreens.kinds+PollScreens.kinds+FinanceScreens.kinds+
-        setOf("my_trainings","trainings","roster","history","administrators","admin_candidates","admin_person","preview_finish","cancel_confirm","recover_confirm","close_panel")
-    val entries=setOf("new","new_poll","default_title","default_time","edit_details","finance_payment_edit",
-        "payment_new","finance_send_confirm","pick_account","pick_add_player","add_players","player","ask_paid")
-    val submissions=setOf("save_training","save_poll","save_default_title","save_default_time","payment_save","save_players")
-    val draftActions=setOf("player","change","reload_attendance","save_attendance","discard_attendance")
-    val effects=setOf("poll_close","poll_close_retry","poll_close_recover","poll_retry","poll_discard","group_rule_save","poll_setting_save","retry_pin","recover_card","public_page")
-    fun continues(action:ScreenAction,form:InputForm?,draft:AttendanceDraft?,group:Long):Boolean=when(action.kind) {
-        "payment_new","finance_send_confirm" -> PaymentInput.isForm(form) && form!!.group==action.group && form.adminPayment==(action.option=="admin")
-        "add_players" -> form?.kind in setOf("add_players","pick_players") && form?.group==action.group && form.training==action.id
-        "player","ask_paid" -> (form==null || form.kind in setOf("paid","attendance")) && group==action.group && draft!=null &&
+    val screens=ActionRegistry.matching { it.leavesInput }
+    val entries=ActionRegistry.matching { it.startsInput }
+    val submissions=ActionRegistry.matching { it.submitsInput }
+    val draftActions=ActionRegistry.matching { it.attendanceDraftAction }
+    val effects=ActionRegistry.matching { it.sideEffect }
+    fun continues(action:ScreenAction,form:InputForm?,draft:AttendanceDraft?,group:Long):Boolean=when(ActionRegistry.requireKnown(action.kind).continuation) {
+        InputContinuation.PAYMENT -> PaymentInput.isForm(form) && form!!.group==action.group && form.adminPayment==(action.option=="admin")
+        InputContinuation.PLAYERS -> form?.kind in setOf("add_players","pick_players") && form?.group==action.group && form.training==action.id
+        InputContinuation.PLAYER,InputContinuation.PAID -> (form==null || form.kind in setOf("paid","attendance")) && group==action.group && draft!=null &&
             (action.kind=="player" || draft.training==action.id && draft.user==(action.user.takeIf { it>0 } ?: draft.user))
-        else -> false
+        InputContinuation.NONE -> false
     }
 }
 

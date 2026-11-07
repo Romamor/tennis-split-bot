@@ -11,16 +11,13 @@ internal class PaymentNotifications(
     private val send:(String,Long,Long,Screens.Output)->Boolean,
 ) {
     private var lastExpiryScan=Long.MIN_VALUE
-    private val retries=object:LinkedHashMap<Pair<Long,String>,Long>() {
-        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Pair<Long,String>,Long>?)=size>256
-    }
     fun maintain() {
         val now=clock.instant().epochSecond
         if(lastExpiryScan==Long.MIN_VALUE || now-lastExpiryScan>=60) {
             state.expiredPaymentNotices().forEach { state.removePaymentNotice(it) }
             lastExpiryScan=now
         }
-        val work=state.pendingPaymentNotices().firstOrNull { (retries[it.group to it.transfer] ?: 0)<=clock.millis() } ?: return
+        val work=state.pendingPaymentNotices().firstOrNull() ?: return
         val key="payment-notice:${work.group}:${work.transfer}"
         val old=state.delivery(key)
         // An edit of a historic transfer never creates a new notification.
@@ -51,16 +48,17 @@ internal class PaymentNotifications(
         try {
             send(key,work.group,recipient,out)
             if(old?.message==null) state.startPaymentNoticeLifetime(key)
-            state.paymentNoticeDelivered(work);retries.remove(work.group to work.transfer)
+            state.paymentNoticeDelivered(work);state.clearDeliveryRetry(key)
         } catch(f:TelegramFailure) {
             if(f.code in setOf(401,409)) throw f
             if(f.kind==FailureKind.NOT_MODIFIED) {
                 state.deliveryResult(key,"SENT",old?.message);state.replace(key,out.tokens)
-                state.paymentNoticeDelivered(work);retries.remove(work.group to work.transfer);return
+                state.paymentNoticeDelivered(work);state.clearDeliveryRetry(key);return
             }
             if(f.kind in setOf(FailureKind.RETRY_LATER,FailureKind.UNCERTAIN)) {
-                retries[work.group to work.transfer]=clock.millis()+(f.retryAfter ?: 5).coerceIn(1,60)*1000L
-                throw f
+                state.retryDelivery(key,f)
+                if(f.backgroundDeferred) throw f
+                return
             }
             // Blocked/never-started chats and deleted notices do not block other recipients.
             state.deliveryResult(key,"BLOCKED");state.replace(key,emptySet());state.paymentNoticeDelivered(work)

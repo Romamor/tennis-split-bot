@@ -33,6 +33,7 @@ data class GroupRoleEntry(val account:Account,val role:GroupRole)
     val guestCount:Int=if(guestMinutes>0) 1 else 0)
 @Serializable data class TrainingRecord(val groupId:Long,val id:String,val title:String,val date:String,val startTime:String,
     val phase:TrainingPhase,val version:Long,val appliedVersion:Long,val createdBy:Long,val players:List<Attendance>,val rules:TrainingRules=TrainingRules()) {
+    val participantCount:Long get()=players.filter { it.playing }.sumOf { 1L+it.guestCount }
     fun calculation():Training = Training(players.sortedBy { it.ordinal }.filter { it.playing }.flatMap {
         (if(rules.minutes(it)>0) listOf(PlayerSlot(ParticipantId(it.userId.toString()),rules.minutes(it))) else emptyList()) +
             if(rules.guestMinutes(it)>0) List(it.guestCount) { _ -> PlayerSlot(ParticipantId(it.userId.toString()),rules.guestMinutes(it),true) } else emptyList()

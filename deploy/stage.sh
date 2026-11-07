@@ -10,7 +10,7 @@ case "$release_dir" in /*) ;; *) echo 'Use an absolute output path.' >&2; exit 1
 mkdir -m 700 "$release_dir"
 cp -R "$dist_dir" "$release_dir/app"
 mv "$release_dir/app/lib/tennis-settlements-bot.jar" "$release_dir/app/tennis-settlements-bot.jar"
-for file in Dockerfile .dockerignore compose.yaml install.sh; do
+for file in Dockerfile .dockerignore compose.yaml install.sh containerd-startup.conf; do
     cp "$project_dir/deploy/$file" "$release_dir/$file"
 done
 echo "Release prepared: $release_dir (token and databases are excluded)."

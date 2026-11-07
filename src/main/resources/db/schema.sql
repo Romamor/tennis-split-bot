@@ -120,7 +120,6 @@ CREATE TABLE actions (
     FOREIGN KEY(group_id,transfer_id) REFERENCES transfers(group_id,id) ON UPDATE CASCADE,
     FOREIGN KEY(group_id,actor_id) REFERENCES group_users(group_id,user_id) ON UPDATE CASCADE
 ) STRICT;
-CREATE INDEX action_history ON actions(group_id,id DESC);
 CREATE INDEX training_actions ON actions(group_id,training_id,id);
 CREATE INDEX transfer_actions ON actions(group_id,transfer_id,id);
 CREATE INDEX pending_actions ON actions(id) WHERE needs_delivery=1 AND delivered_at IS NULL;
@@ -151,7 +150,8 @@ CREATE INDEX pending_events_due ON bot_events(next_attempt_at,received_order,upd
 CREATE TABLE bot_polling (
     singleton INTEGER PRIMARY KEY CHECK(singleton=1),
     next_update_id INTEGER,
-    received_order INTEGER NOT NULL DEFAULT 0
+    received_order INTEGER NOT NULL DEFAULT 0,
+    retry_at INTEGER NOT NULL DEFAULT 0
 ) STRICT;
 INSERT INTO bot_polling(singleton) VALUES(1);
 CREATE TABLE bot_sessions (
@@ -186,6 +186,8 @@ CREATE TABLE bot_deliveries (
     message_id INTEGER,
     ephemeral_id INTEGER,
     status TEXT NOT NULL CHECK(status IN ('SENDING','SENT','UNKNOWN','FAILED','BLOCKED','RETRY')),
+    retry_at INTEGER NOT NULL DEFAULT 0,
+    pin_retry_at INTEGER NOT NULL DEFAULT 0,
     display_page INTEGER NOT NULL DEFAULT 0 CHECK(display_page>=0),
     pin_status TEXT NOT NULL DEFAULT 'NONE' CHECK(pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN','UNPIN_PENDING','UNPIN_SENDING','UNPIN_FAILED','UNPINNED'))
 ) STRICT;

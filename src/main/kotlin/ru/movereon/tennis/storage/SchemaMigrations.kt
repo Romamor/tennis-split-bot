@@ -97,3 +97,14 @@ internal fun migrateUpdateInbox(c:Connection) {
         s.execute("INSERT INTO bot_polling(singleton,next_update_id) SELECT 1,MAX(update_id)+1 FROM bot_events")
     }
 }
+
+/** Persist delivery backoff without rewriting deliveries, action history, or financial entries. */
+internal fun migrateDeliveryRetries(c:Connection) {
+    c.createStatement().use { s ->
+        s.execute("ALTER TABLE bot_deliveries ADD COLUMN retry_at INTEGER NOT NULL DEFAULT 0")
+        s.execute("ALTER TABLE bot_deliveries ADD COLUMN pin_retry_at INTEGER NOT NULL DEFAULT 0")
+        s.execute("ALTER TABLE bot_polling ADD COLUMN retry_at INTEGER NOT NULL DEFAULT 0")
+        // UNIQUE(group_id,id) already supports history lookup in both index directions.
+        s.execute("DROP INDEX IF EXISTS action_history")
+    }
+}

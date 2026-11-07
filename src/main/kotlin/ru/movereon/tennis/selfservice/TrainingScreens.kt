@@ -137,6 +137,6 @@ internal class TrainingScreens(private val service:SettlementService,private val
         ScreenContent(text,richHtml,photoId,trainingVersion)
     }
     companion object {
-        val kinds=setOf("training","public","my_training","training_status","add_player_list","exclude_player_list","manage_players","participation","participation_time","participation_payment")
+        val kinds=ActionRegistry.kinds(ActionRoute.TRAINING_SCREEN)
     }
 }

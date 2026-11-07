@@ -32,7 +32,7 @@ import java.util.UUID
     val ephemeral: Long? = null, val notice: String? = null,
     val newPrivateMessage: Boolean = false, val previousPrivateMessage: Long? = null,
     val draft: AttendanceDraft? = null, val clearDraft: Boolean = false, val clearDraftGroup: Long? = null,val defaultUpdate:DefaultTrainingUpdate?=null,val inputMessage:Long?=null,
-    val nextDraft:AttendanceDraft?=null)
+    val nextDraft:AttendanceDraft?=null,val callbackStartedAt:Long?=null)
 @Serializable data class PrivatePollView(val message:Long,val screen:ScreenAction,val revision:String)
 data class ButtonRecord(val action: ScreenAction, val owner: Long?, val scope: String, val permanent: Boolean)
 data class Delivery(val key: String, val chat: Long, val user: Long?, val message: Long?, val ephemeral: Long?, val status: String)
@@ -105,9 +105,10 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             AND (t.status<>'OPEN' OR COALESCE(json_extract(s.panel_json,'$.rendered_version'),-1)<>t.version)""") { it.getString(1)?.toLong() }.single()
         if(next==null) maximum else ((next-clock.millis()).coerceAtLeast(0)/1000+1).coerceAtMost(maximum.toLong()).toInt()
     }
-    fun retryPanel(panel:PendingPanel,delayMillis:Long) = database.write { c ->
+    fun retryPanel(panel:PendingPanel,delayMillis:Long) = retryPanel(panel.user,panel.group,panel.message,delayMillis)
+    fun retryPanel(user:Long,group:Long,message:Long,delayMillis:Long) = database.write { c ->
         sqlUpdate(c,"""UPDATE bot_sessions SET panel_json=json_set(panel_json,'$.retry_after',?)
-            WHERE user_id=? AND chat_id=? AND ephemeral_id=?""",clock.millis()+delayMillis,panel.user,panel.group,panel.message)
+            WHERE user_id=? AND chat_id=? AND ephemeral_id=?""",clock.millis()+delayMillis,user,group,message)
     }
     fun panels(group:Long,training:String):List<Pair<Long,ScreenAction>> = database.read { c ->
         sqlQuery(c,"SELECT user_id,panel_json FROM bot_sessions WHERE chat_id=? AND ephemeral_id IS NOT NULL AND json_extract(panel_json,'$.id')=? AND json_extract(panel_json,'$.kind') LIKE 'participation%'",group,training) {
@@ -120,7 +121,8 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
             JOIN training_polls p ON p.group_id=s.chat_id AND p.id=json_extract(s.panel_json,'$.id')
             JOIN bot_deliveries d ON d.delivery_key='training:' || p.group_id || ':' || p.training_id
             WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') IN ('poll_detail','poll_close_confirm')
-            AND p.status='CLOSED' AND d.status='SENT' AND d.message_id IS NOT NULL""") {
+            AND p.status='CLOSED' AND d.status='SENT' AND d.message_id IS NOT NULL
+            AND COALESCE(json_extract(s.panel_json,'$.retry_after'),0)<=?""",clock.millis()) {
             Triple(it.getLong(1),it.getLong(2),it.getLong(3))
         }
     }
@@ -149,6 +151,16 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     fun displayPage(key:String):Int=database.read { c -> sqlQuery(c,"SELECT display_page FROM bot_deliveries WHERE delivery_key=?",key) { it.getInt(1) }.singleOrNull() ?: 0 }
     fun displayPage(key:String,page:Int)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET display_page=? WHERE delivery_key=?",page.coerceAtLeast(0),key) }
     fun pinStatus(key:String):String?=database.read { c -> sqlQuery(c,"SELECT pin_status FROM bot_deliveries WHERE delivery_key=?",key) { it.getString(1) }.singleOrNull() }
+    fun retryDelivery(key:String,failure:ru.movereon.tennis.telegram.TelegramFailure,pin:Boolean=false,defaultSeconds:Int=5) = database.write { c ->
+        val column=if(pin) "pin_retry_at" else "retry_at"
+        sqlUpdate(c,"UPDATE bot_deliveries SET $column=? WHERE delivery_key=?",ru.movereon.tennis.telegram.RetryPolicy.deadline(clock.millis(),failure,defaultSeconds),key)
+    }
+    fun clearDeliveryRetry(key:String,pin:Boolean=false) = database.write { c ->
+        sqlUpdate(c,"UPDATE bot_deliveries SET ${if(pin) "pin_retry_at" else "retry_at"}=0 WHERE delivery_key=?",key)
+    }
+    fun deliveryDelay(key:String):Long = database.read { c ->
+        ((sqlQuery(c,"SELECT retry_at FROM bot_deliveries WHERE delivery_key=?",key) { it.getLong(1) }.singleOrNull() ?: 0)-clock.millis()).coerceAtLeast(0)
+    }
     fun pinStatus(key:String,status:String)=database.write { c -> sqlUpdate(c,"UPDATE bot_deliveries SET pin_status=? WHERE delivery_key=?",status,key) }
     /** Re-pin on an explicit group command, including after a manual unpin or a permission fix. */
     fun requestGroupMenuPin(group:Long)=database.write { c ->
@@ -159,20 +171,20 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='PENDING' WHERE delivery_key='group-menu:' || group_id
             AND chat_id=group_id AND status='SENT' AND message_id IS NOT NULL AND pin_status='NONE'""")
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='NONE' WHERE pin_status LIKE 'UNPIN%'
-            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN')""")
+            AND delivery_key IN (SELECT 'training:' || t.group_id || ':' || t.id FROM trainings t WHERE t.status='OPEN')""")
         sqlUpdate(c,"""UPDATE bot_deliveries SET pin_status='UNPIN_PENDING' WHERE message_id IS NOT NULL
             AND pin_status IN ('NONE','PENDING','SENDING','SENT','FAILED','UNKNOWN')
-            AND EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status IN ('CLOSED','CANCELLED'))""")
+            AND delivery_key IN (SELECT 'training:' || t.group_id || ':' || t.id FROM trainings t WHERE t.status IN ('CLOSED','CANCELLED'))""")
     }
     fun pendingUnpins(excludeKeys:Set<String> = emptySet()):List<Pair<String,Delivery>> = database.read { c ->
         val exclusion=if(excludeKeys.isEmpty()) "" else " AND delivery_key NOT IN (${excludeKeys.joinToString(",") { "?" }})"
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND message_id IS NOT NULL$exclusion ORDER BY status='RETRY' DESC LIMIT 100",*excludeKeys.toTypedArray()) {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='UNPIN_PENDING' AND pin_retry_at<=? AND message_id IS NOT NULL$exclusion ORDER BY status='RETRY' DESC LIMIT 100",clock.millis(),*excludeKeys.toTypedArray()) {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,it.getString("status"))
         }
     }
     fun pendingPins():List<Pair<String,Delivery>> = database.read { c ->
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND status='SENT' AND message_id IS NOT NULL AND ((delivery_key='group-menu:' || group_id AND chat_id=group_id) OR EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN') OR EXISTS(SELECT 1 FROM training_polls p WHERE delivery_key='poll:' || p.group_id || ':' || p.id AND p.status='OPEN')) LIMIT 20") {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE pin_status='PENDING' AND pin_retry_at<=? AND status='SENT' AND message_id IS NOT NULL AND ((delivery_key='group-menu:' || group_id AND chat_id=group_id) OR EXISTS(SELECT 1 FROM trainings t WHERE delivery_key='training:' || t.group_id || ':' || t.id AND t.status='OPEN') OR EXISTS(SELECT 1 FROM training_polls p WHERE delivery_key='poll:' || p.group_id || ':' || p.id AND p.status='OPEN')) LIMIT 20",clock.millis()) {
             val key=it.getString("delivery_key")
             key to Delivery(key,it.getLong("chat_id"),null,it.getLong("message_id"),null,"SENT")
         }
@@ -237,8 +249,8 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         sqlQuery(c,"""SELECT d.* FROM bot_deliveries d JOIN bot_deliveries live
             ON live.delivery_key='personal:' || d.user_id || ':' || d.chat_id
             WHERE (d.delivery_key LIKE 'retired:%' OR d.delivery_key LIKE 'input:%') AND d.status='RETRY' AND d.chat_id>0
-            AND live.status='SENT' AND live.message_id IS NOT NULL AND d.message_id<>live.message_id
-            AND (? IS NULL OR d.user_id=?)$excluded LIMIT 20""",user,user,*excludeKeys.toTypedArray()) {
+            AND d.retry_at<=? AND live.status='SENT' AND live.message_id IS NOT NULL AND d.message_id<>live.message_id
+            AND (? IS NULL OR d.user_id=?)$excluded LIMIT 20""",clock.millis(),user,user,*excludeKeys.toTypedArray()) {
             Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
         }
     }
@@ -266,24 +278,29 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     }
     fun pendingCards(excludeKeys:Set<String> = emptySet()): List<Triple<Long, String, Long>> = database.read { c ->
         val exclusion=if(excludeKeys.isEmpty()) "" else " AND ('training:' || a.group_id || ':' || a.training_id) NOT IN (${excludeKeys.joinToString(",") { "?" }})"
-        sqlQuery(c, """SELECT a.group_id,a.training_id,MAX(a.id) FROM actions a
+        // GROUP BY must not make the planner scan historical actions when this partial index is empty.
+        sqlQuery(c, """SELECT a.group_id,a.training_id,MAX(a.id) FROM actions a INDEXED BY pending_actions
             LEFT JOIN bot_deliveries d ON d.delivery_key='training:' || a.group_id || ':' || a.training_id
             WHERE a.training_id IS NOT NULL AND a.needs_delivery=1 AND a.delivered_at IS NULL
-            AND (d.status IS NULL OR d.status<>'FAILED')
+            AND COALESCE(d.retry_at,0)<=? AND (d.status IS NULL OR d.status<>'FAILED')
             AND (d.status IS NULL OR d.status<>'UNKNOWN' OR d.message_id IS NOT NULL)$exclusion
-            GROUP BY a.group_id,a.training_id ORDER BY MAX(a.id) LIMIT 20""",*excludeKeys.toTypedArray()) {
+            GROUP BY a.group_id,a.training_id ORDER BY MAX(a.id) LIMIT 20""",clock.millis(),*excludeKeys.toTypedArray()) {
             Triple(it.getLong(1), it.getString(2), it.getLong(3))
         }
     }
     internal fun pendingPaymentNotices():List<PaymentNoticeWork> = database.read { c ->
-        sqlQuery(c,"""SELECT group_id,transfer_id,MAX(id),MAX(kind IN ('SendPayment','SendOtherPayment'))
-            FROM actions WHERE transfer_id IS NOT NULL AND needs_delivery=1 AND delivered_at IS NULL
-            GROUP BY group_id,transfer_id ORDER BY MAX(id) LIMIT 20""") {
+        sqlQuery(c,"""SELECT a.group_id,a.transfer_id,MAX(a.id),MAX(a.kind IN ('SendPayment','SendOtherPayment'))
+            FROM actions a INDEXED BY pending_actions
+            LEFT JOIN bot_deliveries d ON d.delivery_key='payment-notice:' || a.group_id || ':' || a.transfer_id
+            WHERE a.transfer_id IS NOT NULL AND a.needs_delivery=1 AND a.delivered_at IS NULL AND COALESCE(d.retry_at,0)<=?
+            GROUP BY a.group_id,a.transfer_id ORDER BY MAX(a.id) LIMIT 20""",clock.millis()) {
             PaymentNoticeWork(it.getLong(1),it.getString(2),it.getLong(3),it.getBoolean(4))
         }
     }
     internal fun hasPendingPaymentNotices()=database.read { c ->
-        sqlQuery(c,"SELECT EXISTS(SELECT 1 FROM actions WHERE transfer_id IS NOT NULL AND needs_delivery=1 AND delivered_at IS NULL)") { it.getBoolean(1) }.single()
+        sqlQuery(c,"""SELECT EXISTS(SELECT 1 FROM actions a INDEXED BY pending_actions
+            LEFT JOIN bot_deliveries d ON d.delivery_key='payment-notice:' || a.group_id || ':' || a.transfer_id
+            WHERE a.transfer_id IS NOT NULL AND a.needs_delivery=1 AND a.delivered_at IS NULL AND COALESCE(d.retry_at,0)<=?)""",clock.millis()) { it.getBoolean(1) }.single()
     }
     internal fun paymentNoticeDelivered(work:PaymentNoticeWork)=database.write { c ->
         sqlUpdate(c,"UPDATE actions SET delivered_at=? WHERE group_id=? AND transfer_id=? AND id<=? AND needs_delivery=1 AND delivered_at IS NULL",
@@ -320,7 +337,7 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
     }
     internal fun pendingNoticeRemovals(excludeKeys:Set<String> = emptySet())=database.read { c ->
         val excluded=if(excludeKeys.isEmpty()) "" else " AND delivery_key NOT IN (${excludeKeys.joinToString(",") { "?" }})"
-        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE delivery_key LIKE 'notice-remove:%' AND status IN ('RETRY','BLOCKED') AND message_id IS NOT NULL$excluded ORDER BY status='RETRY' DESC LIMIT 100",*excludeKeys.toTypedArray()) {
+        sqlQuery(c,"SELECT * FROM bot_deliveries WHERE delivery_key LIKE 'notice-remove:%' AND retry_at<=? AND status IN ('RETRY','BLOCKED') AND message_id IS NOT NULL$excluded ORDER BY status='RETRY' DESC LIMIT 100",clock.millis(),*excludeKeys.toTypedArray()) {
             Delivery(it.getString("delivery_key"),it.getLong("chat_id"),it.getLong("user_id"),it.getLong("message_id"),null,it.getString("status"))
         }
     }

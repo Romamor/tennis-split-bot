@@ -77,6 +77,9 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
     }
     fun stop(p:TrainingPoll) {
         if(p.status!="CLOSING" || p.stopped) return
+        val key="poll:${p.group}:${p.id}"
+        if(state.deliveryDelay(key)>0) return
+        recordDelivery(p)
         var stopped=false
         try {
             api.stopPoll(p.group,requireNotNull(p.message))
@@ -84,7 +87,9 @@ internal class PollWorkflow(private val polls:TrainingPolls,private val state:In
             // stopPoll can succeed before a crash; both it and keyboard removal are retry-safe.
             api.editKeyboard(p.group,p.message,TgKeyboard(emptyList()))
             polls.stopped(p)
+            state.clearDeliveryRetry(key)
         } catch(f:TelegramFailure) {
+            if(f.kind in setOf(FailureKind.RETRY_LATER,FailureKind.UNCERTAIN)) state.retryDelivery(key,f)
             if(f.code in setOf(401,409) || f.kind !in setOf(FailureKind.REJECTED,FailureKind.MESSAGE_MISSING)) throw f
             polls.closeFailed(p,stopped || f.kind==FailureKind.MESSAGE_MISSING)
         }

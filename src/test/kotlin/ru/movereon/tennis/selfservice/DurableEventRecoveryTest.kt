@@ -23,15 +23,25 @@ class DurableEventRecoveryTest {
     private val fake=FakeTelegramApi()
     private val panels=mutableMapOf<Pair<Long,Long>,TgMessage>()
     private var nextPanel=100L
+    private var callbackPanels=0
+    private var administratorPanels=0
     private var unavailableMember:Long?=null
     private val api=object:TelegramApi by fake {
         override fun member(chatId:Long,userId:Long):TgMember {
             if(unavailableMember==userId) throw TelegramFailure(FailureKind.UNCERTAIN)
             return fake.member(chatId,userId)
         }
-        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage =
+        private fun panel(chatId:Long,userId:Long,text:String,keyboard:TgKeyboard):TgMessage =
             TgMessage(chat=TgChat(chatId,"supergroup"),from=fake.bot,text=text,keyboard=keyboard,
                 receiver=TgUser(userId),ephemeralId=nextPanel++).also { panels[chatId to userId]=it }
+        override fun ephemeralRich(chatId:Long,userId:Long,callbackId:String,text:String,html:String,keyboard:TgKeyboard):TgMessage {
+            callbackPanels++
+            return panel(chatId,userId,text,keyboard)
+        }
+        override fun ephemeralRichAsAdmin(chatId:Long,userId:Long,text:String,html:String,keyboard:TgKeyboard):TgMessage {
+            administratorPanels++
+            return panel(chatId,userId,text,keyboard)
+        }
         override fun editEphemeralRich(chatId:Long,userId:Long,ephemeralId:Long,text:String,html:String,keyboard:TgKeyboard) {
             val old=panels[chatId to userId] ?: throw TelegramFailure(FailureKind.MESSAGE_MISSING,400)
             panels[chatId to userId]=old.copy(text=text,keyboard=keyboard)
@@ -116,6 +126,8 @@ class DurableEventRecoveryTest {
         assertTrue(bot.state.completed(opening.id))
         assertTrue(bot.state.completed(laterSameUser.id))
         assertEquals(1,panels.size)
+        assertEquals(0,callbackPanels,"The original callback is expired after 25 hours and must not be sent again")
+        assertEquals(1,administratorPanels,"A freshly authorized administrator send must recover the delayed panel")
         assertInputReleased(opening.id)
     }
 

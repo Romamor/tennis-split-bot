@@ -45,5 +45,5 @@ internal class FormerMemberScreens(private val service:SettlementService) {
             else -> error("Not an own-history screen: ${action.kind}")
         }
     }
-    companion object { val kinds=setOf("finance","finance_balance_history","my_training","own_group_trainings") }
+    companion object { val kinds=ActionRegistry.matching { it.allowsFormerMember } }
 }

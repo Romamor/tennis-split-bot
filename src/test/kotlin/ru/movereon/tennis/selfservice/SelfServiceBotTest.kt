@@ -192,8 +192,14 @@ class SelfServiceBotTest {
         bot.maintain();assertEquals("UNPIN_PENDING",bot.state.pinStatus(key))
         bot.state.pinStatus(key,"UNPIN_SENDING")
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
-        fake.unpinFailure=null;bot.maintain();bot.maintain()
+        val attempts=fake.unpinAttempts.size
+        fake.unpinFailure=null;bot.maintain()
+        assertEquals(attempts,fake.unpinAttempts.size,"Restart must preserve the pending unpin delay")
+        clock.now=clock.now.plusSeconds(4);bot.maintain()
+        assertEquals(attempts,fake.unpinAttempts.size)
+        clock.now=clock.now.plusSeconds(1);bot.maintain();bot.maintain()
         assertEquals(listOf(-1L to publicCard().id),fake.unpinned);assertEquals(1,fake.pinAttempts)
+        assertEquals(attempts+1,fake.unpinAttempts.size)
     }
 
     @Test fun `rejected unpin has an admin retry and cannot repin a cancelled card`() {
@@ -227,6 +233,10 @@ class SelfServiceBotTest {
         fake.deleteFailure=null
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
         bot.maintain()
+        assertNotNull(fake.messages[-1L to card.id],"Restart must not discard the pending deletion delay")
+        clock.now=clock.now.plusSeconds(4);bot.maintain()
+        assertNotNull(fake.messages[-1L to card.id])
+        clock.now=clock.now.plusSeconds(1);bot.maintain()
         assertNull(fake.messages[-1L to card.id])
         assertNull(bot.state.delivery("training:-1:${t.id}"))
         assertEquals(history,bot.service.history(auth).total)
@@ -261,6 +271,10 @@ class SelfServiceBotTest {
         assertEquals(current,fake.messages[1L to current.id])
         bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
         fake.deleteFailure=TelegramFailure(FailureKind.REJECTED,400);bot.maintain()
+        assertEquals(old.text,fake.messages[1L to old.id]!!.text,"Restart must preserve the cleanup retry delay")
+        clock.now=clock.now.plusSeconds(59);bot.maintain()
+        assertEquals(old.text,fake.messages[1L to old.id]!!.text)
+        clock.now=clock.now.plusSeconds(1);bot.maintain()
         assertEquals("Меню обновлено. Используй последнее сообщение бота.",fake.messages[1L to old.id]!!.text)
         assertTrue(fake.messages[1L to old.id]!!.keyboard!!.rows.isEmpty())
         assertEquals(current.id,latest(1).id);assertTrue(bot.state.retiredPrivateMenus().isEmpty())
@@ -568,7 +582,7 @@ class SelfServiceBotTest {
         assertFalse(ephemeralMessages.getValue(-1L to 2L).keyboard!!.rows.flatten().any { it.text.contains("Дальше") })
     }
 
-    @Test fun `40 players with guests fit in one rich card across training states`() {
+    @Test fun `legacy 80 person cards and current 50 person cards render without pagination`() {
         setup();create();val auth=Access(-1,1,true);val original=bot.service.trainings(auth).items.single()
         val users=(5L..44L).toList()
         users.forEach { bot.service.remember(Account(it,"Участник $it " + "ДлинноеИмя".repeat(6),username=if(it==5L) "training_player" else null));bot.service.rememberMembership(-1,it,true) }
@@ -581,10 +595,15 @@ class SelfServiceBotTest {
             assertTrue(content.html.contains("href=\"https://t.me/training_player\""))
             users.filter { it!=5L }.forEach { assertTrue(content.html.contains("tg://user?id=$it")) }
         }
-        bot.service.execute(auth,"add",SettlementCommand.AddPlayers(original.id,1,users))
-        users.forEach { bot.service.execute(auth,"guest:$it",SettlementCommand.ChangeAttendance(original.id,it,AttendanceChange.ADJUST_GUESTS,1)) }
+        val currentUsers=users.take(25)
+        bot.service.execute(auth,"add",SettlementCommand.AddPlayers(original.id,1,currentUsers))
+        currentUsers.forEach { bot.service.execute(auth,"guest:$it",SettlementCommand.ChangeAttendance(original.id,it,AttendanceChange.ADJUST_GUESTS,1)) }
         bot.maintain()
-        assertTrue(publicCard().text!!.length>4096)
+        val current=bot.service.training(auth,original.id)
+        assertEquals(25,current.players.size);assertEquals(25,current.players.sumOf { it.guestCount })
+        assertEquals(51,Regex("<tr>").findAll(fake.richMessages.getValue(-1L to publicCard().id)).count())
+        assertTrue(publicCard().text!!.length<=32768)
+        assertFalse(publicCard().text!!.contains("Страница"))
         val privateCard=bot.screens.render(ScreenAction("training",-1,original.id,page=12),auth,"test:full",1)
         assertEquals(publicCard().text,privateCard.text)
         click(2,"Открыть",publicCard())
@@ -1132,16 +1151,24 @@ class SelfServiceBotTest {
         setup();create()
         val auth=Access(-1,1,true)
         val id=bot.service.trainings(auth).items.single().id
+        var previous=emptyList<Long>()
         repeat(8) { batch ->
+            previous.forEach { user -> bot.service.execute(auth,"remove:$batch:$user",SettlementCommand.RemovePlayer(id,user)) }
             val users=(1L..27L).map { 100+batch*27+it }
             users.forEach { bot.service.remember(Account(it,"Длинное имя ".repeat(10)));bot.service.rememberMembership(-1,it,true) }
             bot.service.execute(auth,"batch:$batch",SettlementCommand.AddPlayers(id,bot.service.training(auth,id).version,users))
+            previous=users
+            assertEquals(27,bot.service.training(auth,id).players.size)
         }
-        val history=bot.screens.render(ScreenAction("history",-1,id),auth,"history-test",1)
-        assertTrue(history.text.length<=4096)
+        val pages=(0 until bot.service.history(auth,id).pages).map { page ->
+            bot.screens.render(ScreenAction("history",-1,id,page=page),auth,"history-test:$page",1)
+        }
+        val history=pages.first()
+        assertTrue(pages.all { it.text.length<=4096 })
+        assertEquals(8,pages.sumOf { Regex("Добавил игроков: 27").findAll(it.text).count() })
         assertTrue(history.text.contains("Добавил игроков: 27"))
         assertTrue(history.keyboard.rows.flatten().any { it.text=="Дальше ›" })
-        assertEquals(216,bot.service.training(auth,id).players.size)
+        assertEquals(27,bot.service.training(auth,id).players.size)
     }
 
     @Test fun `admin draft cannot overwrite immediate user changes and replay cannot erase a new draft`() {
