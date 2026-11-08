@@ -76,6 +76,25 @@ class ExtraMetricsTest(unittest.TestCase):
         self.assertEqual(values['vds_vpn_oom_kills_total'],2)
         self.assertEqual(values['vds_vpn_memory_bytes'],1024)
 
+    def test_application_metrics_accept_only_numeric_closed_label_sets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'app.prom'
+            valid = ('# TYPE tennis_ui_response_seconds histogram\n'
+                     'tennis_ui_response_seconds_bucket{category="finance",le="+Inf"} 1\n'
+                     'tennis_ui_response_seconds_count{category="finance"} 1\n'
+                     'tennis_ui_response_seconds_sum{category="finance"} 0.5\n'
+                     'tennis_ui_sample_timestamp_seconds 1000\n')
+            path.write_text(valid)
+            self.assertEqual(collector.ui_metrics(path), valid)
+            for invalid in [valid + 'secret_token 123\n', valid.replace('finance', 'private_name'),
+                            valid.replace('0.5', 'NaN'), valid + valid,
+                            valid.replace('category="finance"', 'user="123"'), 'x' * 131073]:
+                path.write_text(invalid)
+                with self.assertRaises(ValueError): collector.ui_metrics(path)
+
+    def test_missing_application_file_does_not_affect_other_collectors(self):
+        with self.assertRaises(OSError): collector.ui_metrics('/nonexistent/app.prom')
+
 
 if __name__ == '__main__':
     unittest.main()

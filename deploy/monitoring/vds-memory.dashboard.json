@@ -11,14 +11,15 @@
   ],
   "id": null,
   "uid": "vds-memory",
-  "title": "VDS · память и VMware",
+  "title": "VDS · память и отклик бота",
   "tags": [
     "vds",
-    "memory"
+    "memory",
+    "bot"
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "editable": true,
   "refresh": "1m",
   "time": {
@@ -1036,6 +1037,668 @@
       }
     },
     {
+      "id": 23,
+      "title": "Бот · отклик кнопок",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 24,
+      "title": "Отклик кнопок · p50 / p95",
+      "description": "От получения нажатия ботом до принятия панели Telegram, включая очередь и повторы. Не измеряет отрисовку на телефоне. Процентили приблизительны; при редких нажатиях смотри число ответов.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(tennis_ui_response_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "p50",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(tennis_ui_response_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "p95",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 25,
+      "title": "Ответов за час",
+      "description": "",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(tennis_ui_response_seconds_count{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h]))",
+          "legendFormat": "Ответы",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 26,
+      "title": "Возраст метрик бота",
+      "description": "Обычно до двух минут. При остановке бота старые цифры не доказывают работоспособность; сверяй возраст и состояние контейнера.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 35,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - tennis_ui_sample_timestamp_seconds{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "legendFormat": "Возраст",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 27,
+      "title": "Отклик по разделам · p95",
+      "description": "Категории фиксированы; имён, групп и текстов кнопок в метриках нет. Нет нажатий — нет оценки задержки.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le,category) (rate(tennis_ui_response_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "{{category}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "title": "Очередь и обработка · p95",
+      "description": "Обработка включает сетевые запросы. Эти линии и Telegram API не нужно складывать. Повторные попытки считаются отдельно; полное время с повторами видно в отклике.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(tennis_ui_queue_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "Ожидание первой обработки",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(tennis_ui_processing_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "Попытка обработки",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "title": "Telegram API · p95",
+      "description": "Все обращения, включая фоновые, с ошибками и ожиданием тайм-аута. getUpdates исключён: ожидание новых событий не является задержкой кнопки.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le,method) (rate(tennis_ui_api_seconds_bucket{instance=\"$instance\",job=\"integrations/node_exporter\"}[1h])))",
+          "legendFormat": "{{method}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "title": "Исходы обработки за час",
+      "description": "success — принят ответ; retry — событие отложено; uncertain — результат доставки неизвестен; rejected/error — отказ/ошибка; ignored — нет новой панели. Попыток может быть больше нажатий.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 47,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(outcome) (increase(tennis_ui_attempts_total{instance=\"$instance\",job=\"integrations/node_exporter\",outcome!~\"api_.*\"}[1h]))",
+          "legendFormat": "{{outcome}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 31,
+      "title": "Особые ответы API за час",
+      "description": "Включает ожидаемые NOT_MODIFIED, MESSAGE_MISSING и истечение callback. Это причины исключений API, не число неработающих кнопок.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 55,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(outcome) (increase(tennis_ui_attempts_total{instance=\"$instance\",job=\"integrations/node_exporter\",outcome=~\"api_.*\"}[1h]))",
+          "legendFormat": "{{outcome}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 32,
+      "title": "Проверка метрик приложения",
+      "description": "1 — прочитан разрешённый числовой формат; 0 — файл отсутствует или не прошёл проверку. Данные приложения обновляются в цикле бота, без отдельного веб-сервера.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_METRICS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 55,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 6,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "vds_ui_metrics_collector_success{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "legendFormat": "Чтение",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_METRICS}"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
       "id": 14,
       "title": "VPN · состояние, ресурсы и трафик",
       "type": "row",
@@ -1043,7 +1706,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 64,
         "w": 24,
         "h": 1
       }
@@ -1059,7 +1722,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 35,
+        "y": 65,
         "w": 12,
         "h": 4
       },
@@ -1099,7 +1762,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "vds_vpn_running{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_running{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}}",
           "datasource": {
             "type": "prometheus",
@@ -1134,7 +1797,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 35,
+        "y": 65,
         "w": 12,
         "h": 4
       },
@@ -1174,7 +1837,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "vds_vpn_collector_success{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_collector_success{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}}",
           "datasource": {
             "type": "prometheus",
@@ -1209,7 +1872,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 69,
         "w": 12,
         "h": 8
       },
@@ -1248,7 +1911,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "vds_vpn_memory_bytes{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_memory_bytes{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}} · RAM",
           "datasource": {
             "type": "prometheus",
@@ -1259,7 +1922,7 @@
         },
         {
           "refId": "B",
-          "expr": "vds_vpn_swap_bytes{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_swap_bytes{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}} · swap",
           "datasource": {
             "type": "prometheus",
@@ -1294,7 +1957,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 39,
+        "y": 69,
         "w": 12,
         "h": 8
       },
@@ -1333,7 +1996,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * rate(vds_vpn_cpu_seconds_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "100 * rate(vds_vpn_cpu_seconds_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}}",
           "datasource": {
             "type": "prometheus",
@@ -1368,7 +2031,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 47,
+        "y": 77,
         "w": 12,
         "h": 8
       },
@@ -1407,7 +2070,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "rate(vds_vpn_receive_bytes_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_receive_bytes_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · принято",
           "datasource": {
             "type": "prometheus",
@@ -1418,7 +2081,7 @@
         },
         {
           "refId": "B",
-          "expr": "rate(vds_vpn_transmit_bytes_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_transmit_bytes_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · передано",
           "datasource": {
             "type": "prometheus",
@@ -1453,7 +2116,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 47,
+        "y": 77,
         "w": 12,
         "h": 8
       },
@@ -1538,7 +2201,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 55,
+        "y": 85,
         "w": 12,
         "h": 8
       },
@@ -1577,7 +2240,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "rate(vds_vpn_receive_errors_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_receive_errors_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · ошибки вход",
           "datasource": {
             "type": "prometheus",
@@ -1588,7 +2251,7 @@
         },
         {
           "refId": "B",
-          "expr": "rate(vds_vpn_transmit_errors_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_transmit_errors_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · ошибки выход",
           "datasource": {
             "type": "prometheus",
@@ -1599,7 +2262,7 @@
         },
         {
           "refId": "C",
-          "expr": "rate(vds_vpn_receive_drops_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_receive_drops_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · отброшено вход",
           "datasource": {
             "type": "prometheus",
@@ -1610,7 +2273,7 @@
         },
         {
           "refId": "D",
-          "expr": "rate(vds_vpn_transmit_drops_total{instance=\"$instance\",job=\"integrations/node_exporter\"}[5m])",
+          "expr": "rate(vds_vpn_transmit_drops_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}[5m])",
           "legendFormat": "{{vpn}} · отброшено выход",
           "datasource": {
             "type": "prometheus",
@@ -1645,7 +2308,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 55,
+        "y": 85,
         "w": 12,
         "h": 8
       },
@@ -1684,7 +2347,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "vds_vpn_restarts_total{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_restarts_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}} · счётчик перезапусков Docker",
           "datasource": {
             "type": "prometheus",
@@ -1695,7 +2358,7 @@
         },
         {
           "refId": "B",
-          "expr": "vds_vpn_oom_killed{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_oom_killed{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}} · последняя остановка OOM",
           "datasource": {
             "type": "prometheus",
@@ -1706,7 +2369,7 @@
         },
         {
           "refId": "C",
-          "expr": "vds_vpn_oom_kills_total{instance=\"$instance\",job=\"integrations/node_exporter\"}",
+          "expr": "vds_vpn_oom_kills_total{instance=\"$instance\",job=\"integrations/node_exporter\",vpn=~\"$vpn\"}",
           "legendFormat": "{{vpn}} · OOM текущей cgroup",
           "datasource": {
             "type": "prometheus",
@@ -1752,6 +2415,29 @@
           "selected": true,
           "text": "vds-1",
           "value": "vds-1"
+        }
+      },
+      {
+        "name": "vpn",
+        "label": "Контейнер",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_METRICS}"
+        },
+        "query": {
+          "query": "query_result(vds_vpn_collector_success{instance=\"$instance\",job=\"integrations/node_exporter\"})",
+          "refId": "vpn"
+        },
+        "regex": "/vpn=\"([^\"]+)\"/",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
         }
       }
     ]

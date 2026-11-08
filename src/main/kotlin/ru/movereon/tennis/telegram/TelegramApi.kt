@@ -87,7 +87,7 @@ interface TelegramApi {
 
 /** No redirects, URL logging or upstream exception causes: the request URL contains the token. */
 class HttpTelegramApi(private val token: String, private val endpoint: URI = URI("https://api.telegram.org"), private val backgroundBudgetMillis:Long=5000,
-    private val diagnostics:UiDiagnostics=UiDiagnostics()) : TelegramApi {
+    private val diagnostics:UiDiagnostics=UiDiagnostics(), private val metrics:UiMetrics=UiMetrics()) : TelegramApi {
     private var backgroundDeadline:Long?=null
     private val callbackDeadline=ThreadLocal<Long>()
     override fun <T> callbackWindow(remainingMillis:Long,block:()->T):T {
@@ -254,7 +254,10 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         })
     }
 
-    private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement {
+    private fun call(method: String, body: JsonObject, timeout: Int = 25): JsonElement =
+        metrics.api(method) { request(method,body,timeout) }
+
+    private fun request(method:String, body:JsonObject, timeout:Int):JsonElement {
         val started=System.nanoTime()
         val callbackSend=method in setOf("sendMessage","sendRichMessage") &&
             body["ephemeral_message_parameters"]?.jsonObject?.get("callback_query_id")!=null

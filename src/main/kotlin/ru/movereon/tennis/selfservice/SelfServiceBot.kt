@@ -10,7 +10,7 @@ import java.util.UUID
 
 class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgUser,
     private val clock: Clock = Clock.systemUTC(), private val zone: String = "Europe/Moscow",
-    private val diagnostics:UiDiagnostics=UiDiagnostics()) {
+    private val diagnostics:UiDiagnostics=UiDiagnostics(), private val metrics:UiMetrics=UiMetrics()) {
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
     val inbox = UpdateInbox(database,clock,identity.username)
@@ -140,7 +140,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 System.err.println("Telegram: событие без сохранённого содержимого; требуется проверка очереди")
                 inbox.retry(pending.id,60_000);return@repeat
             }
-            try { handle(update) }
+            try { handleReceived(update,pending.acceptedAt) }
             catch(f:TelegramFailure) {
                 if(f.code in setOf(401,409)) throw f
                 inbox.retry(pending.id,RetryPolicy.delayMillis(f,3))
@@ -149,7 +149,15 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
         }
     }
-    fun handle(update: TgUpdate) {
+    fun handle(update:TgUpdate) = handleReceived(update,null)
+
+    private fun handleReceived(update:TgUpdate,receivedAt:Long?) {
+        if(update.callback!=null || update.message?.text?.startsWith("/start n_")==true)
+            metrics.interaction(update.id,receivedAt) { handleUpdate(update) }
+        else handleUpdate(update)
+    }
+
+    private fun handleUpdate(update: TgUpdate) {
         if (state.completed(update.id)) { diagnostics.update(update.id,"duplicate");return }
         checkedMembership.clear()
         val callback = update.callback
@@ -217,6 +225,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             if (plan == null) { diagnostics.update(update.id,"no_plan");state.complete(update.id);return }
             ActionRegistry.requireKnown(plan.screen.kind)
             diagnostics.update(update.id,"plan",plan.screen.kind)
+            metrics.action(plan.screen.kind)
             val closingOwnPanel=plan.chat<0 && plan.screen.kind=="close_panel" && plan.command==null
             val a = if (plan.screen.group < 0 && !closingOwnPanel) screenAccess(plan.screen,plan.user,plan.chat,mutating=plan.command!=null) else null
             var effective = plan
@@ -249,6 +258,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 val target=ScreenAction("edit_training",auth.groupId,effective.screen.id)
                 val token=state.button(target,null,"edit-link:${auth.groupId}:${target.id}",permanent=true)
                 api.openPrivate(requireNotNull(effective.callback),"https://t.me/${identity.username}?start=n_$token")
+                metrics.responded()
                 state.complete(update.id)
                 return
             }
@@ -263,7 +273,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 requireNotNull(a)
                 service.training(a,effective.screen.id)
                 // Previously sent page buttons now refresh the complete card.
-                refreshCard(a.groupId,effective.screen.id)
+                if(refreshCard(a.groupId,effective.screen.id)) metrics.responded()
                 effective.callback?.let { api.answer(it) }
                 state.complete(update.id);return
             }
@@ -298,11 +308,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             state.complete(update.id)
         } catch (failure: TelegramFailure) {
             diagnostics.update(update.id,"telegram_failure",detail=failure.kind.name)
+            metrics.failure(failure.kind)
             if(failure.code in setOf(401,409)) throw failure
             if (failure.kind in setOf(FailureKind.UNCERTAIN, FailureKind.RETRY_LATER)) throw failure
             answer(callback, "Не удалось выполнить действие. Проверь доступ бота к этой группе.")
             state.complete(update.id)
         } catch (failure: RuntimeException) {
+            metrics.failure()
             diagnostics.update(update.id,"application_failure",detail=if(failure is AccountingException) failure.code.name else failure.javaClass.simpleName)
             if (failure !is IllegalArgumentException && failure !is DateTimeException) throw failure
             val explanation = if (failure is DateTimeException) "Проверь формат даты и времени: ДД.ММ.ГГГГ и ЧЧ:ММ."
@@ -340,6 +352,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             val token = callback.data?.takeIf { it.startsWith("n:") }?.removePrefix("n:")
             val button = token?.let(state::button)
             diagnostics.update(update.id,"button",button?.action?.kind,if(button==null) "missing" else "found")
+            metrics.action(button?.action?.kind)
             val incomingNotice=chat==user.id && button?.owner==user.id && button.scope.startsWith("payment-notice:") && state.delivery(button.scope)?.status!="BLOCKED"
             if(chat>0 && !incomingNotice && message.from?.id==identity.id && message.id>0 && state.delivery("personal:${user.id}:$chat")?.message!=message.id) {
                 state.retirePrivateMenu(user.id,chat,message.id)
@@ -688,17 +701,21 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         if (plan.screen.kind == "group_menu") {
             val token = state.button(ScreenAction("menu", plan.screen.group), null, "group-link:${plan.screen.group}", true)
             val out = Screens.Output("Открой личное меню бота для тренировок и расчётов.", ButtonAppearance.keyboard(listOf(listOf(TgButton("Открыть меню", url = "https://t.me/${identity.username}?start=n_$token")))), emptySet())
-            if(delivery.send("group-menu:${plan.screen.group}", plan.screen.group, plan.chat, null, out, "group-menu:${plan.screen.group}"))
+            if(delivery.send("group-menu:${plan.screen.group}", plan.screen.group, plan.chat, null, out, "group-menu:${plan.screen.group}")) {
+                metrics.responded()
                 state.requestGroupMenuPin(plan.screen.group)
+            } else metrics.failure(FailureKind.UNCERTAIN)
             return
         }
         if (plan.chat < 0 && plan.screen.kind in setOf("private_link", "close_panel")) {
             try { closePanel(plan.user, plan.chat, plan.ephemeral,required=true) }
             catch(f:TelegramFailure) {
+                metrics.failure(f.kind)
                 if(f.kind in setOf(FailureKind.UNCERTAIN,FailureKind.RETRY_LATER) || f.code in setOf(401,409)) throw f
                 plan.callback?.let { runCatching { api.answer(it,"Не удалось закрыть панель. Попробуй ещё раз.",true) } }
                 return
             }
+            metrics.responded()
             val text = if (plan.screen.kind == "private_link") "Открой актуальные кнопки через «Открыть» на общей карточке." else "Панель закрыта"
             plan.callback?.let { runCatching { api.answer(it, text, plan.screen.kind=="private_link") } }
             return
@@ -730,6 +747,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                     try {
                         if(out.richHtml!=null) api.editEphemeralRich(plan.chat,plan.user,current,out.text,out.richHtml,out.keyboard)
                         else api.editEphemeral(plan.chat, plan.user, current, out.text, out.keyboard)
+                        metrics.responded()
                         state.rememberEphemeral(plan.user, plan.chat, current)
                         updated = true
                     } catch (failure: TelegramFailure) {
@@ -738,6 +756,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 }
                 if (!updated) {
                     val sent = sendPersonalPanel(event,plan,out)
+                    metrics.responded()
                     state.rememberEphemeral(plan.user, plan.chat, sent.ephemeralId,event)
                     if (current != null && current != sent.ephemeralId) deletePanel(plan.user, plan.chat, current)
                 }
@@ -748,6 +767,7 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 state.panel(plan.user,plan.chat,plan.screen.takeIf { it.kind.startsWith("participation") || it.kind in setOf("poll_detail","poll_close_confirm") },out.trainingVersion)
             } catch (failure: TelegramFailure) {
                 if (failure.code in setOf(401, 409)) throw failure
+                metrics.failure(failure.kind)
                 System.err.println("Telegram: персональная панель не доставлена; ${failure.kind}, код=${failure.code ?: "нет"}")
                 if (failure.kind != FailureKind.UNCERTAIN) state.replace(scope, oldTokens)
                 val notice = (if (plan.command != null) "Изменение сохранено. " else "") +
@@ -765,7 +785,9 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
             }
             val delivered=delivery.send(key, plan.screen.group, plan.chat, plan.user, out, scope)
             diagnostics.update(event,"private_delivery",plan.screen.kind,if(delivered) "accepted" else "uncertain")
+            if(!delivered) metrics.failure(FailureKind.UNCERTAIN)
             if(delivered) {
+                metrics.responded()
                 val view=if(plan.screen.kind in setOf("poll_detail","poll_close_confirm"))
                     state.delivery(key)?.message?.let { PrivatePollView(it,plan.screen,privatePollRevision(plan.screen)) } else null
                 state.privatePollView(plan.user,plan.chat,view?.takeUnless { it.revision.startsWith("CLOSED:") })

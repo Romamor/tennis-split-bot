@@ -9,7 +9,7 @@ import ru.movereon.tennis.storage.sqlUpdate
 import ru.movereon.tennis.telegram.TgUpdate
 import java.time.Clock
 
-data class PendingUpdate(val id:Long,val update:TgUpdate?,val plan:EventPlan?)
+data class PendingUpdate(val id:Long,val update:TgUpdate?,val plan:EventPlan?,val acceptedAt:Long?=null)
 
 /** Telegram acknowledges durable receipt; local retries retain each author's event order. */
 class UpdateInbox(private val database:Database,private val clock:Clock=Clock.systemUTC(),private val botUsername:String?=null) {
@@ -61,11 +61,11 @@ class UpdateInbox(private val database:Database,private val clock:Clock=Clock.sy
     fun pending(limit:Int=20):List<PendingUpdate> {
         require(limit>0)
         return database.read { c ->
-            sqlQuery(c,"""SELECT e.update_id,e.update_json,e.plan_json FROM bot_events e
+            sqlQuery(c,"""SELECT e.update_id,e.update_json,e.plan_json,json_extract(e.update_json,'$.accepted_at') FROM bot_events e
                 WHERE e.completed=0 AND e.next_attempt_at<=? AND $head
                 ORDER BY e.next_attempt_at,e.received_order,e.update_id LIMIT ?""",clock.millis(),limit) {
                 PendingUpdate(it.getLong(1),it.getString(2)?.let { raw -> json.decodeFromString<TgUpdate>(raw) },
-                    it.getString(3)?.let { raw -> json.decodeFromString<EventPlan>(raw) })
+                    it.getString(3)?.let { raw -> json.decodeFromString<EventPlan>(raw) },it.getString(4)?.toLong())
             }
         }
     }

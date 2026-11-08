@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption
 import java.time.ZoneId
 
 /** This class deliberately has no generated toString containing the secret. */
-class BotConfig(val token: String, val database: Path, val timeZone: String, val pollTimeout: Int, val uiDiagnostics:Boolean=false) {
+class BotConfig(val token: String, val database: Path, val timeZone: String, val pollTimeout: Int, val uiDiagnostics:Boolean=false, val uiMetricsPath:Path?=null) {
     companion object {
         fun load(file: Path = Path.of(".env"), environment: Map<String,String> = System.getenv()): BotConfig {
             val settings = if(Files.exists(file)) Files.readAllLines(file).mapNotNull { line ->
@@ -30,7 +30,7 @@ class BotConfig(val token: String, val database: Path, val timeZone: String, val
             require(timeout != null && timeout in 1..50) { "BOT_POLL_TIMEOUT должен быть от 1 до 50" }
             val diagnostics=value("BOT_UI_DIAGNOSTICS","false").toBooleanStrictOrNull()
             require(diagnostics!=null) { "BOT_UI_DIAGNOSTICS должен быть true или false" }
-            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/settlements.sqlite")),zone,timeout,diagnostics)
+            return BotConfig(token,Path.of(value("BOT_DATABASE_PATH","data/settlements.sqlite")),zone,timeout,diagnostics,value("BOT_UI_METRICS_PATH").takeIf { it.isNotBlank() }?.let(Path::of))
         }
     }
 }
@@ -88,10 +88,11 @@ fun runBot() {
         val lock=channel.tryLock() ?: error("С этой базой уже работает другой процесс бота")
         lock.use {
             val diagnostics=UiDiagnostics(config.uiDiagnostics)
-            val api=HttpTelegramApi(config.token,diagnostics=diagnostics)
+            val metrics=UiMetrics(enabled=config.uiMetricsPath!=null)
+            val api=HttpTelegramApi(config.token,diagnostics=diagnostics,metrics=metrics)
             val database=Database(path)
             database.withConnectionReuse {
-                val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone,diagnostics=diagnostics)
+                val bot=SelfServiceBot(api,database,awaitBotIdentity(api),zone=config.timeZone,diagnostics=diagnostics,metrics=metrics)
                 println("Бот @${bot.identity.username} запущен. База: $path. Для остановки нажми Ctrl+C.")
                 var maintenanceDeferred=false
                 val polling=UpdatePollingSchedule(loadDeadline={ bot.inbox.pollRetryAt() },saveDeadline={ bot.inbox.pollRetryAt(it) })
@@ -109,6 +110,7 @@ fun runBot() {
                             catch (_: InterruptedException) { Thread.currentThread().interrupt() }
                         }
                     }
+                    config.uiMetricsPath?.let { metrics.publish(it) }
                     val wait=polling.waitMillis()
                     if(wait>0) try { Thread.sleep(wait) }
                     catch (_: InterruptedException) { Thread.currentThread().interrupt() }

@@ -34,6 +34,21 @@ class HttpTelegramApiTest {
     }
     @AfterEach fun stop() { server.stop(0) }
 
+    @Test fun `API metrics include accepted calls and failures but never the polling wait or payload`() {
+        val metrics=UiMetrics(true)
+        val measured=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),metrics=metrics)
+        measured.answer("private-callback")
+        response={ 429 to """{"ok":false,"error_code":429,"parameters":{"retry_after":15}}""" }
+        assertFailsWith<TelegramFailure> { measured.member(-777,12345) }
+        response={ 200 to """{"ok":true,"result":[]}""" }
+        measured.updates(null,1)
+        val text=metrics.exposition()
+        assertContains(text,"tennis_ui_api_seconds_count{method=\"answerCallbackQuery\"} 1")
+        assertContains(text,"tennis_ui_api_seconds_count{method=\"getChatMember\"} 1")
+        assertContains(text,"outcome=\"api_retry_later\"")
+        for(secret in listOf(token,"private-callback","getUpdates","12345","-777")) assertFalse(text.contains(secret))
+    }
+
     @Test fun `UI diagnostics retain event shape and API outcome without private payloads`() {
         val log=mutableListOf<String>()
         val traced=HttpTelegramApi(token,URI("http://127.0.0.1:${server.address.port}"),diagnostics=UiDiagnostics(true,log::add))

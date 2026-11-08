@@ -2,6 +2,7 @@
 """Publish numeric ballooning and container metrics for Alloy's textfile collector."""
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -156,12 +157,80 @@ def publish(output, text):
             os.unlink(temporary)
 
 
+def ui_metrics(path):
+    """Accept only the bounded numeric application format, never arbitrary textfile contents."""
+    with Path(path).open('rb') as source:
+        raw = source.read(131073)
+    if len(raw) > 131072:
+        raise ValueError('Application metrics too large')
+    text = raw.decode('ascii')
+    categories = {'all', 'other', 'participation', 'transfer', 'finance', 'poll', 'input', 'training', 'settings', 'menu'}
+    methods = {'other', 'getMe', 'getChatMember', 'getChatAdministrators', 'sendMessage', 'sendRichMessage',
+               'sendPoll', 'stopPoll', 'editMessageText', 'editMessageReplyMarkup', 'editEphemeralMessageText',
+               'deleteEphemeralMessage', 'deleteMessage', 'pinChatMessage', 'unpinChatMessage', 'answerCallbackQuery'}
+    outcomes = {'success', 'retry', 'uncertain', 'rejected', 'error', 'ignored', 'evicted'}
+    outcomes |= {'api_' + value for value in ['retry_later', 'uncertain', 'rejected', 'not_modified', 'message_missing', 'callback_expired']}
+    names = {'tennis_ui_attempts_total': 'counter', 'tennis_ui_sample_timestamp_seconds': 'gauge',
+             'tennis_ui_started_timestamp_seconds': 'gauge'}
+    for phase in ('response', 'queue', 'processing', 'api'):
+        names['tennis_ui_' + phase + '_seconds'] = 'histogram'
+    seen = set()
+    for line in text.splitlines():
+        if line.startswith('# TYPE '):
+            if line not in {f'# TYPE {name} {kind}' for name, kind in names.items()}:
+                raise ValueError('Unexpected metric declaration')
+            continue
+        match = re.fullmatch(r'(tennis_ui_[a-z_]+)(\{[^{}]*\})? ([0-9.eE+\-]+)', line)
+        if not match:
+            raise ValueError('Unexpected metric')
+        name, labels, number = match.groups()
+        value = float(number)
+        if not math.isfinite(value) or value < 0:
+            raise ValueError('Invalid metric value')
+        labels = labels or ''
+        pairs = re.findall(r'([a-z]+)="([A-Za-z0-9_.+]+)"', labels)
+        if labels and '{' + ','.join(f'{k}="{v}"' for k, v in pairs) + '}' != labels:
+            raise ValueError('Invalid labels')
+        fields = dict(pairs)
+        if len(fields) != len(pairs):
+            raise ValueError('Duplicate labels')
+        if name in {'tennis_ui_sample_timestamp_seconds', 'tennis_ui_started_timestamp_seconds'}:
+            valid = not fields
+        elif name == 'tennis_ui_attempts_total':
+            valid = set(fields) == {'outcome', 'category'} and fields['outcome'] in outcomes and fields['category'] in categories
+        else:
+            histogram = re.fullmatch(r'tennis_ui_(response|queue|processing|api)_seconds_(bucket|sum|count)', name)
+            valid = False
+            if histogram:
+                phase, suffix = histogram.groups()
+                label = 'method' if phase == 'api' else 'category'
+                allowed = methods if phase == 'api' else categories
+                expected = {label, 'le'} if suffix == 'bucket' else {label}
+                valid = set(fields) == expected and fields.get(label) in allowed
+                if suffix == 'bucket':
+                    valid = valid and fields.get('le') in {'0.1', '0.25', '0.5', '1.0', '2.0', '5.0', '10.0', '30.0', '60.0', '300.0', '3600.0', '86400.0', '+Inf'}
+        key = name + labels
+        if not valid or key in seen:
+            raise ValueError('Unexpected or duplicate metric series')
+        seen.add(key)
+    if 'tennis_ui_sample_timestamp_seconds' not in seen:
+        raise ValueError('Missing application timestamp')
+    return text
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--container', required=True)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--ui-metrics', type=Path, default=os.environ.get('BOT_UI_METRICS_FILE'))
     args = parser.parse_args()
     text = collect(args.container, vpn_configuration(os.environ.get('VPN_CONTAINERS', '{}')))
+    if args.ui_metrics:
+        try:
+            text += ui_metrics(args.ui_metrics)
+            text += 'vds_ui_metrics_collector_success 1\n'
+        except (OSError, ValueError, UnicodeError):
+            text += 'vds_ui_metrics_collector_success 0\n'
     if args.output:
         publish(args.output, text)
     else:

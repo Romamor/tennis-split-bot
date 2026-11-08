@@ -67,8 +67,53 @@ panel('Перезапуски и OOM VPN',[
  ('{{vpn}} · последняя остановка OOM','vds_vpn_oom_killed'+S),
  ('{{vpn}} · OOM текущей cgroup','vds_vpn_oom_kills_total'+S)],12,55,12,8,'none',description='Счётчики сбрасываются при пересоздании контейнера / cgroup. Короткое событие между опросами может не попасть в снимок.')
 
+# Keep existing panel IDs stable; reserve a new block before the optional container section.
+for item in P:
+    if item['gridPos']['y']>=34:
+        item['gridPos']['y']+=30
+    for target in item.get('targets',[]):
+        if 'vds_vpn_' in target['expr']:
+            target['expr']=target['expr'].replace(S,S[:-1]+',vpn=~"$vpn"}')
+
+P.append({'id':len(P)+1,'title':'Бот · отклик кнопок','type':'row','collapsed':False,'panels':[],
+          'gridPos':{'x':0,'y':34,'w':24,'h':1}})
+
+def quantile(phase,q,group='le'):
+    return f'histogram_quantile({q}, sum by ({group}) (rate(tennis_ui_{phase}_seconds_bucket'+S+'[1h])))'
+
+panel('Отклик кнопок · p50 / p95',[
+    ('p50',quantile('response',.5)),('p95',quantile('response',.95))],0,35,12,4,'s','stat',
+    'От получения нажатия ботом до принятия панели Telegram, включая очередь и повторы. Не измеряет отрисовку на телефоне. Процентили приблизительны; при редких нажатиях смотри число ответов.')
+panel('Ответов за час',[
+    ('Ответы','sum(increase(tennis_ui_response_seconds_count'+S+'[1h]))')],12,35,6,4,'short','stat')
+panel('Возраст метрик бота',[
+    ('Возраст','time() - tennis_ui_sample_timestamp_seconds'+S)],18,35,6,4,'s','stat',
+    'Обычно до двух минут. При остановке бота старые цифры не доказывают работоспособность; сверяй возраст и состояние контейнера.')
+panel('Отклик по разделам · p95',[
+    ('{{category}}',quantile('response',.95,'le,category'))],0,39,12,8,'s',
+    description='Категории фиксированы; имён, групп и текстов кнопок в метриках нет. Нет нажатий — нет оценки задержки.')
+panel('Очередь и обработка · p95',[
+    ('Ожидание первой обработки',quantile('queue',.95)),('Попытка обработки',quantile('processing',.95))],12,39,12,8,'s',
+    description='Обработка включает сетевые запросы. Эти линии и Telegram API не нужно складывать. Повторные попытки считаются отдельно; полное время с повторами видно в отклике.')
+panel('Telegram API · p95',[
+    ('{{method}}',quantile('api',.95,'le,method'))],0,47,12,8,'s',
+    description='Все обращения, включая фоновые, с ошибками и ожиданием тайм-аута. getUpdates исключён: ожидание новых событий не является задержкой кнопки.')
+panel('Исходы обработки за час',[
+    ('{{outcome}}','sum by(outcome) (increase(tennis_ui_attempts_total{instance="$instance",job="integrations/node_exporter",outcome!~"api_.*"}[1h]))')],12,47,12,8,'short',
+    description='success — принят ответ; retry — событие отложено; uncertain — результат доставки неизвестен; rejected/error — отказ/ошибка; ignored — нет новой панели. Попыток может быть больше нажатий.')
+panel('Особые ответы API за час',[
+    ('{{outcome}}','sum by(outcome) (increase(tennis_ui_attempts_total{instance="$instance",job="integrations/node_exporter",outcome=~"api_.*"}[1h]))')],0,55,12,8,'short',description='Включает ожидаемые NOT_MODIFIED, MESSAGE_MISSING и истечение callback. Это причины исключений API, не число неработающих кнопок.')
+panel('Проверка метрик приложения',[
+    ('Чтение','vds_ui_metrics_collector_success'+S)],12,55,12,8,'none',
+    description='1 — прочитан разрешённый числовой формат; 0 — файл отсутствует или не прошёл проверку. Данные приложения обновляются в цикле бота, без отдельного веб-сервера.')
+P.sort(key=lambda item:(item['gridPos']['y'],item['gridPos']['x']))
+
 dashboard={'__inputs':[{'name':'DS_METRICS','label':'Grafana Cloud Metrics','description':'Выбери Prometheus-источник метрик своего облака.','type':'datasource','pluginId':'prometheus','pluginName':'Prometheus'}],
-           'id':None,'uid':'vds-memory','title':'VDS · память и VMware','tags':['vds','memory'],'timezone':'browser','schemaVersion':39,'version':2,'editable':True,'refresh':'1m',
-           'time':{'from':'now-6h','to':'now'},'panels':P,'templating':{'list':[{'name':'instance','label':'Виртуалка','type':'query','datasource':DS,'query':{'query':'label_values(node_memory_MemTotal_bytes{job="integrations/node_exporter"}, instance)','refId':'instance'},'refresh':1,'multi':False,'includeAll':False,'current':{'selected':True,'text':'vds-1','value':'vds-1'}}]}}
+           'id':None,'uid':'vds-memory','title':'VDS · память и отклик бота','tags':['vds','memory','bot'],'timezone':'browser','schemaVersion':39,'version':3,'editable':True,'refresh':'1m',
+           'time':{'from':'now-6h','to':'now'},'panels':P,'templating':{'list':[{'name':'instance','label':'Виртуалка','type':'query','datasource':DS,'query':{'query':'label_values(node_memory_MemTotal_bytes{job="integrations/node_exporter"}, instance)','refId':'instance'},'refresh':1,'multi':False,'includeAll':False,'current':{'selected':True,'text':'vds-1','value':'vds-1'}},
+            {'name':'vpn','label':'Контейнер','type':'query','datasource':DS,
+             'query':{'query':'query_result(vds_vpn_collector_success'+S+')','refId':'vpn'},
+             'regex':'/vpn="([^"]+)"/','refresh':2,'multi':True,'includeAll':True,'allValue':None,
+             'current':{'selected':True,'text':'All','value':'$__all'}}]}}
 Path(__file__).with_name('vds-memory.dashboard.json').write_text(json.dumps(dashboard,ensure_ascii=False,indent=2)+'\n')
 print('Dashboard panels:',len(P))
