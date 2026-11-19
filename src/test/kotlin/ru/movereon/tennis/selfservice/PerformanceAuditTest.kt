@@ -15,6 +15,7 @@ import java.nio.file.Path
 import java.sql.DriverManager
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.test.*
 
@@ -53,7 +54,14 @@ class PerformanceAuditTest {
             try { method.invoke(delegate,*(args ?: emptyArray())) }
             catch(e:InvocationTargetException) { throw e.targetException }
         } as TelegramApi
-        val bot=SelfServiceBot(api,db,fake.bot,Clock.fixed(Instant.parse("2026-10-02T12:00:00Z"),ZoneOffset.UTC))
+        private var now=Instant.parse("2026-10-02T12:00:00Z")
+        private val clock=object:Clock() {
+            override fun getZone()=ZoneOffset.UTC
+            override fun withZone(zone:ZoneId)=fixed(now,zone)
+            override fun instant()=now
+        }
+        val bot=SelfServiceBot(api,db,fake.bot,clock)
+        fun advance(seconds:Long) { now=now.plusSeconds(seconds) }
         init {
             (1L..40L).forEach { bot.service.remember(Account(it,"Player $it")) }
             (1..groups).forEach { index ->
@@ -107,6 +115,7 @@ class PerformanceAuditTest {
                 f.setupPanels(panels);f.pay();f.bot.maintain()
                 while(f.bot.hasPendingPanelRefreshes()) f.bot.maintain()
                 repeat(5) {
+                    f.advance(2)
                     samples+=f.measure("payment_handle_panels_$panels",f::pay)
                     val first=f.measure("first_maintenance_batch_panels_$panels",f.bot::maintain)
                     val rest=f.measure("remaining_batches") { while(f.bot.hasPendingPanelRefreshes()) f.bot.maintain() }

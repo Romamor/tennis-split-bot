@@ -381,7 +381,7 @@ class SelfServiceBotTest {
         assertEquals(before,bot.service.training(auth,id));assertEquals(history,bot.service.history(auth).total)
     }
 
-    @Test fun `multiple guests share inviters time and tables show separate rounded balances`() {
+    @Test fun `multiple guests share inviters time and their rounded shares appear on the inviter balance`() {
         setup();create();join(1,60);pay(1,750);join(2,60)
         panelClick(2,"Добавить гостя");panelClick(2,"Добавить гостя");bot.maintain()
         val auth=Access(-1,1,true);val t=bot.service.trainings(auth).items.single()
@@ -390,12 +390,20 @@ class SelfServiceBotTest {
         val html=fake.richMessages.getValue(-1L to publicCard().id)
         assertTrue(html.contains("User 2 гость 1"));assertTrue(html.contains("User 2 гость 2"))
         assertTrue(html.contains("tg://user?id=2"))
-        assertTrue(publicCard().text!!.contains("User 2 | 1 ч | 0 ₽ | -188 ₽"))
+        val preview=publicCard().text!!.lineSequence().toList()
+        assertTrue("User 2 | 1 ч | 0 ₽ | -562 ₽" in preview)
+        for(guest in 1..2) {
+            assertTrue("User 2 гость $guest | 1 ч | 0 ₽ | —" in preview)
+            assertTrue(html.contains("User 2 гость $guest</a></td><td align=\"right\">1 ч</td><td align=\"right\">0 ₽</td><td align=\"right\">—</td>"))
+        }
         assertTrue(bot.service.balances(auth).isEmpty())
         panelClick(2,"Время");panelClick(2,"+0,5 ч");bot.maintain()
         val changed=bot.service.training(auth,t.id).players.single { it.userId==2L }
         assertEquals(90,changed.minutes);assertEquals(90,changed.guestMinutes)
+        clock.now=clock.now.plusSeconds(2)
+        bot.maintain()
         assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 1L).text)
+        assertTrue("User 2 | 1,5 ч | 0 ₽ | -614 ₽" in publicCard().text!!.lineSequence())
         click(1,"Изменить статус");click(1,"Завершена")
         assertEquals(mapOf(1L to 614L,2L to -614L),bot.service.balances(auth))
     }

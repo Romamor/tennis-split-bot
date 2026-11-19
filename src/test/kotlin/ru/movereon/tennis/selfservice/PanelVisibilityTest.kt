@@ -7,6 +7,10 @@ import ru.movereon.tennis.storage.*
 import ru.movereon.tennis.telegram.*
 import java.nio.file.Path
 import java.nio.file.Files
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlin.test.*
 
 class PanelVisibilityTest {
@@ -37,8 +41,14 @@ class PanelVisibilityTest {
         override fun deleteEphemeral(chatId:Long,userId:Long,ephemeralId:Long) { deleteFailure?.let { throw it };visible.remove(ephemeralId);stored.remove(ephemeralId) }
     }
     private lateinit var bot:SelfServiceBot
-    private fun setup() {
-        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite")),fake.bot)
+    private class TestClock:Clock() {
+        var now=Instant.parse("2026-11-16T12:00:00Z")
+        override fun getZone()=ZoneOffset.UTC
+        override fun withZone(zone:ZoneId)=fixed(now,zone)
+        override fun instant()=now
+    }
+    private fun setup(clock:Clock=Clock.systemUTC()) {
+        bot=SelfServiceBot(api,Database(dir.resolve("bot.sqlite")),fake.bot,clock)
         bot.service.remember(Account(1,"Игрок"));bot.service.register(SettlementGroup(-1,"Группа","Europe/Moscow"))
         bot.service.rememberMembership(-1,1,true)
         fake.members[-1L to 1L]=TgMember("administrator");fake.members[-1L to fake.bot.id]=TgMember("administrator")
@@ -158,19 +168,21 @@ class PanelVisibilityTest {
         }
     }
     @Test fun `panel refreshes are bounded survive restart and converge to the latest version`() {
-        setup();val a=Access(-1,1,true)
+        val clock=TestClock()
+        setup(clock);val a=Access(-1,1,true)
         for(user in 2L..10L) { bot.service.remember(Account(user,"Player $user"));bot.service.rememberMembership(-1,user,true);fake.members[-1L to user]=TgMember("member") }
         bot.service.execute(a,"create",SettlementCommand.CreateTraining("t","Теннис","2026-09-14","18:30"));bot.maintain()
         val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
         for(user in 1L..10L) press(card,"Открыть",user)
         bot.service.execute(a,"join",SettlementCommand.ChangeAttendance("t",1,AttendanceChange.JOIN))
         bot.maintain();assertEquals(6,bot.state.pendingPanels(20).size)
-        bot=SelfServiceBot(api,bot.service.database,fake.bot)
+        bot=SelfServiceBot(api,bot.service.database,fake.bot,clock)
         assertEquals(6,bot.state.pendingPanels(20).size)
         val last=stored.values.single { it.receiver?.id==10L }
         press(last,"Присоединиться",10)
         assertTrue(bot.service.training(a,"t").players.any { it.userId==10L && it.playing })
         assertTrue(bot.state.pendingPanels(20).none { it.user==10L },"The author's response already has the latest version")
+        clock.now=clock.now.plusSeconds(2)
         repeat(3) { bot.maintain() }
         assertTrue(bot.state.pendingPanels(20).isEmpty())
         assertEquals(10,visible.size)
@@ -179,6 +191,32 @@ class PanelVisibilityTest {
             val versions=ru.movereon.tennis.storage.sqlQuery(c,"SELECT json_extract(panel_json,'$.rendered_version') FROM bot_sessions WHERE chat_id=-1 AND ephemeral_id IS NOT NULL") { it.getLong(1) }
             assertEquals(List(10) { latestVersion },versions)
         }
+    }
+
+    @Test fun `a burst of changes shares a refresh interval and closure bypasses it`() {
+        val clock=TestClock()
+        setup(clock)
+        val a=Access(-1,1,true)
+        bot.service.execute(a,"create",SettlementCommand.CreateTraining("t","Теннис","2026-11-16","18:30"))
+        bot.maintain()
+        val card=fake.messages.getValue(-1L to bot.state.delivery("training:-1:t")!!.message!!)
+        press(card,"Открыть")
+        bot.service.execute(a,"join",SettlementCommand.ChangeAttendance("t",1,AttendanceChange.JOIN))
+        bot.maintain()
+        val joined=panel()
+        repeat(2) { index ->
+            bot.service.execute(a,"pay$index",SettlementCommand.ChangeAttendance("t",1,AttendanceChange.ADJUST_PAID,50))
+            bot.maintain()
+        }
+        assertEquals(joined,panel())
+        clock.now=clock.now.plusSeconds(2)
+        bot.maintain()
+        assertTrue(panel().text!!.contains("100 ₽"))
+        assertEquals(joined.ephemeralId,panel().ephemeralId)
+        val t=bot.service.training(a,"t")
+        bot.service.execute(a,"cancel",SettlementCommand.CancelTraining("t",t.version))
+        bot.maintain()
+        assertTrue(visible.isEmpty())
     }
     @Test fun `a failing panel does not block other recipients and is retained for retry`() {
         setup();val a=Access(-1,1,true)

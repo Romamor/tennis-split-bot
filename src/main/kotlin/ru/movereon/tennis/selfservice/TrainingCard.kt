@@ -8,7 +8,7 @@ import java.math.RoundingMode
 /** One complete content model for public cards and personal interaction panels. */
 internal object TrainingCard {
     private val publicUsername=Regex("[A-Za-z0-9_]+")
-    data class Row(val user:Long,val name:String,val minutes:Long,val paid:Long,val balance:Long?,val guest:Int=0)
+    private data class Row(val user:Long,val name:String,val minutes:Long,val paid:Long,val balance:String)
     data class Content(val text:String,val html:String)
     fun render(t:TrainingRecord,account:(Long)->Account):Content=render(t,account,onlyUser=null)
     fun render(t:TrainingRecord,account:(Long)->Account,onlyUser:Long?):Content {
@@ -16,14 +16,13 @@ internal object TrainingCard {
         val summary=averageCost(slots,t.rules.trackTime)
         val allocation=if(slots.players.isNotEmpty() && slots.payments.isNotEmpty()) calculateTraining(slots) else null
         val known=slots.payments.isEmpty() || allocation!=null
-        var slotIndex=0
+        val balanceByUser=allocation?.entries.orEmpty().associate { it.participant.value.toLong() to it.amount }
         val rows=t.players.sortedBy { it.ordinal }.filter { it.playing || it.paid>0 }.flatMap { p ->
             val name=Screens.clean(account(p.userId).name,48)
-            val share=if(p.playing && t.rules.minutes(p)>0) allocation?.slotShares?.get(slotIndex++ ) ?: 0 else 0
-            listOf(Row(p.userId,name,if(p.playing) p.minutes else 0,p.paid,if(known) p.paid-share else null))+
+            val balance=if(known) "${Screens.signed(balanceByUser[p.userId] ?: 0)} ₽" else "—"
+            listOf(Row(p.userId,name,if(p.playing) p.minutes else 0,p.paid,balance))+
                 if(p.playing) (1..p.guestCount).map { number ->
-                    val guestShare=if(t.rules.guestMinutes(p)>0) allocation?.slotShares?.get(slotIndex++) ?: 0 else 0
-                    Row(p.userId,"$name гость $number",p.guestMinutes,0,if(known) -guestShare else null,number)
+                    Row(p.userId,"$name гость $number",p.guestMinutes,0,"—")
                 } else emptyList()
         }.filter { onlyUser==null || it.user==onlyUser }
         val whenText="${Screens.date(t.date)} ${t.startTime}"
@@ -38,7 +37,7 @@ internal object TrainingCard {
             if(rows.isEmpty()) append("Пока никто не зарегался")
             else {
                 append(if(t.rules.trackTime) "Участник | Время | Оплата | Баланс\n" else "Участник | Оплата | Баланс\n")
-                rows.forEach { append("${it.name} | "+(if(t.rules.trackTime) "${Screens.hours(it.minutes)} | " else "")+"${it.paid} ₽ | ${it.balance?.let(Screens::signed) ?: "—"} ₽\n") }
+                rows.forEach { append("${it.name} | "+(if(t.rules.trackTime) "${Screens.hours(it.minutes)} | " else "")+"${it.paid} ₽ | ${it.balance}\n") }
                 if(note!=null) append("\n$note")
             }
             append(if(endsWith("\n")) "\n" else "\n\n").append(summary)
@@ -52,7 +51,7 @@ internal object TrainingCard {
                     append("<tr><td>${profileLink(it.user,it.name,account(it.user).username)}</td>")
                     if(t.rules.trackTime) append("<td align=\"right\">${Screens.hours(it.minutes)}</td>")
                     append("<td align=\"right\">${it.paid} ₽</td>")
-                    append("<td align=\"right\">${it.balance?.let(Screens::signed) ?: "—"} ₽</td></tr>")
+                    append("<td align=\"right\">${it.balance}</td></tr>")
                 }
                 append("</table>")
                 if(note!=null) append("<p>${escape(note)}</p>")

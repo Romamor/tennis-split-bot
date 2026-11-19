@@ -17,7 +17,7 @@ class PrivacyInboxTest {
     private val username="synthetic_example_bot"
     private val sender=TgUser(1,firstName="Synthetic participant")
     private val group=TgChat(-1,"supergroup","Synthetic group")
-    private fun raw(db:Database,id:Long)=db.read { c -> sqlQuery(c,"SELECT update_json FROM bot_events WHERE update_id=?",id) { it.getString(1) }.single() }
+    private fun raw(db:Database,id:Long)=db.read { c -> sqlQuery(c,"SELECT update_json FROM bot_events WHERE update_id=?",id) { it.getString(1) }.singleOrNull() }
     private fun decorated(id:Long,chat:TgChat,text:String)=TgMessage(id,chat,sender,text,
         replyTo=TgMessage(900,chat,sender,"SECRET_QUOTED_CONTENT_7492"),
         photo=listOf(TgPhotoSize("SECRET_PHOTO_REFERENCE_7492",100,100)),
@@ -33,7 +33,7 @@ class PrivacyInboxTest {
         assertEquals(sender,stored.from);assertEquals(group,stored.chat)
         assertEquals(listOf(joined),stored.newMembers);assertEquals(left,stored.leftMember);assertEquals(-2L,stored.migrateTo)
         assertEquals(clock.millis(),inbox.acceptedAt(100))
-        assertEquals(clock.millis(),Json.parseToJsonElement(raw(db,100)).jsonObject.getValue("accepted_at").jsonPrimitive.long)
+        assertEquals(clock.millis(),Json.parseToJsonElement(assertNotNull(raw(db,100))).jsonObject.getValue("accepted_at").jsonPrimitive.long)
         val backup=db.backup(dir.resolve("backup.sqlite"))
         for(file in listOf(db.path,Path.of("${db.path}-wal"),Path.of("${db.path}-shm"),backup).filter(Files::exists)) {
             val bytes=Files.readAllBytes(file).toString(Charsets.ISO_8859_1)
@@ -52,11 +52,31 @@ class PrivacyInboxTest {
             "/startsomething" to null,"/other" to null,"ordinary message" to null)
         commands.forEachIndexed { index,(input,expected) ->
             val id=index+1L;inbox.accept(listOf(TgUpdate(id,decorated(id,group,input).copy(from=sender.copy(id=id)))))
-            assertEquals(expected,Json.parseToJsonElement(raw(db,id)).jsonObject.getValue("message").jsonObject["text"]?.jsonPrimitive?.contentOrNull)
+            if(expected!=null) assertEquals(expected,Json.parseToJsonElement(assertNotNull(raw(db,id))).jsonObject.getValue("message").jsonObject["text"]?.jsonPrimitive?.contentOrNull)
+            else assertNull(raw(db,id))
         }
         val unknown=UpdateInbox(Database(dir.resolve("unknown-name.sqlite")),clock)
         unknown.accept(listOf(TgUpdate(1,decorated(1,group,"/menu@another_example_bot"))))
-        assertNull(unknown.pending().single().update?.message?.text,"Without a known bot username no addressed command can be authenticated")
+        assertTrue(unknown.pending().isEmpty(),"Without a known bot username no addressed command can be authenticated")
+        assertEquals(2L,unknown.offset())
+    }
+
+    @Test fun `plain chat messages advance the cursor once without inbox rows or profile writes`() {
+        val sql=mutableListOf<String>()
+        val db=Database(dir.resolve("ordinary.sqlite"),trace={ sql+=it })
+        val fake=FakeTelegramApi()
+        val bot=SelfServiceBot(fake,db,fake.bot,clock)
+        val writes=db.writeTransactions.get()
+        sql.clear()
+        bot.acceptUpdates((1L..20L).map { TgUpdate(it,decorated(it,group,"ordinary message")) })
+        bot.processPending()
+        assertEquals(1L,db.writeTransactions.get()-writes)
+        assertEquals(21L,bot.inbox.offset())
+        assertTrue(sql.none { "INSERT INTO bot_events" in it || "INSERT INTO users" in it || "INSERT INTO groups" in it })
+        val migration=TgMessage(30,group,sender,migrateFrom=-2)
+        bot.acceptUpdates(listOf(TgUpdate(30,migration),TgUpdate(31,decorated(31,group,"ordinary message"))))
+        assertEquals(32L,bot.inbox.offset())
+        assertEquals(migration,bot.inbox.pending().single().update?.message)
     }
 
     @Test fun `callback context votes and membership events survive without quoted message content`() {
@@ -77,7 +97,7 @@ class PrivacyInboxTest {
         assertEquals(privateInput.text,savedInput.text);assertEquals(privateInput.photo,savedInput.photo)
         assertEquals(privateInput.usersShared,savedInput.usersShared);assertNull(savedInput.replyTo);assertNull(savedInput.keyboard)
         assertTrue(inbox.hasPendingVotes("synthetic-poll"))
-        assertFalse(raw(db,1).contains("SECRET_"))
+        assertFalse(assertNotNull(raw(db,1)).contains("SECRET_"))
     }
 
     @Test fun `queued private input retains future form steps across restart and completion removes raw content`() {
@@ -91,7 +111,7 @@ class PrivacyInboxTest {
             TgUpdate(index+1L,TgMessage(index+10L,TgChat(1,"private"),sender,text))
         }
         bot.acceptUpdates(messages)
-        messages.forEach { assertContains(raw(bot.service.database,it.id),it.message!!.text!!) }
+        messages.forEach { assertContains(assertNotNull(raw(bot.service.database,it.id)),it.message!!.text!!) }
         bot=SelfServiceBot(fake,Database(file),fake.bot,clock);bot.processPending(10)
         val form=assertNotNull(bot.state.form(1,1))
         assertEquals("Synthetic session title",form.title);assertEquals("2026-11-07",form.date);assertEquals("19:30",form.time)
@@ -114,7 +134,7 @@ class PrivacyInboxTest {
         bot.polls.attach(poll,"synthetic-poll",100)
         bot.acceptUpdates(listOf(TgUpdate(1,callback=TgCallback("click",sender,panel,"n:$token")),
             TgUpdate(2,pollAnswer=TgPollAnswer("synthetic-poll",TgUser(2),listOf(0)))))
-        assertFalse(raw(bot.service.database,1).contains("SECRET_"))
+        assertFalse(assertNotNull(raw(bot.service.database,1)).contains("SECRET_"))
         bot.processPending(10)
         assertTrue(bot.state.completed(1));assertTrue(bot.state.completed(2))
         assertTrue(fake.messages.values.any { it.chat.id==1L && it.text?.contains("Настройки")==true })

@@ -14,7 +14,6 @@ internal class TrainingScreens(private val service:SettlementService,private val
     fun render(layout:ScreenLayout,a:Access?,personRow:(Long,String,ScreenAction)->Unit,label:(Long)->String,account:(Long)->Account):ScreenContent = with(layout) {
         var richHtml:String?=null
         var photoId:String?=null
-        var trainingVersion:Long?=null
         val text=when(action.kind) {
             "training", "public", "my_training" -> {
                 val t = service.training(requireNotNull(a), action.id)
@@ -85,58 +84,55 @@ internal class TrainingScreens(private val service:SettlementService,private val
                 back(next("training"))
                 when(action.kind) { "add_player_list"->"Кого добавить?";"exclude_player_list"->"Кого исключить?";else->"Выбери игрока." }+if(ids.isEmpty()) "\nСписок пуст." else ""
             }
-            "participation", "participation_time", "participation_payment" -> {
-                val t=service.training(requireNotNull(a),action.id)
-                trainingVersion=t.version
-                service.requireOpen(t)
-                val content=TrainingCard.render(t,account)
-                richHtml=content.html
-                val target=action.user.takeIf { it>0 } ?: a.userId
-                checkAccounting(target==a.userId || service.canEdit(a,t),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
-                val p=t.players.firstOrNull { it.userId==target }
-                val open=t.phase == TrainingPhase.OPEN
-                fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=target,value=value,option=type.name).copy(resume=action.copy(page=0)))
-                if(open) when(action.kind) {
-                    "participation_time" -> {
-                        t.rules.requireChange(AttendanceChange.SET_MINUTES)
-                        checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(change("+0,5 ч",AttendanceChange.ADJUST_MINUTES,30),change("+1 ч",AttendanceChange.ADJUST_MINUTES,60))
-                        rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
-                    }
-                    "participation_payment" -> {
-                        checkAccounting(p?.playing==true || (p?.paid ?: 0)>0,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
-                        rows+=listOf(5L,50L,100L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
-                        rows+=listOf(5L,50L,100L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
-                    }
-                    else -> {
-                        if(p?.playing==true) {
-                            row("Оплата · ${p.paid} ₽",next("participation_payment",page=0,target=target))
-                            if(t.rules.trackTime) row("Время · ${hours(p.minutes)}",next("participation_time",page=0,target=target))
-                            if(t.rules.guestsEnabled || p.guestCount>0) rows+=buildList<TgButton> {
-                                if(t.rules.guestsEnabled && p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
-                                if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
-                            }
-                            rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
-                        } else {
-                            rows+=listOf(change("Присоединиться",AttendanceChange.JOIN))
-                            if((p?.paid ?: 0)>0) row("Оплата · ${p!!.paid} ₽",next("participation_payment",page=0,target=target))
-                        }
-                    }
-                }
-                if(action.kind=="participation" && target==a.userId && action.back?.kind!="manage_players" && service.canEdit(a,t))
-                    row("Редактировать",ScreenAction("edit_training",t.groupId,t.id,back=action.back))
-                if(inGroup) rows+=buildList<TgButton> {
-                    if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
-                    add(button("Закрыть",next("close_panel")))
-                } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=0))
-                else back(next("training"))
-                content.text
-            }
             else -> error("Not a training screen: ${action.kind}")
         }
-        ScreenContent(text,richHtml,photoId,trainingVersion)
+        ScreenContent(text,richHtml,photoId)
     }
+    fun participation(layout:ScreenLayout,access:Access,t:TrainingRecord,content:TrainingCard.Content):ScreenContent = with(layout) {
+        service.requireOpen(t)
+        val target=action.user.takeIf { it>0 } ?: access.userId
+        checkAccounting(target==access.userId || service.canEdit(access,t),ErrorCode.FORBIDDEN,"Можно менять только свои данные")
+        val p=t.players.firstOrNull { it.userId==target }
+        fun change(label:String,type:AttendanceChange,value:Long=0)=button(label,next("participation_change",page=0,target=target,value=value,option=type.name).copy(resume=action.copy(page=0)))
+        when(action.kind) {
+            "participation_time" -> {
+                t.rules.requireChange(AttendanceChange.SET_MINUTES)
+                checkAccounting(p?.playing==true,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
+                rows+=listOf(change("+0,5 ч",AttendanceChange.ADJUST_MINUTES,30),change("+1 ч",AttendanceChange.ADJUST_MINUTES,60))
+                rows+=listOf(change("−0,5 ч",AttendanceChange.ADJUST_MINUTES,-30),change("−1 ч",AttendanceChange.ADJUST_MINUTES,-60))
+            }
+            "participation_payment" -> {
+                checkAccounting(p?.playing==true || (p?.paid ?: 0)>0,ErrorCode.INVALID_STATE,"Сначала присоединись к тренировке")
+                rows+=listOf(5L,50L,100L).map { change("+$it ₽",AttendanceChange.ADJUST_PAID,it) }
+                rows+=listOf(5L,50L,100L).map { change("−$it ₽",AttendanceChange.ADJUST_PAID,-it) }
+            }
+            else -> {
+                if(p?.playing==true) {
+                    row("Оплата · ${p.paid} ₽",next("participation_payment",page=0,target=target))
+                    if(t.rules.trackTime) row("Время · ${hours(p.minutes)}",next("participation_time",page=0,target=target))
+                    if(t.rules.guestsEnabled || p.guestCount>0) rows+=buildList<TgButton> {
+                        if(t.rules.guestsEnabled && p.guestCount<99) add(change("Добавить гостя",AttendanceChange.ADJUST_GUESTS,1))
+                        if(p.guestCount>0) add(change("Убрать гостя",AttendanceChange.ADJUST_GUESTS,-1))
+                    }
+                    rows+=listOf(change("Не участвую",AttendanceChange.LEAVE))
+                } else {
+                    rows+=listOf(change("Присоединиться",AttendanceChange.JOIN))
+                    if((p?.paid ?: 0)>0) row("Оплата · ${p!!.paid} ₽",next("participation_payment",page=0,target=target))
+                }
+            }
+        }
+        if(action.kind=="participation" && target==access.userId && action.back?.kind!="manage_players" && service.canEdit(access,t))
+            row("Редактировать",ScreenAction("edit_training",t.groupId,t.id,back=action.back))
+        if(inGroup) rows+=buildList<TgButton> {
+            if(action.kind!="participation") add(button("⬅️ Назад",next("participation",page=0)))
+            add(button("Закрыть",next("close_panel")))
+        } else if(action.kind!="participation") row("⬅️ Назад",next("participation",page=0))
+        else back(next("training"))
+        ScreenContent(content.text,content.html,trainingVersion=t.version)
+    }
+
     companion object {
         val kinds=ActionRegistry.kinds(ActionRoute.TRAINING_SCREEN)
+        val participationKinds=setOf("participation","participation_time","participation_payment")
     }
 }

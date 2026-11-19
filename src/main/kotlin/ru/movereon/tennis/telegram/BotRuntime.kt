@@ -99,7 +99,7 @@ fun runBot() {
                 while(!Thread.currentThread().isInterrupted) {
                     try {
                         runQueuedBotCycle(
-                            { polling.receive { api.updates(bot.inbox.offset(),bot.nextPollTimeout(if(maintenanceDeferred) 1 else config.pollTimeout)).also { maintenanceDeferred=false } } },
+                            { polling.receive { bot.pollUpdates(if(maintenanceDeferred) 1 else config.pollTimeout).also { maintenanceDeferred=false } } },
                             bot::acceptUpdates,{ bot.processPending() },bot::finishDrainedPolls,{ api.background(bot::maintain) })
                     } catch (failure: TelegramFailure) {
                         if(failure.backgroundDeferred) maintenanceDeferred=true

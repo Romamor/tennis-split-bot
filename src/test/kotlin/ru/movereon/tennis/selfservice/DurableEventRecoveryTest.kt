@@ -26,7 +26,15 @@ class DurableEventRecoveryTest {
     private var callbackPanels=0
     private var administratorPanels=0
     private var unavailableMember:Long?=null
+    private var pendingOnTelegram:Int?=null
+    private var queueSnapshots=0
+    private val batches=ArrayDeque<List<TgUpdate>>()
     private val api=object:TelegramApi by fake {
+        override fun pendingUpdateCount():Int? { queueSnapshots++;return pendingOnTelegram }
+        override fun updates(offset:Long?,timeout:Int):List<TgUpdate> {
+            assertTrue(timeout>=1)
+            return batches.removeFirst()
+        }
         override fun member(chatId:Long,userId:Long):TgMember {
             if(unavailableMember==userId) throw TelegramFailure(FailureKind.UNCERTAIN)
             return fake.member(chatId,userId)
@@ -209,6 +217,42 @@ class DurableEventRecoveryTest {
         assertEquals(setOf(2L),training.players.map { it.userId }.toSet())
         assertEquals(1,count("SELECT COUNT(*) FROM actions WHERE kind='CreateTrainingFromPoll'"))
         assertInputReleased(vote.id)
+    }
+
+    @Test fun `stopped poll drains a finite snapshot even while chat activity continues`() {
+        setup()
+        val poll=publishedPoll()
+        bot.polls.beginClose(Access(-1,1,true),poll.id)
+        bot.maintain()
+        pendingOnTelegram=2
+        batches+=listOf(TgUpdate(100,TgMessage(100,TgChat(-1,"supergroup"),TgUser(1),"ordinary chat")))
+        batches+=listOf(TgUpdate(101,pollAnswer=TgPollAnswer(requireNotNull(poll.telegramId),TgUser(2),listOf(0))))
+        bot.acceptUpdates(bot.pollUpdates(25))
+        bot.processPending();bot.finishDrainedPolls()
+        assertEquals("CLOSING",bot.polls.get(-1,poll.id).status)
+        assertEquals(101L,bot.inbox.offset())
+        bot.acceptUpdates(bot.pollUpdates(25))
+        assertEquals(1,queueSnapshots)
+        bot.finishDrainedPolls()
+        assertEquals("CLOSING",bot.polls.get(-1,poll.id).status,"The durable vote has yet to be applied")
+        bot.processPending();bot.finishDrainedPolls()
+        assertEquals(setOf(2L),bot.service.training(Access(-1,1,true),poll.id).players.map { it.userId }.toSet())
+    }
+
+    @Test fun `stopped poll falls back to an actual empty response when the snapshot is unavailable`() {
+        setup()
+        val poll=publishedPoll()
+        bot.polls.beginClose(Access(-1,1,true),poll.id)
+        bot.maintain()
+        batches+=listOf(TgUpdate(100,TgMessage(100,TgChat(-1,"supergroup"),TgUser(1),"ordinary chat")))
+        batches.add(emptyList())
+        bot.acceptUpdates(bot.pollUpdates(25))
+        bot.finishDrainedPolls()
+        assertEquals("CLOSING",bot.polls.get(-1,poll.id).status)
+        bot.acceptUpdates(bot.pollUpdates(25))
+        bot.finishDrainedPolls()
+        assertEquals("CLOSED",bot.polls.get(-1,poll.id).status)
+        assertEquals(1,queueSnapshots)
     }
 
     @Test fun `negative and withdrawn durable votes release raw choices and voter identity atomically`() {
