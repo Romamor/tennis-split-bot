@@ -29,7 +29,8 @@ import java.time.Duration
     @SerialName("ephemeral_message_id") val ephemeralId: Long? = null,
     @SerialName("new_chat_members") val newMembers: List<TgUser> = emptyList(),
     @SerialName("left_chat_member") val leftMember: TgUser? = null,
-    @SerialName("users_shared") val usersShared: TgUsersShared? = null)
+    @SerialName("users_shared") val usersShared: TgUsersShared? = null,
+    @SerialName("migrate_from_chat_id") val migrateFrom:Long?=null)
 @Serializable data class TgCallback(val id: String, val from: TgUser, val message: TgMessage? = null, val data: String? = null)
 @Serializable data class TgUpdate(@SerialName("update_id") val id: Long, val message: TgMessage? = null,
     @SerialName("callback_query") val callback: TgCallback? = null,
@@ -59,6 +60,7 @@ interface TelegramApi {
     fun editKeyboard(chatId:Long,messageId:Long,keyboard:TgKeyboard) { throw TelegramFailure(FailureKind.REJECTED) }
     fun me(): TgUser
     fun updates(offset: Long?, timeout: Int): List<TgUpdate>
+    fun pendingUpdateCount():Int?=null
     fun member(chatId: Long, userId: Long): TgMember
     fun send(chatId: Long, text: String, keyboard: TgKeyboard? = null, forceReply: Boolean = false): TgMessage
     fun edit(chatId: Long, messageId: Long, text: String, keyboard: TgKeyboard? = null)
@@ -127,6 +129,9 @@ class HttpTelegramApi(private val token: String, private val endpoint: URI = URI
         }) } catch(f:TelegramFailure) { if(f.kind!=FailureKind.NOT_MODIFIED) throw f }
     }
     override fun me(): TgUser = json.decodeFromJsonElement(call("getMe", buildJsonObject {}))
+    override fun pendingUpdateCount():Int? =
+        ((call("getWebhookInfo",buildJsonObject {},3) as? JsonObject)?.get("pending_update_count") as? JsonPrimitive)
+            ?.intOrNull?.takeIf { it>=0 }
     override fun updates(offset: Long?, timeout: Int): List<TgUpdate> {
         val payload=call("getUpdates", buildJsonObject {
         offset?.let { put("offset", it) }; put("timeout", timeout)

@@ -25,6 +25,17 @@ class Screens(private val service: SettlementService, private val state: Interac
     fun render(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm? = null, notice: String? = null, inGroup: Boolean = false, telegramAdmins:Set<Long> = emptySet(), groupOptions:List<GroupOption> = emptyList()): Output = state.buttonBatch {
         renderInside(action,access,scope,user,form,notice,inGroup,telegramAdmins,groupOptions)
     }
+    internal fun participationCard(a:Access,training:TrainingRecord):TrainingCard.Content {
+        val accounts=service.groupAccounts(a).associateBy { it.id }
+        return TrainingCard.render(training) { accounts[it] ?: service.account(it) }
+    }
+    internal fun refreshParticipation(action:ScreenAction,a:Access,scope:String,training:TrainingRecord,card:TrainingCard.Content):Output = state.buttonBatch {
+        renderParticipation(ScreenLayout(action,state,botName,scope,a.userId,true),a,training,card,null,true)
+    }
+    private fun renderParticipation(layout:ScreenLayout,a:Access,training:TrainingRecord,card:TrainingCard.Content,notice:String?,inGroup:Boolean):Output {
+        val content=trainingScreens.participation(layout,a,training,card)
+        return finishScreen(layout,content.text,content.html,notice,inGroup).copy(trainingVersion=content.trainingVersion)
+    }
     private fun renderInside(action: ScreenAction, access: Access?, scope: String, user: Long?, form: InputForm?, notice: String?, inGroup: Boolean, telegramAdmins:Set<Long>, groupOptions:List<GroupOption>):Output {
         ActionRegistry.requireKnown(action.kind)
         return with(ScreenLayout(action,state,botName,scope,user,inGroup)) {
@@ -37,6 +48,11 @@ class Screens(private val service: SettlementService, private val state: Interac
         if(action.kind in NavigationScreens.kinds || action.kind in PollScreens.kinds) a?.let(service::requireKnownGroupMember)
         if(action.kind in NavigationScreens.kinds) return@with finishScreen(this,navigationScreens.render(this,a,groupOptions),null,notice,inGroup)
         if(action.kind in PollScreens.kinds) return@with finishScreen(this,pollScreens.render(this,a),null,notice,inGroup)
+        if(action.kind in TrainingScreens.participationKinds) {
+            val member=requireNotNull(a)
+            val training=service.training(member,action.id)
+            return@with renderParticipation(this,member,training,participationCard(member,training),notice,inGroup)
+        }
         val accounts=if(a!=null) service.groupAccounts(a) else emptyList()
         val accountCache=accounts.associateBy { it.id }.toMutableMap()
         fun account(id:Long)=accountCache.getOrPut(id) { service.account(id) }
@@ -53,7 +69,6 @@ class Screens(private val service: SettlementService, private val state: Interac
         }
         var richHtml:String?=null
         var photoId:String?=null
-        var trainingVersion:Long?=null
         val text = when (action.kind) {
             "profile_preview" -> {
                 rows+=listOf(TgButton("Открыть профиль Telegram",url="tg://user?id=${action.user}"))
@@ -93,7 +108,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             in TrainingScreens.kinds -> {
                 val content=trainingScreens.render(this,a,::personRow,::label,::account)
-                richHtml=content.html;photoId=content.photoId;trainingVersion=content.trainingVersion
+                richHtml=content.html;photoId=content.photoId
                 content.text
             }
             "player" -> {
@@ -321,7 +336,7 @@ class Screens(private val service: SettlementService, private val state: Interac
             }
             else -> error("Unknown screen: ${action.kind}")
         }
-        finishScreen(this,text,richHtml,notice,inGroup,photoId).copy(trainingVersion=trainingVersion)
+        finishScreen(this,text,richHtml,notice,inGroup,photoId)
         }
     }
     private fun finishScreen(layout:ScreenLayout,text:String,richHtml:String?,notice:String?,inGroup:Boolean,photoId:String?=null):Output=with(layout) {

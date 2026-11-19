@@ -6,6 +6,7 @@ import kotlinx.serialization.json.*
 import ru.movereon.tennis.application.SettlementCommand
 import ru.movereon.tennis.application.DefaultTrainingUpdate
 import ru.movereon.tennis.application.Attendance
+import ru.movereon.tennis.application.TrainingRules
 import ru.movereon.tennis.storage.*
 import java.security.MessageDigest
 import java.time.Clock
@@ -81,25 +82,32 @@ class InteractionStore(val database: Database, private val clock: Clock = Clock.
         if(id!=null && deliveredEvent!=null)
             sqlUpdate(c,"""UPDATE bot_events SET plan_json=json_set(plan_json,'$.ephemeral',?) WHERE update_id=? AND plan_json IS NOT NULL""",id,deliveredEvent)
     }
-    fun panel(user:Long,group:Long,screen:ScreenAction?,trainingVersion:Long?=null) = database.write { c ->
+    fun panel(user:Long,group:Long,screen:ScreenAction?,trainingVersion:Long?=null,backgroundRules:TrainingRules?=null) = database.write { c ->
         val payload=screen?.let { JsonObject(json.encodeToJsonElement(it).jsonObject+mapOf(
             "rendered_version" to (trainingVersion?.let(::JsonPrimitive) ?: JsonNull),
-            "refreshed_at" to JsonPrimitive(clock.millis()),"retry_after" to JsonPrimitive(0))).toString() }
+            "refreshed_at" to JsonPrimitive(clock.millis()),"retry_after" to JsonPrimitive(0),
+            "refresh_after" to JsonPrimitive(if(backgroundRules!=null) clock.millis()+2_000 else 0),
+            "refreshed_track_time" to (backgroundRules?.trackTime?.let(::JsonPrimitive) ?: JsonNull),
+            "refreshed_guests_enabled" to (backgroundRules?.guestsEnabled?.let(::JsonPrimitive) ?: JsonNull))).toString() }
         sqlUpdate(c,"UPDATE bot_sessions SET panel_json=? WHERE user_id=? AND chat_id=?",payload,user,group)
     }
     data class PendingPanel(val user:Long,val group:Long,val message:Long,val screen:ScreenAction)
+    private val panelDueAt="""MAX(COALESCE(json_extract(s.panel_json,'$.retry_after'),0),
+        CASE WHEN t.status='OPEN' AND t.track_time=json_extract(s.panel_json,'$.refreshed_track_time')
+            AND t.guests_enabled=json_extract(s.panel_json,'$.refreshed_guests_enabled')
+            THEN COALESCE(json_extract(s.panel_json,'$.refresh_after'),0) ELSE 0 END)"""
     fun pendingPanels(limit:Int=4):List<PendingPanel> = database.read { c ->
         sqlQuery(c,"""SELECT s.user_id,s.chat_id,s.ephemeral_id,s.panel_json FROM bot_sessions s
             JOIN trainings t ON t.group_id=s.chat_id AND t.id=json_extract(s.panel_json,'$.id')
             WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') LIKE 'participation%'
             AND (t.status<>'OPEN' OR COALESCE(json_extract(s.panel_json,'$.rendered_version'),-1)<>t.version)
-            AND COALESCE(json_extract(s.panel_json,'$.retry_after'),0)<=?
+            AND $panelDueAt<=?
             ORDER BY (t.status<>'OPEN') DESC,COALESCE(json_extract(s.panel_json,'$.refreshed_at'),0),s.chat_id,s.user_id LIMIT ?""",clock.millis(),limit) {
             PendingPanel(it.getLong(1),it.getLong(2),it.getLong(3),json.decodeFromString(it.getString(4)))
         }
     }
     fun panelRefreshDelay(maximum:Int):Int = database.read { c ->
-        val next=sqlQuery(c,"""SELECT MIN(COALESCE(json_extract(s.panel_json,'$.retry_after'),0)) FROM bot_sessions s
+        val next=sqlQuery(c,"""SELECT MIN($panelDueAt) FROM bot_sessions s
             JOIN trainings t ON t.group_id=s.chat_id AND t.id=json_extract(s.panel_json,'$.id')
             WHERE s.ephemeral_id IS NOT NULL AND json_extract(s.panel_json,'$.kind') LIKE 'participation%'
             AND (t.status<>'OPEN' OR COALESCE(json_extract(s.panel_json,'$.rendered_version'),-1)<>t.version)""") { it.getString(1)?.toLong() }.single()

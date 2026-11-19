@@ -94,6 +94,17 @@ class UpdateInboxTest {
         assertEquals(0,inbox.nextDelay(25))
     }
 
+    @Test fun `excluded attempted head still blocks the next event from the same author`() {
+        val db=database()
+        val inbox=UpdateInbox(db,clock)
+        inbox.accept(listOf(text(1,1),text(2,1),text(3,2)))
+        assertEquals(1L,inbox.pending(1).single().id)
+        assertEquals(3L,inbox.pending(1,exclude=setOf(1)).single().id)
+        assertTrue(inbox.pending(1,exclude=setOf(1,3)).isEmpty())
+        complete(db,1)
+        assertEquals(2L,inbox.pending(1,exclude=setOf(1,3)).single().id)
+    }
+
     @Test fun `legacy saved plan precedes new inputs of its author and can acquire its raw update`() {
         val db=database()
         SettlementService(db,clock).remember(Account(1,"Synthetic user"))

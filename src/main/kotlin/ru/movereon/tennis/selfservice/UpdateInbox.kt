@@ -18,12 +18,13 @@ class UpdateInbox(private val database:Database,private val clock:Clock=Clock.sy
     fun accept(updates:List<TgUpdate>) {
         if(updates.isEmpty()) return
         // Encode before the transaction: an unencodable response must never advance its cursor.
-        val received=updates.sortedBy { it.id }.map { raw ->
+        val received=updates.asSequence().filterNot { IncomingContent.isOrdinaryGroupMessage(it,botUsername) }.sortedBy { it.id }.map { raw ->
             val update=IncomingContent.minimize(raw,botUsername)
             val payload=JsonObject(json.encodeToJsonElement(update).jsonObject+mapOf("accepted_at" to JsonPrimitive(clock.millis())))
             Triple(update,payload.toString(),orderingKey(update))
-        }
-        val next=Math.addExact(received.last().first.id,1L)
+        }.toList()
+        // Acknowledge discarded chat messages too, in the same transaction as retained events.
+        val next=Math.addExact(updates.maxOf { it.id },1L)
         database.write { c ->
             val previous=sqlQuery(c,"SELECT next_update_id,received_order FROM bot_polling WHERE singleton=1") {
                 it.getString(1)?.toLong() to it.getLong(2)
@@ -58,12 +59,13 @@ class UpdateInbox(private val database:Database,private val clock:Clock=Clock.sy
         Unit
     }
 
-    fun pending(limit:Int=20):List<PendingUpdate> {
+    fun pending(limit:Int=20,exclude:Set<Long> = emptySet()):List<PendingUpdate> {
         require(limit>0)
+        val exclusion=if(exclude.isEmpty()) "" else " AND e.update_id NOT IN (${exclude.joinToString(",") { "?" }})"
         return database.read { c ->
             sqlQuery(c,"""SELECT e.update_id,e.update_json,e.plan_json,json_extract(e.update_json,'$.accepted_at') FROM bot_events e
-                WHERE e.completed=0 AND e.next_attempt_at<=? AND $head
-                ORDER BY e.next_attempt_at,e.received_order,e.update_id LIMIT ?""",clock.millis(),limit) {
+                WHERE e.completed=0 AND e.next_attempt_at<=? AND $head$exclusion
+                ORDER BY e.next_attempt_at,e.received_order,e.update_id LIMIT ?""",clock.millis(),*exclude.toTypedArray(),limit) {
                 PendingUpdate(it.getLong(1),it.getString(2)?.let { raw -> json.decodeFromString<TgUpdate>(raw) },
                     it.getString(3)?.let { raw -> json.decodeFromString<EventPlan>(raw) },it.getString(4)?.toLong())
             }

@@ -55,6 +55,20 @@ class SingleGroupFlowTest {
         click("Назад");assertEquals("Что хочешь сделать?",latest().text)
     }
 
+    @Test fun `finance after navigation cache expires checks only the current member once`() {
+        setup();group(-1,true)
+        bot.polls.setEnabled(Access(-1,1,true),true)
+        message("/start")
+        assertTrue(latest().keyboard!!.rows.flatten().any { it.text.endsWith(" Создать опрос") })
+
+        clock.now=clock.now.plusSeconds(45)
+        fake.membershipCalls.clear()
+        click("Мои финансы")
+
+        assertTrue(latest().text.orEmpty().startsWith("Мои финансы"))
+        assertEquals(listOf(-1L to 1L),fake.membershipCalls)
+    }
+
     @Test fun `multiple member groups keep finance picker but only admin group skips settings picker`() {
         setup();group(-1,true);group(-2)
         message("/start");click("Мои финансы")

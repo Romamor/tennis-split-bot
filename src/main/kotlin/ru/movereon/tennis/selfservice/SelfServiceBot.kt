@@ -14,7 +14,8 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     val service = SettlementService(database, clock)
     val state = InteractionStore(database, clock)
     val inbox = UpdateInbox(database,clock,identity.username)
-    private val drainedPolls=mutableSetOf<Pair<Long,String>>()
+    // Zero is a completed drain, null means the count was unavailable and we wait for an empty response.
+    private val pollDrainRemaining=mutableMapOf<Pair<Long,String>,Int?>()
     val polls=TrainingPolls(service,clock)
     private val pollWorkflow=PollWorkflow(polls,state,api)
     val screens = Screens(service, state, requireNotNull(identity.username))
@@ -61,18 +62,25 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         checkAccounting(member.present, ErrorCode.FORBIDDEN, "Доступ только участникам этой Telegram-группы")
         return Access(group, user, member.admin).also { checkedMembership[group to user] = it }
     }
-    private fun groupOptions(user:Long,forPublication:Boolean=false,discover:Boolean=false,includeFormer:Boolean=false):List<GroupOption> {
+    private fun groupOptions(user:Long,forPublication:Boolean=false,discover:Boolean=false,includeFormer:Boolean=false,
+        showPollCreation:Boolean=false):List<GroupOption> {
         val known=service.knownGroups(user,includeFormer)
         val groups=if(discover || known.isEmpty()) service.knownGroups() else known
         return groups.mapNotNull { group ->
         try {
-            val member=navigationMembership.get(group.id,user) { api.member(group.id,user) }
+            val member=navigationMembership.get(group.id,user) {
+                api.member(group.id,user).also { fresh ->
+                    // Only a live Telegram response can authorize this update's direct transition.
+                    if(fresh.present) checkedMembership[group.id to user]=Access(group.id,user,fresh.admin)
+                }
+            }
             service.observeMembership(group.id,user,member.present)
             if(!member.present) {
                 if(includeFormer && group in known) GroupOption(group,false,false,false,present=false) else null
             } else {
                 val auth=Access(group.id,user,member.admin)
-                val canPublish=(forPublication || polls.enabled(group.id)) && navigationMembership.get(group.id,identity.id) { api.member(group.id,identity.id) }.let { it.present && it.admin }
+                val canPublish=(forPublication || showPollCreation && polls.enabled(group.id)) &&
+                    navigationMembership.get(group.id,identity.id) { api.member(group.id,identity.id) }.let { it.present && it.admin }
                 GroupOption(group,service.isAdmin(auth),member.admin,canPublish)
             }
         } catch(f:TelegramFailure) {
@@ -121,12 +129,16 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     /** Receipt and business execution have separate durable progress. */
     fun acceptUpdates(updates:List<TgUpdate>) {
         inbox.accept(updates)
-        if(updates.isEmpty()) drainedPolls+=polls.closingPolls().map { it.group to it.id }
+        if(updates.isEmpty()) markPollsDrained()
+        else if(pollDrainRemaining.values.any { it!=null && it>0 }) {
+            val received=updates.asSequence().map { it.id }.distinct().count()
+            pollDrainRemaining.replaceAll { _,remaining -> remaining?.let { (it-received).coerceAtLeast(0) } }
+        }
     }
     fun processPending(limit:Int=20) {
         val attempted=mutableSetOf<Long>()
         repeat(limit) {
-            val pending=inbox.pending(limit+attempted.size).firstOrNull { it.id !in attempted } ?: return
+            val pending=inbox.pending(1,attempted).singleOrNull() ?: return
             attempted+=pending.id
             val update=pending.update ?: pending.plan?.let { plan ->
                 // Pre-inbox plans already have an account; preserve its real profile during replay.
@@ -160,6 +172,10 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     private fun handleUpdate(update: TgUpdate) {
         if (state.completed(update.id)) { diagnostics.update(update.id,"duplicate");return }
         checkedMembership.clear()
+        if(IncomingContent.isOrdinaryGroupMessage(update,identity.username)) {
+            state.complete(update.id)
+            return
+        }
         val callback = update.callback
         val message = update.message ?: callback?.message
         val user = callback?.from ?: update.message?.from
@@ -727,7 +743,13 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
                 remember(it);service.rememberMembership(plan.screen.group,it.id,true)
             }.map { it.id }.toSet()+plan.user
         } else emptySet()
-        val options=if(plan.screen.kind in setOf("menu","groups","settings") || plan.form?.kind=="group") groupOptions(plan.user,forPublication=plan.form?.kind=="group",discover=plan.screen.kind=="groups" || plan.form?.kind=="group",includeFormer=plan.screen.kind=="groups" && GroupSelection.allowsFormer(plan.screen.option)) else emptyList()
+        val choosesPublication=plan.form?.kind=="group"
+        val showsGroups=plan.screen.kind=="groups"
+        val showsMenu=plan.screen.kind=="menu"
+        val options=if(showsMenu || showsGroups || plan.screen.kind=="settings" || choosesPublication) {
+            groupOptions(plan.user,forPublication=choosesPublication,discover=showsGroups || choosesPublication,
+                includeFormer=showsGroups && GroupSelection.allowsFormer(plan.screen.option),showPollCreation=showsMenu)
+        } else emptyList()
         val out = screens.render(plan.screen, a, scope, plan.user, plan.form, plan.notice, inGroup = plan.chat < 0, telegramAdmins=administrators,groupOptions=options)
         if (plan.chat < 0) {
             // Only training data already visible on the shared card is rendered inside the group.
@@ -851,15 +873,20 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         }
     }
     fun hasClosingPolls()=polls.hasClosingPolls()
-    /** Run after an empty getUpdates response, so votes queued before stopPoll are included. */
+    private fun markPollsDrained() {
+        polls.closingPolls().forEach { pollDrainRemaining[it.group to it.id]=0 }
+    }
+
+    /** Test and recovery entry point for an observed empty response after stopPoll. */
     fun finishPollsAfterDrain() {
-        drainedPolls+=polls.closingPolls().map { it.group to it.id }
+        markPollsDrained()
         finishDrainedPolls()
     }
     fun finishDrainedPolls() {
-        polls.closingPolls().filter { (it.group to it.id) in drainedPolls }.forEach { p ->
+        if(pollDrainRemaining.values.none { it==0 }) return
+        polls.closingPolls().filter { pollDrainRemaining[it.group to it.id]==0 }.forEach { p ->
             if(!inbox.hasPendingVotes(requireNotNull(p.telegramId))) {
-                polls.finish(p);drainedPolls.remove(p.group to p.id)
+                polls.finish(p);pollDrainRemaining.remove(p.group to p.id)
             }
         }
     }
@@ -964,23 +991,28 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
     }
     /** Progress is stored in panel_json, so unfinished refreshes survive a restart. */
     private fun refreshPendingPanels() {
+        val trainings=mutableMapOf<Pair<Long,String>,TrainingRecord>()
+        val cards=mutableMapOf<Pair<Long,String>,TrainingCard.Content>()
         state.pendingPanels().forEach { panel ->
             val (user,group,id,screen)=panel
             val scope="personal:$user:$group"
             val oldTokens=state.activeTokens(scope)
             try {
                 val auth=access(group,user)
-                val t=service.training(auth,screen.id)
+                val key=group to screen.id
+                val t=trainings.getOrPut(key) { service.training(auth,screen.id) }
                 if(t.phase != TrainingPhase.OPEN) closePanel(user,group,id,required=true)
                 else {
-                    val player=t.players.firstOrNull { it.userId==user }
+                    val target=screen.user.takeIf { it>0 } ?: user
+                    val player=t.players.firstOrNull { it.userId==target }
                     val available=player?.playing==true || screen.kind=="participation_payment" && (player?.paid ?: 0)>0
                     val shown=if(available && (screen.kind!="participation_time" || t.rules.trackTime)) screen else screen.copy(kind="participation")
-                    val out=screens.render(shown,auth,scope,user,inGroup=true)
+                    val card=cards.getOrPut(key) { screens.participationCard(auth,t) }
+                    val out=screens.refreshParticipation(shown,auth,scope,t,card)
                     state.protect(out.tokens)
                     api.editEphemeralRich(group,user,id,out.text,requireNotNull(out.richHtml),out.keyboard)
                     state.replace(scope,out.tokens)
-                    state.panel(user,group,shown,out.trainingVersion)
+                    state.panel(user,group,shown,out.trainingVersion,backgroundRules=t.rules)
                 }
             } catch(f:AccountingException) {
                 if(f.code!=ErrorCode.FORBIDDEN) throw f
@@ -1003,8 +1035,27 @@ class SelfServiceBot(val api: TelegramApi, database: Database, val identity: TgU
         val delivery=state.delivery("training:$group:$training")
         return delivery?.status!="FAILED" && (delivery?.status!="UNKNOWN" || delivery.message!=null)
     }
-    fun nextPollTimeout(maximum:Int):Int {
-        if(polls.closingPolls().any { (it.group to it.id) !in drainedPolls }) return 0
+    internal fun pollUpdates(maximum:Int):List<TgUpdate> {
+        val closing=polls.closingPolls().map { it.group to it.id }
+        val new=closing.filterNot(pollDrainRemaining::containsKey)
+        if(new.isNotEmpty()) {
+            // Snapshot the queue after stopPoll and before requesting the next batch. The count
+            // may include a previously received, unacknowledged batch, which only delays closure.
+            val remaining=try { api.pendingUpdateCount() }
+            catch(failure:TelegramFailure) {
+                if(failure.code in setOf(401,409)) throw failure
+                null
+            }
+            new.forEach { pollDrainRemaining[it]=remaining?.coerceAtLeast(1) }
+        }
+        return api.updates(inbox.offset(),nextPollTimeout(maximum,new.isNotEmpty() || closing.any { pollDrainRemaining[it]!=0 }))
+    }
+
+    fun nextPollTimeout(maximum:Int):Int =
+        nextPollTimeout(maximum,polls.closingPolls().any { pollDrainRemaining[it.group to it.id]!=0 })
+
+    private fun nextPollTimeout(maximum:Int,draining:Boolean):Int {
+        if(draining) return minOf(maximum,1)
         var wait=minOf(state.panelRefreshDelay(maximum),inbox.nextDelay(maximum))
         if(state.hasPendingPaymentNotices()) wait=minOf(wait,1)
         if(state.pendingCards().isNotEmpty() || state.pendingPins().isNotEmpty() || state.pendingUnpins().isNotEmpty()) wait=minOf(wait,1)

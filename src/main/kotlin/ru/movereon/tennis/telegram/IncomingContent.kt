@@ -9,6 +9,15 @@ internal object IncomingContent {
         if('@' in token && (username==null || !token.substringAfter('@').equals(username,true))) return null
         return command
     }
+
+    fun isOrdinaryGroupMessage(update:TgUpdate,username:String?):Boolean {
+        val message=update.message ?: return false
+        return update.callback==null && update.memberUpdate==null && update.botMemberUpdate==null && update.pollAnswer==null &&
+            message.chat.id<0 && message.newMembers.isEmpty() && message.leftMember==null &&
+            message.migrateTo==null && message.migrateFrom==null &&
+            groupCommand(message.text,username)==null
+    }
+
     fun minimize(update:TgUpdate,username:String?):TgUpdate {
         fun minimal(message:TgMessage,callback:Boolean=false):TgMessage {
             val group=message.chat.id<0

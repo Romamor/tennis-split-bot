@@ -400,6 +400,8 @@ class SelfServiceBotTest {
         panelClick(2,"Время");panelClick(2,"+0,5 ч");bot.maintain()
         val changed=bot.service.training(auth,t.id).players.single { it.userId==2L }
         assertEquals(90,changed.minutes);assertEquals(90,changed.guestMinutes)
+        clock.now=clock.now.plusSeconds(2)
+        bot.maintain()
         assertEquals(publicCard().text,ephemeralMessages.getValue(-1L to 1L).text)
         assertTrue("User 2 | 1,5 ч | 0 ₽ | -614 ₽" in publicCard().text!!.lineSequence())
         click(1,"Изменить статус");click(1,"Завершена")

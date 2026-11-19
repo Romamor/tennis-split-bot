@@ -63,6 +63,26 @@ Dockerfile собирает обычный runtime /app/lib, но зависим
 Существующий SSH-ключ GitHub задаётся локально через `core.sshCommand`,
 личные пути и сами ключи в репозиторий не входят.
 
+### Сборка отдельного образа с нуля
+
+Из готового каталога поставки образ можно собрать прямо от Eclipse Temurin 21.
+Для сервера с процессором x86-64 укажите платформу `linux/amd64`. На Mac с
+Apple Silicon локальный Docker должен поддерживать запуск этой платформы.
+
+```sh
+docker build --platform linux/amd64 --pull --no-cache \
+  -t tennis-split-bot:clean /absolute/path/to/prepared-release
+docker image inspect --format '{{.Os}}/{{.Architecture}} {{.Config.User}}' tennis-split-bot:clean
+docker image save tennis-split-bot:clean | gzip > tennis-split-bot-clean.tar.gz
+```
+
+Для повторения сборки с тем же базовым образом сохраните его контрольную сумму
+и укажите её в `FROM` копии Dockerfile. Проверку SQLite выполняйте на отдельной
+демонстрационной базе с `--network none`, `--read-only` и параметрами `/tmp`
+из `compose.yaml`, включая `exec` для нативной библиотеки SQLite.
+
+### Передача каталога поставки
+
 На сервер передать каталог поставки через SSH и отдельно скопировать
 локальный `.env` как `bot.env` в этот каталог. Каталог должен иметь права
 700, файл `bot.env` — 600. Не вставлять токен в команды или переписку.
